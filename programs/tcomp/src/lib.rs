@@ -7,7 +7,10 @@ use anchor_lang::{
     },
 };
 use mpl_bubblegum::{
-    self, program::Bubblegum, state::leaf_schema::LeafSchema, utils::get_asset_id,
+    self,
+    program::Bubblegum,
+    state::{leaf_schema::LeafSchema, metaplex_adapter::Creator},
+    utils::get_asset_id,
 };
 use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
@@ -43,44 +46,31 @@ pub mod tcomp {
         root: [u8; 32],
         nonce: u64,
         index: u32,
-        // metadata with creators array simple as []. instead pass shares & verified separately below
-        // so that we're not duplicating creator keys (space in the tx)
-        metadataWithoutCreators: MetadataArgs,
-        creator_shares: Vec<u8>,
-        creator_verified: Vec<bool>,
+        metadata: MetadataArgs,
     ) -> Result<()> {
         // --------------------------------------- verify collection first
         // @dev: most of the stuff below is taken from process_mint_v1 in bubblegum
 
         let merkle_tree = ctx.accounts.merkle_tree.to_account_info();
-        let (creator_accounts, proof_accounts) =
-            ctx.remaining_accounts.split_at(creator_shares.len());
+        let (creator_accounts, proof_accounts) = ctx
+            .remaining_accounts
+            .split_at(metadata.creator_shares.len());
         let owner = ctx.accounts.leaf_owner.to_account_info();
         let delegate = ctx.accounts.leaf_delegate.to_account_info();
         let compression_program = &ctx.accounts.compression_program.to_account_info();
 
-        // this is the correct creator array that should have been passed originally
-        let creator_array = creator_accounts
-            .iter()
-            .enumerate()
-            .map(|(i, c)| Creator {
-                address: c.key(),
-                verified: creator_verified[i],
-                share: creator_shares[i],
-            })
-            .collect::<Vec<_>>();
-        let mut metadataWithCreators = metadataWithoutCreators.clone();
-        metadataWithCreators.creators = creator_array;
+        //this is the correct metadat that matches metaplex's format
+        let mplexMetadata = metadata.into(creator_accounts);
 
-        let creator_hash = hash_creators(&metadataWithCreators.creators)?;
+        let creator_hash = hash_creators(&mplexMetadata.creators)?;
 
-        let metadata_args_hash = hashv(&[metadataWithCreators.try_to_vec()?.as_slice()]);
+        let metadata_args_hash = hashv(&[mplexMetadata.try_to_vec()?.as_slice()]);
         let data_hash = hashv(&[
             &metadata_args_hash.to_bytes(),
-            &metadataWithCreators.seller_fee_basis_points.to_le_bytes(),
+            &mplexMetadata.seller_fee_basis_points.to_le_bytes(),
         ]);
 
-        if metadataWithoutCreators.collection.is_some() {
+        if mplexMetadata.collection.is_some() {
             let asset_id = get_asset_id(&merkle_tree.key(), nonce);
             let leaf = LeafSchema::new_v0(
                 asset_id,

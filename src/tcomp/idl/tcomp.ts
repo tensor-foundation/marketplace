@@ -70,45 +70,15 @@ export type Tcomp = {
           "type": "u32"
         },
         {
-          "name": "metadataWithoutCreators",
+          "name": "metadata",
           "type": {
             "defined": "MetadataArgs"
-          }
-        },
-        {
-          "name": "creatorShares",
-          "type": "bytes"
-        },
-        {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
           }
         }
       ]
     }
   ],
   "types": [
-    {
-      "name": "Creator",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "address",
-            "type": "publicKey"
-          },
-          {
-            "name": "verified",
-            "type": "bool"
-          },
-          {
-            "name": "share",
-            "type": "u8"
-          }
-        ]
-      }
-    },
     {
       "name": "Uses",
       "type": {
@@ -237,11 +207,13 @@ export type Tcomp = {
             }
           },
           {
-            "name": "creators",
+            "name": "creatorShares",
+            "type": "bytes"
+          },
+          {
+            "name": "creatorVerified",
             "type": {
-              "vec": {
-                "defined": "Creator"
-              }
+              "vec": "bool"
             }
           }
         ]
@@ -373,45 +345,15 @@ export const IDL: Tcomp = {
           "type": "u32"
         },
         {
-          "name": "metadataWithoutCreators",
+          "name": "metadata",
           "type": {
             "defined": "MetadataArgs"
-          }
-        },
-        {
-          "name": "creatorShares",
-          "type": "bytes"
-        },
-        {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
           }
         }
       ]
     }
   ],
   "types": [
-    {
-      "name": "Creator",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "address",
-            "type": "publicKey"
-          },
-          {
-            "name": "verified",
-            "type": "bool"
-          },
-          {
-            "name": "share",
-            "type": "u8"
-          }
-        ]
-      }
-    },
     {
       "name": "Uses",
       "type": {
@@ -540,11 +482,13 @@ export const IDL: Tcomp = {
             }
           },
           {
-            "name": "creators",
+            "name": "creatorShares",
+            "type": "bytes"
+          },
+          {
+            "name": "creatorVerified",
             "type": {
-              "vec": {
-                "defined": "Creator"
-              }
+              "vec": "bool"
             }
           }
         ]

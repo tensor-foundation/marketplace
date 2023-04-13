@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { AnchorProvider, BN, Program } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import { tcompSDK } from "../src";
 import { resolve } from "path";
 import {
@@ -26,19 +26,12 @@ import {
 } from "@solana/spl-account-compression";
 import {
   computeCompressedNFTHash,
-  computeCreatorHash,
-  computeDataHash,
   createCreateTreeInstruction,
-  createDecompressV1Instruction,
-  createMintToCollectionV1Instruction,
   createMintV1Instruction,
-  createRedeemInstruction,
-  createTransferInstruction,
   getLeafAssetId,
   MetadataArgs,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
-  TokenStandard,
 } from "@metaplex-foundation/mpl-bubblegum";
 import {
   buildTx,
@@ -51,15 +44,8 @@ import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
   createSetCollectionSizeInstruction,
-  Key,
 } from "@metaplex-foundation/mpl-token-metadata";
-import {
-  createAccount,
-  createMint,
-  mintTo,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { createAccount, createMint, mintTo } from "@solana/spl-token";
 
 //(!) provider used across all tests
 process.env.ANCHOR_WALLET = resolve(__dirname, "test-keypair.json");
@@ -364,13 +350,14 @@ describe("tcomp", () => {
       name: "Test Compressed NFT",
       symbol: "TST",
       uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
-      creators: [
-        {
-          address: new PublicKey("dNCnRxNgCUxktTtvgx9YHnkGK1kyqRxTCjF9CvRVs94"),
-          share: 100,
-          verified: false,
-        },
-      ],
+      // creators: [
+      //   {
+      //     address: new PublicKey("dNCnRxNgCUxktTtvgx9YHnkGK1kyqRxTCjF9CvRVs94"),
+      //     share: 100,
+      //     verified: false,
+      //   },
+      // ],
+      creators: [],
       editionNonce: 0,
       tokenProgramVersion: TokenProgramVersion.Original,
       tokenStandard: null,

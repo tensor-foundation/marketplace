@@ -1,48 +1,32 @@
 import { DiscMap, genDiscToDecoderMap } from "../common";
 import {
-  AnchorProvider,
   BN,
   BorshCoder,
   Coder,
-  Event,
   EventParser,
-  Instruction,
   Program,
   Provider,
-  Wallet,
 } from "@project-serum/anchor";
-import {
-  AccountInfo,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-} from "@solana/web3.js";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { TCOMP_ADDR } from "./constants";
 import {
-  createCreateTreeInstruction,
-  createDecompressV1Instruction,
-  createMintToCollectionV1Instruction,
-  createRedeemInstruction,
-  createTransferInstruction,
   MetadataArgs,
-  mintV1InstructionDiscriminator,
-  mintV1Struct,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
   TokenStandard,
 } from "@metaplex-foundation/mpl-bubblegum";
-
-// --------------------------------------- idl
-
-import { IDL as IDL_latest, tcomp as tcomp_latest } from "./idl/tcomp";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
 } from "@solana/spl-account-compression";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { Uses } from "@metaplex-foundation/mpl-token-metadata";
+import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
+import { isNullLike } from "@tensor-hq/tensor-common";
 
-// todo
+// --------------------------------------- idl
+
+import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
+
 export const tcompIDL_latest = IDL_latest;
 export const tcompIDL_latest_EffSlot = 0;
 
@@ -52,6 +36,103 @@ export type tcompIDL = tcomp_latest;
 export const triageBidIDL = (slot: number | bigint): tcompIDL | null => {
   if (slot < tcompIDL_latest_EffSlot) return null;
   return tcompIDL_latest;
+};
+
+// --------------------------------------- types
+
+export const TokenStandardAnchor = {
+  NonFungible: { nonFungible: {} },
+  FungibleAsset: { fungibleAsset: {} },
+  Fungible: { fungible: {} },
+  NonFungibleEdition: { nonFungibleEdition: {} },
+};
+export type TokenStandardAnchor =
+  typeof TokenStandardAnchor[keyof typeof TokenStandardAnchor];
+export const castTokenStandard = (
+  t: TokenStandard | null
+): TokenStandardAnchor | null => {
+  if (isNullLike(t)) return null;
+  switch (t) {
+    case TokenStandard.Fungible:
+      return TokenStandardAnchor.Fungible;
+    case TokenStandard.NonFungible:
+      return TokenStandardAnchor.NonFungible;
+    case TokenStandard.NonFungibleEdition:
+      return TokenStandardAnchor.NonFungibleEdition;
+    case TokenStandard.FungibleAsset:
+      return TokenStandardAnchor.FungibleAsset;
+  }
+};
+
+export const UseMethodAnchor = {
+  Burn: { burn: {} },
+  Multiple: { multiple: {} },
+  Single: { single: {} },
+};
+export type UseMethodAnchor =
+  typeof UseMethodAnchor[keyof typeof UseMethodAnchor];
+export const castUseMethod = (u: UseMethod): UseMethodAnchor => {
+  switch (u) {
+    case UseMethod.Burn:
+      return UseMethodAnchor.Burn;
+    case UseMethod.Single:
+      return UseMethodAnchor.Single;
+    case UseMethod.Multiple:
+      return UseMethodAnchor.Multiple;
+  }
+};
+
+export type UsesAnchor = {
+  useMethod: UseMethodAnchor;
+  remaining: BN;
+  total: BN;
+};
+export const castUses = (u: Uses | null): UsesAnchor | null => {
+  if (isNullLike(u)) return null;
+  return {
+    useMethod: castUseMethod(u.useMethod),
+    remaining: new BN(u.remaining),
+    total: new BN(u.total),
+  };
+};
+
+const TokenProgramVersionAnchor = {
+  Original: { original: {} },
+  Token2022: { token2022: {} },
+};
+export type TokenProgramVersionAnchor =
+  typeof TokenProgramVersionAnchor[keyof typeof TokenProgramVersionAnchor];
+export const castTokenProgramVersion = (
+  t: TokenProgramVersion
+): TokenProgramVersionAnchor => {
+  switch (t) {
+    case TokenProgramVersion.Original:
+      return TokenProgramVersionAnchor.Original;
+    case TokenProgramVersion.Token2022:
+      return TokenProgramVersionAnchor.Token2022;
+  }
+};
+
+export type MetadataArgsAnchor = Omit<
+  MetadataArgs,
+  "tokenStandard" | "uses" | "tokenProgramVersion" | "creators"
+> & {
+  tokenStandard: TokenStandardAnchor | null;
+  uses: UsesAnchor | null;
+  tokenProgramVersion: TokenProgramVersionAnchor;
+  creatorShares: Buffer;
+  creatorVerified: boolean[];
+};
+export const castMetadata = (m: MetadataArgs): MetadataArgsAnchor => {
+  const { creators, ...metaWithoutCreators } = m;
+  return {
+    ...metaWithoutCreators,
+    tokenStandard: castTokenStandard(m.tokenStandard),
+    uses: castUses(m.uses),
+    tokenProgramVersion: castTokenProgramVersion(m.tokenProgramVersion),
+    creatorShares: Buffer.from(creators.map((c) => c.share)),
+    creatorVerified: creators.map((c) => c.verified),
+  };
 };
 
 // --------------------------------------- sdk
@@ -68,7 +149,7 @@ export class tcompSDK {
     provider,
     coder,
   }: {
-    idl?: any; //todo better typing
+    idl?: any;
     addr?: PublicKey;
     provider?: Provider;
     coder?: Coder;
@@ -128,16 +209,7 @@ export class tcompSDK {
     console.log(metadata.creators.map((c) => c.verified));
 
     const builder = this.program.methods
-      .executeBuy(
-        root,
-        nonce,
-        index,
-        { ...metadata, tokenProgramVersion: { original: {} } },
-        // { ...metadata, creators: [] },
-        // todo breaks with 0 creators, borsh serialization error
-        Buffer.from(metadata.creators.map((c) => c.share)),
-        metadata.creators.map((c) => c.verified)
-      )
+      .executeBuy(root, nonce, index, castMetadata(metadata))
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,

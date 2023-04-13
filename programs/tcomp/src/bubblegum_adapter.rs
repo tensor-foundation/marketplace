@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use mpl_bubblegum::state::metaplex_adapter;
 
 use crate::*;
 
@@ -8,14 +9,22 @@ pub enum TokenProgramVersion {
     Token2022,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub struct Creator {
-    pub address: Pubkey,
-    pub verified: bool,
-    // In percentages, NOT basis points ;) Watch out!
-    pub share: u8,
+impl From<TokenProgramVersion> for metaplex_adapter::TokenProgramVersion {
+    fn from(v: TokenProgramVersion) -> Self {
+        match v {
+            TokenProgramVersion::Original => metaplex_adapter::TokenProgramVersion::Original,
+            TokenProgramVersion::Token2022 => metaplex_adapter::TokenProgramVersion::Token2022,
+        }
+    }
 }
 
+// #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
+// pub struct Creator {
+//     pub address: Pubkey,
+//     pub verified: bool,
+//     // In percentages, NOT basis points ;) Watch out!
+//     pub share: u8,
+// }
 // impl Creator {
 //     pub fn adapt(&self) -> mpl_bubblegum::state::metaplex_adapter::Creator {
 //         mpl_bubblegum::state::metaplex_adapter::Creator {
@@ -26,12 +35,26 @@ pub struct Creator {
 //     }
 // }
 
+#[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum TokenStandard {
-    NonFungible,        // This is a master edition
-    FungibleAsset,      // A token with metadata that can also have attrributes
-    Fungible,           // A token with simple metadata
-    NonFungibleEdition, // This is a limited edition
+    NonFungible = 0,        // This is a master edition
+    FungibleAsset = 1,      // A token with metadata that can also have attrributes
+    Fungible = 2,           // A token with simple metadata
+    NonFungibleEdition = 3, // This is a limited edition
+}
+
+impl From<TokenStandard> for metaplex_adapter::TokenStandard {
+    fn from(s: TokenStandard) -> Self {
+        match s {
+            TokenStandard::NonFungible => metaplex_adapter::TokenStandard::NonFungible,
+            TokenStandard::FungibleAsset => metaplex_adapter::TokenStandard::FungibleAsset,
+            TokenStandard::Fungible => metaplex_adapter::TokenStandard::Fungible,
+            TokenStandard::NonFungibleEdition => {
+                metaplex_adapter::TokenStandard::NonFungibleEdition
+            }
+        }
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
@@ -39,6 +62,16 @@ pub enum UseMethod {
     Burn,
     Multiple,
     Single,
+}
+
+impl From<UseMethod> for metaplex_adapter::UseMethod {
+    fn from(m: UseMethod) -> Self {
+        match m {
+            UseMethod::Burn => metaplex_adapter::UseMethod::Burn,
+            UseMethod::Multiple => metaplex_adapter::UseMethod::Multiple,
+            UseMethod::Single => metaplex_adapter::UseMethod::Single,
+        }
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
@@ -49,19 +82,15 @@ pub struct Uses {
     pub total: u64,            //8
 }
 
-// impl Uses {
-//     pub fn adapt(&self) -> mpl_bubblegum::state::metaplex_adapter::Uses {
-//         mpl_bubblegum::state::metaplex_adapter::Uses {
-//             use_method: match self.use_method {
-//                 UseMethod::Burn => mpl_bubblegum::state::metaplex_adapter::UseMethod::Burn,
-//                 UseMethod::Multiple => mpl_bubblegum::state::metaplex_adapter::UseMethod::Multiple,
-//                 UseMethod::Single => mpl_bubblegum::state::metaplex_adapter::UseMethod::Single,
-//             },
-//             remaining: self.remaining,
-//             total: self.total,
-//         }
-//     }
-// }
+impl From<Uses> for metaplex_adapter::Uses {
+    fn from(u: Uses) -> Self {
+        Self {
+            use_method: metaplex_adapter::UseMethod::from(u.use_method),
+            remaining: u.remaining,
+            total: u.total,
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
@@ -70,14 +99,14 @@ pub struct Collection {
     pub key: Pubkey,
 }
 
-// impl Collection {
-//     pub fn adapt(&self) -> mpl_bubblegum::state::metaplex_adapter::Collection {
-//         mpl_bubblegum::state::metaplex_adapter::Collection {
-//             verified: self.verified,
-//             key: self.key,
-//         }
-//     }
-// }
+impl From<Collection> for metaplex_adapter::Collection {
+    fn from(c: Collection) -> Self {
+        Self {
+            verified: c.verified,
+            key: c.key,
+        }
+    }
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct MetadataArgs {
@@ -102,5 +131,50 @@ pub struct MetadataArgs {
     /// Uses
     pub uses: Option<Uses>,
     pub token_program_version: TokenProgramVersion,
-    pub creators: Vec<Creator>,
+    // metadata with creators array simple as []. instead pass shares & verified separately below
+    // so that we're not duplicating creator keys (space in the tx)
+    pub creator_shares: Vec<u8>,
+    pub creator_verified: Vec<bool>,
+}
+
+impl MetadataArgs {
+    //can't use the default trait because need extra arg
+    pub fn into(self, creators: &[AccountInfo]) -> metaplex_adapter::MetadataArgs {
+        metaplex_adapter::MetadataArgs {
+            name: self.name,
+            symbol: self.symbol,
+            uri: self.uri,
+            seller_fee_basis_points: self.seller_fee_basis_points,
+            primary_sale_happened: self.primary_sale_happened,
+            is_mutable: self.is_mutable,
+            edition_nonce: self.edition_nonce,
+            token_standard: if let Some(std) = self.token_standard {
+                Some(metaplex_adapter::TokenStandard::from(std))
+            } else {
+                None
+            },
+            collection: if let Some(coll) = self.collection {
+                Some(metaplex_adapter::Collection::from(coll))
+            } else {
+                None
+            },
+            uses: if let Some(uses) = self.uses {
+                Some(metaplex_adapter::Uses::from(uses))
+            } else {
+                None
+            },
+            token_program_version: metaplex_adapter::TokenProgramVersion::from(
+                self.token_program_version,
+            ),
+            creators: creators
+                .iter()
+                .enumerate()
+                .map(|(i, c)| metaplex_adapter::Creator {
+                    address: c.key(),
+                    verified: self.creator_verified[i],
+                    share: self.creator_shares[i],
+                })
+                .collect::<Vec<_>>(),
+        }
+    }
 }
