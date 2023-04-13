@@ -2166,6 +2166,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "mpl-bubblegum",
+ "mpl-token-metadata",
  "spl-account-compression",
 ]
 

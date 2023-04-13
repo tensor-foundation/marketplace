@@ -1,56 +1,115 @@
-use anchor_lang::prelude::*;
-use mpl_bubblegum::{self, program::Bubblegum};
+use anchor_lang::{
+    prelude::*,
+    solana_program::{
+        instruction::Instruction,
+        keccak::hashv,
+        program::{invoke, invoke_signed},
+    },
+};
+use mpl_bubblegum::{
+    self, program::Bubblegum, state::leaf_schema::LeafSchema, utils::get_asset_id,
+};
 use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
+pub mod bubblegum_adapter;
+pub use bubblegum_adapter::*;
 
 declare_id!("CS7Db7Me9YB9UqUfCF9VhcdNPNxGGQgUqpFsvx9mhuqL");
 
+pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
+    // Convert creator Vec to bytes Vec.
+    let creator_data = creators
+        .iter()
+        .map(|c| [c.address.as_ref(), &[c.verified as u8], &[c.share]].concat())
+        .collect::<Vec<_>>();
+    // Calculate new creator hash.
+    Ok(hashv(
+        creator_data
+            .iter()
+            .map(|c| c.as_slice())
+            .collect::<Vec<&[u8]>>()
+            .as_ref(),
+    )
+    .to_bytes())
+}
+
 #[program]
 pub mod tcomp {
-    use anchor_lang::solana_program::{
-        instruction::Instruction,
-        program::{invoke, invoke_signed},
-    };
-
     use super::*;
 
     pub fn execute_buy<'info>(
         ctx: Context<'_, '_, '_, 'info, ExecuteBuy<'info>>,
         root: [u8; 32],
-        data_hash: [u8; 32],
-        creator_hash: [u8; 32],
         nonce: u64,
         index: u32,
+        // metadata with creators array simple as []. instead pass shares & verified separately below
+        // so that we're not duplicating creator keys (space in the tx)
+        metadataWithoutCreators: MetadataArgs,
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
     ) -> Result<()> {
-        msg!("is signer: {}", ctx.accounts.leaf_owner.is_signer);
+        // --------------------------------------- verify collection first
+        // @dev: most of the stuff below is taken from process_mint_v1 in bubblegum
 
-        // todo role of delegate?
-        // mpl_bubblegum::cpi::transfer(
-        //     CpiContext::new(
-        //         ctx.accounts.bubblegum.to_account_info(),
-        //         mpl_bubblegum::cpi::accounts::Transfer {
-        //             tree_authority: ctx.accounts.tree_authority.to_account_info(),
-        //             leaf_owner: ctx.accounts.leaf_owner.to_account_info(),
-        //             leaf_delegate: ctx.accounts.leaf_delegate.to_account_info(),
-        //             new_leaf_owner: ctx.accounts.new_leaf_owner.to_account_info(),
-        //             merkle_tree: ctx.accounts.merkle_tree.to_account_info(),
-        //             log_wrapper: ctx.accounts.log_wrapper.to_account_info(),
-        //             compression_program: ctx.accounts.compression_program.to_account_info(),
-        //             system_program: ctx.accounts.system_program.to_account_info(),
-        //         },
-        //     )
-        //     .with_remaining_accounts(ctx.remaining_accounts.to_vec()),
-        //     root,
-        //     data_hash,
-        //     creator_hash,
-        //     nonce,
-        //     index,
-        // )?;
+        let merkle_tree = ctx.accounts.merkle_tree.to_account_info();
+        let (creator_accounts, proof_accounts) =
+            ctx.remaining_accounts.split_at(creator_shares.len());
+        let owner = ctx.accounts.leaf_owner.to_account_info();
+        let delegate = ctx.accounts.leaf_delegate.to_account_info();
+        let compression_program = &ctx.accounts.compression_program.to_account_info();
+
+        // this is the correct creator array that should have been passed originally
+        let creator_array = creator_accounts
+            .iter()
+            .enumerate()
+            .map(|(i, c)| Creator {
+                address: c.key(),
+                verified: creator_verified[i],
+                share: creator_shares[i],
+            })
+            .collect::<Vec<_>>();
+        let mut metadataWithCreators = metadataWithoutCreators.clone();
+        metadataWithCreators.creators = creator_array;
+
+        let creator_hash = hash_creators(&metadataWithCreators.creators)?;
+
+        let metadata_args_hash = hashv(&[metadataWithCreators.try_to_vec()?.as_slice()]);
+        let data_hash = hashv(&[
+            &metadata_args_hash.to_bytes(),
+            &metadataWithCreators.seller_fee_basis_points.to_le_bytes(),
+        ]);
+
+        if metadataWithoutCreators.collection.is_some() {
+            let asset_id = get_asset_id(&merkle_tree.key(), nonce);
+            let leaf = LeafSchema::new_v0(
+                asset_id,
+                owner.key(),
+                delegate.key(),
+                nonce,
+                data_hash.to_bytes(),
+                creator_hash,
+            );
+
+            let cpi_ctx = CpiContext::new(
+                compression_program.clone(),
+                spl_account_compression::cpi::accounts::VerifyLeaf {
+                    merkle_tree: merkle_tree.clone(),
+                },
+            )
+            .with_remaining_accounts(proof_accounts.to_vec());
+            spl_account_compression::cpi::verify_leaf(cpi_ctx, root, leaf.to_node(), index)?;
+
+            msg!("yay valid");
+        }
+
+        // --------------------------------------- TODO pay sol & royalties
+
+        // --------------------------------------- transfer next
 
         let transfer_instruction_data = mpl_bubblegum::instruction::Transfer {
             root,
-            data_hash,
+            data_hash: data_hash.to_bytes(),
             creator_hash,
             nonce,
             index,
@@ -62,7 +121,7 @@ pub mod tcomp {
         let mut data: Vec<u8> = Vec::with_capacity(INSTRUCTION_DATA_SIZE);
         data.extend_from_slice(&INSTRUCTION_TAG);
         data.extend_from_slice(&root);
-        data.extend_from_slice(&data_hash);
+        data.extend_from_slice(&data_hash.to_bytes());
         data.extend_from_slice(&creator_hash);
         data.extend_from_slice(&nonce.to_le_bytes());
         data.extend_from_slice(&index.to_le_bytes());
@@ -89,8 +148,7 @@ pub mod tcomp {
                 (*acct).is_signer = true;
             }
         }
-        let proof_accounts = ctx.remaining_accounts;
-        for node in proof_accounts.iter() {
+        for node in proof_accounts {
             transfer_account_metas.push(AccountMeta::new_readonly(*node.key, false));
         }
 
@@ -126,4 +184,7 @@ pub struct ExecuteBuy<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum: Program<'info, Bubblegum>,
+    // Remaining accounts:
+    // 1. 1-5 creators
+    // 2. proof
 }

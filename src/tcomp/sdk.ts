@@ -26,6 +26,8 @@ import {
   createRedeemInstruction,
   createTransferInstruction,
   MetadataArgs,
+  mintV1InstructionDiscriminator,
+  mintV1Struct,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
   TokenStandard,
@@ -38,6 +40,7 @@ import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
 } from "@solana/spl-account-compression";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 
 // todo
 export const tcompIDL_latest = IDL_latest;
@@ -91,8 +94,7 @@ export class tcompSDK {
     newLeafOwner,
     proof,
     root,
-    dataHash,
-    creatorHash,
+    metadata,
     nonce,
     index,
   }: {
@@ -101,8 +103,7 @@ export class tcompSDK {
     newLeafOwner: PublicKey;
     proof: PublicKey[];
     root: number[];
-    dataHash: number[];
-    creatorHash: number[];
+    metadata: MetadataArgs;
     nonce: BN;
     index: number;
   }) {
@@ -111,14 +112,32 @@ export class tcompSDK {
       BUBBLEGUM_PROGRAM_ID
     );
 
+    let creators = metadata.creators.map((c) => ({
+      pubkey: c.address,
+      isSigner: false,
+      isWritable: true,
+    }));
+
     let proofPath = proof.map((node: PublicKey) => ({
       pubkey: node,
       isSigner: false,
       isWritable: false,
     }));
 
+    console.log(metadata.creators.map((c) => c.share));
+    console.log(metadata.creators.map((c) => c.verified));
+
     const builder = this.program.methods
-      .executeBuy(root, dataHash, creatorHash, nonce, index)
+      .executeBuy(
+        root,
+        nonce,
+        index,
+        { ...metadata, tokenProgramVersion: { original: {} } },
+        // { ...metadata, creators: [] },
+        // todo breaks with 0 creators, borsh serialization error
+        Buffer.from(metadata.creators.map((c) => c.share)),
+        metadata.creators.map((c) => c.verified)
+      )
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
@@ -130,7 +149,7 @@ export class tcompSDK {
         newLeafOwner,
         bubblegum: BUBBLEGUM_PROGRAM_ID,
       })
-      .remainingAccounts(proofPath);
+      .remainingAccounts([...creators, ...proofPath]);
 
     return {
       builder,

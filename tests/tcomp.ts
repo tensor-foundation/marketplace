@@ -40,8 +40,26 @@ import {
   TokenProgramVersion,
   TokenStandard,
 } from "@metaplex-foundation/mpl-bubblegum";
-import { buildTx, buildTxV0, isNullLike } from "@tensor-hq/tensor-common";
+import {
+  buildTx,
+  buildTxV0,
+  isNullLike,
+  TOKEN_METADATA_PROGRAM_ID,
+} from "@tensor-hq/tensor-common";
 import { backOff } from "exponential-backoff";
+import {
+  createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountV3Instruction,
+  createSetCollectionSizeInstruction,
+  Key,
+} from "@metaplex-foundation/mpl-token-metadata";
+import {
+  createAccount,
+  createMint,
+  mintTo,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 
 //(!) provider used across all tests
 process.env.ANCHOR_WALLET = resolve(__dirname, "test-keypair.json");
@@ -229,18 +247,135 @@ async function setupTreeWithCompressedNFT(
   };
 }
 
+export const initCollection = async (conn: Connection, payer: Keypair) => {
+  const collectionMint = await createMint(
+    conn,
+    payer,
+    payer.publicKey,
+    payer.publicKey,
+    0
+  );
+  const collectionTokenAccount = await createAccount(
+    conn,
+    payer,
+    collectionMint,
+    payer.publicKey
+  );
+  await mintTo(conn, payer, collectionMint, collectionTokenAccount, payer, 1);
+  const [collectionMetadataAccount, _b] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("metadata", "utf8"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      collectionMint.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
+  const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
+    {
+      metadata: collectionMetadataAccount,
+      mint: collectionMint,
+      mintAuthority: payer.publicKey,
+      payer: payer.publicKey,
+      updateAuthority: payer.publicKey,
+    },
+    {
+      createMetadataAccountArgsV3: {
+        data: {
+          name: "Nick's collection",
+          symbol: "NICK",
+          uri: "nicksfancyuri",
+          sellerFeeBasisPoints: 100,
+          creators: null,
+          collection: null,
+          uses: null,
+        },
+        isMutable: false,
+        collectionDetails: null,
+      },
+    }
+  );
+  const [collectionMasterEditionAccount, _b2] =
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata", "utf8"),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        collectionMint.toBuffer(),
+        Buffer.from("edition", "utf8"),
+      ],
+      TOKEN_METADATA_PROGRAM_ID
+    );
+  const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
+    {
+      edition: collectionMasterEditionAccount,
+      mint: collectionMint,
+      mintAuthority: payer.publicKey,
+      payer: payer.publicKey,
+      updateAuthority: payer.publicKey,
+      metadata: collectionMetadataAccount,
+    },
+    {
+      createMasterEditionArgs: {
+        maxSupply: 0,
+      },
+    }
+  );
+
+  const sizeCollectionIX = createSetCollectionSizeInstruction(
+    {
+      collectionMetadata: collectionMetadataAccount,
+      collectionAuthority: payer.publicKey,
+      collectionMint: collectionMint,
+    },
+    {
+      setCollectionSizeArgs: { size: 50 },
+    }
+  );
+
+  let tx = new Transaction()
+    .add(collectionMeatadataIX)
+    .add(collectionMasterEditionIX)
+    .add(sizeCollectionIX);
+  try {
+    const sig = await sendAndConfirmTransaction(conn, tx, [payer], {
+      commitment: "confirmed",
+      skipPreflight: true,
+    });
+    console.log(
+      "Successfull created NFT collection with collection address: " +
+        collectionMint.toBase58(),
+      sig
+    );
+    return {
+      collectionMint,
+      collectionMetadataAccount,
+      collectionMasterEditionAccount,
+    };
+  } catch (e) {
+    console.error("Failed to init collection: ", e);
+    throw e;
+  }
+};
+
 describe("tcomp", () => {
   it("creates a tree", async () => {
+    const coll = await initCollection(TEST_PROVIDER.connection, TEST_KEYPAIR);
+
     const compressedNFT: MetadataArgs = {
       name: "Test Compressed NFT",
       symbol: "TST",
       uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
-      creators: [],
+      creators: [
+        {
+          address: new PublicKey("dNCnRxNgCUxktTtvgx9YHnkGK1kyqRxTCjF9CvRVs94"),
+          share: 100,
+          verified: false,
+        },
+      ],
       editionNonce: 0,
       tokenProgramVersion: TokenProgramVersion.Original,
-      tokenStandard: TokenStandard.Fungible,
+      tokenStandard: null,
       uses: null,
-      collection: null,
+      collection: { key: coll.collectionMint, verified: false },
       primarySaleHappened: false,
       sellerFeeBasisPoints: 0,
       isMutable: false,
@@ -299,8 +434,7 @@ describe("tcomp", () => {
       merkleTree,
       nonce: new BN(0),
       index: 0,
-      creatorHash: [...computeCreatorHash([])],
-      dataHash: [...computeDataHash(compressedNFT)],
+      metadata: compressedNFT,
       root: [...proof.root],
       proof: proof.proof.map((p) => new PublicKey(p)),
     });
