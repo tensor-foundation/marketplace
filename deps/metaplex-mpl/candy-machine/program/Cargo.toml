@@ -1,0 +1,43 @@
+[workspace]
+[package]
+name = "mpl-candy-machine"
+version = "4.6.0"
+description = "NFT Candy Machine v2: programmatic and trustless NFT drops."
+authors = ["Jordan Prince", "Metaplex Developers <dev@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex-program-library"
+license-file = "../../LICENSE"
+edition = "2018"
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+no-idl = []
+test-bpf = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.26.0"
+arrayref = "0.3.6"
+spl-token = { version = "3.5.0", features = ["no-entrypoint"] }
+mpl-token-metadata = { version = "1.7", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "1.1.1", features = [
+  "no-entrypoint",
+] }
+anchor-spl = "0.26.0"
+solana-program = "1.14"
+solana-gateway = "0.2.2"
+
+[dev-dependencies]
+solana-program-test = "1.14"
+solana-sdk = "1.14"
+anchor-client = "0.26.0"
+borsh = "~0.9.3"
+tarpc = "0.29.0"
+console = "0.15.5"
+
+[profile.release]
+overflow-checks = true     # Enable integer overflow checks.

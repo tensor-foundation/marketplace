@@ -1,0 +1,72 @@
+# anchor
+.vscode/
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn/*
+!.yarn/releases/
+
+# Private keys/secrets
+*.jks
+*.p8
+*.p12
+*.key
+.env
+
+# macOS
+.DS_Store
+
+# WSL
+*:Zone.Identifier
+
+# Temp files
+*.orig.*
+*.swp
+*.log
+schema.prisma.tmp
+prisma.tmp/
+build_tracker
+me_slugs/
+me_txs/
+me_stats/
+raw_txs/
+BAD_META_*
+*-ext-mints/
+ddb_backup/
+
+# Node/tsc
+node_modules/
+npm-debug.*
+dist/
+
+# Data
+*.jsonl
+*.gz
+
+# AWS
+.aws-sam
+cdk.out/
+
+# Python
+__pycache__/
+
+# IDEs
+.idea/
+.vscode/
+
+# KCL jars
+**/lib/jars/
+# We generate these dynamically: do not check in
+*.properties
+
+# Keys used to deploy
+cosigner.json
+initial_authority.json
+TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW.json
+TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN.json
+validator-stdout.txt
+
+ilmoi_full_test.sh

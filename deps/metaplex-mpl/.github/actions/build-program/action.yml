@@ -1,0 +1,26 @@
+# Implicit dependencies
+# - actions/checkout@v3
+# - ./.github/actions/install-linux-build-deps
+# - ./.github/actions/install-solana
+# - ./.github/actions/install-rust
+
+name: Build Program
+description: Builds the specified Rust program based on the `name` input
+inputs:
+  name:
+    description: The name of the program to build
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: "Build: ${{ inputs.name }}"
+      working-directory: ./${{ inputs.name }}/program
+      run: |
+        mkdir -p ../../test-programs
+        solana program dump -u https://api.mainnet-beta.solana.com auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg ../../test-programs/mpl_token_auth_rules.so
+        solana program dump -u https://api.mainnet-beta.solana.com Roostrnex2Z9Y2XZC49sFAdZARP8E4iFpEnZC5QJWdz ../../test-programs/rooster.so
+        cargo +${{ env.RUST_STABLE }} build-bpf --version
+        export BPF_OUT_DIR=../../test-programs/
+        cargo +${{ env.RUST_STABLE }} build-bpf --bpf-out-dir ../../test-programs/
+      shell: bash
+

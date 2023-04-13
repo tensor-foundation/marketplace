@@ -1,0 +1,32 @@
+{
+  "scripts": {
+    "build": "anchor build && bash scripts/cp_idl.sh",
+    "build:test": "anchor build -- --features testing && bash scripts/cp_idl.sh",
+    "test": "bash scripts/full_test.sh",
+    "fast-test": "anchor test --skip-build -- --features testing",
+    "push": "git push --atomic",
+    "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"
+  },
+  "dependencies": {
+    "@metaplex-foundation/mpl-bubblegum": "^0.6.2",
+    "@metaplex-foundation/mpl-token-metadata": "^2.9.1",
+    "@msgpack/msgpack": "^3.0.0-beta2",
+    "@project-serum/anchor": "^0.26.0",
+    "@solana/spl-account-compression": "^0.1.7",
+    "@solana/spl-token": "^0.3.7",
+    "@solana/web3.js": "^1.75.0",
+    "@tensor-hq/tensor-common": "^0.9.8",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.1",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.4",
+    "exponential-backoff": "^3.1.1",
+    "mocha": "^9.0.3",
+    "prettier": "^2.6.2",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.3.5"
+  }
+}

@@ -1,0 +1,35 @@
+[workspace]
+[package]
+name = "mpl-fixed-price-sale"
+version = "0.3.0"
+description = "Created with Anchor"
+edition = "2018"
+license-file = "../../LICENSE"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "mpl_fixed_price_sale"
+
+[features]
+no-entrypoint = []
+test-bpf = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = {version="0.26.0", features=["init-if-needed"]}
+anchor-spl = {version="0.26.0"}
+spl-token = "3.5.0"
+mpl-token-metadata = { features = [ "no-entrypoint" ], version="1.7" }
+
+[dev-dependencies]
+anchor-client = "0.26.0"
+solana-program-test = "1.14"
+solana-program = "1.14"
+solana-sdk = "1.14"
+spl-associated-token-account = "1.1.1"
+mpl-testing-utils= {path="../../core/rust/testing-utils" }
+
+[profile.release]
+overflow-checks = true     # Enable integer overflow checks.
