@@ -201,6 +201,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "anchor-spl"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f32390ce8356f54c0f0245ea156f8190717e37285b8bf4f406a613dc4b954cde"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "anchor-syn"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2127,6 +2139,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "static-pubkey"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0547d5945c93f55e1b18bf2a67d1a3d0548561f2687645b22c1c1d4fbb9a8e90"
+dependencies = [
+ "bs58 0.4.0",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2165,9 +2195,12 @@ name = "tcomp"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "mpl-bubblegum",
  "mpl-token-metadata",
  "spl-account-compression",
+ "static_assertions",
+ "vipers",
 ]
 
 [[package]]
@@ -2317,6 +2350,18 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vipers"
+version = "2.0.6"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "num-traits",
+ "spl-associated-token-account",
+ "spl-token",
+ "static-pubkey",
+]
 
 [[package]]
 name = "wasi"

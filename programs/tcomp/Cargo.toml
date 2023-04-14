@@ -21,3 +21,6 @@ anchor-lang = "0.26.0"
 spl-account-compression = { version="0.1.8", features = ["cpi"] }
 mpl-bubblegum = {version="0.7.0", features=["cpi"]}
 mpl-token-metadata = {version="1.9.1", features = [ "no-entrypoint" ]}
+anchor-spl = { version = "0.26.0", features =  ["default"] }
+vipers = {path= '../../lib/vipers' }
+static_assertions = "1.1.0"

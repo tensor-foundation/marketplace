@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/*",
+    "lib/*"
 ]
 exclude = [
     "deps/metaplex-mpl/bubblegum/program"

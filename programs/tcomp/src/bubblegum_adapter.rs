@@ -18,23 +18,6 @@ impl From<TokenProgramVersion> for metaplex_adapter::TokenProgramVersion {
     }
 }
 
-// #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-// pub struct Creator {
-//     pub address: Pubkey,
-//     pub verified: bool,
-//     // In percentages, NOT basis points ;) Watch out!
-//     pub share: u8,
-// }
-// impl Creator {
-//     pub fn adapt(&self) -> mpl_bubblegum::state::metaplex_adapter::Creator {
-//         mpl_bubblegum::state::metaplex_adapter::Creator {
-//             address: self.address,
-//             verified: self.verified,
-//             share: self.share,
-//         }
-//     }
-// }
-
 #[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum TokenStandard {

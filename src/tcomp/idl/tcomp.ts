@@ -1,9 +1,45 @@
 export type Tcomp = {
   "version": "0.1.0",
   "name": "tcomp",
+  "constants": [
+    {
+      "name": "CURRENT_TCOMP_VERSION",
+      "type": "u8",
+      "value": "1"
+    },
+    {
+      "name": "FEE_BPS",
+      "type": "u16",
+      "value": "169"
+    },
+    {
+      "name": "MAX_EXPIRY_SEC",
+      "type": "i64",
+      "value": "5184000"
+    },
+    {
+      "name": "TAKER_BROKER_PCT",
+      "type": "u16",
+      "value": "0"
+    },
+    {
+      "name": "LIST_STATE_SIZE",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+    },
+    {
+      "name": "BID_STATE_SIZE",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+    }
+  ],
   "instructions": [
     {
-      "name": "executeBuy",
+      "name": "buy",
       "accounts": [
         {
           "name": "treeAuthority",
@@ -76,6 +112,130 @@ export type Tcomp = {
           }
         }
       ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "listState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "bidState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "margin",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -269,6 +429,95 @@ export type Tcomp = {
           }
         ]
       }
+    }
+  ],
+  "events": [
+    {
+      "name": "MakeEvent",
+      "fields": [
+        {
+          "name": "owner",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "assetId",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currency",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "expiry",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "privateTaker",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "TakeEvent",
+      "fields": [
+        {
+          "name": "owner",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "assetId",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "tcompFee",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "creatorsFee",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currency",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "expiry",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "privateTaker",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ArithmeticError",
+      "msg": "arithmetic error"
     }
   ]
 };
@@ -276,9 +525,45 @@ export type Tcomp = {
 export const IDL: Tcomp = {
   "version": "0.1.0",
   "name": "tcomp",
+  "constants": [
+    {
+      "name": "CURRENT_TCOMP_VERSION",
+      "type": "u8",
+      "value": "1"
+    },
+    {
+      "name": "FEE_BPS",
+      "type": "u16",
+      "value": "169"
+    },
+    {
+      "name": "MAX_EXPIRY_SEC",
+      "type": "i64",
+      "value": "5184000"
+    },
+    {
+      "name": "TAKER_BROKER_PCT",
+      "type": "u16",
+      "value": "0"
+    },
+    {
+      "name": "LIST_STATE_SIZE",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+    },
+    {
+      "name": "BID_STATE_SIZE",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+    }
+  ],
   "instructions": [
     {
-      "name": "executeBuy",
+      "name": "buy",
       "accounts": [
         {
           "name": "treeAuthority",
@@ -351,6 +636,130 @@ export const IDL: Tcomp = {
           }
         }
       ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "listState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "bidState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "margin",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -544,6 +953,95 @@ export const IDL: Tcomp = {
           }
         ]
       }
+    }
+  ],
+  "events": [
+    {
+      "name": "MakeEvent",
+      "fields": [
+        {
+          "name": "owner",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "assetId",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currency",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "expiry",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "privateTaker",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "TakeEvent",
+      "fields": [
+        {
+          "name": "owner",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "assetId",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "tcompFee",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "creatorsFee",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currency",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "expiry",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "privateTaker",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ArithmeticError",
+      "msg": "arithmetic error"
     }
   ]
 };

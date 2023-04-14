@@ -3,7 +3,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-tcomp = "CS7Db7Me9YB9UqUfCF9VhcdNPNxGGQgUqpFsvx9mhuqL"
+tcomp = "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
 
 [registry]
 url = "https://api.apr.dev"
