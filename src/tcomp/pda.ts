@@ -3,6 +3,17 @@ import { TCOMP_ADDR } from "./constants";
 import BN from "bn.js";
 import { BUBBLEGUM_PROGRAM_ID } from "./sdk";
 
+export const findTCompPda = ({
+  program,
+}: {
+  program?: PublicKey;
+}) => {
+  return PublicKey.findProgramAddressSync(
+    [],
+    program ?? TCOMP_ADDR
+  );
+};
+
 export const findBidStatePda = ({
   program,
   assetId,
@@ -17,6 +28,7 @@ export const findBidStatePda = ({
     program ?? TCOMP_ADDR
   );
 };
+
 export const findListStatePda = ({
   program,
   assetId,
@@ -32,7 +44,7 @@ export const findListStatePda = ({
 
 export const findAssetId = ({
   merkleTree,
-  //TODO index or nonce?
+  //(!) Nonce, not index. This has to exactly match Bubblegum code.
   nonce,
 }: {
   merkleTree: PublicKey;

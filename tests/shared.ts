@@ -22,7 +22,7 @@ import {
 import { backOff } from "exponential-backoff";
 import { resolve } from "path";
 import { isNullLike, TCompSDK } from "../src";
-import { getLamports as _getLamports } from "../src/common";
+import { getLamports as _getLamports } from "../src/shared";
 import {
   buildTx,
   buildTxV0,
@@ -249,7 +249,7 @@ export const calcMinRent = async (address: PublicKey) => {
   }
 };
 
-// TODO prettify
+// TODO: prettify
 export async function setupTreeWithCompressedNFT(
   conn: Connection,
   payerKeypair: Keypair,
@@ -327,7 +327,7 @@ export async function setupTreeWithCompressedNFT(
   };
 }
 
-// TODO prettify
+// TODO: prettify
 export const initCollection = async (conn: Connection, payer: Keypair) => {
   const collectionMint = await createMint(
     conn,

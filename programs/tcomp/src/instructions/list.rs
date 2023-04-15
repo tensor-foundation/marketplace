@@ -16,7 +16,8 @@ pub struct List<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
-    #[account(init, payer = payer,
+    // init_if_ndeeded because ix can be used for both listing and editing
+    #[account(init_if_needed, payer = payer,
         seeds=[
             b"list_state".as_ref(),
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
@@ -41,10 +42,16 @@ impl<'info> Validate<'info> for List<'info> {
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, List<'info>>,
+    // What is the difference between nonce and index?
+    // Nonce is a higher level metaplex concept that is used to derive asset_id
+    // Index i a lowerl level account-compression concept that is used to indicate leaf #
+    // Most of the time they are the same, but it's possible that an NFT is decompressed and
+    // then put into a new leaf with a different index, but preserves old nonce to preserve asset id
+    // TODO: confirm with metaplex
     nonce: u64,
     index: u32,
     root: [u8; 32],
-    metadata: MetadataArgs,
+    metadata: TMetadataArgs,
     amount: u64,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -54,6 +61,7 @@ pub fn handler<'info>(
         .remaining_accounts
         .split_at(metadata.creator_shares.len());
 
+    // Verify in order to know if NFT already transferred = aka are we listing or editing
     let verif_result = verify_cnft(VerifyArgs {
         root,
         index,
@@ -69,10 +77,11 @@ pub fn handler<'info>(
 
     let asset_id_;
 
-    // TODO think if this is safe enough
-    //failure indicates that NFT already transferred
+    // TODO: 0xrwu - do you see any security issues with this?
+    // TODO: write tests with both owner and delegate as signer
     match verif_result {
-        Ok((asset_id, creator_hash, data_hash)) => {
+        Ok((asset_id, creator_hash, data_hash, _)) => {
+            // This branch means we're listing for the first time
             transfer_cnft(TransferArgs {
                 root,
                 nonce,
@@ -95,20 +104,25 @@ pub fn handler<'info>(
             asset_id_ = asset_id;
         }
         Err(_) => {
+            // This branch means we're editing
             let list_state = &ctx.accounts.list_state;
 
-            //this branch means we're editing, have to make sure the correct owner signs off
-            require!(
-                ctx.accounts.leaf_owner.is_signer,
-                crate::ErrorCode::BadSigner
-            );
+            // Make sure list state already exists
+            require!(list_state.version != 0, TcompError::BadListState);
+
+            // Make sure correct owner signs off
+            require!(ctx.accounts.leaf_owner.is_signer, TcompError::BadOwner);
             require!(
                 list_state.owner == *ctx.accounts.leaf_owner.key,
-                crate::ErrorCode::BadSigner
+                TcompError::BadOwner
+            );
+            require!(
+                list_state.owner == *ctx.accounts.leaf_delegate.key,
+                TcompError::BadOwner
             );
 
-            //and that the nft belongs to the program
-            let (asset_id, _, _) = verify_cnft(VerifyArgs {
+            // Make sure nft owned by the program
+            let (asset_id, _, _, _) = verify_cnft(VerifyArgs {
                 root,
                 index,
                 nonce,
@@ -133,15 +147,13 @@ pub fn handler<'info>(
     list_state.currency = currency;
     list_state.private_taker = private_taker;
 
-    //grab current expiry in case they're editing a bid
+    // Grab current expiry in case they're editing a bid
     let current_expiry = list_state.expiry;
-    //figure out new expiry
+    // Figure out new expiry
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            if expire_in_i64 > MAX_EXPIRY_SEC {
-                throw_err!(ExpiryTooLarge);
-            }
+            require!(expire_in_i64 < MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
@@ -150,7 +162,7 @@ pub fn handler<'info>(
     list_state.expiry = expiry;
 
     emit!(MakeEvent {
-        owner: *ctx.accounts.leaf_owner.key,
+        maker: *ctx.accounts.leaf_owner.key,
         asset_id: asset_id_,
         amount,
         currency,

@@ -1,73 +1,71 @@
-use mpl_bubblegum::state::metaplex_adapter;
-
 use crate::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub enum TokenProgramVersion {
+pub enum TTokenProgramVersion {
     Original,
     Token2022,
 }
 
-impl From<TokenProgramVersion> for metaplex_adapter::TokenProgramVersion {
-    fn from(v: TokenProgramVersion) -> Self {
+impl From<TTokenProgramVersion> for TokenProgramVersion {
+    fn from(v: TTokenProgramVersion) -> Self {
         match v {
-            TokenProgramVersion::Original => metaplex_adapter::TokenProgramVersion::Original,
-            TokenProgramVersion::Token2022 => metaplex_adapter::TokenProgramVersion::Token2022,
+            TTokenProgramVersion::Original => TokenProgramVersion::Original,
+            TTokenProgramVersion::Token2022 => TokenProgramVersion::Token2022,
         }
     }
 }
 
 #[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub enum TokenStandard {
+pub enum TTokenStandard {
     NonFungible = 0,        // This is a master edition
     FungibleAsset = 1,      // A token with metadata that can also have attrributes
     Fungible = 2,           // A token with simple metadata
     NonFungibleEdition = 3, // This is a limited edition
 }
 
-impl From<TokenStandard> for metaplex_adapter::TokenStandard {
-    fn from(s: TokenStandard) -> Self {
+impl From<TTokenStandard> for TokenStandard {
+    fn from(s: TTokenStandard) -> Self {
         match s {
-            TokenStandard::NonFungible => metaplex_adapter::TokenStandard::NonFungible,
-            TokenStandard::FungibleAsset => metaplex_adapter::TokenStandard::FungibleAsset,
-            TokenStandard::Fungible => metaplex_adapter::TokenStandard::Fungible,
-            TokenStandard::NonFungibleEdition => {
-                metaplex_adapter::TokenStandard::NonFungibleEdition
+            TTokenStandard::NonFungible => TokenStandard::NonFungible,
+            TTokenStandard::FungibleAsset => TokenStandard::FungibleAsset,
+            TTokenStandard::Fungible => TokenStandard::Fungible,
+            TTokenStandard::NonFungibleEdition => {
+                TokenStandard::NonFungibleEdition
             }
         }
     }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub enum UseMethod {
+pub enum TUseMethod {
     Burn,
     Multiple,
     Single,
 }
 
-impl From<UseMethod> for metaplex_adapter::UseMethod {
-    fn from(m: UseMethod) -> Self {
+impl From<TUseMethod> for UseMethod {
+    fn from(m: TUseMethod) -> Self {
         match m {
-            UseMethod::Burn => metaplex_adapter::UseMethod::Burn,
-            UseMethod::Multiple => metaplex_adapter::UseMethod::Multiple,
-            UseMethod::Single => metaplex_adapter::UseMethod::Single,
+            TUseMethod::Burn => UseMethod::Burn,
+            TUseMethod::Multiple => UseMethod::Multiple,
+            TUseMethod::Single => UseMethod::Single,
         }
     }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub struct Uses {
+pub struct TUses {
     // 17 bytes + Option byte
-    pub use_method: UseMethod, //1
+    pub use_method: TUseMethod, //1
     pub remaining: u64,        //8
     pub total: u64,            //8
 }
 
-impl From<Uses> for metaplex_adapter::Uses {
-    fn from(u: Uses) -> Self {
+impl From<TUses> for Uses {
+    fn from(u: TUses) -> Self {
         Self {
-            use_method: metaplex_adapter::UseMethod::from(u.use_method),
+            use_method: UseMethod::from(u.use_method),
             remaining: u.remaining,
             total: u.total,
         }
@@ -76,13 +74,13 @@ impl From<Uses> for metaplex_adapter::Uses {
 
 #[repr(C)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub struct Collection {
+pub struct TCollection {
     pub verified: bool,
     pub key: Pubkey,
 }
 
-impl From<Collection> for metaplex_adapter::Collection {
-    fn from(c: Collection) -> Self {
+impl From<TCollection> for Collection {
+    fn from(c: TCollection) -> Self {
         Self {
             verified: c.verified,
             key: c.key,
@@ -91,7 +89,7 @@ impl From<Collection> for metaplex_adapter::Collection {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
-pub struct MetadataArgs {
+pub struct TMetadataArgs {
     /// The name of the asset
     pub name: String,
     /// The symbol for the asset
@@ -107,22 +105,22 @@ pub struct MetadataArgs {
     /// nonce for easy calculation of editions, if present
     pub edition_nonce: Option<u8>,
     /// Since we cannot easily change Metadata, we add the new DataV2 fields here at the end.
-    pub token_standard: Option<TokenStandard>,
+    pub token_standard: Option<TTokenStandard>,
     /// Collection
-    pub collection: Option<Collection>,
+    pub collection: Option<TCollection>,
     /// Uses
-    pub uses: Option<Uses>,
-    pub token_program_version: TokenProgramVersion,
-    // metadata with creators array simple as []. instead pass shares & verified separately below
-    // so that we're not duplicating creator keys (space in the tx)
+    pub uses: Option<TUses>,
+    pub token_program_version: TTokenProgramVersion,
+    // Metadata with creators array simple as []. instead pass shares & verified separately below
+    // So that we're not duplicating creator keys (space in the tx)
     pub creator_shares: Vec<u8>,
     pub creator_verified: Vec<bool>,
 }
 
-impl MetadataArgs {
-    //can't use the default from trait because need extra arg
-    pub fn into(self, creators: &[AccountInfo]) -> metaplex_adapter::MetadataArgs {
-        metaplex_adapter::MetadataArgs {
+impl TMetadataArgs {
+    // Can't use the default from trait because need extra arg
+    pub fn into(self, creators: &[AccountInfo]) -> MetadataArgs {
+        MetadataArgs {
             name: self.name,
             symbol: self.symbol,
             uri: self.uri,
@@ -131,27 +129,27 @@ impl MetadataArgs {
             is_mutable: self.is_mutable,
             edition_nonce: self.edition_nonce,
             token_standard: if let Some(std) = self.token_standard {
-                Some(metaplex_adapter::TokenStandard::from(std))
+                Some(TokenStandard::from(std))
             } else {
                 None
             },
             collection: if let Some(coll) = self.collection {
-                Some(metaplex_adapter::Collection::from(coll))
+                Some(Collection::from(coll))
             } else {
                 None
             },
             uses: if let Some(uses) = self.uses {
-                Some(metaplex_adapter::Uses::from(uses))
+                Some(Uses::from(uses))
             } else {
                 None
             },
-            token_program_version: metaplex_adapter::TokenProgramVersion::from(
+            token_program_version: TokenProgramVersion::from(
                 self.token_program_version,
             ),
             creators: creators
                 .iter()
                 .enumerate()
-                .map(|(i, c)| metaplex_adapter::Creator {
+                .map(|(i, c)| Creator {
                     address: c.key(),
                     verified: self.creator_verified[i],
                     share: self.creator_shares[i],

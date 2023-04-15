@@ -7,7 +7,7 @@ import {
   getRentSync,
   hexCode,
   parseStrFn,
-} from "../common";
+} from "../shared";
 import {
   BN,
   BorshCoder,
@@ -21,7 +21,6 @@ import {
 import {
   AccountInfo,
   Commitment,
-  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   TransactionResponse,
@@ -43,7 +42,12 @@ import { isNullLike } from "@tensor-hq/tensor-common";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
-import { findAssetId, findListStatePda, findTreeAuthorityPda } from "./pda";
+import {
+  findAssetId,
+  findListStatePda,
+  findTCompPda,
+  findTreeAuthorityPda,
+} from "./pda";
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
@@ -92,7 +96,7 @@ export const TokenStandardAnchor = {
   NonFungibleEdition: { nonFungibleEdition: {} },
 };
 export type TokenStandardAnchor =
-  typeof TokenStandardAnchor[keyof typeof TokenStandardAnchor];
+  (typeof TokenStandardAnchor)[keyof typeof TokenStandardAnchor];
 export const castTokenStandard = (
   t: TokenStandard | null
 ): TokenStandardAnchor | null => {
@@ -115,7 +119,7 @@ export const UseMethodAnchor = {
   Single: { single: {} },
 };
 export type UseMethodAnchor =
-  typeof UseMethodAnchor[keyof typeof UseMethodAnchor];
+  (typeof UseMethodAnchor)[keyof typeof UseMethodAnchor];
 export const castUseMethod = (u: UseMethod): UseMethodAnchor => {
   switch (u) {
     case UseMethod.Burn:
@@ -146,7 +150,7 @@ const TokenProgramVersionAnchor = {
   Token2022: { token2022: {} },
 };
 export type TokenProgramVersionAnchor =
-  typeof TokenProgramVersionAnchor[keyof typeof TokenProgramVersionAnchor];
+  (typeof TokenProgramVersionAnchor)[keyof typeof TokenProgramVersionAnchor];
 export const castTokenProgramVersion = (
   t: TokenProgramVersion
 ): TokenProgramVersionAnchor => {
@@ -206,11 +210,11 @@ export type TaggedTCompPdaAnchor =
       account: ListStateAnchor;
     };
 
-export type TCompEventAnchor = Event<typeof IDL_latest["events"][number]>;
+export type TCompEventAnchor = Event<(typeof IDL_latest)["events"][number]>;
 
 // ------------- Types for parsed ixs from raw tx.
 
-export type TCompIxName = typeof IDL_latest["instructions"][number]["name"];
+export type TCompIxName = (typeof IDL_latest)["instructions"][number]["name"];
 export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
 export type ParsedTCompIx = {
   ixIdx: number;
@@ -294,7 +298,8 @@ export class TCompSDK {
     proof: PublicKey[];
     root: number[];
     metadata: MetadataArgs;
-    nonce: BN;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
     index: number;
     amount: BN;
     expireInSec?: BN | null;
@@ -302,6 +307,8 @@ export class TCompSDK {
     privateTaker?: PublicKey | null;
     payer?: PublicKey | null;
   }) {
+    nonce = nonce ?? new BN(index);
+
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [assetId] = findAssetId({ merkleTree, nonce });
     const [listState] = findListStatePda({ assetId });
@@ -311,9 +318,8 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-
-    let proofPath = proof.map((node: PublicKey) => ({
-      pubkey: node,
+    let proofPath = proof.map((pubkey: PublicKey) => ({
+      pubkey,
       isSigner: false,
       isWritable: false,
     }));
@@ -346,69 +352,117 @@ export class TCompSDK {
     return {
       builder,
       tx: { ixs: [await builder.instruction()], extraSigners: [] },
+      treeAuthority,
+      assetId,
+      listState,
+      creators,
+      proofPath,
     };
   }
 
   async buy({
     merkleTree,
-    leafOwner,
-    newLeafOwner,
     proof,
     root,
     metadata,
     nonce,
     index,
+    maxAmount,
+    currency = null,
+    optionalRoyaltiesPct = null,
+    listState,
+    owner,
+    newLeafOwner,
+    payer = null,
+    takerBroker = null,
   }: {
     merkleTree: PublicKey;
-    leafOwner: PublicKey;
-    newLeafOwner: PublicKey;
+    leafDelegate?: PublicKey;
     proof: PublicKey[];
     root: number[];
     metadata: MetadataArgs;
-    nonce: BN;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
     index: number;
+    maxAmount: BN;
+    currency?: PublicKey | null;
+    optionalRoyaltiesPct?: number | null;
+    listState: PublicKey;
+    owner: PublicKey;
+    newLeafOwner: PublicKey;
+    payer?: PublicKey;
+    takerBroker?: PublicKey | null;
   }) {
-    const [treeAuthority, _bump] = await PublicKey.findProgramAddress(
-      [merkleTree.toBuffer()],
-      BUBBLEGUM_PROGRAM_ID
-    );
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const [tcomp] = findTCompPda({});
 
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
       isWritable: true,
     }));
-
-    let proofPath = proof.map((node: PublicKey) => ({
-      pubkey: node,
+    let proofPath = proof.map((pubkey: PublicKey) => ({
+      pubkey,
       isSigner: false,
       isWritable: false,
     }));
 
-    const [assetId] = findAssetId({ merkleTree, nonce });
-    console.log("asset id", assetId.toString());
-
-    console.log(metadata.creators.map((c) => c.share));
-    console.log(metadata.creators.map((c) => c.verified));
+    console.log(
+      JSON.stringify(
+        {
+          logWrapper: SPL_NOOP_PROGRAM_ID,
+          compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+          merkleTree,
+          treeAuthority,
+          payer: payer ?? newLeafOwner,
+          owner,
+          listState,
+          newLeafOwner,
+          tcomp,
+          takerBroker: takerBroker ?? tcomp,
+        },
+        null,
+        4
+      )
+    );
 
     const builder = this.program.methods
-      .buy(root, nonce, index, castMetadata(metadata))
+      .buy(
+        nonce,
+        index,
+        root,
+        castMetadata(metadata),
+        maxAmount,
+        currency,
+        optionalRoyaltiesPct
+      )
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        leafDelegate: leafOwner,
-        leafOwner,
+        payer: payer ?? newLeafOwner,
+        owner,
+        listState,
         newLeafOwner,
-        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcomp,
+        takerBroker: takerBroker ?? tcomp,
       })
       .remainingAccounts([...creators, ...proofPath]);
 
     return {
       builder,
       tx: { ixs: [await builder.instruction()], extraSigners: [] },
+      treeAuthority,
+      tcomp,
+      creators,
+      proofPath,
     };
   }
 
@@ -429,13 +483,13 @@ export class TCompSDK {
   }
 
   getError(
-    name: typeof IDL_latest["errors"][number]["name"]
-  ): typeof IDL_latest["errors"][number] {
+    name: (typeof IDL_latest)["errors"][number]["name"]
+  ): (typeof IDL_latest)["errors"][number] {
     //@ts-ignore (throwing weird ts errors for me)
     return this.program.idl.errors.find((e) => e.name === name)!;
   }
 
-  getErrorCodeHex(name: typeof IDL_latest["errors"][number]["name"]): string {
+  getErrorCodeHex(name: (typeof IDL_latest)["errors"][number]["name"]): string {
     return hexCode(this.getError(name).code);
   }
 
@@ -500,7 +554,7 @@ export class TCompSDK {
     return ixs;
   }
 
-  // TODO throwing an error
+  // TODO: throwing an error
   // getFeeAmount(ix: ParsedTCompIx): BN | null {
   //   switch (ix.ix.name) {
   //     case "buy":

@@ -19,6 +19,7 @@
     "bn.js": "^5.2.1"
   },
   "devDependencies": {
+    "@metaplex-foundation/js": "^0.18.3",
     "@saberhq/solana-contrib": "^1.14.11",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.0",

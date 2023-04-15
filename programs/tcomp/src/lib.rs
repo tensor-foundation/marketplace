@@ -1,12 +1,13 @@
-#![allow(unknown_lints)] //needed otherwise complains during github actions
-#![allow(clippy::result_large_err)] //needed otherwise unhappy w/ anchor errors
+#![allow(unknown_lints)] // Needed otherwise clippy complains during github actions
+#![allow(clippy::result_large_err)] // Needed otherwise clippy unhappy w/ anchor errors
 
 pub mod bubblegum_adapter;
+pub mod error;
 pub mod instructions;
+pub mod shared;
 pub mod state;
-pub mod utils;
 
-pub use std::str::FromStr;
+pub use std::{slice::Iter, str::FromStr};
 
 pub use anchor_lang::{
     prelude::*,
@@ -14,22 +15,30 @@ pub use anchor_lang::{
         instruction::Instruction,
         keccak::hashv,
         program::{invoke, invoke_signed},
+        system_instruction,
     },
+    InstructionData,
 };
 pub use bubblegum_adapter::*;
+pub use error::*;
 pub use instructions::*;
 pub use mpl_bubblegum::{
     self,
     program::Bubblegum,
-    state::{leaf_schema::LeafSchema, metaplex_adapter::Creator},
+    state::{
+        leaf_schema::LeafSchema,
+        metaplex_adapter::{
+            Collection, Creator, MetadataArgs, TokenProgramVersion, TokenStandard, UseMethod, Uses,
+        },
+    },
     utils::get_asset_id,
 };
+pub use shared::*;
 pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
 pub use state::*;
-pub use utils::*;
-pub use vipers::{prelude::*, throw_err};
+pub use vipers::prelude::*;
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 
@@ -39,12 +48,24 @@ pub mod tcomp {
 
     pub fn buy<'info>(
         ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
-        root: [u8; 32],
         nonce: u64,
         index: u32,
-        metadata: MetadataArgs,
+        root: [u8; 32],
+        metadata: TMetadataArgs,
+        max_amount: u64,
+        currency: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::buy::handler(ctx, root, nonce, index, metadata)
+        instructions::buy::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            metadata,
+            max_amount,
+            currency,
+            optional_royalty_pct,
+        )
     }
 
     pub fn list<'info>(
@@ -52,7 +73,7 @@ pub mod tcomp {
         nonce: u64,
         index: u32,
         root: [u8; 32],
-        metadata: MetadataArgs,
+        metadata: TMetadataArgs,
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -70,16 +91,4 @@ pub mod tcomp {
             private_taker,
         )
     }
-}
-
-// --------------------------------------- errors
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("arithmetic error")]
-    ArithmeticError = 0,
-    #[msg("expiry too large")]
-    ExpiryTooLarge = 1,
-    #[msg("bad signer")]
-    BadSigner = 2,
 }

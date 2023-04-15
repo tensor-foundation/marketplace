@@ -1,23 +1,39 @@
 use crate::*;
 
 #[derive(Accounts)]
+#[instruction(nonce: u64)]
 pub struct Buy<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
-    /// CHECK: downstream (dont make Signer coz either this or delegate)
-    pub leaf_owner: UncheckedAccount<'info>,
-    /// CHECK: downstream (dont make Signer coz either this or owner)
-    pub leaf_delegate: UncheckedAccount<'info>,
+    pub new_leaf_owner: Signer<'info>,
     /// CHECK: downstream
-    pub new_leaf_owner: UncheckedAccount<'info>,
     #[account(mut)]
-    /// CHECK: downstream
     pub merkle_tree: UncheckedAccount<'info>,
     pub log_wrapper: Program<'info, Noop>,
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
-    /// For us to CPI into
     pub bubblegum_program: Program<'info, Bubblegum>,
+    #[account(mut, close = owner,
+        seeds=[
+            b"list_state".as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+        ],
+        bump = list_state.bump[0],
+        has_one = owner
+    )]
+    pub list_state: Box<Account<'info, ListState>>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    // Owner needs to be passed in as mutable account, so we reassign lamports back to them
+    /// CHECK: has_one = owner
+    #[account(mut)]
+    pub owner: UncheckedAccount<'info>,
+    // Acts purely as a fee account
+    /// CHECK: seeds
+    #[account(mut, seeds=[], bump)]
+    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: none, can be anything
+    pub taker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -29,42 +45,90 @@ impl<'info> Validate<'info> for Buy<'info> {
     }
 }
 
+impl<'info> Buy<'info> {
+    fn transfer_lamports(&self, to: &AccountInfo<'info>, lamports: u64) -> Result<()> {
+        invoke(
+            &system_instruction::transfer(self.payer.key, to.key, lamports),
+            &[
+                self.payer.to_account_info(),
+                to.clone(),
+                self.system_program.to_account_info(),
+            ],
+        )
+        .map_err(Into::into)
+    }
+}
+
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
-    root: [u8; 32],
     nonce: u64,
     index: u32,
-    metadata: MetadataArgs,
+    root: [u8; 32],
+    metadata: TMetadataArgs,
+    // Passing these in so buyer doesn't get rugged
+    max_amount: u64,
+    currency: Option<Pubkey>,
+    optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    // --------------------------------------- verify collection first
-
     let (creator_accounts, proof_accounts) = ctx
         .remaining_accounts
         .split_at(metadata.creator_shares.len());
 
-    let (_asset_id, creator_hash, data_hash) = verify_cnft(VerifyArgs {
+    // TODO: 0xrwu - does this make sense?
+    // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
+    let (asset_id, creator_hash, data_hash, mplex_metadata) = verify_cnft(VerifyArgs {
         root,
-        nonce,
         index,
+        nonce,
         metadata,
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        leaf_owner: &ctx.accounts.leaf_owner.to_account_info(),
-        leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+        leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
+        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
         compression_program: &ctx.accounts.compression_program.to_account_info(),
         creator_accounts,
         proof_accounts,
     })?;
 
-    msg!("asset id is {}", _asset_id);
-    msg!(
-        "asset id 2 is {}",
-        get_asset_id(&ctx.accounts.merkle_tree.key(), nonce)
-    );
+    let list_state = &ctx.accounts.list_state;
+    let amount = list_state.amount;
+    let expiry = list_state.expiry;
+    let currency = list_state.currency;
+    let private_taker = list_state.private_taker;
+    require!(amount <= max_amount, TcompError::PriceMismatch);
 
-    // --------------------------------------- TODO pay sol & royalties
+    let (tcomp_fee, broker_fee) = calc_fees(amount)?;
+    let creator_fee = calc_creators_fee(&mplex_metadata, amount, optional_royalty_pct)?;
 
-    // --------------------------------------- transfer next
+    // --------------------------------------- sol transfers
+
+    // TODO: handle currency
+    // TODO: handle expiry
+    // TODO: handle private taker
+
+    // Pay fees
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
+
+    // Pay creators
+    let actual_creator_fee = transfer_creators_fee(
+        None,
+        Some(FromExternal {
+            from: &ctx.accounts.payer.to_account_info(),
+            sys_prog: &ctx.accounts.system_program,
+        }),
+        &mplex_metadata,
+        &mut creator_accounts.iter(),
+        creator_fee,
+    )?;
+
+    // Pay the seller
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
+    // --------------------------------------- nft transfer
 
     transfer_cnft(TransferArgs {
         root,
@@ -73,8 +137,8 @@ pub fn handler<'info>(
         data_hash,
         creator_hash,
         tree_authority: &ctx.accounts.tree_authority.to_account_info(),
-        leaf_owner: &ctx.accounts.leaf_owner.to_account_info(),
-        leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+        leaf_owner: &ctx.accounts.list_state.to_account_info(),
+        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
         new_leaf_owner: &ctx.accounts.new_leaf_owner.to_account_info(),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
@@ -83,8 +147,18 @@ pub fn handler<'info>(
         proof_accounts,
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         signer_bid: None,
-        signer_listing: None,
+        signer_listing: Some(&ctx.accounts.list_state),
     })?;
+
+    emit!(TakeEvent {
+        taker: *ctx.accounts.owner.key,
+        asset_id,
+        amount,
+        tcomp_fee,
+        broker_fee,
+        creator_fee: actual_creator_fee,
+        currency,
+    });
 
     Ok(())
 }

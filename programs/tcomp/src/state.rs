@@ -5,11 +5,13 @@ pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
 pub const FEE_BPS: u16 = 169;
 #[constant]
-pub const MAX_EXPIRY_SEC: i64 = 5184000; //60 days
-
-// TODO currently disabled
+pub const MAX_EXPIRY_SEC: i64 = 5184000; // Max 60 days
 #[constant]
-pub const TAKER_BROKER_PCT: u16 = 0;
+pub const HUNDRED_PCT_BPS: u16 = 10000;
+
+// TODO: currently disabled
+#[constant]
+pub const TAKER_BROKER_PCT: u16 = 0; // Out of 100
 
 // --------------------------------------- listing
 
@@ -17,13 +19,13 @@ pub const TAKER_BROKER_PCT: u16 = 0;
 pub struct ListState {
     pub version: u8,
     pub bump: [u8; 1],
-    //ids
+    // IDs
     pub owner: Pubkey,
     pub asset_id: Pubkey,
-    //amount
+    // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
-    //extras
+    // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
 
@@ -47,13 +49,13 @@ impl ListState {
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],
-    //ids
+    // IDs
     pub owner: Pubkey,
     pub asset_id: Pubkey,
-    //amount
+    // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
-    //extras
+    // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
@@ -81,7 +83,7 @@ impl BidState {
 
 #[event]
 pub struct MakeEvent {
-    pub owner: Pubkey,
+    pub maker: Pubkey,
     pub asset_id: Pubkey,
     pub amount: u64,
     pub currency: Option<Pubkey>,
@@ -91,12 +93,11 @@ pub struct MakeEvent {
 
 #[event]
 pub struct TakeEvent {
-    pub owner: Pubkey,
+    pub taker: Pubkey,
     pub asset_id: Pubkey,
     pub amount: u64,
     pub tcomp_fee: u64,
-    pub creators_fee: u64,
+    pub broker_fee: u64,
+    pub creator_fee: u64,
     pub currency: Option<Pubkey>,
-    pub expiry: i64,
-    pub private_taker: Option<Pubkey>,
 }

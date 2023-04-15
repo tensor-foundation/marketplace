@@ -149,7 +149,7 @@ export const isNullLike = <T>(v: T | null | undefined): v is null | undefined =>
 export const DEFAULT_COMPUTE_UNITS = 800_000;
 export const DEFAULT_MICRO_LAMPORTS = 200_000;
 
-// todo
+// TODO:
 export type AccountSuffix = "";
 
 export const parseStrFn = (str: string) => {
