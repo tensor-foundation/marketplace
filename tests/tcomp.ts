@@ -26,21 +26,23 @@ import {
 } from "./shared";
 
 describe("tcomp", () => {
-  it("creates a tree", async () => {
+  it("lists + buys", async () => {
     const coll = await initCollection(TEST_PROVIDER.connection, TEST_KEYPAIR);
+
+    // TODO be sure to have tests with both 0 and 5 creators
+    const creators = Array(1)
+      .fill(null)
+      .map((_) => ({
+        address: Keypair.generate().publicKey,
+        share: 100,
+        verified: false,
+      }));
 
     const compressedNFT: MetadataArgs = {
       name: "Test Compressed NFT",
       symbol: "TST",
       uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
-      creators: [
-        {
-          address: new PublicKey("dNCnRxNgCUxktTtvgx9YHnkGK1kyqRxTCjF9CvRVs94"),
-          share: 100,
-          verified: false,
-        },
-      ],
-      // creators: [],
+      creators,
       editionNonce: 0,
       tokenProgramVersion: TokenProgramVersion.Original,
       tokenStandard: null,
@@ -98,16 +100,30 @@ describe("tcomp", () => {
 
     const {
       tx: { ixs },
-    } = await tcompSdk.buy({
-      newLeafOwner: Keypair.generate().publicKey,
+    } = await tcompSdk.list({
+      proof: proof.proof.map((p) => new PublicKey(p)),
       leafOwner: TEST_KEYPAIR.publicKey,
+      payer: TEST_KEYPAIR.publicKey,
       merkleTree,
-      nonce: new BN(0),
-      index: 0,
       metadata: compressedNFT,
       root: [...proof.root],
-      proof: proof.proof.map((p) => new PublicKey(p)),
+      index: 0,
+      nonce: new BN(0),
+      amount: new BN(123),
     });
+
+    // const {
+    //   tx: { ixs },
+    // } = await tcompSdk.buy({
+    //   proof: proof.proof.map((p) => new PublicKey(p)),
+    //   leafOwner: TEST_KEYPAIR.publicKey,
+    //   newLeafOwner: Keypair.generate().publicKey,
+    //   merkleTree,
+    //   metadata: compressedNFT,
+    //   root: [...proof.root],
+    //   index: 0,
+    //   nonce: new BN(0),
+    // });
 
     const sig = await buildAndSendTx({ ixs });
     console.log("yay sig is", sig);

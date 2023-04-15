@@ -49,12 +49,12 @@ export type Tcomp = {
         {
           "name": "leafOwner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "leafDelegate",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "newLeafOwner",
@@ -82,9 +82,12 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "bubblegum",
+          "name": "bubblegumProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "For us to CPI into"
+          ]
         }
       ],
       "args": [
@@ -109,6 +112,108 @@ export type Tcomp = {
           "name": "metadata",
           "type": {
             "defined": "MetadataArgs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "leafOwner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "leafDelegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metadata",
+          "type": {
+            "defined": "MetadataArgs"
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]
@@ -452,7 +557,9 @@ export type Tcomp = {
         },
         {
           "name": "currency",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         },
         {
@@ -462,7 +569,9 @@ export type Tcomp = {
         },
         {
           "name": "privateTaker",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -497,7 +606,9 @@ export type Tcomp = {
         },
         {
           "name": "currency",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         },
         {
@@ -507,7 +618,9 @@ export type Tcomp = {
         },
         {
           "name": "privateTaker",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -518,6 +631,16 @@ export type Tcomp = {
       "code": 6000,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
+    },
+    {
+      "code": 6001,
+      "name": "ExpiryTooLarge",
+      "msg": "expiry too large"
+    },
+    {
+      "code": 6002,
+      "name": "BadSigner",
+      "msg": "bad signer"
     }
   ]
 };
@@ -573,12 +696,12 @@ export const IDL: Tcomp = {
         {
           "name": "leafOwner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "leafDelegate",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "newLeafOwner",
@@ -606,9 +729,12 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "bubblegum",
+          "name": "bubblegumProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "For us to CPI into"
+          ]
         }
       ],
       "args": [
@@ -633,6 +759,108 @@ export const IDL: Tcomp = {
           "name": "metadata",
           "type": {
             "defined": "MetadataArgs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "leafOwner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "leafDelegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metadata",
+          "type": {
+            "defined": "MetadataArgs"
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]
@@ -976,7 +1204,9 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         },
         {
@@ -986,7 +1216,9 @@ export const IDL: Tcomp = {
         },
         {
           "name": "privateTaker",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -1021,7 +1253,9 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         },
         {
@@ -1031,7 +1265,9 @@ export const IDL: Tcomp = {
         },
         {
           "name": "privateTaker",
-          "type": "publicKey",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -1042,6 +1278,16 @@ export const IDL: Tcomp = {
       "code": 6000,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
+    },
+    {
+      "code": 6001,
+      "name": "ExpiryTooLarge",
+      "msg": "expiry too large"
+    },
+    {
+      "code": 6002,
+      "name": "BadSigner",
+      "msg": "bad signer"
     }
   ]
 };

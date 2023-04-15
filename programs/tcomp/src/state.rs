@@ -6,7 +6,8 @@ pub const CURRENT_TCOMP_VERSION: u8 = 1;
 pub const FEE_BPS: u16 = 169;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 5184000; //60 days
-                                         // TODO currently disabled
+
+// TODO currently disabled
 #[constant]
 pub const TAKER_BROKER_PCT: u16 = 0;
 
@@ -83,9 +84,9 @@ pub struct MakeEvent {
     pub owner: Pubkey,
     pub asset_id: Pubkey,
     pub amount: u64,
-    pub currency: Pubkey,
+    pub currency: Option<Pubkey>,
     pub expiry: i64,
-    pub private_taker: Pubkey,
+    pub private_taker: Option<Pubkey>,
 }
 
 #[event]
@@ -95,7 +96,7 @@ pub struct TakeEvent {
     pub amount: u64,
     pub tcomp_fee: u64,
     pub creators_fee: u64,
-    pub currency: Pubkey,
+    pub currency: Option<Pubkey>,
     pub expiry: i64,
-    pub private_taker: Pubkey,
+    pub private_taker: Option<Pubkey>,
 }

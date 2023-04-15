@@ -1,4 +1,3 @@
-use anchor_lang::prelude::*;
 use mpl_bubblegum::state::metaplex_adapter;
 
 use crate::*;
@@ -121,7 +120,7 @@ pub struct MetadataArgs {
 }
 
 impl MetadataArgs {
-    //can't use the default trait because need extra arg
+    //can't use the default from trait because need extra arg
     pub fn into(self, creators: &[AccountInfo]) -> metaplex_adapter::MetadataArgs {
         metaplex_adapter::MetadataArgs {
             name: self.name,

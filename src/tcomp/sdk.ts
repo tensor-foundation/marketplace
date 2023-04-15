@@ -40,13 +40,13 @@ import {
 import { Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
 import { isNullLike } from "@tensor-hq/tensor-common";
-
-// --------------------------------------- idl
-
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
-import { Bid } from "../../deps/metaplex-mpl/auctioneer/js/src/generated";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
+import { findAssetId, findListStatePda, findTreeAuthorityPda } from "./pda";
+export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
+
+// --------------------------------------- idl
 
 export const tcompIDL_latest = IDL_latest;
 export const tcompIDL_latest_EffSlot = 0;
@@ -273,6 +273,82 @@ export class TCompSDK {
 
   // --------------------------------------- ixs
 
+  async list({
+    merkleTree,
+    leafOwner,
+    leafDelegate = leafOwner,
+    proof,
+    root,
+    metadata,
+    nonce,
+    index,
+    amount,
+    expireInSec = null,
+    currency = null,
+    privateTaker = null,
+    payer = null,
+  }: {
+    merkleTree: PublicKey;
+    leafOwner: PublicKey;
+    leafDelegate?: PublicKey;
+    proof: PublicKey[];
+    root: number[];
+    metadata: MetadataArgs;
+    nonce: BN;
+    index: number;
+    amount: BN;
+    expireInSec?: BN | null;
+    currency?: PublicKey | null;
+    privateTaker?: PublicKey | null;
+    payer?: PublicKey | null;
+  }) {
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const [assetId] = findAssetId({ merkleTree, nonce });
+    const [listState] = findListStatePda({ assetId });
+
+    let creators = metadata.creators.map((c) => ({
+      pubkey: c.address,
+      isSigner: false,
+      isWritable: true,
+    }));
+
+    let proofPath = proof.map((node: PublicKey) => ({
+      pubkey: node,
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const builder = this.program.methods
+      .list(
+        nonce,
+        index,
+        root,
+        castMetadata(metadata),
+        amount,
+        expireInSec,
+        currency,
+        privateTaker
+      )
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        merkleTree,
+        treeAuthority,
+        leafDelegate,
+        leafOwner,
+        listState,
+        payer: payer ?? leafOwner,
+      })
+      .remainingAccounts([...creators, ...proofPath]);
+
+    return {
+      builder,
+      tx: { ixs: [await builder.instruction()], extraSigners: [] },
+    };
+  }
+
   async buy({
     merkleTree,
     leafOwner,
@@ -309,6 +385,9 @@ export class TCompSDK {
       isWritable: false,
     }));
 
+    const [assetId] = findAssetId({ merkleTree, nonce });
+    console.log("asset id", assetId.toString());
+
     console.log(metadata.creators.map((c) => c.share));
     console.log(metadata.creators.map((c) => c.verified));
 
@@ -323,7 +402,7 @@ export class TCompSDK {
         leafDelegate: leafOwner,
         leafOwner,
         newLeafOwner,
-        bubblegum: BUBBLEGUM_PROGRAM_ID,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
       })
       .remainingAccounts([...creators, ...proofPath]);
 

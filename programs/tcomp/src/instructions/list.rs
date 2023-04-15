@@ -1,0 +1,162 @@
+use crate::*;
+
+#[derive(Accounts)]
+#[instruction(nonce: u64)]
+pub struct List<'info> {
+    /// CHECK: downstream
+    pub tree_authority: UncheckedAccount<'info>,
+    /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
+    pub leaf_owner: UncheckedAccount<'info>,
+    /// CHECK: downstream (dont make Signer coz either this or owner will sign)
+    pub leaf_delegate: UncheckedAccount<'info>,
+    /// CHECK: downstream
+    #[account(mut)]
+    pub merkle_tree: UncheckedAccount<'info>,
+    pub log_wrapper: Program<'info, Noop>,
+    pub compression_program: Program<'info, SplAccountCompression>,
+    pub system_program: Program<'info, System>,
+    pub bubblegum_program: Program<'info, Bubblegum>,
+    #[account(init, payer = payer,
+        seeds=[
+            b"list_state".as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+        ],
+        bump,
+        space = LIST_STATE_SIZE,
+    )]
+    pub list_state: Box<Account<'info, ListState>>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    // Remaining accounts:
+    // 1. creators (1-5)
+    // 2. proof accounts (less canopy)
+}
+
+impl<'info> Validate<'info> for List<'info> {
+    fn validate(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[access_control(ctx.accounts.validate())]
+pub fn handler<'info>(
+    ctx: Context<'_, '_, '_, 'info, List<'info>>,
+    nonce: u64,
+    index: u32,
+    root: [u8; 32],
+    metadata: MetadataArgs,
+    amount: u64,
+    expire_in_sec: Option<u64>,
+    currency: Option<Pubkey>,
+    private_taker: Option<Pubkey>,
+) -> Result<()> {
+    let (creator_accounts, proof_accounts) = ctx
+        .remaining_accounts
+        .split_at(metadata.creator_shares.len());
+
+    let verif_result = verify_cnft(VerifyArgs {
+        root,
+        index,
+        nonce,
+        metadata: metadata.clone(),
+        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        leaf_owner: &ctx.accounts.leaf_owner.to_account_info(),
+        leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+        compression_program: &ctx.accounts.compression_program.to_account_info(),
+        creator_accounts,
+        proof_accounts,
+    });
+
+    let asset_id_;
+
+    // TODO think if this is safe enough
+    //failure indicates that NFT already transferred
+    match verif_result {
+        Ok((asset_id, creator_hash, data_hash)) => {
+            transfer_cnft(TransferArgs {
+                root,
+                nonce,
+                index,
+                data_hash,
+                creator_hash,
+                tree_authority: &ctx.accounts.tree_authority.to_account_info(),
+                leaf_owner: &ctx.accounts.leaf_owner.to_account_info(),
+                leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+                new_leaf_owner: &ctx.accounts.list_state.to_account_info(),
+                merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+                log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
+                compression_program: &ctx.accounts.compression_program.to_account_info(),
+                system_program: &ctx.accounts.system_program.to_account_info(),
+                bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
+                proof_accounts,
+                signer_bid: None,
+                signer_listing: None,
+            })?;
+            asset_id_ = asset_id;
+        }
+        Err(_) => {
+            let list_state = &ctx.accounts.list_state;
+
+            //this branch means we're editing, have to make sure the correct owner signs off
+            require!(
+                ctx.accounts.leaf_owner.is_signer,
+                crate::ErrorCode::BadSigner
+            );
+            require!(
+                list_state.owner == *ctx.accounts.leaf_owner.key,
+                crate::ErrorCode::BadSigner
+            );
+
+            //and that the nft belongs to the program
+            let (asset_id, _, _) = verify_cnft(VerifyArgs {
+                root,
+                index,
+                nonce,
+                metadata,
+                merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+                leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
+                leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+                compression_program: &ctx.accounts.compression_program.to_account_info(),
+                creator_accounts,
+                proof_accounts,
+            })?;
+            asset_id_ = asset_id;
+        }
+    }
+
+    let list_state = &mut ctx.accounts.list_state;
+    list_state.version = CURRENT_TCOMP_VERSION;
+    list_state.bump = [unwrap_bump!(ctx, "list_state")];
+    list_state.asset_id = asset_id_;
+    list_state.owner = ctx.accounts.leaf_owner.key();
+    list_state.amount = amount;
+    list_state.currency = currency;
+    list_state.private_taker = private_taker;
+
+    //grab current expiry in case they're editing a bid
+    let current_expiry = list_state.expiry;
+    //figure out new expiry
+    let expiry = match expire_in_sec {
+        Some(expire_in_sec) => {
+            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
+            if expire_in_i64 > MAX_EXPIRY_SEC {
+                throw_err!(ExpiryTooLarge);
+            }
+            Clock::get()?.unix_timestamp + expire_in_i64
+        }
+        None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
+        None => current_expiry,
+    };
+    list_state.expiry = expiry;
+
+    emit!(MakeEvent {
+        owner: *ctx.accounts.leaf_owner.key,
+        asset_id: asset_id_,
+        amount,
+        currency,
+        expiry,
+        private_taker
+    });
+
+    Ok(())
+}
