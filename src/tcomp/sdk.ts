@@ -21,12 +21,14 @@ import {
 import {
   AccountInfo,
   Commitment,
+  ComputeBudgetProgram,
   PublicKey,
   SystemProgram,
   TransactionResponse,
 } from "@solana/web3.js";
 import { TCOMP_ADDR } from "./constants";
 import {
+  getLeafAssetId,
   MetadataArgs,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
@@ -42,12 +44,7 @@ import { isNullLike } from "@tensor-hq/tensor-common";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
-import {
-  findAssetId,
-  findListStatePda,
-  findTCompPda,
-  findTreeAuthorityPda,
-} from "./pda";
+import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
@@ -86,6 +83,9 @@ export const MAX_EXPIRY_SEC: number = +IDL_latest.constants.find(
 
 export const APPROX_BID_STATE_RENT = getRentSync(BID_STATE_SIZE);
 export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
+
+export const DEFAULT_COMPUTE_UNITS = 400_000;
+export const DEFAULT_MICRO_LAMPORTS = 200_000;
 
 // --------------------------------------- types
 
@@ -291,11 +291,13 @@ export class TCompSDK {
     currency = null,
     privateTaker = null,
     payer = null,
+    compute = null,
+    priorityMicroLamports = null,
   }: {
     merkleTree: PublicKey;
     leafOwner: PublicKey;
     leafDelegate?: PublicKey;
-    proof: PublicKey[];
+    proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
     //in most cases nonce == index and doesn't need to passed in separately
@@ -306,11 +308,13 @@ export class TCompSDK {
     currency?: PublicKey | null;
     privateTaker?: PublicKey | null;
     payer?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
   }) {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const [assetId] = findAssetId({ merkleTree, nonce });
+    const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
     let creators = metadata.creators.map((c) => ({
@@ -318,8 +322,8 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-    let proofPath = proof.map((pubkey: PublicKey) => ({
-      pubkey,
+    let proofPath = proof.map((b) => ({
+      pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
     }));
@@ -349,9 +353,14 @@ export class TCompSDK {
       })
       .remainingAccounts([...creators, ...proofPath]);
 
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
     return {
       builder,
-      tx: { ixs: [await builder.instruction()], extraSigners: [] },
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
       treeAuthority,
       assetId,
       listState,
@@ -369,16 +378,17 @@ export class TCompSDK {
     index,
     maxAmount,
     currency = null,
-    optionalRoyaltiesPct = null,
-    listState,
+    optionalRoyaltyPct = null,
     owner,
-    newLeafOwner,
+    buyer,
     payer = null,
     takerBroker = null,
+    compute = null,
+    priorityMicroLamports = null,
   }: {
     merkleTree: PublicKey;
     leafDelegate?: PublicKey;
-    proof: PublicKey[];
+    proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
     //in most cases nonce == index and doesn't need to passed in separately
@@ -386,25 +396,28 @@ export class TCompSDK {
     index: number;
     maxAmount: BN;
     currency?: PublicKey | null;
-    optionalRoyaltiesPct?: number | null;
-    listState: PublicKey;
+    optionalRoyaltyPct?: number | null;
     owner: PublicKey;
-    newLeafOwner: PublicKey;
+    buyer: PublicKey;
     payer?: PublicKey;
     takerBroker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
   }) {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [tcomp] = findTCompPda({});
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
 
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
       isWritable: true,
     }));
-    let proofPath = proof.map((pubkey: PublicKey) => ({
-      pubkey,
+    let proofPath = proof.map((b) => ({
+      pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
     }));
@@ -418,10 +431,10 @@ export class TCompSDK {
           bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
           merkleTree,
           treeAuthority,
-          payer: payer ?? newLeafOwner,
+          payer: payer ?? buyer,
           owner,
           listState,
-          newLeafOwner,
+          buyer,
           tcomp,
           takerBroker: takerBroker ?? tcomp,
         },
@@ -438,7 +451,7 @@ export class TCompSDK {
         castMetadata(metadata),
         maxAmount,
         currency,
-        optionalRoyaltiesPct
+        optionalRoyaltyPct
       )
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
@@ -447,18 +460,24 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        payer: payer ?? newLeafOwner,
+        payer: payer ?? buyer,
         owner,
         listState,
-        newLeafOwner,
+        newLeafOwner: buyer,
         tcomp,
         takerBroker: takerBroker ?? tcomp,
       })
       .remainingAccounts([...creators, ...proofPath]);
 
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
     return {
       builder,
-      tx: { ixs: [await builder.instruction()], extraSigners: [] },
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      listState,
       treeAuthority,
       tcomp,
       creators,
@@ -588,3 +607,27 @@ export class TCompSDK {
     return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(name));
   }
 }
+
+export const getTotalComputeIxs = (
+  compute: number | null,
+  priorityMicroLamports: number | null
+) => {
+  const finalIxs = [];
+  //optionally include extra compute]
+  if (!isNullLike(compute)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitLimit({
+        units: compute,
+      })
+    );
+  }
+  //optionally include priority fee
+  if (!isNullLike(priorityMicroLamports)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityMicroLamports,
+      })
+    );
+  }
+  return finalIxs;
+};

@@ -1,267 +1,76 @@
-// Common helper functions b/w tensor_whitelist & tensorswap.
-import * as anchor from "@project-serum/anchor";
-import { AnchorProvider, Wallet } from "@project-serum/anchor";
 import {
-  SingleConnectionBroadcaster,
-  SolanaProvider,
-  TransactionEnvelope,
-} from "@saberhq/solana-contrib";
-import {
-  AddressLookupTableAccount,
-  ConfirmOptions,
   Connection,
   Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
-  sendAndConfirmTransaction,
-  Signer,
   SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  VersionedTransaction,
 } from "@solana/web3.js";
-import { backOff } from "exponential-backoff";
-import { resolve } from "path";
-import { isNullLike, TCompSDK } from "../src";
-import { getLamports as _getLamports } from "../src/shared";
-import {
-  buildTx,
-  buildTxV0,
-  TOKEN_METADATA_PROGRAM_ID,
-  waitMS,
-} from "@tensor-hq/tensor-common";
 import {
   createCreateTreeInstruction,
   createMintV1Instruction,
+  getLeafAssetId,
   MetadataArgs,
+  TokenProgramVersion,
+  TokenStandard,
 } from "@metaplex-foundation/mpl-bubblegum";
 import {
+  ConcurrentMerkleTreeAccount,
+  createVerifyLeafIx,
   getConcurrentMerkleTreeAccountSize,
+  MerkleTree,
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
   ValidDepthSizePair,
 } from "@solana/spl-account-compression";
 import { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum/dist/src/generated";
-import { createAccount, createMint, mintTo } from "@solana/spl-token";
 import {
-  createCreateMasterEditionV3Instruction,
-  createCreateMetadataAccountV3Instruction,
-  createSetCollectionSizeInstruction,
-} from "@metaplex-foundation/mpl-token-metadata";
+  ACCT_NOT_EXISTS_ERR,
+  buildAndSendTx,
+  calcFees,
+  DEFAULT_DEPTH_SIZE,
+  FEE_PCT,
+  getLamports,
+  tcompSdk,
+  TEST_KEYPAIR,
+  TEST_PROVIDER,
+  withLamports,
+} from "./utils";
+import {
+  CURRENT_TCOMP_VERSION,
+  findListStatePda,
+  findTCompPda,
+  findTreeAuthorityPda,
+  TAKER_BROKER_PCT,
+} from "../src";
+import { BN } from "@project-serum/anchor";
+import {
+  computeDataHash,
+  Creator,
+} from "../deps/metaplex-mpl/bubblegum/js/src";
+import { keccak_256 } from "js-sha3";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { isNullLike, MINUTES } from "@tensor-hq/tensor-common";
+import {
+  getAccount,
+  initCollection,
+  makeNTraders,
+  transferLamports,
+} from "./account";
 
-// Exporting these here vs in each .test.ts file prevents weird undefined issues.
-export { hexCode, stringifyPKsAndBNs } from "../src";
+// Enables rejectedWith.
+chai.use(chaiAsPromised);
 
-export { waitMS } from "@tensor-hq/tensor-common";
-
-export const ACCT_NOT_EXISTS_ERR = "Account does not exist";
-// Vipers IntegerOverflow error.
-export const INTEGER_OVERFLOW_ERR = "0x44f";
-
-export const getLamports = (acct: PublicKey) =>
-  _getLamports(TEST_PROVIDER.connection, acct);
-
-type BuildAndSendTxArgs = {
-  provider?: AnchorProvider;
-  ixs: TransactionInstruction[];
-  extraSigners?: Signer[];
-  opts?: ConfirmOptions;
-  // Prints out transaction (w/ logs) to stdout
-  debug?: boolean;
-  // Optional, if present signify that a V0 tx should be sent
-  lookupTableAccounts?: [AddressLookupTableAccount] | undefined;
-  blockhash?: string;
-};
-
-export const buildAndSendTx = async ({
-  provider = TEST_PROVIDER,
-  ixs,
-  extraSigners,
-  opts,
-  debug,
-  lookupTableAccounts,
-  blockhash,
-}: BuildAndSendTxArgs) => {
-  let tx: Transaction | VersionedTransaction;
-
-  if (isNullLike(lookupTableAccounts)) {
-    //build legacy
-    ({ tx } = await backOff(
-      () =>
-        buildTx({
-          connections: [provider.connection],
-          instructions: ixs,
-          additionalSigners: extraSigners,
-          feePayer: provider.publicKey,
-        }),
-      {
-        // Retry blockhash errors (happens during tests sometimes).
-        retry: (e: any) => {
-          return e.message.includes("blockhash");
-        },
-      }
-    ));
-    //sometimes have to pass manually, eg when updating LUT
-    if (!!blockhash) {
-      tx.recentBlockhash = blockhash;
-    }
-    await provider.wallet.signTransaction(tx);
-  } else {
-    //build v0
-    ({ tx } = await backOff(
-      () =>
-        buildTxV0({
-          connections: [provider.connection],
-          instructions: ixs,
-          //have to add TEST_KEYPAIR here instead of wallet.signTx() since partialSign not impl on v0 txs
-          additionalSigners: [TEST_KEYPAIR, ...(extraSigners ?? [])],
-          feePayer: provider.publicKey,
-          addressLookupTableAccs: lookupTableAccounts,
-        }),
-      {
-        // Retry blockhash errors (happens during tests sometimes).
-        retry: (e: any) => {
-          return e.message.includes("blockhash");
-        },
-      }
-    ));
-  }
-
-  try {
-    if (debug) opts = { ...opts, commitment: "confirmed" };
-    const sig = await provider.connection.sendRawTransaction(
-      tx.serialize(),
-      opts
-    );
-    await provider.connection.confirmTransaction(sig, "confirmed");
-    if (debug) {
-      console.log(
-        await provider.connection.getTransaction(sig, {
-          commitment: "confirmed",
-        })
-      );
-    }
-    return sig;
-  } catch (e) {
-    //this is needed to see program error logs
-    console.error("❌ FAILED TO SEND TX, FULL ERROR: ❌");
-    console.error(e);
-    throw e;
-  }
-};
-
-// This passes the accounts' lamports before the provided `callback` function is called.
-// Useful for doing before/after lamports diffing.
-//
-// Example:
-// ```
-// // Create tx...
-// await withLamports(
-//   { prevLamports: traderA.publicKey, prevEscrowLamports: solEscrowPda },
-//   async ({ prevLamports, prevEscrowLamports }) => {
-//     // Actually send tx
-//     await buildAndSendTx({...});
-//     const currlamports = await getLamports(traderA.publicKey);
-//     // Compare currlamports w/ prevLamports
-//   })
-// );
-// ```
-export const withLamports = async <
-  Accounts extends Record<string, PublicKey>,
-  R
->(
-  accts: Accounts,
-  callback: (results: {
-    [k in keyof Accounts]: number | undefined;
-  }) => Promise<R>
-): Promise<R> => {
-  const results = Object.fromEntries(
-    await Promise.all(
-      Object.entries(accts).map(async ([k, key]) => [
-        k,
-        await getLamports(key as PublicKey),
-      ])
-    )
-  );
-  return await callback(results);
-};
-
-// Taken from https://stackoverflow.com/a/65025697/4463793
-type MapCartesian<T extends any[][]> = {
-  [P in keyof T]: T[P] extends Array<infer U> ? U : never;
-};
-// Lets you form the cartesian/cross product of a bunch of parameters, useful for tests with a ladder.
-//
-// Example:
-// ```
-// await Promise.all(
-//   cartesian([traderA, traderB], [nftPoolConfig, tradePoolConfig]).map(
-//     async ([owner, config]) => {
-//        // Do stuff
-//     }
-//   )
-// );
-// ```
-export const cartesian = <T extends any[][]>(...arr: T): MapCartesian<T>[] =>
-  arr.reduce(
-    (a, b) => a.flatMap((c) => b.map((d) => [...c, d])),
-    [[]]
-  ) as MapCartesian<T>[];
-
-//(!) provider used across all tests
-process.env.ANCHOR_WALLET = resolve(__dirname, "test-keypair.json");
-export const TEST_PROVIDER = anchor.AnchorProvider.local();
-export const TEST_KEYPAIR = Keypair.fromSecretKey(
-  Buffer.from(
-    JSON.parse(
-      require("fs").readFileSync(process.env.ANCHOR_WALLET, {
-        encoding: "utf-8",
-      })
-    )
-  )
-);
-
-export const tcompSdk = new TCompSDK({ provider: TEST_PROVIDER });
-
-//useful for debugging
-export const simulateTxTable = async (ixs: TransactionInstruction[]) => {
-  const broadcaster = new SingleConnectionBroadcaster(TEST_PROVIDER.connection);
-  const wallet = new Wallet(Keypair.generate());
-  const provider = new SolanaProvider(
-    TEST_PROVIDER.connection,
-    broadcaster,
-    wallet
-  );
-  const tx = new TransactionEnvelope(provider, ixs);
-  console.log(await tx.simulateTable());
-};
-
-export const calcMinRent = async (address: PublicKey) => {
-  const acc = await TEST_PROVIDER.connection.getAccountInfo(address);
-  if (acc) {
-    console.log(
-      "min rent is",
-      await TEST_PROVIDER.connection.getMinimumBalanceForRentExemption(
-        acc.data.length
-      )
-    );
-  } else {
-    console.log("acc not found");
-  }
-};
-
-// TODO: prettify
-export async function setupTreeWithCompressedNFT(
-  conn: Connection,
-  payerKeypair: Keypair,
-  compressedNFT: MetadataArgs,
-  depthSizePair: ValidDepthSizePair = {
-    maxDepth: 14,
-    maxBufferSize: 64,
-  }
-): Promise<{
-  merkleTree: PublicKey;
-}> {
-  const payer = payerKeypair.publicKey;
+export const makeTree = async ({
+  conn = TEST_PROVIDER.connection,
+  treeOwner,
+  depthSizePair = DEFAULT_DEPTH_SIZE,
+}: {
+  conn?: Connection;
+  treeOwner: Keypair;
+  depthSizePair?: ValidDepthSizePair;
+}) => {
+  const owner = treeOwner.publicKey;
 
   const merkleTreeKeypair = Keypair.generate();
   const merkleTree = merkleTreeKeypair.publicKey;
@@ -270,22 +79,19 @@ export async function setupTreeWithCompressedNFT(
     depthSizePair.maxBufferSize
   );
   const allocTreeIx = SystemProgram.createAccount({
-    fromPubkey: payer,
+    fromPubkey: owner,
     newAccountPubkey: merkleTree,
     lamports: await conn.getMinimumBalanceForRentExemption(space),
     space: space,
     programId: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   });
-  const [treeAuthority, _bump] = await PublicKey.findProgramAddress(
-    [merkleTree.toBuffer()],
-    BUBBLEGUM_PROGRAM_ID
-  );
+  const [treeAuthority, _bump] = await findTreeAuthorityPda({ merkleTree });
   const createTreeIx = createCreateTreeInstruction(
     {
       merkleTree,
       treeAuthority,
-      treeCreator: payer,
-      payer,
+      treeCreator: owner,
+      payer: owner,
       logWrapper: SPL_NOOP_PROGRAM_ID,
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
     },
@@ -297,142 +103,556 @@ export async function setupTreeWithCompressedNFT(
     BUBBLEGUM_PROGRAM_ID
   );
 
-  const mintIx = createMintV1Instruction(
-    {
-      merkleTree,
-      treeAuthority,
-      treeDelegate: payer,
-      payer,
-      leafDelegate: payer,
-      leafOwner: payer,
-      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-      logWrapper: SPL_NOOP_PROGRAM_ID,
-    },
-    {
-      message: compressedNFT,
-    }
-  );
-
-  const tx = new Transaction().add(allocTreeIx).add(createTreeIx).add(mintIx);
-  tx.feePayer = payer;
-  await sendAndConfirmTransaction(conn, tx, [merkleTreeKeypair, payerKeypair], {
-    commitment: "confirmed",
-    skipPreflight: true,
+  await buildAndSendTx({
+    ixs: [allocTreeIx, createTreeIx],
+    extraSigners: [merkleTreeKeypair, treeOwner],
   });
-
-  console.log("✅ tree created + minted", merkleTree);
 
   return {
     merkleTree,
   };
+};
+
+export const mintCNft = async ({
+  treeOwner,
+  receiver,
+  metadata,
+  merkleTree,
+}: {
+  treeOwner: Keypair;
+  receiver: PublicKey;
+  metadata: MetadataArgs;
+  merkleTree: PublicKey;
+}) => {
+  const owner = treeOwner.publicKey;
+
+  const [treeAuthority] = await findTreeAuthorityPda({ merkleTree });
+
+  const mintIx = createMintV1Instruction(
+    {
+      merkleTree,
+      treeAuthority,
+      treeDelegate: owner,
+      payer: owner,
+      leafDelegate: receiver,
+      leafOwner: receiver,
+      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      logWrapper: SPL_NOOP_PROGRAM_ID,
+    },
+    {
+      message: metadata,
+    }
+  );
+
+  const sig = await buildAndSendTx({
+    ixs: [mintIx],
+    extraSigners: [treeOwner],
+  });
+
+  console.log("✅ minted", sig);
+};
+
+// TODO temp patch over metaplex's code
+export function computeCreatorHashPATCHED(creators: Creator[]) {
+  const bufferOfCreatorData = Buffer.concat(
+    creators.map((creator) => {
+      return Buffer.concat([
+        creator.address.toBuffer(),
+        Buffer.from([creator.verified ? 1 : 0]),
+        Buffer.from([creator.share]),
+      ]);
+    })
+  );
+  return Buffer.from(keccak_256.digest(bufferOfCreatorData));
 }
 
-// TODO: prettify
-export const initCollection = async (conn: Connection, payer: Keypair) => {
-  const collectionMint = await createMint(
-    conn,
-    payer,
-    payer.publicKey,
-    payer.publicKey,
-    0
-  );
-  const collectionTokenAccount = await createAccount(
-    conn,
-    payer,
-    collectionMint,
-    payer.publicKey
-  );
-  await mintTo(conn, payer, collectionMint, collectionTokenAccount, payer, 1);
-  const [collectionMetadataAccount, _b] = await PublicKey.findProgramAddress(
-    [
-      Buffer.from("metadata", "utf8"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-      collectionMint.toBuffer(),
-    ],
-    TOKEN_METADATA_PROGRAM_ID
-  );
-  const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
-    {
-      metadata: collectionMetadataAccount,
-      mint: collectionMint,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
-      updateAuthority: payer.publicKey,
-    },
-    {
-      createMetadataAccountArgsV3: {
-        data: {
-          name: "Nick's collection",
-          symbol: "NICK",
-          uri: "nicksfancyuri",
-          sellerFeeBasisPoints: 100,
-          creators: null,
-          collection: null,
-          uses: null,
-        },
-        isMutable: false,
-        collectionDetails: null,
-      },
-    }
-  );
-  const [collectionMasterEditionAccount, _b2] =
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from("metadata", "utf8"),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        collectionMint.toBuffer(),
-        Buffer.from("edition", "utf8"),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
-  const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
-    {
-      edition: collectionMasterEditionAccount,
-      mint: collectionMint,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
-      updateAuthority: payer.publicKey,
-      metadata: collectionMetadataAccount,
-    },
-    {
-      createMasterEditionArgs: {
-        maxSupply: 0,
-      },
-    }
-  );
+// TODO temp patch over metaplex's code
+export function computeCompressedNFTHashPATCHED(
+  assetId: PublicKey,
+  owner: PublicKey,
+  delegate: PublicKey,
+  treeNonce: BN,
+  metadata: MetadataArgs
+): Buffer {
+  const message = Buffer.concat([
+    Buffer.from([0x1]), // All NFTs are version 1 right now
+    assetId.toBuffer(),
+    owner.toBuffer(),
+    delegate.toBuffer(),
+    treeNonce.toBuffer("le", 8),
+    computeDataHash(metadata),
+    computeCreatorHashPATCHED(metadata.creators),
+  ]);
 
-  const sizeCollectionIX = createSetCollectionSizeInstruction(
-    {
-      collectionMetadata: collectionMetadataAccount,
-      collectionAuthority: payer.publicKey,
-      collectionMint: collectionMint,
-    },
-    {
-      setCollectionSizeArgs: { size: 50 },
-    }
-  );
+  return Buffer.from(keccak_256.digest(message));
+}
 
-  let tx = new Transaction()
-    .add(collectionMeatadataIX)
-    .add(collectionMasterEditionIX)
-    .add(sizeCollectionIX);
-  try {
-    const sig = await sendAndConfirmTransaction(conn, tx, [payer], {
-      commitment: "confirmed",
-      skipPreflight: true,
-    });
-    console.log(
-      "Successfull created NFT collection with collection address: " +
-        collectionMint.toBase58(),
-      sig
+export const verifyCNft = async ({
+  conn = TEST_PROVIDER.connection,
+  index,
+  owner,
+  delegate,
+  merkleTree,
+  metadata,
+  proof,
+}: {
+  conn?: Connection;
+  index: number;
+  owner: PublicKey;
+  delegate?: PublicKey;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  proof: Buffer[];
+}) => {
+  const accountInfo = await conn.getAccountInfo(merkleTree, {
+    commitment: "confirmed",
+  });
+  const account = ConcurrentMerkleTreeAccount.fromBuffer(accountInfo!.data!);
+  const { leaf, assetId } = await makeLeaf({
+    index,
+    owner,
+    delegate,
+    merkleTree,
+    metadata,
+  });
+  const verifyLeafIx = createVerifyLeafIx(merkleTree, {
+    root: account.getCurrentRoot(),
+    leaf,
+    leafIndex: index,
+    proof,
+  });
+  const sig = await buildAndSendTx({
+    ixs: [verifyLeafIx],
+    extraSigners: [TEST_KEYPAIR],
+  });
+  console.log("✅ CNFT verified:", sig);
+
+  return { leaf, assetId };
+};
+
+export const makeLeaf = async ({
+  index,
+  owner,
+  delegate,
+  merkleTree,
+  metadata,
+}: {
+  index: number;
+  owner: PublicKey;
+  delegate?: PublicKey;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+}) => {
+  const nonce = new BN(index);
+  const assetId = await getLeafAssetId(merkleTree, nonce);
+  const leaf = computeCompressedNFTHashPATCHED(
+    assetId,
+    owner,
+    delegate ?? owner,
+    nonce,
+    metadata
+  );
+  return {
+    leaf,
+    assetId,
+  };
+};
+
+export const makeCNftMeta = ({
+  nrCreators = 4,
+  sellerFeeBasisPoints = 1000,
+  collectionMint,
+}: {
+  nrCreators?: number;
+  sellerFeeBasisPoints?: number;
+  collectionMint?: PublicKey;
+}): MetadataArgs => {
+  if (nrCreators < 0 || nrCreators > 4) {
+    throw new Error(
+      "must be between 0 and 4 creators (yes 4 for compressed nfts)"
     );
-    return {
-      collectionMint,
-      collectionMetadataAccount,
-      collectionMasterEditionAccount,
-    };
-  } catch (e) {
-    console.error("Failed to init collection: ", e);
-    throw e;
   }
+
+  return {
+    name: "Compress me hard",
+    symbol: "COMP",
+    uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
+    creators: Array(nrCreators)
+      .fill(null)
+      .map((_) => ({
+        address: Keypair.generate().publicKey,
+        verified: false,
+        share: 100 / nrCreators,
+      })),
+    editionNonce: 0,
+    tokenProgramVersion: TokenProgramVersion.Original,
+    tokenStandard: TokenStandard.NonFungible,
+    uses: null,
+    collection: collectionMint
+      ? { key: collectionMint, verified: false }
+      : null,
+    primarySaleHappened: true,
+    sellerFeeBasisPoints,
+    isMutable: false,
+  };
+};
+
+export const beforeHook = async ({
+  numMints,
+  nrCreators = 4,
+  depthSizePair = DEFAULT_DEPTH_SIZE,
+}: {
+  numMints: number;
+  nrCreators?: number;
+  depthSizePair?: ValidDepthSizePair;
+}) => {
+  //tcomp has to be funded or get rent error
+  const [tcomp] = findTCompPda({});
+  await transferLamports(tcomp, LAMPORTS_PER_SOL);
+
+  const [treeOwner, traderA, traderB] = await makeNTraders(3);
+
+  //setup collection and tree
+  const { collectionMint } = await initCollection({ owner: treeOwner });
+  const { merkleTree } = await makeTree({ treeOwner, depthSizePair });
+
+  //has to be sequential to ensure index is correct
+  let leaves: {
+    index: number;
+    assetId: PublicKey;
+    metadata: MetadataArgs;
+    leaf: Buffer;
+  }[] = [];
+  for (let index = 0; index < numMints; index++) {
+    const metadata = await makeCNftMeta({
+      collectionMint,
+      nrCreators,
+    });
+
+    await mintCNft({
+      merkleTree,
+      metadata,
+      treeOwner,
+      receiver: traderA.publicKey,
+    });
+    const { leaf, assetId } = await makeLeaf({
+      index,
+      merkleTree,
+      metadata,
+      owner: traderA.publicKey,
+    });
+    leaves.push({
+      index,
+      metadata,
+      assetId,
+      leaf,
+    });
+  }
+
+  // simulate an in-mem tree
+  const memTree = new MerkleTree(leaves.map((l) => l.leaf));
+
+  // TODO eventually can probably get rid of this
+  await Promise.all(
+    leaves.map(async (l) => {
+      const { index, assetId, leaf, metadata } = l;
+
+      const proof = memTree.getProof(
+        l.index,
+        false,
+        depthSizePair.maxDepth,
+        true
+      ).proof;
+
+      // const root = memTree.getProof(
+      //   l.index,
+      //   false,
+      //   depthSizePair.maxDepth,
+      //   true
+      // ).root;
+      // console.log("root", Array.from(root));
+      // console.log(
+      //   "leaf",
+      //   assetId.toString(),
+      //   traderA.publicKey.toString(),
+      //   traderA.publicKey?.toString(),
+      //   index,
+      //   JSON.stringify(metadata)
+      // );
+      // console.log("data hash", Array.from(computeDataHash(metadata)));
+      // console.log(
+      //   "creator hash",
+      //   Array.from(computeCreatorHashPATCHED(metadata.creators))
+      // );
+      // console.log(
+      //   "hashed leaf",
+      //   Array.from(
+      //     computeCompressedNFTHash(
+      //       assetId,
+      //       traderA.publicKey,
+      //       traderA.publicKey,
+      //       new BN(index),
+      //       metadata
+      //     )
+      //   )
+      // );
+      // console.log("proof", JSON.stringify(proof.map((p) => new PublicKey(p))));
+      // console.log("tree", merkleTree.toString());
+
+      await verifyCNft({
+        index: l.index,
+        merkleTree,
+        metadata: l.metadata,
+        owner: traderA.publicKey,
+        proof,
+      });
+    })
+  );
+
+  console.log("✅ setup done");
+
+  return {
+    merkleTree,
+    memTree,
+    leaves,
+    treeOwner,
+    traderA,
+    traderB,
+  };
+};
+
+export const testList = async ({
+  memTree,
+  index,
+  owner,
+  // TODO write a test when delegaete is set
+  leafDelegate,
+  merkleTree,
+  metadata,
+  amount,
+  currency,
+  expireInSec,
+  privateTaker,
+}: {
+  memTree: MerkleTree;
+  index: number;
+  owner: Keypair;
+  leafDelegate?: PublicKey;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  amount: BN;
+  currency?: PublicKey;
+  expireInSec?: BN;
+  privateTaker?: PublicKey;
+}) => {
+  let proof = memTree.getProof(index, false, DEFAULT_DEPTH_SIZE.maxDepth, true);
+
+  const {
+    tx: { ixs },
+    assetId,
+  } = await tcompSdk.list({
+    proof: proof.proof,
+    leafOwner: owner.publicKey,
+    payer: owner.publicKey,
+    merkleTree,
+    metadata,
+    root: [...proof.root],
+    index,
+    amount,
+    currency,
+    expireInSec,
+    leafDelegate,
+    privateTaker,
+  });
+
+  const sig = await buildAndSendTx({ ixs, extraSigners: [owner] });
+  console.log("✅ listed", sig);
+
+  //nft moved to escrow
+  const [listState, bump] = findListStatePda({ assetId });
+  await verifyCNft({
+    index,
+    merkleTree,
+    metadata,
+    owner: listState,
+    delegate: listState,
+    proof: proof.proof,
+  });
+
+  const listStateAcc = await tcompSdk.fetchListState(listState);
+  expect(listStateAcc.assetId.toString()).to.eq(assetId.toString());
+  expect(listStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
+  expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
+  if (!isNullLike(currency)) {
+    expect(listStateAcc.currency.toString()).to.eq(currency.toString());
+  }
+  if (!isNullLike(expireInSec)) {
+    expect(listStateAcc.expiry.toNumber()).to.approximately(
+      +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
+      MINUTES
+    );
+  }
+  if (!isNullLike(privateTaker)) {
+    expect(listStateAcc.privateTaker.toString()).to.eq(privateTaker.toString());
+  }
+  expect(listStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
+  expect(listStateAcc.bump[0]).to.eq(bump);
+
+  //update mem tree
+  const { leaf } = await makeLeaf({
+    index,
+    merkleTree,
+    metadata,
+    owner: listState,
+    delegate: listState,
+  });
+  memTree.updateLeaf(index, leaf);
+};
+
+export const testBuy = async ({
+  memTree,
+  index,
+  owner,
+  buyer,
+  merkleTree,
+  metadata,
+  maxAmount,
+  currency,
+  // TODO maybe write a test for taker broker
+  takerBroker,
+  optionalRoyaltyPct,
+  programmable = false,
+}: {
+  memTree: MerkleTree;
+  index: number;
+  owner: PublicKey;
+  buyer: Keypair;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  maxAmount: BN;
+  currency?: PublicKey;
+  takerBroker?: PublicKey;
+  optionalRoyaltyPct?: number;
+  programmable?: boolean;
+}) => {
+  let proof = memTree.getProof(index, false, DEFAULT_DEPTH_SIZE.maxDepth, true);
+  const [tcomp] = await findTCompPda({});
+
+  const {
+    tx: { ixs },
+    listState,
+  } = await tcompSdk.buy({
+    proof: proof.proof,
+    buyer: buyer.publicKey,
+    merkleTree,
+    metadata,
+    root: [...proof.root],
+    index,
+    owner,
+    maxAmount,
+    payer: buyer.publicKey,
+    currency,
+    takerBroker,
+    optionalRoyaltyPct,
+  });
+
+  await withLamports(
+    {
+      prevFeeAccLamports: tcomp,
+      prevSellerLamports: owner,
+      prevBuyerLamports: buyer.publicKey,
+      ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
+    },
+    async ({
+      prevFeeAccLamports,
+      prevSellerLamports,
+      prevBuyerLamports,
+      prevTakerBroker,
+    }) => {
+      const sig = await buildAndSendTx({ ixs, extraSigners: [buyer] });
+      console.log("✅ bought", sig);
+
+      //nft moved to buyer
+      await verifyCNft({
+        index,
+        merkleTree,
+        metadata,
+        owner: buyer.publicKey,
+        delegate: buyer.publicKey,
+        proof: proof.proof,
+      });
+
+      //list state closed
+      expect(getAccount(listState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
+
+      const amount = maxAmount.toNumber();
+      const creators = metadata.creators;
+      const royaltyBps = metadata.sellerFeeBasisPoints;
+
+      //fees paid
+      const feeAccLamports = await getLamports(tcomp);
+      const { tcompFee, brokerFee } = calcFees(amount);
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+      if (!isNullLike(takerBroker) && TAKER_BROKER_PCT > 0) {
+        const brokerLamports = await getLamports(takerBroker);
+        expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
+      }
+
+      //creators paid
+      let creatorsFee = 0;
+      // Trade pools (when being bought from) charge no royalties.
+      if (!!creators?.length && !!royaltyBps) {
+        //skip creators when royalties not enough to cover rent
+        let skippedCreators = 0;
+        for (const c of creators) {
+          if (c.share <= 1) {
+            skippedCreators++;
+          }
+        }
+        const temp = Math.trunc(
+          (programmable
+            ? royaltyBps / 1e4
+            : !isNullLike(optionalRoyaltyPct)
+            ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
+            : 0) *
+            amount *
+            (1 - skippedCreators / 100)
+        );
+        for (const c of creators) {
+          const cBal = await getLamports(c.address);
+          //only run the test if share > 1, else it's skipped && cBal exists (it wont if 0 royalties were paid)
+          if (c.share > 1 && !isNullLike(cBal)) {
+            const expected = Math.trunc((temp * c.share) / 100);
+            expect(cBal).eq(expected);
+            creatorsFee += expected;
+          }
+        }
+      }
+
+      //buyer paid
+      const currBuyerLamports = await getLamports(buyer.publicKey);
+      //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      if (!programmable) {
+        expect(currBuyerLamports! - prevBuyerLamports!).eq(
+          -1 * (amount + tcompFee + brokerFee + creatorsFee)
+        );
+      }
+
+      //seller gained
+      const currSellerLamports = await getLamports(owner);
+      expect(currSellerLamports! - prevSellerLamports!).eq(
+        amount + (await tcompSdk.getListStateRent())
+      );
+    }
+  );
+
+  //update mem tree
+  const { leaf } = await makeLeaf({
+    index,
+    merkleTree,
+    metadata,
+    owner: buyer.publicKey,
+    delegate: buyer.publicKey,
+  });
+  memTree.updateLeaf(index, leaf);
 };

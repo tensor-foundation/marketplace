@@ -5,12 +5,16 @@ import {
 } from "@metaplex-foundation/js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAccount,
   createAssociatedTokenAccountInstruction,
+  createMint,
   getAccount as _getAccount,
   getAssociatedTokenAddress,
+  mintTo,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
+  Connection,
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -19,23 +23,29 @@ import {
   SYSVAR_INSTRUCTIONS_PUBKEY,
   Transaction,
 } from "@solana/web3.js";
-import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./shared";
+import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./utils";
 import {
   Payload,
   PROGRAM_ID as AUTH_PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-auth-rules";
 import {
   createCreateInstruction,
+  createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountV3Instruction,
   CreateInstructionAccounts,
   CreateInstructionArgs,
   createMintInstruction,
+  createSetCollectionSizeInstruction,
   MintInstructionAccounts,
   MintInstructionArgs,
   PROGRAM_ID,
   TokenStandard,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider } from "@project-serum/anchor";
-import { findTokenRecordPda } from "@tensor-hq/tensor-common";
+import {
+  findTokenRecordPda,
+  TOKEN_METADATA_PROGRAM_ID,
+} from "@tensor-hq/tensor-common";
 
 export const transferLamports = async (
   to: PublicKey,
@@ -417,4 +427,106 @@ export const makeNTraders = async (n: number, sol?: number) => {
       .fill(null)
       .map(async () => await createFundedWallet(sol))
   );
+};
+
+export const initCollection = async ({
+  conn = TEST_PROVIDER.connection,
+  owner,
+}: {
+  conn?: Connection;
+  owner: Keypair;
+}) => {
+  const collectionMint = await createMint(
+    conn,
+    owner,
+    owner.publicKey,
+    owner.publicKey,
+    0
+  );
+  const collectionTokenAccount = await createAccount(
+    conn,
+    owner,
+    collectionMint,
+    owner.publicKey
+  );
+  await mintTo(conn, owner, collectionMint, collectionTokenAccount, owner, 1);
+  const [collectionMetadataAccount, _b] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("metadata", "utf8"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      collectionMint.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
+  const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
+    {
+      metadata: collectionMetadataAccount,
+      mint: collectionMint,
+      mintAuthority: owner.publicKey,
+      payer: owner.publicKey,
+      updateAuthority: owner.publicKey,
+    },
+    {
+      createMetadataAccountArgsV3: {
+        data: {
+          name: "Nick's collection",
+          symbol: "NICK",
+          uri: "nicksfancyuri",
+          sellerFeeBasisPoints: 100,
+          creators: null,
+          collection: null,
+          uses: null,
+        },
+        isMutable: false,
+        collectionDetails: null,
+      },
+    }
+  );
+  const [collectionMasterEditionAccount, _b2] =
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata", "utf8"),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        collectionMint.toBuffer(),
+        Buffer.from("edition", "utf8"),
+      ],
+      TOKEN_METADATA_PROGRAM_ID
+    );
+  const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
+    {
+      edition: collectionMasterEditionAccount,
+      mint: collectionMint,
+      mintAuthority: owner.publicKey,
+      payer: owner.publicKey,
+      updateAuthority: owner.publicKey,
+      metadata: collectionMetadataAccount,
+    },
+    {
+      createMasterEditionArgs: {
+        maxSupply: 0,
+      },
+    }
+  );
+
+  const sizeCollectionIX = createSetCollectionSizeInstruction(
+    {
+      collectionMetadata: collectionMetadataAccount,
+      collectionAuthority: owner.publicKey,
+      collectionMint: collectionMint,
+    },
+    {
+      setCollectionSizeArgs: { size: 50 },
+    }
+  );
+
+  await buildAndSendTx({
+    ixs: [collectionMeatadataIX, collectionMasterEditionIX, sizeCollectionIX],
+    extraSigners: [owner],
+  });
+
+  return {
+    collectionMint,
+    collectionMetadataAccount,
+    collectionMasterEditionAccount,
+  };
 };

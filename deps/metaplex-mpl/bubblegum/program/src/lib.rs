@@ -526,6 +526,19 @@ fn process_mint_v1<'info>(
         &message.seller_fee_basis_points.to_le_bytes(),
     ]);
 
+    // let creator_data_raw = message
+    //     .creators
+    //     .iter()
+    //     .map(|c| {
+    //         if c.verified && !metadata_auth.contains(&c.address) {
+    //             Err(BubblegumError::CreatorDidNotVerify.into())
+    //         } else {
+    //             Ok((c.address, c.verified, c.share))
+    //         }
+    //     })
+    //     .collect::<Result<Vec<_>>>()?;
+    // msg!("creator_data_raw: {:?}", creator_data_raw);
+
     // Use the metadata auth to check whether we can allow `verified` to be set to true in the
     // creator Vec.
     let creator_data = message
@@ -540,6 +553,8 @@ fn process_mint_v1<'info>(
         })
         .collect::<Result<Vec<_>>>()?;
 
+    // msg!("creator_data: {:?}", creator_data);
+
     // Calculate creator hash.
     let creator_hash = keccak::hashv(
         creator_data
@@ -548,6 +563,8 @@ fn process_mint_v1<'info>(
             .collect::<Vec<&[u8]>>()
             .as_ref(),
     );
+
+    // msg!("creator_hash: {:?}", creator_hash.to_bytes());
 
     let asset_id = get_asset_id(&merkle_tree.key(), authority.num_minted);
     let leaf = LeafSchema::new_v0(

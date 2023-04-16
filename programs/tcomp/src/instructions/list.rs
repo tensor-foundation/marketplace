@@ -107,6 +107,8 @@ pub fn handler<'info>(
             // This branch means we're editing
             let list_state = &ctx.accounts.list_state;
 
+            // TODO: write a test for these
+
             // Make sure list state already exists
             require!(list_state.version != 0, TcompError::BadListState);
 

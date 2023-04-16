@@ -47,6 +47,19 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
 
     // Serialize metadata into original metaplex format
     let mplex_metadata = metadata.into(creator_accounts);
+
+    // msg!("creators {:?}", creator_accounts.len());
+    // msg!("proof {:?}", proof_accounts.len());
+    // msg!("root {:?}", root);
+    // msg!(
+    //     "leaf: {:?}{:?}{:?}{}{:?}",
+    //     get_asset_id(&merkle_tree.key(), nonce),
+    //     leaf_owner,
+    //     leaf_delegate,
+    //     nonce,
+    //     mplex_metadata.clone()
+    // );
+
     let creator_hash = hash_creators(&mplex_metadata.creators)?;
     let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
     let data_hash = hashv(&[
@@ -54,6 +67,11 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
         &mplex_metadata.seller_fee_basis_points.to_le_bytes(),
     ])
     .to_bytes();
+
+    // msg!("data_hash {:?}", data_hash);
+    // msg!("creator_hash {:?}", creator_hash);
+    // msg!("proof accounts {:?}", proof_accounts);
+    // msg!("tree {:?}", merkle_tree.key());
 
     // Nonce is used for asset it, not index
     let asset_id = get_asset_id(&merkle_tree.key(), nonce);
@@ -65,7 +83,6 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
         data_hash,
         creator_hash,
     );
-
     let cpi_ctx = CpiContext::new(
         compression_program.clone(),
         spl_account_compression::cpi::accounts::VerifyLeaf {
@@ -73,12 +90,56 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
         },
     )
     .with_remaining_accounts(proof_accounts.to_vec());
+
+    // TODO alright ffs this isn't gonig to work have to copy paste verification code from spl compression
+    // TODO: not currently taking into account the canopy
+
+    // msg!("hashed leaf, ${:?}", leaf.to_node());
+
     // SPL compression receives index, not nonce
-    spl_account_compression::cpi::verify_leaf(cpi_ctx, root, leaf.to_node(), index)?;
+    let r = spl_account_compression::cpi::verify_leaf(cpi_ctx, root, leaf.to_node(), index);
 
-    msg!("yay valid");
+    // let data = spl_account_compression::instruction::VerifyLeaf {
+    //     root,
+    //     leaf: leaf.to_node(),
+    //     index,
+    // }
+    // .data();
+    //
+    // let verify_accounts = spl_account_compression::cpi::accounts::VerifyLeaf {
+    //     merkle_tree: merkle_tree.clone(),
+    // };
+    // let mut verify_account_metas = verify_accounts.to_account_metas(Some(true));
+    // for node in proof_accounts {
+    //     verify_account_metas.push(AccountMeta::new_readonly(*node.key, false));
+    // }
+    //
+    //
+    //
+    // let mut verify_cpi_account_infos = verify_accounts.to_account_infos();
+    // verify_cpi_account_infos.extend_from_slice(proof_accounts);
+    //
+    // msg!("345");
+    //
+    // let r = invoke(
+    //     &Instruction {
+    //         program_id: compression_program.key(),
+    //         accounts: verify_account_metas,
+    //         data,
+    //     },
+    //     &(verify_cpi_account_infos[..]),
+    // );
 
-    return Ok((asset_id, creator_hash, data_hash, mplex_metadata));
+    return match r {
+        Ok(_) => {
+            msg!("yay valid");
+            Ok((asset_id, creator_hash, data_hash, mplex_metadata))
+        }
+        Err(e) => {
+            msg!("OH NOOO: {:?}", e);
+            Err(TcompError::ArithmeticError.into())
+        }
+    };
 }
 
 pub struct TransferArgs<'a, 'info> {
