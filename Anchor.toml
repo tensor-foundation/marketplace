@@ -18,7 +18,7 @@ program = "./deps/metaplex-mpl/bubblegum/program/target/deploy/mpl_bubblegum.so"
 
 [[test.genesis]]
 address = "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
-program = "./deps/cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK.so"
+program = "./deps/solana-spl/account-compression/target/deploy/spl_account_compression.so"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"

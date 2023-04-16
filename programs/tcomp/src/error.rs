@@ -18,4 +18,6 @@ pub enum TcompError {
     CreatorMismatch = 6,
     #[msg("insufficient balance")]
     InsufficientBalance = 7,
+    #[msg("failed leaf verification")]
+    FailedLeafVerification = 8,
 }

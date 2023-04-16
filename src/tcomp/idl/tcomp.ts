@@ -692,6 +692,11 @@ export type Tcomp = {
       "code": 6007,
       "name": "InsufficientBalance",
       "msg": "insufficient balance"
+    },
+    {
+      "code": 6008,
+      "name": "FailedLeafVerification",
+      "msg": "failed leaf verification"
     }
   ]
 };
@@ -1390,6 +1395,11 @@ export const IDL: Tcomp = {
       "code": 6007,
       "name": "InsufficientBalance",
       "msg": "insufficient balance"
+    },
+    {
+      "code": 6008,
+      "name": "FailedLeafVerification",
+      "msg": "failed leaf verification"
     }
   ]
 };

@@ -328,6 +328,12 @@ export class TCompSDK {
       isWritable: false,
     }));
 
+    console.log(
+      "proofpath",
+      proofPath.length,
+      JSON.stringify(proofPath.map((p) => p.pubkey.toString()))
+    );
+
     const builder = this.program.methods
       .list(
         nonce,

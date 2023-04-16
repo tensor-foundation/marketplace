@@ -65,10 +65,12 @@ export const makeTree = async ({
   conn = TEST_PROVIDER.connection,
   treeOwner,
   depthSizePair = DEFAULT_DEPTH_SIZE,
+  canopyDepth = 0,
 }: {
   conn?: Connection;
   treeOwner: Keypair;
   depthSizePair?: ValidDepthSizePair;
+  canopyDepth?: number;
 }) => {
   const owner = treeOwner.publicKey;
 
@@ -76,7 +78,8 @@ export const makeTree = async ({
   const merkleTree = merkleTreeKeypair.publicKey;
   const space = getConcurrentMerkleTreeAccountSize(
     depthSizePair.maxDepth,
-    depthSizePair.maxBufferSize
+    depthSizePair.maxBufferSize,
+    canopyDepth
   );
   const allocTreeIx = SystemProgram.createAccount({
     fromPubkey: owner,
@@ -85,7 +88,7 @@ export const makeTree = async ({
     space: space,
     programId: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   });
-  const [treeAuthority, _bump] = await findTreeAuthorityPda({ merkleTree });
+  const [treeAuthority, _bump] = findTreeAuthorityPda({ merkleTree });
   const createTreeIx = createCreateTreeInstruction(
     {
       merkleTree,
@@ -301,20 +304,25 @@ export const beforeHook = async ({
   numMints,
   nrCreators = 4,
   depthSizePair = DEFAULT_DEPTH_SIZE,
+  canopyDepth = 0,
 }: {
   numMints: number;
   nrCreators?: number;
   depthSizePair?: ValidDepthSizePair;
+  canopyDepth?: number;
 }) => {
   //tcomp has to be funded or get rent error
   const [tcomp] = findTCompPda({});
   await transferLamports(tcomp, LAMPORTS_PER_SOL);
-
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
   //setup collection and tree
   const { collectionMint } = await initCollection({ owner: treeOwner });
-  const { merkleTree } = await makeTree({ treeOwner, depthSizePair });
+  const { merkleTree } = await makeTree({
+    treeOwner,
+    depthSizePair,
+    canopyDepth,
+  });
 
   //has to be sequential to ensure index is correct
   let leaves: {
@@ -328,7 +336,6 @@ export const beforeHook = async ({
       collectionMint,
       nrCreators,
     });
-
     await mintCNft({
       merkleTree,
       metadata,
@@ -352,11 +359,9 @@ export const beforeHook = async ({
   // simulate an in-mem tree
   const memTree = new MerkleTree(leaves.map((l) => l.leaf));
 
-  // TODO eventually can probably get rid of this
   await Promise.all(
     leaves.map(async (l) => {
       const { index, assetId, leaf, metadata } = l;
-
       const proof = memTree.getProof(
         l.index,
         false,
@@ -399,12 +404,14 @@ export const beforeHook = async ({
       // console.log("proof", JSON.stringify(proof.map((p) => new PublicKey(p))));
       // console.log("tree", merkleTree.toString());
 
+      console.log("PROOF", JSON.stringify(proof.map((p) => new PublicKey(p))));
+
       await verifyCNft({
         index: l.index,
         merkleTree,
         metadata: l.metadata,
         owner: traderA.publicKey,
-        proof,
+        proof: proof.slice(0, proof.length - canopyDepth),
       });
     })
   );

@@ -1,3 +1,11 @@
+use spl_account_compression::{
+    canopy::fill_in_proof_from_canopy,
+    merkle_tree_apply_fn,
+    state::{
+        merkle_tree_get_size, ConcurrentMerkleTreeHeader, CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1,
+    },
+};
+
 use crate::*;
 
 pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
@@ -30,7 +38,6 @@ pub struct VerifyArgs<'a, 'info> {
     pub proof_accounts: &'a [AccountInfo<'info>],
 }
 
-// Most of the stuff below is taken from process_mint_v1 in bubblegum
 pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], MetadataArgs)> {
     let VerifyArgs {
         root,
@@ -44,6 +51,8 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
         creator_accounts,
         proof_accounts,
     } = args;
+
+    // --------------------------------------- from bubblegum/process_mint_v1
 
     // Serialize metadata into original metaplex format
     let mplex_metadata = metadata.into(creator_accounts);
@@ -82,64 +91,51 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
         nonce, // Nonce is also stored in the schema, not index
         data_hash,
         creator_hash,
-    );
-    let cpi_ctx = CpiContext::new(
-        compression_program.clone(),
-        spl_account_compression::cpi::accounts::VerifyLeaf {
-            merkle_tree: merkle_tree.clone(),
-        },
     )
-    .with_remaining_accounts(proof_accounts.to_vec());
+    .to_node();
 
-    // TODO alright ffs this isn't gonig to work have to copy paste verification code from spl compression
+    // --------------------------------------- from spl_compression/verify_leaf
+    // Can't CPI into it because failed CPI calls can't be caught with match
+
     // TODO: not currently taking into account the canopy
 
-    // msg!("hashed leaf, ${:?}", leaf.to_node());
+    require_eq!(
+        *merkle_tree.owner,
+        spl_account_compression::id(),
+        TcompError::FailedLeafVerification
+    );
+    let merkle_tree_bytes = merkle_tree.try_borrow_data()?;
+    let (header_bytes, rest) = merkle_tree_bytes.split_at(CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1);
 
-    // SPL compression receives index, not nonce
-    let r = spl_account_compression::cpi::verify_leaf(cpi_ctx, root, leaf.to_node(), index);
+    let header = ConcurrentMerkleTreeHeader::try_from_slice(header_bytes)?;
+    header.assert_valid()?;
+    header.assert_valid_leaf_index(index)?;
 
-    // let data = spl_account_compression::instruction::VerifyLeaf {
-    //     root,
-    //     leaf: leaf.to_node(),
-    //     index,
-    // }
-    // .data();
-    //
-    // let verify_accounts = spl_account_compression::cpi::accounts::VerifyLeaf {
-    //     merkle_tree: merkle_tree.clone(),
+    let merkle_tree_size = merkle_tree_get_size(&header)?;
+    let (tree_bytes, canopy_bytes) = rest.split_at(merkle_tree_size);
+
+    let mut proof = vec![];
+    for node in proof_accounts.iter() {
+        proof.push(node.key().to_bytes());
+    }
+    fill_in_proof_from_canopy(canopy_bytes, header.get_max_depth(), index, &mut proof)?;
+    let id = merkle_tree.key();
+
+    // TODO temp to compile
+    Ok((asset_id, creator_hash, data_hash, mplex_metadata))
+
+    // return match merkle_tree_apply_fn!(
+    //     header, id, tree_bytes, prove_leaf, root, leaf, &proof, index
+    // ) {
+    //     Ok(_) => {
+    //         msg!("Leaf Valid");
+    //         Ok((asset_id, creator_hash, data_hash, mplex_metadata))
+    //     }
+    //     Err(e) => {
+    //         msg!("FAILED LEAF VERIFICATION: {:?}", e);
+    //         Err(TcompError::FailedLeafVerification.into())
+    //     }
     // };
-    // let mut verify_account_metas = verify_accounts.to_account_metas(Some(true));
-    // for node in proof_accounts {
-    //     verify_account_metas.push(AccountMeta::new_readonly(*node.key, false));
-    // }
-    //
-    //
-    //
-    // let mut verify_cpi_account_infos = verify_accounts.to_account_infos();
-    // verify_cpi_account_infos.extend_from_slice(proof_accounts);
-    //
-    // msg!("345");
-    //
-    // let r = invoke(
-    //     &Instruction {
-    //         program_id: compression_program.key(),
-    //         accounts: verify_account_metas,
-    //         data,
-    //     },
-    //     &(verify_cpi_account_infos[..]),
-    // );
-
-    return match r {
-        Ok(_) => {
-            msg!("yay valid");
-            Ok((asset_id, creator_hash, data_hash, mplex_metadata))
-        }
-        Err(e) => {
-            msg!("OH NOOO: {:?}", e);
-            Err(TcompError::ArithmeticError.into())
-        }
-    };
 }
 
 pub struct TransferArgs<'a, 'info> {

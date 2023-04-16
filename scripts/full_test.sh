@@ -10,9 +10,14 @@ bash scripts/cp_idl.sh
 git submodule init
 git submodule update
 
-pushd deps/metaplex-mpl/bubblegum/program
-cargo build-bpf
-popd
+#TODO re-enable before pushing to prod (annoying to wait)
+#pushd deps/metaplex-mpl/bubblegum/program
+#cargo build-bpf
+#popd
+#
+#pushd deps/solana-spl/account-compression/programs
+#cargo build-bpf
+#popd
 
 # Run tests
 anchor test --skip-build -- --features testing
