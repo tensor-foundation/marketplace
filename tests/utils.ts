@@ -7,20 +7,47 @@ import {
 } from "@saberhq/solana-contrib";
 import {
   AddressLookupTableAccount,
+  AddressLookupTableProgram,
+  Commitment,
   ConfirmOptions,
   Keypair,
   PublicKey,
   Signer,
+  SystemProgram,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction,
   VersionedTransaction,
 } from "@solana/web3.js";
 import { backOff } from "exponential-backoff";
 import { resolve } from "path";
-import { FEE_BPS, isNullLike, TAKER_BROKER_PCT, TCompSDK } from "../src";
+import {
+  BUBBLEGUM_PROGRAM_ID,
+  FEE_BPS,
+  findTCompPda,
+  isNullLike,
+  TAKER_BROKER_PCT,
+  TCompSDK,
+} from "../src";
 import { getLamports as _getLamports } from "../src/shared";
-import { buildTx, buildTxV0, waitMS } from "@tensor-hq/tensor-common";
-import { ValidDepthSizePair } from "@solana/spl-account-compression";
+import {
+  AUTH_PROG_ID,
+  buildTx,
+  buildTxV0,
+  TMETA_PROG_ID,
+  waitMS,
+} from "@tensor-hq/tensor-common";
+import {
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID,
+  ValidDepthSizePair,
+} from "@solana/spl-account-compression";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { TENSORSWAP_ADDR } from "@tensor-hq/tensorswap-sdk";
 
 // Exporting these here vs in each .test.ts file prevents weird undefined issues.
 export { hexCode, stringifyPKsAndBNs } from "../src";
@@ -234,4 +261,129 @@ export const calcFees = (amount: number) => {
   const brokerFee = Math.trunc((totalFee * TAKER_BROKER_PCT) / 100);
   const tcompFee = totalFee - brokerFee;
   return { totalFee, brokerFee, tcompFee };
+};
+
+export const updateLUT = async ({
+  provider = TEST_PROVIDER,
+  committment = "finalized",
+  lookupTableAddress,
+  addresses,
+}: {
+  provider?;
+  committment?: Commitment;
+  lookupTableAddress: PublicKey;
+  addresses: PublicKey[];
+}) => {
+  const conn = provider.connection;
+
+  //needed else we keep refetching the blockhash
+  const blockhash = (await conn.getLatestBlockhash(committment)).blockhash;
+  console.log("blockhash", blockhash);
+
+  //add NEW addresses ONLY
+  const extendInstruction = AddressLookupTableProgram.extendLookupTable({
+    payer: provider.publicKey,
+    authority: provider.publicKey,
+    lookupTable: lookupTableAddress,
+    addresses,
+  });
+
+  let done = false;
+  while (!done) {
+    try {
+      await buildAndSendTx({
+        provider,
+        ixs: [extendInstruction],
+        blockhash,
+      });
+      done = true;
+    } catch (e) {
+      console.log("failed, try again in 5");
+      await waitMS(5000);
+    }
+  }
+
+  //fetch (this will actually show wrong the first time, need to rerun
+  const lookupTableAccount = (
+    await conn.getAddressLookupTable(lookupTableAddress)
+  ).value;
+
+  console.log("updated LUT", lookupTableAccount);
+};
+
+export const createLUT = async (
+  provider = TEST_PROVIDER,
+  slotCommitment: Commitment = "finalized"
+) => {
+  const conn = provider.connection;
+
+  //use finalized, otherwise get "is not a recent slot err"
+  const slot = await conn.getSlot(slotCommitment);
+
+  //create
+  const [lookupTableInst, lookupTableAddress] =
+    AddressLookupTableProgram.createLookupTable({
+      authority: provider.publicKey,
+      payer: provider.publicKey,
+      recentSlot: slot,
+    });
+
+  //see if already created
+  let lookupTableAccount = (
+    await conn.getAddressLookupTable(lookupTableAddress)
+  ).value;
+  if (!!lookupTableAccount) {
+    console.log("LUT exists", lookupTableAddress.toBase58());
+    return lookupTableAccount;
+  }
+
+  console.log("LUT missing");
+
+  const [tcomp] = findTCompPda({});
+
+  //add addresses
+  const extendInstruction = AddressLookupTableProgram.extendLookupTable({
+    payer: provider.publicKey,
+    authority: provider.publicKey,
+    lookupTable: lookupTableAddress,
+    addresses: [
+      SPL_NOOP_PROGRAM_ID,
+      SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      SystemProgram.programId,
+      BUBBLEGUM_PROGRAM_ID,
+      tcomp,
+      //for spl payments
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      //margin
+      TENSORSWAP_ADDR,
+      //future proofing
+      SYSVAR_RENT_PUBKEY,
+      AUTH_PROG_ID,
+      TMETA_PROG_ID,
+      SYSVAR_INSTRUCTIONS_PUBKEY,
+    ],
+  });
+
+  let done = false;
+  while (!done) {
+    try {
+      await buildAndSendTx({
+        provider,
+        ixs: [lookupTableInst, extendInstruction],
+      });
+      done = true;
+    } catch (e) {
+      console.log("failed, try again in 5");
+      await waitMS(5000);
+    }
+  }
+
+  console.log("new LUT created", lookupTableAddress.toBase58());
+
+  //fetch
+  lookupTableAccount = (await conn.getAddressLookupTable(lookupTableAddress))
+    .value;
+
+  return lookupTableAccount;
 };

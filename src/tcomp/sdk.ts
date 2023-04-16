@@ -1,6 +1,8 @@
 import {
   AccountSuffix,
   decodeAcct,
+  DEFAULT_COMPUTE_UNITS,
+  DEFAULT_MICRO_LAMPORTS,
   DiscMap,
   genDiscToDecoderMap,
   getAccountRent,
@@ -83,9 +85,6 @@ export const MAX_EXPIRY_SEC: number = +IDL_latest.constants.find(
 
 export const APPROX_BID_STATE_RENT = getRentSync(BID_STATE_SIZE);
 export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
-
-export const DEFAULT_COMPUTE_UNITS = 400_000;
-export const DEFAULT_MICRO_LAMPORTS = 200_000;
 
 // --------------------------------------- types
 
@@ -211,6 +210,8 @@ export type TaggedTCompPdaAnchor =
     };
 
 export type TCompEventAnchor = Event<(typeof IDL_latest)["events"][number]>;
+export type MakeEventAnchor = Event<(typeof IDL_latest)["events"][0]>;
+export type TakeEventAnchor = Event<(typeof IDL_latest)["events"][1]>;
 
 // ------------- Types for parsed ixs from raw tx.
 
@@ -291,8 +292,9 @@ export class TCompSDK {
     currency = null,
     privateTaker = null,
     payer = null,
-    compute = null,
-    priorityMicroLamports = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
     leafOwner: PublicKey;
@@ -310,6 +312,7 @@ export class TCompSDK {
     payer?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
+    canopyDepth?: number;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -322,17 +325,11 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-    let proofPath = proof.map((b) => ({
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
     }));
-
-    console.log(
-      "proofpath",
-      proofPath.length,
-      JSON.stringify(proofPath.map((p) => p.pubkey.toString()))
-    );
 
     const builder = this.program.methods
       .list(
@@ -389,8 +386,9 @@ export class TCompSDK {
     buyer,
     payer = null,
     takerBroker = null,
-    compute = null,
-    priorityMicroLamports = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
     leafDelegate?: PublicKey;
@@ -409,6 +407,7 @@ export class TCompSDK {
     takerBroker?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
+    canopyDepth?: number;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -422,7 +421,7 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-    let proofPath = proof.map((b) => ({
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
@@ -466,10 +465,10 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
+        newLeafOwner: buyer,
         payer: payer ?? buyer,
         owner,
         listState,
-        newLeafOwner: buyer,
         tcomp,
         takerBroker: takerBroker ?? tcomp,
       })
@@ -579,19 +578,23 @@ export class TCompSDK {
     return ixs;
   }
 
-  // TODO: throwing an error
-  // getFeeAmount(ix: ParsedTCompIx): BN | null {
-  //   switch (ix.ix.name) {
-  //     case "buy":
-  //       const event = ix.events[0].data;
-  //       return event.tswapFee.add(event.creatorsFee);
-  //   }
-  // }
+  getFeeAmount(ix: ParsedTCompIx): BN | null {
+    switch (ix.ix.name) {
+      case "buy":
+        const event = ix.events[0] as TakeEventAnchor | undefined;
+        return event.data.tcompFee
+          .add(event.data.brokerFee)
+          .add(event.data.creatorFee);
+      case "list":
+        return null;
+    }
+  }
 
   getAmount(
     ix: ParsedTCompIx
   ): { amount: BN; currency: PublicKey | null } | null {
     switch (ix.ix.name) {
+      case "list":
       case "buy":
         return {
           amount: (ix.ix.data as TCompPricedIx).amount,

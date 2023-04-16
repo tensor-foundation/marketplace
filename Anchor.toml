@@ -9,32 +9,20 @@ tcomp = "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
 url = "https://api.apr.dev"
 
 [[test.genesis]]
-address = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-program = "./deps/ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL.so"
-
-[[test.genesis]]
 address = "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
 program = "./deps/metaplex-mpl/bubblegum/program/target/deploy/mpl_bubblegum.so"
+
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "./deps/metaplex-mpl/token-metadata/target/deploy/mpl_token_metadata.so"
 
 [[test.genesis]]
 address = "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
 program = "./deps/solana-spl/account-compression/target/deploy/spl_account_compression.so"
 
 [[test.genesis]]
-address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "./deps/metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s.so"
-
-[[test.genesis]]
 address = "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
-program = "./deps/noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV.so"
-
-[[test.genesis]]
-address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-program = "./deps/TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA.so"
-
-[[test.genesis]]
-address = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-program = "./deps/TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb.so"
+program = "./deps/solana-spl/account-compression/target/deploy/spl_noop.so"
 
 [provider]
 cluster = "localnet"

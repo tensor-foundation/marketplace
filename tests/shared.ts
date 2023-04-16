@@ -1,4 +1,5 @@
 import {
+  AddressLookupTableAccount,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
@@ -27,6 +28,7 @@ import {
   ACCT_NOT_EXISTS_ERR,
   buildAndSendTx,
   calcFees,
+  createLUT,
   DEFAULT_DEPTH_SIZE,
   FEE_PCT,
   getLamports,
@@ -37,9 +39,12 @@ import {
 } from "./utils";
 import {
   CURRENT_TCOMP_VERSION,
+  DEFAULT_COMPUTE_UNITS,
+  DEFAULT_MICRO_LAMPORTS,
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
+  getTotalComputeIxs,
   TAKER_BROKER_PCT,
 } from "../src";
 import { BN } from "@project-serum/anchor";
@@ -155,7 +160,7 @@ export const mintCNft = async ({
   console.log("✅ minted", sig);
 };
 
-// TODO temp patch over metaplex's code
+// TODO: temp patch over metaplex's code
 export function computeCreatorHashPATCHED(creators: Creator[]) {
   const bufferOfCreatorData = Buffer.concat(
     creators.map((creator) => {
@@ -169,7 +174,7 @@ export function computeCreatorHashPATCHED(creators: Creator[]) {
   return Buffer.from(keccak_256.digest(bufferOfCreatorData));
 }
 
-// TODO temp patch over metaplex's code
+// TODO: temp patch over metaplex's code
 export function computeCompressedNFTHashPATCHED(
   assetId: PublicKey,
   owner: PublicKey,
@@ -224,8 +229,14 @@ export const verifyCNft = async ({
     leafIndex: index,
     proof,
   });
+
+  const computeIxs = getTotalComputeIxs(
+    DEFAULT_COMPUTE_UNITS,
+    DEFAULT_MICRO_LAMPORTS
+  );
+
   const sig = await buildAndSendTx({
-    ixs: [verifyLeafIx],
+    ixs: [...computeIxs, verifyLeafIx],
     extraSigners: [TEST_KEYPAIR],
   });
   console.log("✅ CNFT verified:", sig);
@@ -300,6 +311,15 @@ export const makeCNftMeta = ({
   };
 };
 
+export const beforeAllHook = async () => {
+  //tcomp has to be funded or get rent error
+  const [tcomp] = findTCompPda({});
+  await transferLamports(tcomp, LAMPORTS_PER_SOL);
+  const lookupTableAccount = await createLUT();
+
+  return lookupTableAccount;
+};
+
 export const beforeHook = async ({
   numMints,
   nrCreators = 4,
@@ -311,9 +331,6 @@ export const beforeHook = async ({
   depthSizePair?: ValidDepthSizePair;
   canopyDepth?: number;
 }) => {
-  //tcomp has to be funded or get rent error
-  const [tcomp] = findTCompPda({});
-  await transferLamports(tcomp, LAMPORTS_PER_SOL);
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
   //setup collection and tree
@@ -357,7 +374,10 @@ export const beforeHook = async ({
   }
 
   // simulate an in-mem tree
-  const memTree = new MerkleTree(leaves.map((l) => l.leaf));
+  const memTree = MerkleTree.sparseMerkleTreeFromLeaves(
+    leaves.map((l) => l.leaf),
+    depthSizePair.maxDepth
+  );
 
   await Promise.all(
     leaves.map(async (l) => {
@@ -366,7 +386,7 @@ export const beforeHook = async ({
         l.index,
         false,
         depthSizePair.maxDepth,
-        true
+        false
       ).proof;
 
       // const root = memTree.getProof(
@@ -404,8 +424,6 @@ export const beforeHook = async ({
       // console.log("proof", JSON.stringify(proof.map((p) => new PublicKey(p))));
       // console.log("tree", merkleTree.toString());
 
-      console.log("PROOF", JSON.stringify(proof.map((p) => new PublicKey(p))));
-
       await verifyCNft({
         index: l.index,
         merkleTree,
@@ -440,6 +458,8 @@ export const testList = async ({
   currency,
   expireInSec,
   privateTaker,
+  canopyDepth = 0,
+  lookupTableAccount,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -451,8 +471,15 @@ export const testList = async ({
   currency?: PublicKey;
   expireInSec?: BN;
   privateTaker?: PublicKey;
+  canopyDepth?: number;
+  lookupTableAccount?: AddressLookupTableAccount;
 }) => {
-  let proof = memTree.getProof(index, false, DEFAULT_DEPTH_SIZE.maxDepth, true);
+  let proof = memTree.getProof(
+    index,
+    false,
+    DEFAULT_DEPTH_SIZE.maxDepth,
+    false
+  );
 
   const {
     tx: { ixs },
@@ -470,9 +497,14 @@ export const testList = async ({
     expireInSec,
     leafDelegate,
     privateTaker,
+    canopyDepth,
   });
 
-  const sig = await buildAndSendTx({ ixs, extraSigners: [owner] });
+  const sig = await buildAndSendTx({
+    ixs,
+    extraSigners: [owner],
+    lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
+  });
   console.log("✅ listed", sig);
 
   //nft moved to escrow
@@ -529,6 +561,8 @@ export const testBuy = async ({
   takerBroker,
   optionalRoyaltyPct,
   programmable = false,
+  lookupTableAccount,
+  canopyDepth = 0,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -541,9 +575,16 @@ export const testBuy = async ({
   takerBroker?: PublicKey;
   optionalRoyaltyPct?: number;
   programmable?: boolean;
+  lookupTableAccount?: AddressLookupTableAccount;
+  canopyDepth?: number;
 }) => {
-  let proof = memTree.getProof(index, false, DEFAULT_DEPTH_SIZE.maxDepth, true);
-  const [tcomp] = await findTCompPda({});
+  let proof = memTree.getProof(
+    index,
+    false,
+    DEFAULT_DEPTH_SIZE.maxDepth,
+    false
+  );
+  const [tcomp] = findTCompPda({});
 
   const {
     tx: { ixs },
@@ -557,10 +598,10 @@ export const testBuy = async ({
     index,
     owner,
     maxAmount,
-    payer: buyer.publicKey,
     currency,
     takerBroker,
     optionalRoyaltyPct,
+    canopyDepth,
   });
 
   await withLamports(
@@ -576,7 +617,13 @@ export const testBuy = async ({
       prevBuyerLamports,
       prevTakerBroker,
     }) => {
-      const sig = await buildAndSendTx({ ixs, extraSigners: [buyer] });
+      const sig = await buildAndSendTx({
+        ixs,
+        extraSigners: [buyer],
+        lookupTableAccounts: lookupTableAccount
+          ? [lookupTableAccount]
+          : undefined,
+      });
       console.log("✅ bought", sig);
 
       //nft moved to buyer
