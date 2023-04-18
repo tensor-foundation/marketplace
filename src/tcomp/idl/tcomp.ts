@@ -697,6 +697,11 @@ export type Tcomp = {
       "code": 6008,
       "name": "FailedLeafVerification",
       "msg": "failed leaf verification"
+    },
+    {
+      "code": 6009,
+      "name": "OfferExpired",
+      "msg": "offer has expired"
     }
   ]
 };
@@ -1400,6 +1405,11 @@ export const IDL: Tcomp = {
       "code": 6008,
       "name": "FailedLeafVerification",
       "msg": "failed leaf verification"
+    },
+    {
+      "code": 6009,
+      "name": "OfferExpired",
+      "msg": "offer has expired"
     }
   ]
 };

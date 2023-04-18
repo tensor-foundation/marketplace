@@ -41,6 +41,11 @@ pub struct Buy<'info> {
 
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
+        let list_state = &self.list_state;
+        require!(
+            list_state.expiry >= Clock::get()?.unix_timestamp,
+            TcompError::OfferExpired
+        );
         Ok(())
     }
 }
@@ -103,7 +108,6 @@ pub fn handler<'info>(
     // --------------------------------------- sol transfers
 
     // TODO: handle currency
-    // TODO: handle expiry
     // TODO: handle private taker
 
     // Pay fees

@@ -20,4 +20,6 @@ pub enum TcompError {
     InsufficientBalance = 7,
     #[msg("failed leaf verification")]
     FailedLeafVerification = 8,
+    #[msg("offer has expired")]
+    OfferExpired = 9,
 }
