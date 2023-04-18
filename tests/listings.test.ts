@@ -6,6 +6,7 @@ import chaiAsPromised from "chai-as-promised";
 import { tcompSdk, updateLUT } from "./utils";
 import { findTreeAuthorityPda } from "../src";
 import { waitMS } from "@tensor-hq/tensor-common";
+import { makeNTraders } from "./account";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -117,6 +118,52 @@ describe("tcomp", () => {
           canopyDepth,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
+    }
+  });
+
+  it("lists + buys (private taker)", async () => {
+    let canopyDepth = 10;
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
+    const [traderC] = await makeNTraders(1);
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      await testList({
+        amount: new BN(LAMPORTS_PER_SOL),
+        index,
+        memTree,
+        merkleTree,
+        metadata,
+        owner: traderA,
+        canopyDepth,
+        privateTaker: traderB.publicKey,
+      });
+
+      await waitMS(3000);
+
+      await expect(
+        testBuy({
+          index,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata,
+          buyer: traderC,
+          owner: traderA.publicKey,
+          canopyDepth,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
+
+      await testBuy({
+        index,
+        maxAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        buyer: traderB,
+        owner: traderA.publicKey,
+        canopyDepth,
+      });
     }
   });
 });

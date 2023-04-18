@@ -702,6 +702,11 @@ export type Tcomp = {
       "code": 6009,
       "name": "OfferExpired",
       "msg": "offer has expired"
+    },
+    {
+      "code": 6010,
+      "name": "TakerNotAllowed",
+      "msg": "taker not allowed"
     }
   ]
 };
@@ -1410,6 +1415,11 @@ export const IDL: Tcomp = {
       "code": 6009,
       "name": "OfferExpired",
       "msg": "offer has expired"
+    },
+    {
+      "code": 6010,
+      "name": "TakerNotAllowed",
+      "msg": "taker not allowed"
     }
   ]
 };

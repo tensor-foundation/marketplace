@@ -3,7 +3,7 @@
     "build": "anchor build && bash scripts/cp_idl.sh",
     "build:test": "anchor build -- --features testing && bash scripts/cp_idl.sh",
     "test": "bash scripts/full_test.sh",
-    "test:s": "bash scripts/full_test_skip.sh",
+    "test:ss": "bash scripts/full_test_skip_submodules.sh",
     "fast-test": "anchor test --skip-build -- --features testing",
     "push": "git push --atomic",
     "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"

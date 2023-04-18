@@ -42,10 +42,18 @@ pub struct Buy<'info> {
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+        // Verify expiry
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::OfferExpired
         );
+        // Verify private taker
+        if let Some(private_taker) = list_state.private_taker {
+            require!(
+                private_taker == self.new_leaf_owner.key(),
+                TcompError::TakerNotAllowed
+            );
+        }
         Ok(())
     }
 }
@@ -108,7 +116,6 @@ pub fn handler<'info>(
     // --------------------------------------- sol transfers
 
     // TODO: handle currency
-    // TODO: handle private taker
 
     // Pay fees
     ctx.accounts

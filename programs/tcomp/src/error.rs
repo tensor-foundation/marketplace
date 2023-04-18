@@ -22,4 +22,6 @@ pub enum TcompError {
     FailedLeafVerification = 8,
     #[msg("offer has expired")]
     OfferExpired = 9,
+    #[msg("taker not allowed")]
+    TakerNotAllowed = 10,
 }

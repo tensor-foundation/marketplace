@@ -1,7 +1,7 @@
 #!/bin/bash
 #! skips submodule - faster for local testing where you don't need to rebuild them constantly
 
-echo "SKIP SUBMODULE (run without :s if unintentional)"
+echo "SKIP SUBMODULES (run without :s if unintentional)"
 
 set -e
 
