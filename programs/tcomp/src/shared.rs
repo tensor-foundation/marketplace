@@ -1,10 +1,11 @@
 use spl_account_compression::{
     _merkle_tree_apply_fn, _merkle_tree_depth_size_apply_fn,
     canopy::fill_in_proof_from_canopy,
-    load_bytes, merkle_tree_apply_fn,
+    merkle_tree_apply_fn,
     state::{
         merkle_tree_get_size, ConcurrentMerkleTreeHeader, CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1,
     },
+    zero_copy::ZeroCopy,
     AccountCompressionError, ChangeLogEvent, ConcurrentMerkleTree,
 };
 
