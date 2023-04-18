@@ -1,9 +1,11 @@
 use spl_account_compression::{
+    _merkle_tree_apply_fn, _merkle_tree_depth_size_apply_fn,
     canopy::fill_in_proof_from_canopy,
-    merkle_tree_apply_fn,
+    load_bytes, merkle_tree_apply_fn,
     state::{
         merkle_tree_get_size, ConcurrentMerkleTreeHeader, CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1,
     },
+    AccountCompressionError, ChangeLogEvent, ConcurrentMerkleTree,
 };
 
 use crate::*;
@@ -121,21 +123,18 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
     fill_in_proof_from_canopy(canopy_bytes, header.get_max_depth(), index, &mut proof)?;
     let id = merkle_tree.key();
 
-    // TODO temp to compile
-    Ok((asset_id, creator_hash, data_hash, mplex_metadata))
-
-    // return match merkle_tree_apply_fn!(
-    //     header, id, tree_bytes, prove_leaf, root, leaf, &proof, index
-    // ) {
-    //     Ok(_) => {
-    //         msg!("Leaf Valid");
-    //         Ok((asset_id, creator_hash, data_hash, mplex_metadata))
-    //     }
-    //     Err(e) => {
-    //         msg!("FAILED LEAF VERIFICATION: {:?}", e);
-    //         Err(TcompError::FailedLeafVerification.into())
-    //     }
-    // };
+    return match merkle_tree_apply_fn!(
+        header, id, tree_bytes, prove_leaf, root, leaf, &proof, index
+    ) {
+        Ok(_) => {
+            msg!("Leaf Valid");
+            Ok((asset_id, creator_hash, data_hash, mplex_metadata))
+        }
+        Err(e) => {
+            msg!("FAILED LEAF VERIFICATION: {:?}", e);
+            Err(TcompError::FailedLeafVerification.into())
+        }
+    };
 }
 
 pub struct TransferArgs<'a, 'info> {
