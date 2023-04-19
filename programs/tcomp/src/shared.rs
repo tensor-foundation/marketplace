@@ -100,8 +100,6 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
     // --------------------------------------- from spl_compression/verify_leaf
     // Can't CPI into it because failed CPI calls can't be caught with match
 
-    // TODO: not currently taking into account the canopy
-
     require_eq!(
         *merkle_tree.owner,
         spl_account_compression::id(),
