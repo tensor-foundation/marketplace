@@ -331,6 +331,8 @@ export class TCompSDK {
       isWritable: false,
     }));
 
+    console.log("creators len", creators.length);
+
     const builder = this.program.methods
       .list(
         nonce,
@@ -421,6 +423,9 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
+
+    console.log("creators len", creators.length);
+
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,

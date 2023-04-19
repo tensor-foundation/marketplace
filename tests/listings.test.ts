@@ -17,11 +17,15 @@ describe("tcomp", () => {
     lookupTableAccount = await beforeAllHook();
   });
 
-  // TODO: why does it always fail with the same size (1680)? is there nothing we can do?
+  //each creator costs 35 bytes in total
   it("lists + buys (no canopy - max fits 0 creators)", async () => {
-    for (const nrCreators of [0]) {
+    for (const nrCreators of [0, 2, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({ nrCreators, numMints: 3 });
+        await beforeHook({
+          nrCreators,
+          numMints: 3,
+          depthSizePair: { maxDepth: 5, maxBufferSize: 8 },
+        });
 
       //for this test only, since we're not using the canopy, add tree and authority to the LUT
       const [treeAuthority] = findTreeAuthorityPda({ merkleTree });

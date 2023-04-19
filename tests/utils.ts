@@ -127,6 +127,8 @@ export const buildAndSendTx = async ({
     ));
   }
 
+  console.log("tx len", tx.serialize().length);
+
   try {
     if (debug) opts = { ...opts, commitment: "confirmed" };
     const sig = await provider.connection.sendRawTransaction(
