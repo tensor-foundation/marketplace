@@ -30,6 +30,7 @@ import {
 } from "@solana/web3.js";
 import { TCOMP_ADDR } from "./constants";
 import {
+  computeDataHash,
   getLeafAssetId,
   MetadataArgs,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
@@ -47,6 +48,7 @@ import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
+import { computeCreatorHashPATCHED } from "../../tests/shared";
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
@@ -331,8 +333,6 @@ export class TCompSDK {
       isWritable: false,
     }));
 
-    console.log("creators len", creators.length);
-
     const builder = this.program.methods
       .list(
         nonce,
@@ -370,6 +370,77 @@ export class TCompSDK {
       assetId,
       listState,
       creators,
+      proofPath,
+    };
+  }
+
+  async delist({
+    merkleTree,
+    leafOwner,
+    proof,
+    root,
+    metadata,
+    nonce,
+    index,
+    payer = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
+  }: {
+    merkleTree: PublicKey;
+    leafOwner: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    metadata: MetadataArgs;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
+    payer?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
+  }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const dataHash = computeDataHash(metadata);
+    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
+    const builder = this.program.methods
+      .delist(nonce, index, root, [...dataHash], [...creatorsHash])
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        merkleTree,
+        treeAuthority,
+        owner: leafOwner,
+        listState,
+        payer: payer ?? leafOwner,
+      })
+      .remainingAccounts(proofPath);
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      treeAuthority,
+      assetId,
+      listState,
       proofPath,
     };
   }
@@ -423,8 +494,6 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-
-    console.log("creators len", creators.length);
 
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),

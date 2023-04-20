@@ -250,6 +250,93 @@ export type Tcomp = {
           }
         }
       ]
+    },
+    {
+      "name": "delist",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -960,6 +1047,93 @@ export const IDL: Tcomp = {
           "name": "privateTaker",
           "type": {
             "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delist",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
           }
         }
       ]

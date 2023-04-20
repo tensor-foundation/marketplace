@@ -47,7 +47,7 @@ pub fn handler<'info>(
     // Index i a lowerl level account-compression concept that is used to indicate leaf #
     // Most of the time they are the same, but it's possible that an NFT is decompressed and
     // then put into a new leaf with a different index, but preserves old nonce to preserve asset id
-    // TODO: confirm with metaplex
+    // TODO: doesn't sounds like metaplex themselves know if this might happen, but the distinction stands
     nonce: u64,
     index: u32,
     root: [u8; 32],
@@ -107,8 +107,6 @@ pub fn handler<'info>(
             // This branch means we're editing
             let list_state = &ctx.accounts.list_state;
 
-            // TODO: write a test for these
-
             // Make sure list state already exists
             require!(list_state.version != 0, TcompError::BadListState);
 
@@ -116,10 +114,6 @@ pub fn handler<'info>(
             require!(ctx.accounts.leaf_owner.is_signer, TcompError::BadOwner);
             require!(
                 list_state.owner == *ctx.accounts.leaf_owner.key,
-                TcompError::BadOwner
-            );
-            require!(
-                list_state.owner == *ctx.accounts.leaf_delegate.key,
                 TcompError::BadOwner
             );
 
@@ -131,7 +125,7 @@ pub fn handler<'info>(
                 metadata,
                 merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
                 leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
-                leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+                leaf_delegate: &ctx.accounts.list_state.to_account_info(),
                 compression_program: &ctx.accounts.compression_program.to_account_info(),
                 creator_accounts,
                 proof_accounts,

@@ -91,4 +91,15 @@ pub mod tcomp {
             private_taker,
         )
     }
+
+    pub fn delist<'info>(
+        ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
+    ) -> Result<()> {
+        instructions::delist::handler(ctx, nonce, index, root, data_hash, creator_hash)
+    }
 }

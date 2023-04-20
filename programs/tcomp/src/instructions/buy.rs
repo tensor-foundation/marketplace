@@ -13,6 +13,7 @@ pub struct Buy<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
+    /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut, close = owner,
         seeds=[
             b"list_state".as_ref(),
@@ -25,7 +26,7 @@ pub struct Buy<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
-    /// CHECK: has_one = owner
+    /// CHECK: has_one = owner on list_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     // Acts purely as a fee account
@@ -155,8 +156,8 @@ pub fn handler<'info>(
         log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
         compression_program: &ctx.accounts.compression_program.to_account_info(),
         system_program: &ctx.accounts.system_program.to_account_info(),
-        proof_accounts,
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
+        proof_accounts,
         signer_bid: None,
         signer_listing: Some(&ctx.accounts.list_state),
     })?;

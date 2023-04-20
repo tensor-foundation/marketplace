@@ -474,7 +474,7 @@ export const testList = async ({
   canopyDepth?: number;
   lookupTableAccount?: AddressLookupTableAccount;
 }) => {
-  let proof = memTree.getProof(
+  const proof = memTree.getProof(
     index,
     false,
     DEFAULT_DEPTH_SIZE.maxDepth,
@@ -544,6 +544,78 @@ export const testList = async ({
     metadata,
     owner: listState,
     delegate: listState,
+  });
+  memTree.updateLeaf(index, leaf);
+};
+
+export const testDelist = async ({
+  memTree,
+  index,
+  owner,
+  merkleTree,
+  metadata,
+  canopyDepth = 0,
+  lookupTableAccount,
+}: {
+  memTree: MerkleTree;
+  index: number;
+  owner: Keypair;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  canopyDepth?: number;
+  lookupTableAccount?: AddressLookupTableAccount;
+}) => {
+  const proof = memTree.getProof(
+    index,
+    false,
+    DEFAULT_DEPTH_SIZE.maxDepth,
+    false
+  );
+
+  const {
+    tx: { ixs },
+    assetId,
+  } = await tcompSdk.delist({
+    proof: proof.proof,
+    leafOwner: owner.publicKey,
+    payer: owner.publicKey,
+    merkleTree,
+    metadata,
+    root: [...proof.root],
+    index,
+    canopyDepth,
+  });
+
+  const sig = await buildAndSendTx({
+    ixs,
+    extraSigners: [owner],
+    lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
+  });
+  console.log("✅ delisted", sig);
+
+  //nft moved back to wner
+  await verifyCNft({
+    index,
+    merkleTree,
+    metadata,
+    owner: owner.publicKey,
+    delegate: owner.publicKey,
+    proof: proof.proof,
+  });
+
+  //listing closed
+  const [listState, bump] = findListStatePda({ assetId });
+  await expect(tcompSdk.fetchListState(listState)).to.be.rejectedWith(
+    ACCT_NOT_EXISTS_ERR
+  );
+
+  //update mem tree
+  const { leaf } = await makeLeaf({
+    index,
+    merkleTree,
+    metadata,
+    owner: owner.publicKey,
+    delegate: owner.publicKey,
   });
   memTree.updateLeaf(index, leaf);
 };
