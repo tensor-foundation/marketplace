@@ -358,12 +358,22 @@ export class TCompSDK {
       })
       .remainingAccounts([...creators, ...proofPath]);
 
+    //because EITHER of the two has to sign, mark one of them as signer
+    const ix = await builder.instruction();
+    if (!!leafDelegate && !leafDelegate.equals(leafOwner)) {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(leafDelegate));
+      ix["keys"][i]["isSigner"] = true;
+    } else {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(leafOwner));
+      ix["keys"][i]["isSigner"] = true;
+    }
+
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs: [...computeIxs, ix],
         extraSigners: [],
       },
       treeAuthority,
@@ -382,7 +392,6 @@ export class TCompSDK {
     metadata,
     nonce,
     index,
-    payer = null,
     compute = DEFAULT_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
@@ -395,7 +404,6 @@ export class TCompSDK {
     //in most cases nonce == index and doesn't need to passed in separately
     nonce?: BN;
     index: number;
-    payer?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
@@ -426,7 +434,6 @@ export class TCompSDK {
         treeAuthority,
         owner: leafOwner,
         listState,
-        payer: payer ?? leafOwner,
       })
       .remainingAccounts(proofPath);
 
@@ -500,27 +507,6 @@ export class TCompSDK {
       isSigner: false,
       isWritable: false,
     }));
-
-    console.log(
-      JSON.stringify(
-        {
-          logWrapper: SPL_NOOP_PROGRAM_ID,
-          compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-          merkleTree,
-          treeAuthority,
-          payer: payer ?? buyer,
-          owner,
-          listState,
-          buyer,
-          tcomp,
-          takerBroker: takerBroker ?? tcomp,
-        },
-        null,
-        4
-      )
-    );
 
     const builder = this.program.methods
       .buy(

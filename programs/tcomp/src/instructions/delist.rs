@@ -5,8 +5,7 @@ use crate::*;
 pub struct Delist<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
-    /// CHECK: has_one = owner on list_state
-    pub owner: UncheckedAccount<'info>,
+    pub owner: Signer<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
@@ -24,8 +23,6 @@ pub struct Delist<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
-    #[account(mut)]
-    pub payer: Signer<'info>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
@@ -43,6 +40,7 @@ pub fn handler<'info>(
     index: u32,
     root: [u8; 32],
     // @TODO: 0xrwu is there a security concern here I'm not thinking about, with passing in directly hashed data?
+    //   benefit is that it's smoler than passing in raw creators / metadata
     data_hash: [u8; 32],
     creator_hash: [u8; 32],
 ) -> Result<()> {

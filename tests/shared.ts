@@ -8,6 +8,7 @@ import {
 } from "@solana/web3.js";
 import {
   createCreateTreeInstruction,
+  createDelegateInstruction,
   createMintV1Instruction,
   getLeafAssetId,
   MetadataArgs,
@@ -134,7 +135,7 @@ export const mintCNft = async ({
 }) => {
   const owner = treeOwner.publicKey;
 
-  const [treeAuthority] = await findTreeAuthorityPda({ merkleTree });
+  const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
 
   const mintIx = createMintV1Instruction(
     {
@@ -158,6 +159,73 @@ export const mintCNft = async ({
   });
 
   console.log("✅ minted", sig);
+};
+
+export const delegateCNft = async ({
+  memTree,
+  index,
+  owner,
+  newDelegate,
+  merkleTree,
+  metadata,
+  canopyDepth = 0,
+  depthSizePair = DEFAULT_DEPTH_SIZE,
+}: {
+  memTree: MerkleTree;
+  index: number;
+  owner: Keypair;
+  newDelegate?: PublicKey;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  canopyDepth?: number;
+  depthSizePair?: ValidDepthSizePair;
+}) => {
+  const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+  const proof = memTree.getProof(index, false, depthSizePair.maxDepth, true);
+  const dataHash = computeDataHash(metadata);
+  const creatorHash = computeCreatorHashPATCHED(metadata.creators);
+  const delegateIx = createDelegateInstruction(
+    {
+      merkleTree,
+      treeAuthority,
+      leafOwner: owner.publicKey,
+      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      logWrapper: SPL_NOOP_PROGRAM_ID,
+      newLeafDelegate: newDelegate,
+      previousLeafDelegate: owner.publicKey,
+      anchorRemainingAccounts: proof.proof
+        .slice(0, proof.proof.length - canopyDepth)
+        .map((b) => ({
+          pubkey: new PublicKey(b),
+          isWritable: false,
+          isSigner: false,
+        })),
+    },
+    {
+      root: [...proof.root],
+      dataHash: [...dataHash],
+      creatorHash: [...creatorHash],
+      index,
+      nonce: new BN(index),
+    }
+  );
+
+  const sig = await buildAndSendTx({
+    ixs: [delegateIx],
+    extraSigners: [owner],
+  });
+
+  console.log("✅ delegated", sig);
+
+  //verify the new delegate
+  await verifyCNft({
+    index,
+    merkleTree,
+    metadata,
+    owner: owner.publicKey,
+    delegate: newDelegate,
+    proof: proof.proof,
+  });
 };
 
 // TODO: temp patch over metaplex's code
@@ -450,7 +518,6 @@ export const testList = async ({
   memTree,
   index,
   owner,
-  // TODO write a test when delegaete is set
   leafDelegate,
   merkleTree,
   metadata,
@@ -460,11 +527,12 @@ export const testList = async ({
   privateTaker,
   canopyDepth = 0,
   lookupTableAccount,
+  payer = owner,
 }: {
   memTree: MerkleTree;
   index: number;
   owner: Keypair;
-  leafDelegate?: PublicKey;
+  leafDelegate?: Keypair;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   amount: BN;
@@ -473,6 +541,7 @@ export const testList = async ({
   privateTaker?: PublicKey;
   canopyDepth?: number;
   lookupTableAccount?: AddressLookupTableAccount;
+  payer?: Keypair;
 }) => {
   const proof = memTree.getProof(
     index,
@@ -487,7 +556,7 @@ export const testList = async ({
   } = await tcompSdk.list({
     proof: proof.proof,
     leafOwner: owner.publicKey,
-    payer: owner.publicKey,
+    payer: payer.publicKey,
     merkleTree,
     metadata,
     root: [...proof.root],
@@ -495,14 +564,15 @@ export const testList = async ({
     amount,
     currency,
     expireInSec,
-    leafDelegate,
+    leafDelegate: leafDelegate?.publicKey,
     privateTaker,
     canopyDepth,
   });
 
   const sig = await buildAndSendTx({
     ixs,
-    extraSigners: [owner],
+    //if leaf delegate passed in, then skip the owner
+    extraSigners: [leafDelegate ?? owner, payer],
     lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
   });
   console.log("✅ listed", sig);
@@ -578,7 +648,6 @@ export const testDelist = async ({
   } = await tcompSdk.delist({
     proof: proof.proof,
     leafOwner: owner.publicKey,
-    payer: owner.publicKey,
     merkleTree,
     metadata,
     root: [...proof.root],
@@ -629,12 +698,12 @@ export const testBuy = async ({
   metadata,
   maxAmount,
   currency,
-  // TODO maybe write a test for taker broker
   takerBroker,
   optionalRoyaltyPct,
   programmable = false,
   lookupTableAccount,
   canopyDepth = 0,
+  payer = buyer,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -649,6 +718,7 @@ export const testBuy = async ({
   programmable?: boolean;
   lookupTableAccount?: AddressLookupTableAccount;
   canopyDepth?: number;
+  payer?: Keypair;
 }) => {
   let proof = memTree.getProof(
     index,
@@ -664,6 +734,7 @@ export const testBuy = async ({
   } = await tcompSdk.buy({
     proof: proof.proof,
     buyer: buyer.publicKey,
+    payer: payer.publicKey,
     merkleTree,
     metadata,
     root: [...proof.root],
@@ -680,7 +751,7 @@ export const testBuy = async ({
     {
       prevFeeAccLamports: tcomp,
       prevSellerLamports: owner,
-      prevBuyerLamports: buyer.publicKey,
+      prevBuyerLamports: payer.publicKey,
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
     },
     async ({
@@ -691,7 +762,7 @@ export const testBuy = async ({
     }) => {
       const sig = await buildAndSendTx({
         ixs,
-        extraSigners: [buyer],
+        extraSigners: [buyer, payer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -756,7 +827,7 @@ export const testBuy = async ({
       }
 
       //buyer paid
-      const currBuyerLamports = await getLamports(buyer.publicKey);
+      const currBuyerLamports = await getLamports(payer.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
       if (!programmable) {
         expect(currBuyerLamports! - prevBuyerLamports!).eq(

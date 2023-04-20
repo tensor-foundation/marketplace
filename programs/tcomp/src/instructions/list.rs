@@ -78,7 +78,6 @@ pub fn handler<'info>(
     let asset_id_;
 
     // TODO: 0xrwu - do you see any security issues with this?
-    // TODO: write tests with both owner and delegate as signer
     match verif_result {
         Ok((asset_id, creator_hash, data_hash, _)) => {
             // This branch means we're listing for the first time

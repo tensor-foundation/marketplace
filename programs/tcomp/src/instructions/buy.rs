@@ -89,7 +89,8 @@ pub fn handler<'info>(
         .remaining_accounts
         .split_at(metadata.creator_shares.len());
 
-    // TODO: 0xrwu - does this make sense?
+    // TODO: 0xrwu - does this make sense? my thinking is that we HAVE TO verify instead of letting them passin data/creator hashes
+    //  otherwise they pass in any creators (themselves) and send royalties there
     // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
     let (asset_id, creator_hash, data_hash, mplex_metadata) = verify_cnft(VerifyArgs {
         root,
@@ -116,7 +117,7 @@ pub fn handler<'info>(
 
     // --------------------------------------- sol transfers
 
-    // TODO: handle currency
+    // TODO: handle currency (not v1)
 
     // Pay fees
     ctx.accounts

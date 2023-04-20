@@ -262,7 +262,7 @@ export type Tcomp = {
         {
           "name": "owner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "merkleTree",
@@ -293,11 +293,6 @@ export type Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         }
       ],
       "args": [
@@ -1062,7 +1057,7 @@ export const IDL: Tcomp = {
         {
           "name": "owner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "merkleTree",
@@ -1093,11 +1088,6 @@ export const IDL: Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         }
       ],
       "args": [

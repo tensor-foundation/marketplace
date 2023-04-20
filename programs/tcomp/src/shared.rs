@@ -204,15 +204,31 @@ pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
     };
     let mut transfer_account_metas = transfer_accounts.to_account_metas(Some(true));
     for acct in transfer_account_metas.iter_mut() {
-        if acct.pubkey == leaf_owner.key() {
+        if acct.pubkey == leaf_delegate.key() && leaf_delegate.is_signer {
+            (*acct).is_signer = true;
+        }
+        if acct.pubkey == leaf_owner.key() && (leaf_owner.is_signer) {
+            (*acct).is_signer = true;
+        }
+        //for cpi to work
+        if let Some(signer_listing) = signer_listing {
+            if acct.pubkey == signer_listing.key() {
+                (*acct).is_signer = true;
+            }
+        }
+        if let Some(signer_bid) = signer_bid {
+            if acct.pubkey == signer_bid.key() {
+                (*acct).is_signer = true;
+            }
+        }
+
+        if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
             (*acct).is_signer = true;
         }
     }
     for node in proof_accounts {
         transfer_account_metas.push(AccountMeta::new_readonly(*node.key, false));
     }
-
-    // TODO: not currently taking into account the canopy
 
     let mut transfer_cpi_account_infos = transfer_accounts.to_account_infos();
     transfer_cpi_account_infos.extend_from_slice(proof_accounts);
@@ -367,8 +383,6 @@ pub fn transfer_creators_fee<'b, 'info>(
 
         let pct = creator.share as u64;
         let creator_fee = unwrap_checked!({ pct.checked_mul(creator_fee)?.checked_div(100) });
-
-        // TODO: we'll have to seed tcomp with some sol as well to prevent this error
 
         // Prevents InsufficientFundsForRent, where creator acc doesn't have enough fee
         // https://explorer.solana.com/tx/vY5nYA95ELVrs9SU5u7sfU2ucHj4CRd3dMCi1gWrY7MSCBYQLiPqzABj9m8VuvTLGHb9vmhGaGY7mkqPa1NLAFE
