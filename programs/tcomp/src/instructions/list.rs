@@ -6,9 +6,9 @@ pub struct List<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
-    pub leaf_owner: UncheckedAccount<'info>,
+    pub owner: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or owner will sign)
-    pub leaf_delegate: UncheckedAccount<'info>,
+    pub delegate: UncheckedAccount<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
@@ -62,8 +62,8 @@ pub fn handler<'info>(
         data_hash,
         creator_hash,
         tree_authority: &ctx.accounts.tree_authority.to_account_info(),
-        leaf_owner: &ctx.accounts.leaf_owner.to_account_info(),
-        leaf_delegate: &ctx.accounts.leaf_delegate.to_account_info(),
+        leaf_owner: &ctx.accounts.owner.to_account_info(),
+        leaf_delegate: &ctx.accounts.delegate.to_account_info(),
         new_leaf_owner: &ctx.accounts.list_state.to_account_info(),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
@@ -81,7 +81,7 @@ pub fn handler<'info>(
     list_state.version = CURRENT_TCOMP_VERSION;
     list_state.bump = [unwrap_bump!(ctx, "list_state")];
     list_state.asset_id = asset_id;
-    list_state.owner = ctx.accounts.leaf_owner.key();
+    list_state.owner = ctx.accounts.owner.key();
     list_state.amount = amount;
     list_state.currency = currency;
     list_state.private_taker = private_taker;
@@ -96,7 +96,7 @@ pub fn handler<'info>(
     list_state.expiry = expiry;
 
     emit!(MakeEvent {
-        maker: *ctx.accounts.leaf_owner.key,
+        maker: *ctx.accounts.owner.key,
         asset_id,
         amount,
         currency,

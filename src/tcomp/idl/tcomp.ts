@@ -52,7 +52,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "newLeafOwner",
+          "name": "buyer",
           "isMut": false,
           "isSigner": true
         },
@@ -158,12 +158,12 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "leafOwner",
+          "name": "owner",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "leafDelegate",
+          "name": "delegate",
           "isMut": false,
           "isSigner": false
         },
@@ -907,7 +907,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "newLeafOwner",
+          "name": "buyer",
           "isMut": false,
           "isSigner": true
         },
@@ -1013,12 +1013,12 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "leafOwner",
+          "name": "owner",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "leafDelegate",
+          "name": "delegate",
           "isMut": false,
           "isSigner": false
         },

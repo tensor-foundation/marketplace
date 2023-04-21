@@ -5,7 +5,7 @@ use crate::*;
 pub struct Buy<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
-    pub new_leaf_owner: Signer<'info>,
+    pub buyer: Signer<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
@@ -51,7 +51,7 @@ impl<'info> Validate<'info> for Buy<'info> {
         // Verify private taker
         if let Some(private_taker) = list_state.private_taker {
             require!(
-                private_taker == self.new_leaf_owner.key(),
+                private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
@@ -152,7 +152,7 @@ pub fn handler<'info>(
         tree_authority: &ctx.accounts.tree_authority.to_account_info(),
         leaf_owner: &ctx.accounts.list_state.to_account_info(),
         leaf_delegate: &ctx.accounts.list_state.to_account_info(),
-        new_leaf_owner: &ctx.accounts.new_leaf_owner.to_account_info(),
+        new_leaf_owner: &ctx.accounts.buyer.to_account_info(),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
         compression_program: &ctx.accounts.compression_program.to_account_info(),

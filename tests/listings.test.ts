@@ -216,7 +216,7 @@ describe("tcomp", () => {
           merkleTree,
           metadata,
           owner: traderA,
-          leafDelegate: delegate, ///<-- trader C signs
+          delegate: delegate, ///<-- trader C signs
           canopyDepth,
           payer, //<-- separate payer
         });

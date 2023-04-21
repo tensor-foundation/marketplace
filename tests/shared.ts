@@ -518,7 +518,7 @@ export const testList = async ({
   memTree,
   index,
   owner,
-  leafDelegate,
+  delegate,
   merkleTree,
   metadata,
   amount,
@@ -532,7 +532,7 @@ export const testList = async ({
   memTree: MerkleTree;
   index: number;
   owner: Keypair;
-  leafDelegate?: Keypair;
+  delegate?: Keypair;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   amount: BN;
@@ -564,7 +564,7 @@ export const testList = async ({
     amount,
     currency,
     expireInSec,
-    delegate: leafDelegate?.publicKey,
+    delegate: delegate?.publicKey,
     privateTaker,
     canopyDepth,
   });
@@ -572,7 +572,7 @@ export const testList = async ({
   const sig = await buildAndSendTx({
     ixs,
     //if leaf delegate passed in, then skip the owner
-    extraSigners: [leafDelegate ?? owner, payer],
+    extraSigners: [delegate ?? owner, payer],
     lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
   });
   console.log("✅ listed", sig);

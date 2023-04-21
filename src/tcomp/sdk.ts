@@ -351,8 +351,8 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        leafDelegate: delegate,
-        leafOwner: owner,
+        delegate,
+        owner,
         listState,
         payer: payer ?? owner,
       })
@@ -385,7 +385,6 @@ export class TCompSDK {
 
   async edit({
     merkleTree,
-    // TODO standartize the names (eg owner not leafOwner everywhere)
     owner,
     nonce,
     amount,
@@ -477,7 +476,7 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        owner: owner,
+        owner,
         listState,
       })
       .remainingAccounts(proofPath);
@@ -570,7 +569,7 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        newLeafOwner: buyer,
+        buyer,
         payer: payer ?? buyer,
         owner,
         listState,
