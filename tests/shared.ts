@@ -555,7 +555,7 @@ export const testList = async ({
     assetId,
   } = await tcompSdk.list({
     proof: proof.proof,
-    leafOwner: owner.publicKey,
+    owner: owner.publicKey,
     payer: payer.publicKey,
     merkleTree,
     metadata,
@@ -564,7 +564,7 @@ export const testList = async ({
     amount,
     currency,
     expireInSec,
-    leafDelegate: leafDelegate?.publicKey,
+    delegate: leafDelegate?.publicKey,
     privateTaker,
     canopyDepth,
   });
@@ -618,6 +618,59 @@ export const testList = async ({
   memTree.updateLeaf(index, leaf);
 };
 
+export const testEdit = async ({
+  index,
+  owner,
+  merkleTree,
+  amount,
+  currency,
+  expireInSec,
+  privateTaker,
+}: {
+  index: number;
+  owner: Keypair;
+  merkleTree: PublicKey;
+  amount: BN;
+  currency?: PublicKey;
+  expireInSec?: BN;
+  privateTaker?: PublicKey;
+}) => {
+  const {
+    tx: { ixs },
+    listState,
+    assetId,
+  } = await tcompSdk.edit({
+    owner: owner.publicKey,
+    merkleTree,
+    nonce: new BN(index),
+    amount,
+    currency,
+    expireInSec,
+    privateTaker,
+  });
+
+  const sig = await buildAndSendTx({
+    ixs,
+    extraSigners: [owner],
+  });
+  console.log("✅ edited", sig);
+
+  const listStateAcc = await tcompSdk.fetchListState(listState);
+  expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
+  if (!isNullLike(currency)) {
+    expect(listStateAcc.currency.toString()).to.eq(currency.toString());
+  }
+  if (!isNullLike(expireInSec)) {
+    expect(listStateAcc.expiry.toNumber()).to.approximately(
+      +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
+      MINUTES
+    );
+  }
+  if (!isNullLike(privateTaker)) {
+    expect(listStateAcc.privateTaker.toString()).to.eq(privateTaker.toString());
+  }
+};
+
 export const testDelist = async ({
   memTree,
   index,
@@ -647,7 +700,7 @@ export const testDelist = async ({
     assetId,
   } = await tcompSdk.delist({
     proof: proof.proof,
-    leafOwner: owner.publicKey,
+    owner: owner.publicKey,
     merkleTree,
     metadata,
     root: [...proof.root],

@@ -14,11 +14,11 @@ import {
   BN,
   BorshCoder,
   Coder,
+  Event,
   EventParser,
+  Instruction,
   Program,
   Provider,
-  Event,
-  Instruction,
 } from "@project-serum/anchor";
 import {
   AccountInfo,
@@ -49,6 +49,7 @@ import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/i
 import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
 import { computeCreatorHashPATCHED } from "../../tests/shared";
+
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
@@ -282,8 +283,8 @@ export class TCompSDK {
 
   async list({
     merkleTree,
-    leafOwner,
-    leafDelegate = leafOwner,
+    owner,
+    delegate = owner,
     proof,
     root,
     metadata,
@@ -299,8 +300,8 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
-    leafOwner: PublicKey;
-    leafDelegate?: PublicKey;
+    owner: PublicKey;
+    delegate?: PublicKey;
     proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
@@ -322,23 +323,22 @@ export class TCompSDK {
     const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
-    let creators = metadata.creators.map((c) => ({
-      pubkey: c.address,
-      isSigner: false,
-      isWritable: true,
-    }));
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
     }));
 
+    const dataHash = computeDataHash(metadata);
+    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
     const builder = this.program.methods
       .list(
         nonce,
         index,
         root,
-        castMetadata(metadata),
+        [...dataHash],
+        [...creatorsHash],
         amount,
         expireInSec,
         currency,
@@ -351,20 +351,20 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        leafDelegate,
-        leafOwner,
+        leafDelegate: delegate,
+        leafOwner: owner,
         listState,
-        payer: payer ?? leafOwner,
+        payer: payer ?? owner,
       })
-      .remainingAccounts([...creators, ...proofPath]);
+      .remainingAccounts(proofPath);
 
     //because EITHER of the two has to sign, mark one of them as signer
     const ix = await builder.instruction();
-    if (!!leafDelegate && !leafDelegate.equals(leafOwner)) {
-      const i = ix.keys.findIndex((k) => k.pubkey.equals(leafDelegate));
+    if (!!delegate && !delegate.equals(owner)) {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(delegate));
       ix["keys"][i]["isSigner"] = true;
     } else {
-      const i = ix.keys.findIndex((k) => k.pubkey.equals(leafOwner));
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(owner));
       ix["keys"][i]["isSigner"] = true;
     }
 
@@ -379,14 +379,59 @@ export class TCompSDK {
       treeAuthority,
       assetId,
       listState,
-      creators,
       proofPath,
+    };
+  }
+
+  async edit({
+    merkleTree,
+    // TODO standartize the names (eg owner not leafOwner everywhere)
+    owner,
+    nonce,
+    amount,
+    expireInSec = null,
+    currency = null,
+    privateTaker = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+  }: {
+    merkleTree: PublicKey;
+    owner: PublicKey;
+    nonce: BN;
+    amount: BN;
+    expireInSec?: BN | null;
+    currency?: PublicKey | null;
+    privateTaker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+  }) {
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+
+    const builder = this.program.methods
+      .edit(nonce, amount, expireInSec, currency, privateTaker)
+      .accounts({
+        merkleTree,
+        owner,
+        listState,
+      });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      assetId,
+      listState,
     };
   }
 
   async delist({
     merkleTree,
-    leafOwner,
+    owner,
     proof,
     root,
     metadata,
@@ -397,7 +442,7 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
-    leafOwner: PublicKey;
+    owner: PublicKey;
     proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
@@ -432,7 +477,7 @@ export class TCompSDK {
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
         merkleTree,
         treeAuthority,
-        owner: leafOwner,
+        owner: owner,
         listState,
       })
       .remainingAccounts(proofPath);
@@ -471,7 +516,7 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
-    leafDelegate?: PublicKey;
+    delegate?: PublicKey;
     proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;

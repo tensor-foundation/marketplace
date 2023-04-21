@@ -222,9 +222,21 @@ export type Tcomp = {
           }
         },
         {
-          "name": "metadata",
+          "name": "dataHash",
           "type": {
-            "defined": "TMetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
           }
         },
         {
@@ -329,6 +341,54 @@ export type Tcomp = {
               "u8",
               32
             ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "edit",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]
@@ -1017,9 +1077,21 @@ export const IDL: Tcomp = {
           }
         },
         {
-          "name": "metadata",
+          "name": "dataHash",
           "type": {
-            "defined": "TMetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
           }
         },
         {
@@ -1124,6 +1196,54 @@ export const IDL: Tcomp = {
               "u8",
               32
             ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "edit",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]

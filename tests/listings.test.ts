@@ -6,11 +6,12 @@ import {
   delegateCNft,
   testBuy,
   testDelist,
+  testEdit,
   testList,
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { HAS_ONE_ERR, tcompSdk } from "./utils";
+import { ALRADY_IN_USE_ERR, HAS_ONE_ERR, tcompSdk } from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
 
@@ -33,7 +34,7 @@ describe("tcomp", () => {
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //list 1st time
+        //list
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
@@ -43,15 +44,24 @@ describe("tcomp", () => {
           owner: traderA,
           lookupTableAccount,
         });
-        //relist at a different price (higher)
-        await testList({
+        //can't list again
+        await expect(
+          testList({
+            amount: new BN(LAMPORTS_PER_SOL),
+            index,
+            memTree,
+            merkleTree,
+            metadata,
+            owner: traderA,
+            lookupTableAccount,
+          })
+        ).to.be.rejectedWith(ALRADY_IN_USE_ERR);
+        //edit the price (up)
+        await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
           index,
-          memTree,
           merkleTree,
-          metadata,
           owner: traderA,
-          lookupTableAccount,
         });
         //try to buy at the wrong price
         await expect(
@@ -66,15 +76,12 @@ describe("tcomp", () => {
             lookupTableAccount,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-        //relist at a different price (lower)
-        await testList({
+        //edit the price again (down)
+        await testEdit({
           amount: new BN(LAMPORTS_PER_SOL / 2),
           index,
-          memTree,
           merkleTree,
-          metadata,
           owner: traderA,
-          lookupTableAccount,
         });
         //buy at the correct price
         await testBuy({
@@ -91,7 +98,7 @@ describe("tcomp", () => {
     }
   });
 
-  it.only("lists + edits + buys (separate payer)", async () => {
+  it("lists + buys (separate payer)", async () => {
     for (const nrCreators of [4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
@@ -135,7 +142,7 @@ describe("tcomp", () => {
         await beforeHook({ nrCreators, numMints: 3, canopyDepth });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //list 1st time
+        //list
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
@@ -146,16 +153,12 @@ describe("tcomp", () => {
           canopyDepth,
           // lookupTableAccount, //<-- intentionally not passing
         });
-        //relist at a different price (higher)
-        await testList({
+        //edit the price (up)
+        await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
           index,
-          memTree,
           merkleTree,
-          metadata,
           owner: traderA,
-          canopyDepth,
-          // lookupTableAccount, //<-- intentionally not passing
         });
         //try to buy at the wrong price
         await expect(
@@ -171,22 +174,10 @@ describe("tcomp", () => {
             // lookupTableAccount, //<-- intentionally not passing
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-        //relist at a different price (lower)
-        await testList({
-          amount: new BN(LAMPORTS_PER_SOL / 2),
-          index,
-          memTree,
-          merkleTree,
-          metadata,
-          owner: traderA,
-          lookupTableAccount,
-          canopyDepth,
-          // lookupTableAccount, //<-- intentionally not passing
-        });
         //buy at the correct price
         await testBuy({
           index,
-          maxAmount: new BN(LAMPORTS_PER_SOL / 2),
+          maxAmount: new BN(LAMPORTS_PER_SOL * 2),
           memTree,
           merkleTree,
           metadata,
@@ -199,7 +190,7 @@ describe("tcomp", () => {
     }
   });
 
-  it("lists + edits + buys (with delegate)", async () => {
+  it("lists + buys (with delegate)", async () => {
     let canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -217,13 +208,6 @@ describe("tcomp", () => {
           canopyDepth,
           newDelegate: delegate.publicKey,
         });
-
-        console.log(
-          traderA.publicKey.toString(),
-          traderB.publicKey.toString(),
-          delegate.publicKey.toString()
-        );
-
         //list using delegate
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
@@ -236,37 +220,10 @@ describe("tcomp", () => {
           canopyDepth,
           payer, //<-- separate payer
         });
-        console.log(1);
-        //can't adjust listing with delegate signing
-        await expect(
-          testList({
-            amount: new BN(LAMPORTS_PER_SOL * 2),
-            index,
-            memTree,
-            merkleTree,
-            metadata,
-            owner: traderA,
-            leafDelegate: delegate, ///<-- trader C signs
-            canopyDepth,
-            payer, //<-- separate payer
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadOwner"));
-        console.log(2);
-        //but can with owner signing
-        await testList({
-          amount: new BN(LAMPORTS_PER_SOL * 2),
-          index,
-          memTree,
-          merkleTree,
-          metadata,
-          owner: traderA,
-          canopyDepth,
-        });
-        console.log(3);
-        //buy works
+        //buy
         await testBuy({
           index,
-          maxAmount: new BN(LAMPORTS_PER_SOL * 2),
+          maxAmount: new BN(LAMPORTS_PER_SOL),
           memTree,
           merkleTree,
           metadata,
@@ -274,7 +231,6 @@ describe("tcomp", () => {
           owner: traderA.publicKey,
           canopyDepth,
         });
-        console.log(4);
       }
     }
   });
@@ -352,14 +308,11 @@ describe("tcomp", () => {
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
       //relists with more expiry
-      await testList({
+      await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
-        memTree,
         merkleTree,
-        metadata,
         owner: traderA,
-        canopyDepth,
         expireInSec: new BN(100),
       });
       //succeeds this time
@@ -428,7 +381,7 @@ describe("tcomp", () => {
     const [traderC] = await makeNTraders(1);
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      //lists 1st time
+      //lists
       await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -453,14 +406,11 @@ describe("tcomp", () => {
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
       //edits the listing to remove private taker
-      await testList({
+      await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
-        memTree,
         merkleTree,
-        metadata,
         owner: traderA,
-        canopyDepth,
         privateTaker: null,
       });
       //succeeds with correct taker

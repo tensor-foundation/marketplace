@@ -58,6 +58,7 @@ export const ACCT_NOT_EXISTS_ERR = "Account does not exist";
 // Vipers IntegerOverflow error.
 export const INTEGER_OVERFLOW_ERR = "0x44f";
 export const HAS_ONE_ERR = "0x7d1";
+export const ALRADY_IN_USE_ERR = "0x0";
 
 export const getLamports = (acct: PublicKey) =>
   _getLamports(TEST_PROVIDER.connection, acct);

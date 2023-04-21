@@ -39,8 +39,6 @@ pub fn handler<'info>(
     nonce: u64,
     index: u32,
     root: [u8; 32],
-    // @TODO: 0xrwu is there a security concern here I'm not thinking about, with passing in directly hashed data?
-    //   benefit is that it's smoler than passing in raw creators / metadata
     data_hash: [u8; 32],
     creator_hash: [u8; 32],
 ) -> Result<()> {

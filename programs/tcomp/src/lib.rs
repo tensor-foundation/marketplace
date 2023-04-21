@@ -73,7 +73,8 @@ pub mod tcomp {
         nonce: u64,
         index: u32,
         root: [u8; 32],
-        metadata: TMetadataArgs,
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -84,7 +85,8 @@ pub mod tcomp {
             nonce,
             index,
             root,
-            metadata,
+            data_hash,
+            creator_hash,
             amount,
             expire_in_sec,
             currency,
@@ -101,5 +103,16 @@ pub mod tcomp {
         creator_hash: [u8; 32],
     ) -> Result<()> {
         instructions::delist::handler(ctx, nonce, index, root, data_hash, creator_hash)
+    }
+
+    pub fn edit<'info>(
+        ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
+        nonce: u64,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::edit::handler(ctx, nonce, amount, expire_in_sec, currency, private_taker)
     }
 }
