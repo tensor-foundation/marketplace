@@ -35,6 +35,7 @@ import {
   AUTH_PROG_ID,
   buildTx,
   buildTxV0,
+  TENSORSWAP_ADDR,
   TMETA_PROG_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
@@ -47,7 +48,6 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { TENSORSWAP_ADDR } from "@tensor-hq/tensorswap-sdk";
 
 // Exporting these here vs in each .test.ts file prevents weird undefined issues.
 export { hexCode, stringifyPKsAndBNs } from "../src";

@@ -16,8 +16,7 @@
     "@solana/spl-account-compression": "^0.1.7",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
-    "@tensor-hq/tensor-common": "^0.9.8",
-    "@tensor-hq/tensorswap-sdk": "^1.8.4",
+    "@tensor-hq/tensor-common": "^0.9.9",
     "bn.js": "^5.2.1"
   },
   "devDependencies": {
