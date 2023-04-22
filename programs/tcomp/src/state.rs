@@ -29,13 +29,13 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
 
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64;
+pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128;
 
 impl ListState {
     pub fn seeds(&self) -> [&[u8]; 3] {
@@ -60,13 +60,13 @@ pub struct BidState {
     pub private_taker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
 
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64;
+pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {
@@ -77,27 +77,4 @@ impl BidState {
             &self.bump,
         ]
     }
-}
-
-// --------------------------------------- events
-
-#[event]
-pub struct MakeEvent {
-    pub maker: Pubkey,
-    pub asset_id: Pubkey,
-    pub amount: u64,
-    pub currency: Option<Pubkey>,
-    pub expiry: i64,
-    pub private_taker: Option<Pubkey>,
-}
-
-#[event]
-pub struct TakeEvent {
-    pub taker: Pubkey,
-    pub asset_id: Pubkey,
-    pub amount: u64,
-    pub tcomp_fee: u64,
-    pub broker_fee: u64,
-    pub creator_fee: u64,
-    pub currency: Option<Pubkey>,
 }

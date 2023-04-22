@@ -95,14 +95,17 @@ pub fn handler<'info>(
     };
     list_state.expiry = expiry;
 
-    emit!(MakeEvent {
-        maker: *ctx.accounts.owner.key,
-        asset_id,
-        amount,
-        currency,
-        expiry,
-        private_taker
-    });
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            currency,
+            expiry,
+            private_taker,
+        }),
+        &ctx.accounts.log_wrapper,
+    )?;
 
     Ok(())
 }

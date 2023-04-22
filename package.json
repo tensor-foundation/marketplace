@@ -9,6 +9,8 @@
     "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"
   },
   "dependencies": {
+    "@metaplex-foundation/beet": "^0.7.1",
+    "@metaplex-foundation/beet-solana": "^0.4.0",
     "@metaplex-foundation/mpl-bubblegum": "^0.6.2",
     "@metaplex-foundation/mpl-token-metadata": "^2.9.1",
     "@msgpack/msgpack": "^3.0.0-beta2",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@metaplex-foundation/js": "^0.18.3",
+    "@metaplex-foundation/solita\n": "^0.19.4",
     "@saberhq/solana-contrib": "^1.14.11",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.4",

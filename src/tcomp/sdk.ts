@@ -14,7 +14,6 @@ import {
   BN,
   BorshCoder,
   Coder,
-  Event,
   EventParser,
   Instruction,
   Program,
@@ -24,6 +23,7 @@ import {
   AccountInfo,
   Commitment,
   ComputeBudgetProgram,
+  Connection,
   PublicKey,
   SystemProgram,
   TransactionResponse,
@@ -44,15 +44,18 @@ import {
 import { Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
 import { isNullLike } from "@tensor-hq/tensor-common";
-import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
 import { computeCreatorHashPATCHED } from "../../tests/shared";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import { MakeEvent, TakeEvent, tcompEventBeet } from "../generated";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
+
+import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 
 export const tcompIDL_latest = IDL_latest;
 export const tcompIDL_latest_EffSlot = 0;
@@ -212,10 +215,6 @@ export type TaggedTCompPdaAnchor =
       account: ListStateAnchor;
     };
 
-export type TCompEventAnchor = Event<(typeof IDL_latest)["events"][number]>;
-export type MakeEventAnchor = Event<(typeof IDL_latest)["events"][0]>;
-export type TakeEventAnchor = Event<(typeof IDL_latest)["events"][1]>;
-
 // ------------- Types for parsed ixs from raw tx.
 
 export type TCompIxName = (typeof IDL_latest)["instructions"][number]["name"];
@@ -223,7 +222,6 @@ export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
 export type ParsedTCompIx = {
   ixIdx: number;
   ix: TCompIx;
-  events: TCompEventAnchor[];
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
   // version of the fields for the corresponding #[Accounts].
   // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
@@ -413,6 +411,7 @@ export class TCompSDK {
         merkleTree,
         owner,
         listState,
+        logWrapper: SPL_NOOP_PROGRAM_ID,
       });
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
@@ -527,7 +526,7 @@ export class TCompSDK {
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
     buyer: PublicKey;
-    payer?: PublicKey;
+    payer?: PublicKey | null;
     takerBroker?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
@@ -623,23 +622,6 @@ export class TCompSDK {
 
   // --------------------------------------- parsing raw txs
 
-  // Stolen from https://github.com/saber-hq/saber-common/blob/4b533d77af8ad5c26f033fd5e69bace96b0e1840/packages/anchor-contrib/src/utils/coder.ts#L171-L185
-  parseEvents = (logs: string[] | undefined | null) => {
-    if (!logs) {
-      return [];
-    }
-
-    const events: TCompEventAnchor[] = [];
-    const parsedLogsIter = this.eventParser.parseLogs(logs ?? []);
-    let parsedEvent = parsedLogsIter.next();
-    while (!parsedEvent.done) {
-      events.push(parsedEvent.value as unknown as TCompEventAnchor);
-      parsedEvent = parsedLogsIter.next();
-    }
-
-    return events;
-  };
-
   parseIxs(tx: TransactionResponse): ParsedTCompIx[] {
     const message = tx.transaction.message;
     const logs = tx.meta?.logMessages;
@@ -675,37 +657,38 @@ export class TCompSDK {
 
       // Events data.
 
-      const events = this.parseEvents(logs);
-      ixs.push({ ixIdx, ix: ix as TCompIx, events, formatted });
+      ixs.push({ ixIdx, ix: ix as TCompIx, formatted });
     });
 
     return ixs;
   }
 
-  getFeeAmount(ix: ParsedTCompIx): BN | null {
-    switch (ix.ix.name) {
-      case "buy":
-        const event = ix.events[0] as TakeEventAnchor | undefined;
-        return event.data.tcompFee
-          .add(event.data.brokerFee)
-          .add(event.data.creatorFee);
-      case "list":
-        return null;
-    }
-  }
+  // TODO
+  // getFeeAmount(ix: ParsedTCompIx): BN | null {
+  //   switch (ix.ix.name) {
+  //     case "buy":
+  //       const event = ix.events[0] as TakeEventAnchor | undefined;
+  //       return event.data.tcompFee
+  //         .add(event.data.brokerFee)
+  //         .add(event.data.creatorFee);
+  //     case "list":
+  //       return null;
+  //   }
+  // }
 
-  getAmount(
-    ix: ParsedTCompIx
-  ): { amount: BN; currency: PublicKey | null } | null {
-    switch (ix.ix.name) {
-      case "list":
-      case "buy":
-        return {
-          amount: (ix.ix.data as TCompPricedIx).amount,
-          currency: (ix.ix.data as TCompPricedIx).currency,
-        };
-    }
-  }
+  // TODO
+  // getAmount(
+  //   ix: ParsedTCompIx
+  // ): { amount: BN; currency: PublicKey | null } | null {
+  //   switch (ix.ix.name) {
+  //     case "list":
+  //     case "buy":
+  //       return {
+  //         amount: (ix.ix.data as TCompPricedIx).amount,
+  //         currency: (ix.ix.data as TCompPricedIx).currency,
+  //       };
+  //   }
+  // }
 
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
   // version of the fields for the corresponding #[Accounts].
@@ -743,4 +726,70 @@ export const getTotalComputeIxs = (
     );
   }
   return finalIxs;
+};
+
+export function deserializeTcompEvent(data: Buffer) {
+  const event = tcompEventBeet.toFixedFromData(data, 0).read(data, 0);
+
+  if (event.__kind == "Taker") {
+    const takeEvent: TakeEvent = event.fields[0];
+    console.log("Taker event detected");
+    return {
+      taker: takeEvent.taker,
+      assetId: takeEvent.assetId,
+      amount: new BN(takeEvent.amount),
+      tcompFee: new BN(takeEvent.tcompFee),
+      brokerFee: new BN(takeEvent.brokerFee),
+      creatorFee: new BN(takeEvent.creatorFee),
+      currency: takeEvent.currency,
+    };
+  } else if (event.__kind == "Maker") {
+    const makeEvent: MakeEvent = event.fields[0];
+    console.log("Maker event detected");
+    return {
+      maker: makeEvent.maker,
+      assetId: makeEvent.assetId,
+      amount: new BN(makeEvent.amount),
+      currency: makeEvent.currency,
+      expiry: new BN(makeEvent.expiry),
+      privateTaker: makeEvent.privateTaker,
+    };
+  } else {
+    throw Error("Unable to decode buffer");
+  }
+}
+
+// TODO: this fn is probably temp
+export const parseTcompEvent = async ({
+  conn,
+  sig,
+  tx,
+}: // ix,
+{
+  sig: string;
+  tx?: TransactionResponse;
+  conn: Connection;
+  // TODO make it work with this
+  // ix: ParsedTCompIx;
+}) => {
+  const tempConn = new Connection(conn.rpcEndpoint, "confirmed");
+  let usedTx =
+    tx ??
+    (await tempConn.getTransaction(sig, { maxSupportedTransactionVersion: 0 }));
+  if (!usedTx) return;
+
+  // TODO okay fuck this this wont work, need to work with ix
+  // Get noop program instruction
+  const accountKeys = usedTx.transaction.message.getAccountKeys();
+  const noopInstruction = usedTx.meta!.innerInstructions![0].instructions[0];
+  const programId = accountKeys.get(noopInstruction.programIdIndex)!;
+  if (!programId.equals(SPL_NOOP_PROGRAM_ID)) {
+    throw Error(
+      `Only inner ix should be a noop, but instead is a ${programId.toBase58()}`
+    );
+  }
+
+  const cpiData = Buffer.from(bs58.decode(noopInstruction.data));
+  const event = deserializeTcompEvent(cpiData);
+  console.log("event", JSON.stringify(event, null, 4));
 };

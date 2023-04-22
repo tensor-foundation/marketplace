@@ -46,6 +46,7 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
   getTotalComputeIxs,
+  parseTcompEvent,
   TAKER_BROKER_PCT,
 } from "../src";
 import { BN } from "@project-serum/anchor";
@@ -174,7 +175,7 @@ export const delegateCNft = async ({
   memTree: MerkleTree;
   index: number;
   owner: Keypair;
-  newDelegate?: PublicKey;
+  newDelegate: PublicKey;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   canopyDepth?: number;
@@ -576,6 +577,7 @@ export const testList = async ({
     lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
   });
   console.log("✅ listed", sig);
+  await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
   //nft moved to escrow
   const [listState, bump] = findListStatePda({ assetId });
@@ -593,7 +595,7 @@ export const testList = async ({
   expect(listStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
   expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
   if (!isNullLike(currency)) {
-    expect(listStateAcc.currency.toString()).to.eq(currency.toString());
+    expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
   }
   if (!isNullLike(expireInSec)) {
     expect(listStateAcc.expiry.toNumber()).to.approximately(
@@ -602,7 +604,9 @@ export const testList = async ({
     );
   }
   if (!isNullLike(privateTaker)) {
-    expect(listStateAcc.privateTaker.toString()).to.eq(privateTaker.toString());
+    expect(listStateAcc.privateTaker!.toString()).to.eq(
+      privateTaker.toString()
+    );
   }
   expect(listStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
   expect(listStateAcc.bump[0]).to.eq(bump);
@@ -633,7 +637,7 @@ export const testEdit = async ({
   amount: BN;
   currency?: PublicKey;
   expireInSec?: BN;
-  privateTaker?: PublicKey;
+  privateTaker?: PublicKey | null;
 }) => {
   const {
     tx: { ixs },
@@ -658,7 +662,7 @@ export const testEdit = async ({
   const listStateAcc = await tcompSdk.fetchListState(listState);
   expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
   if (!isNullLike(currency)) {
-    expect(listStateAcc.currency.toString()).to.eq(currency.toString());
+    expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
   }
   if (!isNullLike(expireInSec)) {
     expect(listStateAcc.expiry.toNumber()).to.approximately(
@@ -667,7 +671,9 @@ export const testEdit = async ({
     );
   }
   if (!isNullLike(privateTaker)) {
-    expect(listStateAcc.privateTaker.toString()).to.eq(privateTaker.toString());
+    expect(listStateAcc.privateTaker!.toString()).to.eq(
+      privateTaker.toString()
+    );
   }
 };
 
@@ -821,6 +827,7 @@ export const testBuy = async ({
           : undefined,
       });
       console.log("✅ bought", sig);
+      await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
       //nft moved to buyer
       await verifyCNft({

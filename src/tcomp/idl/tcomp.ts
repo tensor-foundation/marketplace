@@ -32,20 +32,25 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
     {
       "name": "buy",
       "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
         {
           "name": "treeAuthority",
           "isMut": false,
@@ -93,11 +98,6 @@ export type Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tcomp",
           "isMut": true,
           "isSigner": false
         },
@@ -362,6 +362,11 @@ export type Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -446,7 +451,7 @@ export type Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -510,7 +515,7 @@ export type Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -660,6 +665,80 @@ export type Tcomp = {
       }
     },
     {
+      "name": "MakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "tcompFee",
+            "type": "u64"
+          },
+          {
+            "name": "brokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "creatorFee",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
@@ -709,89 +788,30 @@ export type Tcomp = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "MakeEvent",
-      "fields": [
-        {
-          "name": "maker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        }
-      ]
     },
     {
-      "name": "TakeEvent",
-      "fields": [
-        {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "tcompFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "brokerFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "creatorFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+      "name": "TcompEvent",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Maker",
+            "fields": [
+              {
+                "defined": "MakeEvent"
+              }
+            ]
           },
-          "index": false
-        }
-      ]
+          {
+            "name": "Taker",
+            "fields": [
+              {
+                "defined": "TakeEvent"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -887,20 +907,25 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
     {
       "name": "buy",
       "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
         {
           "name": "treeAuthority",
           "isMut": false,
@@ -948,11 +973,6 @@ export const IDL: Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tcomp",
           "isMut": true,
           "isSigner": false
         },
@@ -1217,6 +1237,11 @@ export const IDL: Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -1301,7 +1326,7 @@ export const IDL: Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -1365,7 +1390,7 @@ export const IDL: Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -1515,6 +1540,80 @@ export const IDL: Tcomp = {
       }
     },
     {
+      "name": "MakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "tcompFee",
+            "type": "u64"
+          },
+          {
+            "name": "brokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "creatorFee",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
@@ -1564,89 +1663,30 @@ export const IDL: Tcomp = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "MakeEvent",
-      "fields": [
-        {
-          "name": "maker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        }
-      ]
     },
     {
-      "name": "TakeEvent",
-      "fields": [
-        {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "tcompFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "brokerFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "creatorFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+      "name": "TcompEvent",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Maker",
+            "fields": [
+              {
+                "defined": "MakeEvent"
+              }
+            ]
           },
-          "index": false
-        }
-      ]
+          {
+            "name": "Taker",
+            "fields": [
+              {
+                "defined": "TakeEvent"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "errors": [

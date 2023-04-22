@@ -3,7 +3,9 @@
 
 pub mod bubblegum_adapter;
 pub mod error;
+pub mod event;
 pub mod instructions;
+pub mod noop;
 pub mod shared;
 pub mod state;
 
@@ -21,6 +23,7 @@ pub use anchor_lang::{
 };
 pub use bubblegum_adapter::*;
 pub use error::*;
+pub use event::*;
 pub use instructions::*;
 pub use mpl_bubblegum::{
     self,
@@ -33,6 +36,7 @@ pub use mpl_bubblegum::{
     },
     utils::get_asset_id,
 };
+pub use noop::*;
 pub use shared::*;
 pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,

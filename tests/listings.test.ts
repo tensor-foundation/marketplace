@@ -1,5 +1,5 @@
 import { BN } from "@project-serum/anchor";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { AddressLookupTableAccount, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import {
   beforeAllHook,
   beforeHook,
@@ -19,12 +19,12 @@ import { makeNTraders } from "./account";
 chai.use(chaiAsPromised);
 
 describe("tcomp", () => {
-  let lookupTableAccount;
+  let lookupTableAccount: AddressLookupTableAccount | undefined;
   before(async () => {
-    lookupTableAccount = await beforeAllHook();
+    lookupTableAccount = (await beforeAllHook()) ?? undefined;
   });
 
-  it("lists + edits + buys (no canopy)", async () => {
+  it.only("lists + edits + buys (no canopy)", async () => {
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({

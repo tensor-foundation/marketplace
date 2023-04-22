@@ -16,6 +16,7 @@ pub struct Edit<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
+    pub log_wrapper: Program<'info, Noop>,
 }
 
 impl<'info> Validate<'info> for Edit<'info> {
@@ -41,7 +42,7 @@ pub fn handler<'info>(
     // Grab current expiry in case they're editing a bid
     let current_expiry = list_state.expiry;
     // Figure out new expiry
-    list_state.expiry = match expire_in_sec {
+    let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
             require!(expire_in_i64 < MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
@@ -50,6 +51,21 @@ pub fn handler<'info>(
         None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
         None => current_expiry,
     };
+    list_state.expiry = expiry;
+
+    let asset_id = get_asset_id(&ctx.accounts.merkle_tree.key(), nonce);
+
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            currency,
+            expiry,
+            private_taker,
+        }),
+        &ctx.accounts.log_wrapper,
+    )?;
 
     Ok(())
 }

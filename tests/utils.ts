@@ -271,7 +271,7 @@ export const updateLUT = async ({
   lookupTableAddress,
   addresses,
 }: {
-  provider?;
+  provider?: anchor.AnchorProvider;
   committment?: Commitment;
   lookupTableAddress: PublicKey;
   addresses: PublicKey[];

@@ -24,3 +24,4 @@ mpl-token-metadata = {version="1.9.1", features = [ "no-entrypoint" ]}
 anchor-spl = { version = "0.26.0", features =  ["default"] }
 vipers = {path= '../../lib/vipers' }
 static_assertions = "1.1.0"
+spl-noop = { version="0.1.3", features=["no-entrypoint"] }

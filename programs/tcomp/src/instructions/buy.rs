@@ -3,6 +3,10 @@ use crate::*;
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
 pub struct Buy<'info> {
+    // Acts purely as a fee account
+    /// CHECK: seeds
+    #[account(mut, seeds=[], bump)]
+    pub tcomp: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     pub buyer: Signer<'info>,
@@ -29,10 +33,6 @@ pub struct Buy<'info> {
     /// CHECK: has_one = owner on list_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
     pub taker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
@@ -163,15 +163,18 @@ pub fn handler<'info>(
         signer_listing: Some(&ctx.accounts.list_state),
     })?;
 
-    emit!(TakeEvent {
-        taker: *ctx.accounts.owner.key,
-        asset_id,
-        amount,
-        tcomp_fee,
-        broker_fee,
-        creator_fee: actual_creator_fee,
-        currency,
-    });
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            tcomp_fee,
+            broker_fee,
+            creator_fee: actual_creator_fee,
+            currency,
+        }),
+        &ctx.accounts.log_wrapper,
+    )?;
 
     Ok(())
 }
