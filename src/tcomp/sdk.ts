@@ -663,7 +663,10 @@ export class TCompSDK {
   }
 
   // TODO
-  // getFeeAmount(ix: ParsedTCompIx): BN | null {
+  // getFeeAmount(
+  //   ix: ParsedTCompIx
+  // ): { amount: BN; currency: PublicKey | null } | null {
+  //   // const nooIx = ix.ix.
   //   switch (ix.ix.name) {
   //     case "buy":
   //       const event = ix.events[0] as TakeEventAnchor | undefined;
@@ -671,23 +674,27 @@ export class TCompSDK {
   //         .add(event.data.brokerFee)
   //         .add(event.data.creatorFee);
   //     case "list":
+  //     case "edit":
+  //     case "delist":
   //       return null;
   //   }
   // }
 
-  // TODO
-  // getAmount(
-  //   ix: ParsedTCompIx
-  // ): { amount: BN; currency: PublicKey | null } | null {
-  //   switch (ix.ix.name) {
-  //     case "list":
-  //     case "buy":
-  //       return {
-  //         amount: (ix.ix.data as TCompPricedIx).amount,
-  //         currency: (ix.ix.data as TCompPricedIx).currency,
-  //       };
-  //   }
-  // }
+  getAmount(
+    ix: ParsedTCompIx
+  ): { amount: BN; currency: PublicKey | null } | null {
+    switch (ix.ix.name) {
+      case "list":
+      case "edit":
+      case "buy":
+        return {
+          amount: (ix.ix.data as TCompPricedIx).amount,
+          currency: (ix.ix.data as TCompPricedIx).currency,
+        };
+      case "delist":
+        return null;
+    }
+  }
 
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
   // version of the fields for the corresponding #[Accounts].
@@ -830,13 +837,10 @@ export const parseTcompEvent = async ({
   conn,
   sig,
   tx,
-}: // ix,
-{
+}: {
   sig: string;
   tx?: TransactionResponse;
   conn: Connection;
-  // TODO make it work with this
-  // ix: ParsedTCompIx;
 }) => {
   const tempConn = new Connection(conn.rpcEndpoint, "confirmed");
   let usedTx =

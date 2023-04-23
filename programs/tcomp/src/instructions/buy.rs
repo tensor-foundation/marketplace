@@ -127,8 +127,7 @@ pub fn handler<'info>(
 
     // Pay creators
     let actual_creator_fee = transfer_creators_fee(
-        None,
-        Some(FromExternal {
+        &FromAcc::External(&FromExternal {
             from: &ctx.accounts.payer.to_account_info(),
             sys_prog: &ctx.accounts.system_program,
         }),
@@ -159,10 +158,10 @@ pub fn handler<'info>(
         system_program: &ctx.accounts.system_program.to_account_info(),
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         proof_accounts,
-        signer_bid: None,
-        signer_listing: Some(&ctx.accounts.list_state),
+        signer: Some(&TransferSigner::List(&ctx.accounts.list_state)),
     })?;
 
+    // TODO: fuck this doesn't work, if someone adds a tx on top with a noop ix it'll break out parser
     // (!) HAS TO GO LAST FOR PARSING
     record_event(
         &TcompEvent::Taker(TakeEvent {

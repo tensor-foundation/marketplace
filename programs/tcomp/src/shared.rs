@@ -136,6 +136,13 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
     };
 }
 
+#[derive(AnchorDeserialize, AnchorSerialize)]
+#[repr(C)]
+pub(crate) enum TransferSigner<'a, 'info> {
+    Bid(&'a Account<'info, BidState>),
+    List(&'a Account<'info, ListState>),
+}
+
 pub struct TransferArgs<'a, 'info> {
     pub root: [u8; 32],
     pub nonce: u64,
@@ -152,9 +159,7 @@ pub struct TransferArgs<'a, 'info> {
     pub system_program: &'a AccountInfo<'info>,
     pub bubblegum_program: &'a AccountInfo<'info>,
     pub proof_accounts: &'a [AccountInfo<'info>],
-    // Not pretty but less painful than trying to pass in seeds of varialbe length
-    pub signer_bid: Option<&'a Account<'info, BidState>>,
-    pub signer_listing: Option<&'a Account<'info, ListState>>,
+    pub(crate) signer: Option<&'a TransferSigner<'a, 'info>>,
 }
 
 pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
@@ -174,8 +179,7 @@ pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
         system_program,
         bubblegum_program,
         proof_accounts,
-        signer_bid,
-        signer_listing,
+        signer,
     } = args;
 
     let data = mpl_bubblegum::instruction::Transfer {
@@ -211,14 +215,18 @@ pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
             (*acct).is_signer = true;
         }
         //for cpi to work
-        if let Some(signer_listing) = signer_listing {
-            if acct.pubkey == signer_listing.key() {
-                (*acct).is_signer = true;
-            }
-        }
-        if let Some(signer_bid) = signer_bid {
-            if acct.pubkey == signer_bid.key() {
-                (*acct).is_signer = true;
+        if let Some(signer) = signer {
+            match signer {
+                TransferSigner::Bid(bid) => {
+                    if acct.pubkey == bid.key() {
+                        (*acct).is_signer = true;
+                    }
+                }
+                TransferSigner::List(list) => {
+                    if acct.pubkey == list.key() {
+                        (*acct).is_signer = true;
+                    }
+                }
             }
         }
 
@@ -233,29 +241,31 @@ pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
     let mut transfer_cpi_account_infos = transfer_accounts.to_account_infos();
     transfer_cpi_account_infos.extend_from_slice(proof_accounts);
 
-    if let Some(signer_bid) = signer_bid {
-        invoke_signed(
-            &Instruction {
-                program_id: bubblegum_program.key(),
-                accounts: transfer_account_metas,
-                data,
-            },
-            &(transfer_cpi_account_infos[..]),
-            &[&signer_bid.seeds()],
-        )?;
-        return Ok(());
-    }
-
-    if let Some(signer_listing) = signer_listing {
-        invoke_signed(
-            &Instruction {
-                program_id: bubblegum_program.key(),
-                accounts: transfer_account_metas,
-                data,
-            },
-            &(transfer_cpi_account_infos[..]),
-            &[&signer_listing.seeds()],
-        )?;
+    if let Some(signer) = signer {
+        match signer {
+            TransferSigner::Bid(bid) => {
+                invoke_signed(
+                    &Instruction {
+                        program_id: bubblegum_program.key(),
+                        accounts: transfer_account_metas,
+                        data,
+                    },
+                    &(transfer_cpi_account_infos[..]),
+                    &[&bid.seeds()],
+                )?;
+            }
+            TransferSigner::List(list) => {
+                invoke_signed(
+                    &Instruction {
+                        program_id: bubblegum_program.key(),
+                        accounts: transfer_account_metas,
+                        data,
+                    },
+                    &(transfer_cpi_account_infos[..]),
+                    &[&list.seeds()],
+                )?;
+            }
+        }
         return Ok(());
     }
 
@@ -323,7 +333,7 @@ pub fn calc_creators_fee(
     Ok(fee)
 }
 
-pub fn transfer_all_lamports_from_tswap<'info>(
+pub fn transfer_all_lamports_from_tcomp<'info>(
     from_pda: &AccountInfo<'info>,
     to: &AccountInfo<'info>,
 ) -> Result<()> {
@@ -359,12 +369,15 @@ pub struct FromExternal<'b, 'info> {
     pub sys_prog: &'b AccountInfo<'info>,
 }
 
-pub fn transfer_creators_fee<'b, 'info>(
-    // Not possible have a private enum in Anchor, it's always stuffed into IDL, which leads to:
-    // IdlError: Type not found: {"type":{"defined":"&'bAccountInfo<'info>"},"name":"0"}
-    // Hence the next 2 lines are 2x Options instead of 1 Enum. First Option dictates branch
-    from_pda: Option<&'b AccountInfo<'info>>,
-    from_ext: Option<FromExternal<'b, 'info>>,
+#[derive(AnchorDeserialize, AnchorSerialize)]
+#[repr(C)]
+pub(crate) enum FromAcc<'a, 'info> {
+    Pda(&'a AccountInfo<'info>),
+    External(&'a FromExternal<'a, 'info>),
+}
+
+pub(crate) fn transfer_creators_fee<'a, 'info>(
+    from: &'a FromAcc<'a, 'info>,
     metadata: &MetadataArgs,
     creator_accounts: &mut Iter<AccountInfo<'info>>,
     creator_fee: u64,
@@ -393,12 +406,12 @@ pub fn transfer_creators_fee<'b, 'info>(
 
         remaining_fee = unwrap_int!(remaining_fee.checked_sub(creator_fee));
         if creator_fee > 0 {
-            match from_pda {
-                Some(from) => {
-                    transfer_lamports_from_pda(from, current_creator_info, creator_fee)?;
+            match from {
+                FromAcc::Pda(from_pda) => {
+                    transfer_lamports_from_pda(from_pda, current_creator_info, creator_fee)?;
                 }
-                None => {
-                    let FromExternal { from, sys_prog } = from_ext.as_ref().unwrap();
+                FromAcc::External(from_ext) => {
+                    let FromExternal { from, sys_prog } = from_ext;
                     invoke(
                         &system_instruction::transfer(
                             from.key,

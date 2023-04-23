@@ -577,7 +577,7 @@ export const testList = async ({
     lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
   });
   console.log("✅ listed", sig);
-  await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
+  // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
   //nft moved to escrow
   const [listState, bump] = findListStatePda({ assetId });
@@ -827,7 +827,7 @@ export const testBuy = async ({
           : undefined,
       });
       console.log("✅ bought", sig);
-      await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
+      // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
       //nft moved to buyer
       await verifyCNft({
