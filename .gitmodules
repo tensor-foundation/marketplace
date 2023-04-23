@@ -1,0 +1,6 @@
+[submodule "deps/metaplex-mpl"]
+	path = deps/metaplex-mpl
+	url = https://github.com/metaplex-foundation/metaplex-program-library
+[submodule "deps/solana-spl"]
+	path = deps/solana-spl
+	url = https://github.com/solana-labs/solana-program-library.git
