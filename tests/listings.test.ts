@@ -11,7 +11,7 @@ import {
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { ALRADY_IN_USE_ERR, HAS_ONE_ERR, tcompSdk } from "./utils";
+import { ALREADY_IN_USE_ERR, HAS_ONE_ERR, tcompSdk } from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
 
@@ -24,7 +24,7 @@ describe("tcomp", () => {
     lookupTableAccount = (await beforeAllHook()) ?? undefined;
   });
 
-  it.only("lists + edits + buys (no canopy)", async () => {
+  it("lists + edits + buys (no canopy)", async () => {
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
@@ -55,7 +55,7 @@ describe("tcomp", () => {
             owner: traderA,
             lookupTableAccount,
           })
-        ).to.be.rejectedWith(ALRADY_IN_USE_ERR);
+        ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
         //edit the price (up)
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
@@ -135,7 +135,7 @@ describe("tcomp", () => {
     }
   });
 
-  it("lists + edits + buys (with canopy)", async () => {
+  it.only("lists + edits + buys (with canopy)", async () => {
     let canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =

@@ -1,3 +1,4 @@
+import * as borsh from "borsh";
 import {
   AccountSuffix,
   decodeAcct,
@@ -49,13 +50,11 @@ import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
 import { computeCreatorHashPATCHED } from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { MakeEvent, TakeEvent, tcompEventBeet } from "../generated";
+import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
-
-import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 
 export const tcompIDL_latest = IDL_latest;
 export const tcompIDL_latest_EffSlot = 0;
@@ -728,38 +727,105 @@ export const getTotalComputeIxs = (
   return finalIxs;
 };
 
-export function deserializeTcompEvent(data: Buffer) {
-  const event = tcompEventBeet.toFixedFromData(data, 0).read(data, 0);
+// --------------------------------------- events
 
-  if (event.__kind == "Taker") {
-    const takeEvent: TakeEvent = event.fields[0];
-    console.log("Taker event detected");
+export class MakeEvent {
+  maker!: PublicKey;
+  assetId!: PublicKey;
+  amount!: BN;
+  currency!: PublicKey | null;
+  expiry!: BN;
+  privateTaker!: PublicKey | null;
+
+  constructor(fields?: Partial<MakeEvent>) {
+    Object.assign(this, fields);
+  }
+}
+export const makeEventSchema = new Map([
+  [
+    MakeEvent,
+    {
+      kind: "struct",
+      fields: [
+        ["maker", [32]],
+        ["assetId", [32]],
+        ["amount", "u64"],
+        ["currency", { kind: "option", type: [32] }],
+        ["expiry", "u64"],
+        ["privateTaker", { kind: "option", type: [32] }],
+      ],
+    },
+  ],
+]);
+
+export class TakeEvent {
+  taker!: PublicKey;
+  assetId!: PublicKey;
+  amount!: BN;
+  tcompFee!: BN;
+  brokerFee!: BN;
+  creatorFee!: BN;
+  currency!: PublicKey | null;
+
+  constructor(fields?: Partial<TakeEvent>) {
+    Object.assign(this, fields);
+  }
+}
+export const takeEventSchema = new Map([
+  [
+    TakeEvent,
+    {
+      kind: "struct",
+      fields: [
+        ["taker", [32]],
+        ["assetId", [32]],
+        ["amount", "u64"],
+        ["tcompFee", "u64"],
+        ["brokerFee", "u64"],
+        ["creatorFee", "u64"],
+        ["currency", { kind: "option", type: [32] }],
+      ],
+    },
+  ],
+]);
+
+export function deserializeTcompEvent(data: Buffer): MakeEvent | TakeEvent {
+  if (data[0] === 0) {
+    console.log("Maker event detected", data.length);
+    const e = borsh.deserialize(
+      makeEventSchema,
+      MakeEvent,
+      data.slice(1, data.length)
+    );
     return {
-      taker: takeEvent.taker,
-      assetId: takeEvent.assetId,
-      amount: new BN(takeEvent.amount),
-      tcompFee: new BN(takeEvent.tcompFee),
-      brokerFee: new BN(takeEvent.brokerFee),
-      creatorFee: new BN(takeEvent.creatorFee),
-      currency: takeEvent.currency,
+      maker: new PublicKey(e.maker),
+      assetId: new PublicKey(e.assetId),
+      amount: new BN(e.amount),
+      currency: e.currency ? new PublicKey(e.currency) : null,
+      expiry: new BN(e.expiry),
+      privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
     };
-  } else if (event.__kind == "Maker") {
-    const makeEvent: MakeEvent = event.fields[0];
-    console.log("Maker event detected");
+  } else if (data[0] === 1) {
+    console.log("Taker event detected", data.length);
+    const e = borsh.deserialize(
+      takeEventSchema,
+      TakeEvent,
+      data.slice(1, data.length)
+    );
     return {
-      maker: makeEvent.maker,
-      assetId: makeEvent.assetId,
-      amount: new BN(makeEvent.amount),
-      currency: makeEvent.currency,
-      expiry: new BN(makeEvent.expiry),
-      privateTaker: makeEvent.privateTaker,
+      taker: new PublicKey(e.taker),
+      assetId: new PublicKey(e.assetId),
+      amount: new BN(e.amount),
+      tcompFee: new BN(e.tcompFee),
+      creatorFee: new BN(e.creatorFee),
+      brokerFee: new BN(e.brokerFee),
+      currency: e.currency ? new PublicKey(e.currency) : null,
     };
   } else {
-    throw Error("Unable to decode buffer");
+    throw new Error("unknown event");
   }
 }
 
-// TODO: this fn is probably temp
 export const parseTcompEvent = async ({
   conn,
   sig,
@@ -778,16 +844,14 @@ export const parseTcompEvent = async ({
     (await tempConn.getTransaction(sig, { maxSupportedTransactionVersion: 0 }));
   if (!usedTx) return;
 
-  // TODO okay fuck this this wont work, need to work with ix
   // Get noop program instruction
   const accountKeys = usedTx.transaction.message.getAccountKeys();
-  const noopInstruction = usedTx.meta!.innerInstructions![0].instructions[0];
-  const programId = accountKeys.get(noopInstruction.programIdIndex)!;
-  if (!programId.equals(SPL_NOOP_PROGRAM_ID)) {
-    throw Error(
-      `Only inner ix should be a noop, but instead is a ${programId.toBase58()}`
-    );
-  }
+  const noopInstruction = usedTx
+    .meta!.innerInstructions![0].instructions.reverse()
+    .find((i) => {
+      return accountKeys.get(i.programIdIndex)?.equals(SPL_NOOP_PROGRAM_ID);
+    });
+  if (!noopInstruction) return;
 
   const cpiData = Buffer.from(bs58.decode(noopInstruction.data));
   const event = deserializeTcompEvent(cpiData);

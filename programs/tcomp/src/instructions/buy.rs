@@ -163,6 +163,7 @@ pub fn handler<'info>(
         signer_listing: Some(&ctx.accounts.list_state),
     })?;
 
+    // (!) HAS TO GO LAST FOR PARSING
     record_event(
         &TcompEvent::Taker(TakeEvent {
             taker: *ctx.accounts.owner.key,

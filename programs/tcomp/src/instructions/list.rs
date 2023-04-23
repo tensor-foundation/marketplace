@@ -95,6 +95,7 @@ pub fn handler<'info>(
     };
     list_state.expiry = expiry;
 
+    // (!) HAS TO GO LAST FOR PARSING
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
