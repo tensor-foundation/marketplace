@@ -28,25 +28,34 @@ pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
     .to_bytes())
 }
 
-pub struct VerifyArgs<'a, 'info> {
-    pub root: [u8; 32],
-    pub nonce: u64,
-    pub index: u32,
-    pub metadata: TMetadataArgs,
-    pub merkle_tree: &'a AccountInfo<'info>,
-    pub leaf_owner: &'a AccountInfo<'info>,
-    pub leaf_delegate: &'a AccountInfo<'info>,
-    pub compression_program: &'a AccountInfo<'info>,
-    pub creator_accounts: &'a [AccountInfo<'info>],
-    pub proof_accounts: &'a [AccountInfo<'info>],
+pub(crate) struct DataHashArgs {
+    pub data_hash: [u8; 32],
+    pub creator_shares: Vec<u8>,
+    pub creator_verified: Vec<bool>,
+    pub seller_fee_basis_points: u16,
 }
-
-pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], MetadataArgs)> {
+pub(crate) enum MetadataSrc {
+    Metadata(TMetadataArgs),
+    DataHash(DataHashArgs),
+}
+pub(crate) struct VerifyArgs<'a, 'info> {
+    pub(crate) root: [u8; 32],
+    pub(crate) nonce: u64,
+    pub(crate) index: u32,
+    pub(crate) metadata_src: MetadataSrc,
+    pub(crate) merkle_tree: &'a AccountInfo<'info>,
+    pub(crate) leaf_owner: &'a AccountInfo<'info>,
+    pub(crate) leaf_delegate: &'a AccountInfo<'info>,
+    pub(crate) compression_program: &'a AccountInfo<'info>,
+    pub(crate) creator_accounts: &'a [AccountInfo<'info>],
+    pub(crate) proof_accounts: &'a [AccountInfo<'info>],
+}
+pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Vec<Creator>)> {
     let VerifyArgs {
         root,
         nonce,
         index,
-        metadata,
+        metadata_src,
         merkle_tree,
         leaf_owner,
         leaf_delegate,
@@ -57,36 +66,63 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
 
     // --------------------------------------- from bubblegum/process_mint_v1
 
-    // Serialize metadata into original metaplex format
-    let mplex_metadata = metadata.into(creator_accounts);
+    let (data_hash, creator_hash, creators) = match metadata_src {
+        MetadataSrc::Metadata(metadata) => {
+            // Serialize metadata into original metaplex format
+            let mplex_metadata = metadata.into(creator_accounts);
 
-    // msg!("creators {:?}", creator_accounts.len());
-    // msg!("proof {:?}", proof_accounts.len());
-    // msg!("root {:?}", root);
-    // msg!(
-    //     "leaf: {:?}{:?}{:?}{}{:?}",
-    //     get_asset_id(&merkle_tree.key(), nonce),
-    //     leaf_owner,
-    //     leaf_delegate,
-    //     nonce,
-    //     mplex_metadata.clone()
-    // );
+            // msg!("creators {:?}", creator_accounts.len());
+            // msg!("proof {:?}", proof_accounts.len());
+            // msg!("root {:?}", root);
+            // msg!(
+            //     "leaf: {:?}{:?}{:?}{}{:?}",
+            //     get_asset_id(&merkle_tree.key(), nonce),
+            //     leaf_owner,
+            //     leaf_delegate,
+            //     nonce,
+            //     mplex_metadata.clone()
+            // );
 
-    let creator_hash = hash_creators(&mplex_metadata.creators)?;
-    let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
-    let data_hash = hashv(&[
-        &metadata_args_hash.to_bytes(),
-        &mplex_metadata.seller_fee_basis_points.to_le_bytes(),
-    ])
-    .to_bytes();
+            let creator_hash = hash_creators(&mplex_metadata.creators)?;
+            let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
+            let data_hash = hashv(&[
+                &metadata_args_hash.to_bytes(),
+                &mplex_metadata.seller_fee_basis_points.to_le_bytes(),
+            ])
+            .to_bytes();
 
-    // msg!("data_hash {:?}", data_hash);
-    // msg!("creator_hash {:?}", creator_hash);
-    // msg!("proof accounts {:?}", proof_accounts);
-    // msg!("tree {:?}", merkle_tree.key());
+            // msg!("data_hash {:?}", data_hash);
+            // msg!("creator_hash {:?}", creator_hash);
+            // msg!("proof accounts {:?}", proof_accounts);
+            // msg!("tree {:?}", merkle_tree.key());
+
+            (data_hash, creator_hash, mplex_metadata.creators)
+        }
+        MetadataSrc::DataHash(DataHashArgs {
+            data_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+        }) => {
+            let creators = creator_accounts
+                .iter()
+                .zip(creator_shares.iter())
+                .zip(creator_verified.iter())
+                .map(|((c, s), v)| Creator {
+                    address: c.key(),
+                    verified: *v,
+                    share: *s,
+                })
+                .collect::<Vec<_>>();
+            let creator_hash = hash_creators(&creators)?;
+
+            (data_hash, creator_hash, creators)
+        }
+    };
 
     // Nonce is used for asset it, not index
     let asset_id = get_asset_id(&merkle_tree.key(), nonce);
+
     let leaf = LeafSchema::new_v0(
         asset_id,
         leaf_owner.key(),
@@ -127,7 +163,7 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
     ) {
         Ok(_) => {
             msg!("Leaf Valid");
-            Ok((asset_id, creator_hash, data_hash, mplex_metadata))
+            Ok((asset_id, creator_hash, data_hash, creators))
         }
         Err(e) => {
             msg!("FAILED LEAF VERIFICATION: {:?}", e);
@@ -136,14 +172,11 @@ pub fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Meta
     };
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize)]
-#[repr(C)]
 pub(crate) enum TransferSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
     List(&'a Account<'info, ListState>),
 }
-
-pub struct TransferArgs<'a, 'info> {
+pub(crate) struct TransferArgs<'a, 'info> {
     pub root: [u8; 32],
     pub nonce: u64,
     pub index: u32,
@@ -162,7 +195,7 @@ pub struct TransferArgs<'a, 'info> {
     pub(crate) signer: Option<&'a TransferSigner<'a, 'info>>,
 }
 
-pub fn transfer_cnft(args: TransferArgs) -> Result<()> {
+pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
     let TransferArgs {
         root,
         nonce,
@@ -301,22 +334,16 @@ pub fn calc_fees(amount: u64) -> Result<(u64, u64)> {
 }
 
 pub fn calc_creators_fee(
-    metadata: &MetadataArgs,
+    seller_fee_basis_points: u16,
     amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<u64> {
-    let creators_fee_bps = if metadata.token_standard.is_some() && false
-    // TODO: currently bubblegum doesn't recognize pNFTs, keeping as placeholder for when it does
-    // metadata.token_standard.unwrap() == TokenStandard::ProgrammableNonFungible
-    {
-        // For pnfts, pay full royalties
-        metadata.seller_fee_basis_points as u64
-    } else if let Some(optional_royalty_pct) = optional_royalty_pct {
+    let creator_fee_bps = if let Some(optional_royalty_pct) = optional_royalty_pct {
         require!(optional_royalty_pct < 100, TcompError::BadRoyaltiesPct);
 
         // If optional passed, pay optional royalties
         unwrap_checked!({
-            (metadata.seller_fee_basis_points as u64)
+            (seller_fee_basis_points as u64)
                 .checked_mul(optional_royalty_pct as u64)?
                 .checked_div(100_u64)
         })
@@ -325,7 +352,7 @@ pub fn calc_creators_fee(
         0_u64
     };
     let fee = unwrap_checked!({
-        creators_fee_bps
+        creator_fee_bps
             .checked_mul(amount)?
             .checked_div(HUNDRED_PCT_BPS as u64)
     });
@@ -364,28 +391,24 @@ pub fn transfer_lamports_from_pda<'info>(
     Ok(())
 }
 
-pub struct FromExternal<'b, 'info> {
-    pub from: &'b AccountInfo<'info>,
-    pub sys_prog: &'b AccountInfo<'info>,
+pub(crate) struct FromExternal<'b, 'info> {
+    pub(crate) from: &'b AccountInfo<'info>,
+    pub(crate) sys_prog: &'b AccountInfo<'info>,
 }
-
-#[derive(AnchorDeserialize, AnchorSerialize)]
-#[repr(C)]
 pub(crate) enum FromAcc<'a, 'info> {
     Pda(&'a AccountInfo<'info>),
     External(&'a FromExternal<'a, 'info>),
 }
-
 pub(crate) fn transfer_creators_fee<'a, 'info>(
     from: &'a FromAcc<'a, 'info>,
-    metadata: &MetadataArgs,
+    creators: &'a Vec<Creator>,
     creator_accounts: &mut Iter<AccountInfo<'info>>,
     creator_fee: u64,
 ) -> Result<u64> {
     // Send royalties: taken from AH's calculation:
     // https://github.com/metaplex-foundation/metaplex-program-library/blob/2320b30ec91b729b153f0c0fe719f96d325b2358/auction-house/program/src/utils.rs#L366-L471
     let mut remaining_fee = creator_fee;
-    for creator in &metadata.creators {
+    for creator in creators {
         let current_creator_info = next_account_info(creator_accounts)?;
         require!(
             creator.address.eq(current_creator_info.key),

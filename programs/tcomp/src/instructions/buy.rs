@@ -79,24 +79,30 @@ pub fn handler<'info>(
     nonce: u64,
     index: u32,
     root: [u8; 32],
-    metadata: TMetadataArgs,
+    data_hash: [u8; 32],
+    // Below 3 used for creator verification
+    // Creators themseleves taken from extra accounts
+    creator_shares: Vec<u8>,
+    creator_verified: Vec<bool>,
+    seller_fee_basis_points: u16,
     // Passing these in so buyer doesn't get rugged
     max_amount: u64,
     currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    let (creator_accounts, proof_accounts) = ctx
-        .remaining_accounts
-        .split_at(metadata.creator_shares.len());
+    let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
-    // TODO: 0xrwu - does this make sense? my thinking is that we HAVE TO verify instead of letting them passin data/creator hashes
-    //  otherwise they pass in any creators (themselves) and send royalties there
     // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
-    let (asset_id, creator_hash, data_hash, mplex_metadata) = verify_cnft(VerifyArgs {
+    let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
         root,
         index,
         nonce,
-        metadata,
+        metadata_src: MetadataSrc::DataHash(DataHashArgs {
+            data_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+        }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
         leaf_delegate: &ctx.accounts.list_state.to_account_info(),
@@ -105,6 +111,7 @@ pub fn handler<'info>(
         proof_accounts,
     })?;
 
+    // TODO: destructuring doesn't work due to Box<>
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let expiry = list_state.expiry;
@@ -113,7 +120,7 @@ pub fn handler<'info>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
 
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;
-    let creator_fee = calc_creators_fee(&mplex_metadata, amount, optional_royalty_pct)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // --------------------------------------- sol transfers
 
@@ -131,7 +138,7 @@ pub fn handler<'info>(
             from: &ctx.accounts.payer.to_account_info(),
             sys_prog: &ctx.accounts.system_program,
         }),
-        &mplex_metadata,
+        &creators,
         &mut creator_accounts.iter(),
         creator_fee,
     )?;

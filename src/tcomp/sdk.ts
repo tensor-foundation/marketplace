@@ -227,6 +227,7 @@ export type ParsedTCompIx = {
   formatted: InstructionDisplay | null;
 };
 export type TCompPricedIx = { amount: BN; currency: PublicKey | null };
+export type TCompBuyIx = { maxAmount: BN; currency: PublicKey | null };
 
 // --------------------------------------- sdk
 
@@ -538,6 +539,8 @@ export class TCompSDK {
     const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
+    console.log("creators", JSON.stringify(metadata.creators));
+
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
@@ -550,12 +553,17 @@ export class TCompSDK {
       isWritable: false,
     }));
 
+    const dataHash = computeDataHash(metadata);
+
     const builder = this.program.methods
       .buy(
         nonce,
         index,
         root,
-        castMetadata(metadata),
+        [...dataHash],
+        Buffer.from(metadata.creators.map((c) => c.share)),
+        metadata.creators.map((c) => c.verified),
+        metadata.sellerFeeBasisPoints,
         maxAmount,
         currency,
         optionalRoyaltyPct
@@ -680,16 +688,21 @@ export class TCompSDK {
   //   }
   // }
 
+  // TODO potentially parse amounts from the events
   getAmount(
     ix: ParsedTCompIx
   ): { amount: BN; currency: PublicKey | null } | null {
     switch (ix.ix.name) {
       case "list":
       case "edit":
-      case "buy":
         return {
           amount: (ix.ix.data as TCompPricedIx).amount,
           currency: (ix.ix.data as TCompPricedIx).currency,
+        };
+      case "buy":
+        return {
+          amount: (ix.ix.data as TCompBuyIx).maxAmount,
+          currency: (ix.ix.data as TCompBuyIx).currency,
         };
       case "delist":
         return null;

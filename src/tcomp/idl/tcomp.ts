@@ -126,10 +126,27 @@ export type Tcomp = {
           }
         },
         {
-          "name": "metadata",
+          "name": "dataHash",
           "type": {
-            "defined": "TMetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
           }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
         },
         {
           "name": "maxAmount",
@@ -1001,10 +1018,27 @@ export const IDL: Tcomp = {
           }
         },
         {
-          "name": "metadata",
+          "name": "dataHash",
           "type": {
-            "defined": "TMetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
           }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
         },
         {
           "name": "maxAmount",

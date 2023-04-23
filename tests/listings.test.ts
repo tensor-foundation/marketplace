@@ -1,5 +1,9 @@
 import { BN } from "@project-serum/anchor";
-import { AddressLookupTableAccount, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+  AddressLookupTableAccount,
+  Keypair,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 import {
   beforeAllHook,
   beforeHook,
@@ -30,7 +34,6 @@ describe("tcomp", () => {
         await beforeHook({
           nrCreators,
           numMints: 3,
-          depthSizePair: { maxDepth: 5, maxBufferSize: 8 },
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -98,6 +101,98 @@ describe("tcomp", () => {
     }
   });
 
+  it("tries to buy with false creators", async () => {
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 4,
+        numMints: 2,
+      });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      //list
+      await testList({
+        amount: new BN(LAMPORTS_PER_SOL),
+        index,
+        memTree,
+        merkleTree,
+        metadata,
+        owner: traderA,
+        lookupTableAccount,
+      });
+      //fake addresses
+      await expect(
+        testBuy({
+          index,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata: {
+            ...metadata,
+            creators: metadata.creators.map((c) => ({
+              address: Keypair.generate().publicKey, //wrong
+              verified: false,
+              share: c.share,
+            })),
+          },
+          buyer: traderB,
+          owner: traderA.publicKey,
+          lookupTableAccount,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      //fake shares
+      await expect(
+        testBuy({
+          index,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata: {
+            ...metadata,
+            creators: metadata.creators.map((c, i) => ({
+              address: c.address,
+              verified: false,
+              share: i === 0 ? 85 : 5, //wrong
+            })),
+          },
+          buyer: traderB,
+          owner: traderA.publicKey,
+          lookupTableAccount,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      //fake verified
+      await expect(
+        testBuy({
+          index,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata: {
+            ...metadata,
+            creators: metadata.creators.map((c) => ({
+              address: c.address,
+              verified: true, //wrong
+              share: c.share,
+            })),
+          },
+          buyer: traderB,
+          owner: traderA.publicKey,
+          lookupTableAccount,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      //finally buy
+      await testBuy({
+        index,
+        maxAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        buyer: traderB,
+        owner: traderA.publicKey,
+        lookupTableAccount,
+      });
+    }
+  });
+
   it("lists + buys (separate payer)", async () => {
     for (const nrCreators of [4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -135,7 +230,7 @@ describe("tcomp", () => {
     }
   });
 
-  it.only("lists + edits + buys (with canopy)", async () => {
+  it("lists + edits + buys (with canopy)", async () => {
     let canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
