@@ -808,6 +808,8 @@ export const testBuy = async ({
     canopyDepth,
   });
 
+  let sig: string | undefined;
+
   await withLamports(
     {
       prevFeeAccLamports: tcomp,
@@ -821,7 +823,7 @@ export const testBuy = async ({
       prevBuyerLamports,
       prevTakerBroker,
     }) => {
-      const sig = await buildAndSendTx({
+      sig = await buildAndSendTx({
         ixs,
         extraSigners: [buyer, payer],
         lookupTableAccounts: lookupTableAccount
@@ -914,4 +916,6 @@ export const testBuy = async ({
     delegate: buyer.publicKey,
   });
   memTree.updateLeaf(index, leaf);
+
+  return { sig };
 };

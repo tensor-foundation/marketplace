@@ -105,6 +105,11 @@ export type Tcomp = {
           "isSigner": false
         },
         {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -404,7 +409,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "logWrapper",
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -878,7 +883,7 @@ export type Tcomp = {
     {
       "code": 6004,
       "name": "BadRoyaltiesPct",
-      "msg": "royalties pct must be between 0 and 99"
+      "msg": "royalties pct must be between 0 and 100"
     },
     {
       "code": 6005,
@@ -1020,6 +1025,11 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -1319,7 +1329,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "logWrapper",
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -1793,7 +1803,7 @@ export const IDL: Tcomp = {
     {
       "code": 6004,
       "name": "BadRoyaltiesPct",
-      "msg": "royalties pct must be between 0 and 99"
+      "msg": "royalties pct must be between 0 and 100"
     },
     {
       "code": 6005,

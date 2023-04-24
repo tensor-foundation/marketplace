@@ -16,7 +16,7 @@ pub struct Edit<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
-    pub log_wrapper: Program<'info, Noop>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
 }
 
 impl<'info> Validate<'info> for Edit<'info> {
@@ -55,17 +55,17 @@ pub fn handler<'info>(
 
     let asset_id = get_asset_id(&ctx.accounts.merkle_tree.key(), nonce);
 
-    // record_event(
-    //     &TcompEvent::Maker(MakeEvent {
-    //         maker: *ctx.accounts.owner.key,
-    //         asset_id,
-    //         amount,
-    //         currency,
-    //         expiry,
-    //         private_taker,
-    //     }),
-    //     &ctx.accounts.log_wrapper,
-    // )?;
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            currency,
+            expiry,
+            private_taker,
+        }),
+        &ctx.accounts.tcomp_program,
+    )?;
 
     Ok(())
 }

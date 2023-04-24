@@ -238,6 +238,7 @@ export type ParsedTCompIx = {
   // version of the fields for the corresponding #[Accounts].
   // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   formatted: InstructionDisplay | null;
+  accountKeys: PublicKey[];
 };
 export type TCompPricedIx = { amount: BN; currency: PublicKey | null };
 export type TCompBuyIx = { maxAmount: BN; currency: PublicKey | null };
@@ -425,7 +426,7 @@ export class TCompSDK {
         merkleTree,
         owner,
         listState,
-        logWrapper: SPL_NOOP_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
       });
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
@@ -553,8 +554,6 @@ export class TCompSDK {
     const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
-    console.log("creators", JSON.stringify(metadata.creators));
-
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
@@ -587,6 +586,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         buyer,
@@ -653,8 +653,8 @@ export class TCompSDK {
   }
 
   findAllNoopIxs(ix: ParsedTCompIx): CompiledInstruction[] {
-    const noopProgramIndex = ix.formatted?.accounts.findIndex((a) =>
-      a.pubkey.equals(TCOMP_ADDR)
+    const noopProgramIndex = ix.accountKeys.findIndex((a) =>
+      a.equals(TCOMP_ADDR)
     );
     return (ix.innerIxs ?? []).filter(
       (ix) => ix.programIdIndex === noopProgramIndex
@@ -668,12 +668,6 @@ export class TCompSDK {
     currency: PublicKey | null;
   } | null {
     const noopIxs = this.findAllNoopIxs(ix);
-
-    console.log(
-      "found noop ixs",
-      noopIxs.length,
-      JSON.stringify(noopIxs, null, 4)
-    );
 
     if (!noopIxs.length) return null;
 
@@ -815,7 +809,7 @@ export function deserializeTcompEvent(data: Buffer) {
   // cut off anchor discriminator
   data = data.slice(8, data.length);
   if (data[0] === 0) {
-    console.log("Maker event detected", data.length - 64);
+    console.log("🟩 Maker event detected", data.length - 64);
     const e = borsh.deserialize(
       makeEventSchema,
       MakeEvent,
@@ -831,7 +825,7 @@ export function deserializeTcompEvent(data: Buffer) {
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
     };
   } else if (data[0] === 1) {
-    console.log("Taker event detected", data.length - 64);
+    console.log("🟥 Taker event detected", data.length - 64);
     const e = borsh.deserialize(
       takeEventSchema,
       TakeEvent,
@@ -868,11 +862,6 @@ export const parseTcompEvent = async ({
     (await tempConn.getTransaction(sig, { maxSupportedTransactionVersion: 0 }));
   if (!usedTx) return;
 
-  console.log(
-    "ILJA INNER IXS",
-    usedTx.meta!.innerInstructions![0].instructions?.length
-  );
-
   // Get noop program instruction
   const accountKeys = usedTx.transaction.message.getAccountKeys();
   const noopInstruction = usedTx
@@ -882,8 +871,6 @@ export const parseTcompEvent = async ({
     });
   if (!noopInstruction) return;
 
-  console.log("ILJA noop data", noopInstruction);
-
   const cpiData = Buffer.from(bs58.decode(noopInstruction.data));
   const event = deserializeTcompEvent(cpiData);
   console.log("event", JSON.stringify(event, null, 4));
@@ -891,6 +878,7 @@ export const parseTcompEvent = async ({
   return event;
 };
 
+// TODO: move to tensor common when done
 export const extractAllIxs = (
   tx: TransactionResponse,
   /// If passed, will filter for ixs w/ this program ID.
@@ -931,6 +919,7 @@ export const extractAllIxs = (
   return allIxs;
 };
 
+// TODO: move to tensor common when done
 export type ParsedAnchorIx<IDL extends Idl> = {
   /// Index of top-level instruction.
   ixIdx: number;
@@ -942,8 +931,11 @@ export type ParsedAnchorIx<IDL extends Idl> = {
   /// version of the fields for the corresponding #[Accounts].
   /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   formatted: InstructionDisplay | null;
+  /// Needed to be able to figure out correct programs for sub-ixs
+  accountKeys: PublicKey[];
 };
 
+// TODO: move to tensor common when done
 export const parseAnchorIxs = <IDL extends Idl>({
   coder,
   tx,
@@ -975,16 +967,24 @@ export const parseAnchorIxs = <IDL extends Idl>({
       };
     });
 
-    console.log(ix.name, JSON.stringify(ix), JSON.stringify(accountMetas));
-
+    // TODO: temp, anchor doesn't work for enums
+    if (ix.name === "tcompNoop") return;
     const formatted = coder.instruction.format(ix, accountMetas);
-
-    console.log("RICHARD INNER IXS", innerIxs?.length);
 
     // Events data.
     // TODO: partition events properly by ix.
-    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
-    ixs.push({ ixIdx, ix, innerIxs, events, formatted });
+    // TODO: lol this also breaks
+    // const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
+    const events: any[] = [];
+
+    ixs.push({
+      ixIdx,
+      ix,
+      innerIxs,
+      events,
+      formatted,
+      accountKeys: message.accountKeys,
+    });
   });
 
   return ixs;

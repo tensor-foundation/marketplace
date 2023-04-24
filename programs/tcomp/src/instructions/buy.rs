@@ -17,6 +17,7 @@ pub struct Buy<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut, close = owner,
         seeds=[
@@ -168,19 +169,18 @@ pub fn handler<'info>(
         signer: Some(&TransferSigner::List(&ctx.accounts.list_state)),
     })?;
 
-    // TODO: fuck this doesn't work, if someone adds a tx on top with a noop ix it'll break out parser
-    // record_event(
-    //     &TcompEvent::Taker(TakeEvent {
-    //         taker: *ctx.accounts.owner.key,
-    //         asset_id,
-    //         amount,
-    //         tcomp_fee,
-    //         broker_fee,
-    //         creator_fee: actual_creator_fee,
-    //         currency,
-    //     }),
-    //     &ctx.accounts.log_wrapper,
-    // )?;
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            tcomp_fee,
+            broker_fee,
+            creator_fee: actual_creator_fee,
+            currency,
+        }),
+        &ctx.accounts.tcomp_program,
+    )?;
 
     Ok(())
 }

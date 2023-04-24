@@ -1,5 +1,6 @@
 use crate::*;
 
+// (!) tuples currently unsupported on anchor
 #[derive(AnchorDeserialize, AnchorSerialize)]
 #[repr(C)]
 pub enum TcompEvent {

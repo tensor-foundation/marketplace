@@ -339,7 +339,7 @@ pub fn calc_creators_fee(
     optional_royalty_pct: Option<u16>,
 ) -> Result<u64> {
     let creator_fee_bps = if let Some(optional_royalty_pct) = optional_royalty_pct {
-        require!(optional_royalty_pct < 100, TcompError::BadRoyaltiesPct);
+        require!(optional_royalty_pct <= 100, TcompError::BadRoyaltiesPct);
 
         // If optional passed, pay optional royalties
         unwrap_checked!({

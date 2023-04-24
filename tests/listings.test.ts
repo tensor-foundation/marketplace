@@ -529,13 +529,16 @@ describe("tcomp", () => {
     }
   });
 
-  it.only("parses list tx ok", async () => {
+  it.only("parses events ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       const currency = Keypair.generate().publicKey;
+
+      // --------------------------------------- Maker event
+
       const { sig } = await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -551,28 +554,60 @@ describe("tcomp", () => {
       const tx = (await TEST_PROVIDER.connection.getTransaction(sig, {
         commitment: "confirmed",
       }))!;
-
       await parseTcompEvent({ tx, conn: TEST_PROVIDER.connection, sig });
 
       expect(tx).not.null;
       const ixs = tcompSdk.parseIxs(tx);
       expect(ixs).length(1);
-
-      console.log("parsed", JSON.stringify(ixs[0], null, 4));
-
       const ix = ixs[0];
       expect(ix.ix.name).eq("list");
       expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(LAMPORTS_PER_SOL);
       expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
         currency.toString()
       );
-      expect(tcompSdk.getFeeAmount(ix)?.brokerFee?.toNumber()).eq(
-        Math.trunc((LAMPORTS_PER_SOL * FEE_PCT * TAKER_BROKER_PCT) / 100)
+
+      // --------------------------------------- Taker event
+
+      const { sig: sig2 } = await testBuy({
+        index,
+        maxAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        buyer: traderB,
+        owner: traderA.publicKey,
+        canopyDepth,
+        currency,
+        optionalRoyaltyPct: 100,
+      });
+
+      const tx2 = (await TEST_PROVIDER.connection.getTransaction(sig2!, {
+        commitment: "confirmed",
+      }))!;
+      await parseTcompEvent({
+        tx: tx2,
+        conn: TEST_PROVIDER.connection,
+        sig: sig2!,
+      });
+
+      expect(tx2).not.null;
+      const ixs2 = tcompSdk.parseIxs(tx2);
+      expect(ixs2).length(1);
+      const ix2 = ixs2[0];
+      expect(ix2.ix.name).eq("buy");
+      expect(tcompSdk.getAmount(ix2)?.amount.toNumber()).eq(LAMPORTS_PER_SOL);
+      expect(tcompSdk.getAmount(ix2)?.currency?.toString()).eq(
+        currency.toString()
       );
-      expect(tcompSdk.getFeeAmount(ix)?.tcompFee?.toNumber()).eq(
+      if (TAKER_BROKER_PCT > 0) {
+        expect(tcompSdk.getFeeAmount(ix2)?.brokerFee?.toNumber()).eq(
+          Math.trunc((LAMPORTS_PER_SOL * FEE_PCT * TAKER_BROKER_PCT) / 100)
+        );
+      }
+      expect(tcompSdk.getFeeAmount(ix2)?.tcompFee?.toNumber()).eq(
         Math.trunc(LAMPORTS_PER_SOL * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
       );
-      expect(tcompSdk.getFeeAmount(ix)?.creatorFee?.toNumber()).eq(
+      expect(tcompSdk.getFeeAmount(ix2)?.creatorFee?.toNumber()).eq(
         Math.trunc((LAMPORTS_PER_SOL * metadata.sellerFeeBasisPoints) / 10000)
       );
     }
