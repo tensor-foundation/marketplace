@@ -1108,9 +1108,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensor-common@npm:^0.9.9":
-  version: 0.9.9
-  resolution: "@tensor-hq/tensor-common@npm:0.9.9"
+"@tensor-hq/tensor-common@npm:0.10.0":
+  version: 0.10.0
+  resolution: "@tensor-hq/tensor-common@npm:0.10.0"
   dependencies:
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
     "@metaplex-foundation/mpl-token-auth-rules": ^1.2.0
@@ -1123,7 +1123,7 @@ __metadata:
     bs58: ^5.0.0
     hadeswap-sdk: ^0.8.25
     typescript: ^4.7.4
-  checksum: a7acbea6e9050f7ceedd047ffee61a38859fae1d23063e9cecdec497d3debd7e699fc5e21d32cbbe8cb0b8e78558a836475d8e1a2b35d0e5d792baec06f851ae
+  checksum: 46e4097cdc744b21b36268c3c98c6396ca0c5c2a234c682bf730fd4b9a94ef55472eca4a785229086813c98e6d4cd185d586698c99b5b5e3cc96318786573314
   languageName: node
   linkType: hard
 
@@ -4910,7 +4910,7 @@ __metadata:
     "@solana/spl-account-compression": ^0.1.7
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": ^0.9.9
+    "@tensor-hq/tensor-common": 0.10.0
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
     "@types/chai-as-promised": ^7.1.5

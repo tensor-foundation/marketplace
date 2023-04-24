@@ -5,10 +5,30 @@
 
 use crate::*;
 
-pub fn record_event<'info>(event: &TcompEvent, noop_program: &Program<'info, Noop>) -> Result<()> {
+#[derive(Accounts)]
+pub struct TcompNoop<'info> {
+    pub tcomp: Program<'info, crate::program::Tcomp>,
+}
+
+pub fn record_event<'info>(
+    event: &TcompEvent,
+    tcomp: &Program<'info, crate::program::Tcomp>,
+) -> Result<()> {
+    let mut data = Vec::new();
+    data.extend_from_slice(&hash::hash("global:tcomp_noop".as_bytes()).to_bytes()[..8]);
+    data.extend_from_slice(&event.try_to_vec()?);
     invoke(
-        &spl_noop::instruction(event.try_to_vec()?),
-        &[noop_program.to_account_info()],
+        &Instruction {
+            program_id: tcomp.key(),
+            accounts: [AccountMeta {
+                pubkey: tcomp.key(),
+                is_signer: false,
+                is_writable: false,
+            }; 1]
+                .to_vec(),
+            data,
+        },
+        &[tcomp.to_account_info()],
     )?;
     Ok(())
 }

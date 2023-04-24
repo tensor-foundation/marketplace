@@ -16,6 +16,7 @@ pub struct List<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
     #[account(init, payer = payer,
         seeds=[
             b"list_state".as_ref(),
@@ -94,7 +95,6 @@ pub fn handler<'info>(
     };
     list_state.expiry = expiry;
 
-    // (!) HAS TO GO LAST FOR PARSING
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
@@ -104,7 +104,7 @@ pub fn handler<'info>(
             expiry,
             private_taker,
         }),
-        &ctx.accounts.log_wrapper,
+        &ctx.accounts.tcomp_program,
     )?;
 
     Ok(())

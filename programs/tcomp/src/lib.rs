@@ -11,6 +11,7 @@ pub mod state;
 
 pub use std::{slice::Iter, str::FromStr};
 
+use anchor_lang::solana_program::hash;
 pub use anchor_lang::{
     prelude::*,
     solana_program::{
@@ -49,6 +50,11 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 #[program]
 pub mod tcomp {
     use super::*;
+
+    // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
+    pub fn tcomp_noop(_ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
+        Ok(())
+    }
 
     pub fn buy<'info>(
         ctx: Context<'_, '_, '_, 'info, Buy<'info>>,

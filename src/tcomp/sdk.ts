@@ -16,6 +16,7 @@ import {
   BorshCoder,
   Coder,
   EventParser,
+  Idl,
   Instruction,
   Program,
   Provider,
@@ -23,6 +24,8 @@ import {
 import {
   AccountInfo,
   Commitment,
+  CompiledInnerInstruction,
+  CompiledInstruction,
   ComputeBudgetProgram,
   Connection,
   PublicKey,
@@ -44,13 +47,20 @@ import {
 } from "@solana/spl-account-compression";
 import { Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
-import { isNullLike } from "@tensor-hq/tensor-common";
+import {
+  AnchorEvent,
+  AnchorIx,
+  filterNullLike,
+  isNullLike,
+  parseAnchorEvents,
+} from "@tensor-hq/tensor-common";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
 import { computeCreatorHashPATCHED } from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
+import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -221,6 +231,9 @@ export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
 export type ParsedTCompIx = {
   ixIdx: number;
   ix: TCompIx;
+  // These are already filtered for the current ix
+  innerIxs?: CompiledInstruction[];
+  events: AnchorEvent<TcompIDL>[];
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
   // version of the fields for the corresponding #[Accounts].
   // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
@@ -347,6 +360,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         delegate,
@@ -630,65 +644,47 @@ export class TCompSDK {
   // --------------------------------------- parsing raw txs
 
   parseIxs(tx: TransactionResponse): ParsedTCompIx[] {
-    const message = tx.transaction.message;
-    const logs = tx.meta?.logMessages;
-
-    const programIdIndex = message.accountKeys.findIndex((k) =>
-      k.equals(this.program.programId)
-    );
-
-    const ixs: ParsedTCompIx[] = [];
-    [
-      // Top-level ixs.
-      ...message.instructions.map((rawIx, ixIdx) => ({ rawIx, ixIdx })),
-      // Inner ixs (eg in CPI calls).
-      ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
-        instructions.map((rawIx) => ({ rawIx, ixIdx: index }))
-      ) ?? []),
-    ].forEach(({ rawIx, ixIdx }) => {
-      // Ignore ixs that are not from our program.
-      if (rawIx.programIdIndex !== programIdIndex) return;
-
-      // Instruction data.
-      const ix = this.coder.instruction.decode(rawIx.data, "base58");
-      if (!ix) return;
-      const accountMetas = rawIx.accounts.map((acctIdx) => {
-        const pubkey = message.accountKeys[acctIdx];
-        return {
-          pubkey,
-          isSigner: message.isAccountSigner(acctIdx),
-          isWritable: message.isAccountWritable(acctIdx),
-        };
-      });
-      const formatted = this.coder.instruction.format(ix, accountMetas);
-
-      // Events data.
-
-      ixs.push({ ixIdx, ix: ix as TCompIx, formatted });
+    return parseAnchorIxs<TcompIDL>({
+      coder: this.coder,
+      tx,
+      programId: this.program.programId,
+      eventParser: this.eventParser,
     });
-
-    return ixs;
   }
 
-  // TODO
-  // getFeeAmount(
-  //   ix: ParsedTCompIx
-  // ): { amount: BN; currency: PublicKey | null } | null {
-  //   // const nooIx = ix.ix.
-  //   switch (ix.ix.name) {
-  //     case "buy":
-  //       const event = ix.events[0] as TakeEventAnchor | undefined;
-  //       return event.data.tcompFee
-  //         .add(event.data.brokerFee)
-  //         .add(event.data.creatorFee);
-  //     case "list":
-  //     case "edit":
-  //     case "delist":
-  //       return null;
-  //   }
-  // }
+  findAllNoopIxs(ix: ParsedTCompIx): CompiledInstruction[] {
+    const noopProgramIndex = ix.formatted?.accounts.findIndex((a) =>
+      a.pubkey.equals(TCOMP_ADDR)
+    );
+    return (ix.innerIxs ?? []).filter(
+      (ix) => ix.programIdIndex === noopProgramIndex
+    );
+  }
 
-  // TODO potentially parse amounts from the events
+  getFeeAmount(ix: ParsedTCompIx): {
+    tcompFee: BN;
+    brokerFee: BN;
+    creatorFee: BN;
+    currency: PublicKey | null;
+  } | null {
+    const noopIxs = this.findAllNoopIxs(ix);
+
+    console.log(
+      "found noop ixs",
+      noopIxs.length,
+      JSON.stringify(noopIxs, null, 4)
+    );
+
+    if (!noopIxs.length) return null;
+
+    const cpiData = Buffer.from(bs58.decode(noopIxs[0].data));
+    const e = deserializeTcompEvent(cpiData);
+    if (e.type === "maker") return null;
+    return e as TakeEvent;
+  }
+
+  // TODO: idea - what if we just listened to noops?
+  // TODO: 0xrwu - we could parse events from noop, but if we're CPIed into we won't see them, so this might actually be better
   getAmount(
     ix: ParsedTCompIx
   ): { amount: BN; currency: PublicKey | null } | null {
@@ -705,6 +701,7 @@ export class TCompSDK {
           currency: (ix.ix.data as TCompBuyIx).currency,
         };
       case "delist":
+      case "tcompNoop":
         return null;
     }
   }
@@ -809,15 +806,23 @@ export const takeEventSchema = new Map([
   ],
 ]);
 
-export function deserializeTcompEvent(data: Buffer): MakeEvent | TakeEvent {
+export function deserializeTcompEvent(data: Buffer) {
+  if (
+    data.slice(0, 8).toString("hex") !== hash("global:tcomp_noop").slice(0, 16)
+  ) {
+    throw new Error("not tcomp noop buffer data");
+  }
+  // cut off anchor discriminator
+  data = data.slice(8, data.length);
   if (data[0] === 0) {
-    console.log("Maker event detected", data.length);
+    console.log("Maker event detected", data.length - 64);
     const e = borsh.deserialize(
       makeEventSchema,
       MakeEvent,
       data.slice(1, data.length)
     );
     return {
+      type: "maker",
       maker: new PublicKey(e.maker),
       assetId: new PublicKey(e.assetId),
       amount: new BN(e.amount),
@@ -826,13 +831,14 @@ export function deserializeTcompEvent(data: Buffer): MakeEvent | TakeEvent {
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
     };
   } else if (data[0] === 1) {
-    console.log("Taker event detected", data.length);
+    console.log("Taker event detected", data.length - 64);
     const e = borsh.deserialize(
       takeEventSchema,
       TakeEvent,
       data.slice(1, data.length)
     );
     return {
+      type: "taker",
       taker: new PublicKey(e.taker),
       assetId: new PublicKey(e.assetId),
       amount: new BN(e.amount),
@@ -846,6 +852,7 @@ export function deserializeTcompEvent(data: Buffer): MakeEvent | TakeEvent {
   }
 }
 
+// TODO: remove
 export const parseTcompEvent = async ({
   conn,
   sig,
@@ -861,16 +868,124 @@ export const parseTcompEvent = async ({
     (await tempConn.getTransaction(sig, { maxSupportedTransactionVersion: 0 }));
   if (!usedTx) return;
 
+  console.log(
+    "ILJA INNER IXS",
+    usedTx.meta!.innerInstructions![0].instructions?.length
+  );
+
   // Get noop program instruction
   const accountKeys = usedTx.transaction.message.getAccountKeys();
   const noopInstruction = usedTx
     .meta!.innerInstructions![0].instructions.reverse()
     .find((i) => {
-      return accountKeys.get(i.programIdIndex)?.equals(SPL_NOOP_PROGRAM_ID);
+      return accountKeys.get(i.programIdIndex)?.equals(TCOMP_ADDR);
     });
   if (!noopInstruction) return;
+
+  console.log("ILJA noop data", noopInstruction);
 
   const cpiData = Buffer.from(bs58.decode(noopInstruction.data));
   const event = deserializeTcompEvent(cpiData);
   console.log("event", JSON.stringify(event, null, 4));
+
+  return event;
+};
+
+export const extractAllIxs = (
+  tx: TransactionResponse,
+  /// If passed, will filter for ixs w/ this program ID.
+  programId?: PublicKey
+): {
+  rawIx: CompiledInstruction;
+  ixIdx: number;
+  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  innerIxs?: CompiledInstruction[];
+}[] => {
+  const message = tx.transaction.message;
+
+  let allIxs = [
+    // Top-level ixs.
+    ...message.instructions.map((rawIx, ixIdx) => ({
+      rawIx,
+      ixIdx,
+      innerIxs:
+        tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx)
+          ?.instructions ?? [],
+    })),
+    // Inner ixs (eg in CPI calls).
+    // TODO: do we need to filter out self-CPI subixs?
+    ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
+      instructions.map((rawIx) => ({ rawIx, ixIdx: index }))
+    ) ?? []),
+  ];
+
+  if (!isNullLike(programId)) {
+    const programIdIndex = message.accountKeys.findIndex((k) =>
+      k.equals(programId)
+    );
+    allIxs = allIxs.filter(
+      ({ rawIx }) => rawIx.programIdIndex === programIdIndex
+    );
+  }
+
+  return allIxs;
+};
+
+export type ParsedAnchorIx<IDL extends Idl> = {
+  /// Index of top-level instruction.
+  ixIdx: number;
+  ix: AnchorIx<IDL>;
+  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  innerIxs?: CompiledInstruction[];
+  events: AnchorEvent<IDL>[];
+  /// FYI: accounts under InstructionDisplay is the space-separated capitalized
+  /// version of the fields for the corresponding #[Accounts].
+  /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
+  formatted: InstructionDisplay | null;
+};
+
+export const parseAnchorIxs = <IDL extends Idl>({
+  coder,
+  tx,
+  eventParser,
+  programId,
+}: {
+  coder: BorshCoder;
+  tx: TransactionResponse;
+  /// If provided, will try to parse events.
+  /// Do not initialize if there are no events defined!
+  eventParser?: EventParser;
+  /// If passed, will only process ixs w/ this program ID.
+  programId?: PublicKey;
+}): ParsedAnchorIx<IDL>[] => {
+  const message = tx.transaction.message;
+  const logs = tx.meta?.logMessages;
+
+  const ixs: ParsedAnchorIx<IDL>[] = [];
+  extractAllIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
+    // Instruction data.
+    const ix = coder.instruction.decode(rawIx.data, "base58");
+    if (!ix) return;
+    const accountMetas = rawIx.accounts.map((acctIdx) => {
+      const pubkey = message.accountKeys[acctIdx];
+      return {
+        pubkey,
+        isSigner: message.isAccountSigner(acctIdx),
+        isWritable: message.isAccountWritable(acctIdx),
+      };
+    });
+
+    console.log(ix.name, JSON.stringify(ix), JSON.stringify(accountMetas));
+
+    const formatted = coder.instruction.format(ix, accountMetas);
+
+    console.log("RICHARD INNER IXS", innerIxs?.length);
+
+    // Events data.
+    // TODO: partition events properly by ix.
+    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
+    ixs.push({ ixIdx, ix, innerIxs, events, formatted });
+  });
+
+  return ixs;
 };

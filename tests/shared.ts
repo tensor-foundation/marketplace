@@ -620,6 +620,8 @@ export const testList = async ({
     delegate: listState,
   });
   memTree.updateLeaf(index, leaf);
+
+  return { sig };
 };
 
 export const testEdit = async ({

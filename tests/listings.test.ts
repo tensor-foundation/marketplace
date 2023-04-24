@@ -15,9 +15,16 @@ import {
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { ALREADY_IN_USE_ERR, HAS_ONE_ERR, tcompSdk } from "./utils";
+import {
+  ALREADY_IN_USE_ERR,
+  FEE_PCT,
+  HAS_ONE_ERR,
+  tcompSdk,
+  TEST_PROVIDER,
+} from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
+import { parseTcompEvent, TAKER_BROKER_PCT } from "../src";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -519,6 +526,55 @@ describe("tcomp", () => {
         owner: traderA.publicKey,
         canopyDepth,
       });
+    }
+  });
+
+  it.only("parses list tx ok", async () => {
+    let canopyDepth = 10;
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const currency = Keypair.generate().publicKey;
+      const { sig } = await testList({
+        amount: new BN(LAMPORTS_PER_SOL),
+        index,
+        memTree,
+        merkleTree,
+        metadata,
+        owner: traderA,
+        canopyDepth,
+        privateTaker: traderB.publicKey,
+        currency,
+      });
+
+      const tx = (await TEST_PROVIDER.connection.getTransaction(sig, {
+        commitment: "confirmed",
+      }))!;
+
+      await parseTcompEvent({ tx, conn: TEST_PROVIDER.connection, sig });
+
+      expect(tx).not.null;
+      const ixs = tcompSdk.parseIxs(tx);
+      expect(ixs).length(1);
+
+      console.log("parsed", JSON.stringify(ixs[0], null, 4));
+
+      const ix = ixs[0];
+      expect(ix.ix.name).eq("list");
+      expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(LAMPORTS_PER_SOL);
+      expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
+        currency.toString()
+      );
+      expect(tcompSdk.getFeeAmount(ix)?.brokerFee?.toNumber()).eq(
+        Math.trunc((LAMPORTS_PER_SOL * FEE_PCT * TAKER_BROKER_PCT) / 100)
+      );
+      expect(tcompSdk.getFeeAmount(ix)?.tcompFee?.toNumber()).eq(
+        Math.trunc(LAMPORTS_PER_SOL * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
+      );
+      expect(tcompSdk.getFeeAmount(ix)?.creatorFee?.toNumber()).eq(
+        Math.trunc((LAMPORTS_PER_SOL * metadata.sellerFeeBasisPoints) / 10000)
+      );
     }
   });
 });

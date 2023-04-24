@@ -44,6 +44,24 @@ export type Tcomp = {
   ],
   "instructions": [
     {
+      "name": "tcompNoop",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "event",
+          "type": {
+            "defined": "TcompEvent"
+          }
+        }
+      ]
+    },
+    {
       "name": "buy",
       "accounts": [
         {
@@ -206,6 +224,11 @@ export type Tcomp = {
         },
         {
           "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -936,6 +959,24 @@ export const IDL: Tcomp = {
   ],
   "instructions": [
     {
+      "name": "tcompNoop",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "event",
+          "type": {
+            "defined": "TcompEvent"
+          }
+        }
+      ]
+    },
+    {
       "name": "buy",
       "accounts": [
         {
@@ -1098,6 +1139,11 @@ export const IDL: Tcomp = {
         },
         {
           "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         },

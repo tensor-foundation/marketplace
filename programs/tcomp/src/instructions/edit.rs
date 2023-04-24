@@ -55,18 +55,17 @@ pub fn handler<'info>(
 
     let asset_id = get_asset_id(&ctx.accounts.merkle_tree.key(), nonce);
 
-    // (!) HAS TO GO LAST FOR PARSING
-    record_event(
-        &TcompEvent::Maker(MakeEvent {
-            maker: *ctx.accounts.owner.key,
-            asset_id,
-            amount,
-            currency,
-            expiry,
-            private_taker,
-        }),
-        &ctx.accounts.log_wrapper,
-    )?;
+    // record_event(
+    //     &TcompEvent::Maker(MakeEvent {
+    //         maker: *ctx.accounts.owner.key,
+    //         asset_id,
+    //         amount,
+    //         currency,
+    //         expiry,
+    //         private_taker,
+    //     }),
+    //     &ctx.accounts.log_wrapper,
+    // )?;
 
     Ok(())
 }

@@ -169,19 +169,18 @@ pub fn handler<'info>(
     })?;
 
     // TODO: fuck this doesn't work, if someone adds a tx on top with a noop ix it'll break out parser
-    // (!) HAS TO GO LAST FOR PARSING
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.owner.key,
-            asset_id,
-            amount,
-            tcomp_fee,
-            broker_fee,
-            creator_fee: actual_creator_fee,
-            currency,
-        }),
-        &ctx.accounts.log_wrapper,
-    )?;
+    // record_event(
+    //     &TcompEvent::Taker(TakeEvent {
+    //         taker: *ctx.accounts.owner.key,
+    //         asset_id,
+    //         amount,
+    //         tcomp_fee,
+    //         broker_fee,
+    //         creator_fee: actual_creator_fee,
+    //         currency,
+    //     }),
+    //     &ctx.accounts.log_wrapper,
+    // )?;
 
     Ok(())
 }
