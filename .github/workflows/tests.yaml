@@ -1,0 +1,128 @@
+# Adapted from Anchor's GH actions file.
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+  SOLANA_CLI_VERSION: 1.10.35
+  NODE_VERSION: 17.0.1
+  GH_AUTH_TOKEN: ${{ secrets.TENSORSWAP_GPR_PAT }}
+
+jobs:
+  test-rust:
+    name: Rust Tests
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+
+      - uses: actions/cache@v2
+        name: Cache Cargo registry + index
+        id: cache-cargo-build
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
+      - run: cargo build
+      - run: cargo fmt -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+      - uses: ./.github/actions/git-diff/
+
+  setup-anchor-cli:
+    name: Setup Anchor cli
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+
+      - uses: actions/cache@v2
+        name: Cache Cargo registry + index
+        id: cache-anchor
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
+
+      - run: |
+          if [ ! -f ~/.cargo/bin/anchor ] ; then
+            cargo install --git https://github.com/project-serum/anchor anchor-cli --locked --rev c1c4f6c
+          fi
+
+      - run: anchor --version
+      - run: chmod +x ~/.cargo/bin/anchor
+      - uses: actions/upload-artifact@v3
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/anchor
+          retention-days: 1
+
+      - uses: ./.github/actions/git-diff/
+
+  test-typescript:
+    # NB: Even though this depends on setup-anchor-cli it technically runs a different machine/runner
+    # so we need to download the anchor artifact from above.
+    needs: setup-anchor-cli
+    name: Test ${{ matrix.node.glob }}
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - glob: tests/listings.test.ts
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+      - uses: ./.github/actions/setup-ts/
+      - uses: ./.github/actions/setup-solana/
+
+      - uses: actions/cache@v2
+        name: Cache Cargo registry + index
+        id: cache-anchor
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: cargo-${{ runner.os }}-typescript-tests-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/
+      - run: chmod +x ~/.cargo/bin/anchor
+
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
+
+      - run: yarn install
+      - run: yarn test
+        env:
+          TESTS_GLOB: ${{ matrix.node.glob }}
+      # This ensures the IDL generated matches what's checked in!
+      - uses: ./.github/actions/git-diff/
