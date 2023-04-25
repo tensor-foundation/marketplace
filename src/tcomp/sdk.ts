@@ -221,25 +221,6 @@ export type TaggedTCompPdaAnchor =
       account: ListStateAnchor;
     };
 
-// ------------- Types for parsed ixs from raw tx.
-
-export type TCompIxName = (typeof IDL_latest)["instructions"][number]["name"];
-export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
-export type ParsedTCompIx = {
-  ixIdx: number;
-  ix: TCompIx;
-  // These are already filtered for the current ix
-  innerIxs?: CompiledInstruction[];
-  events: AnchorEvent<TcompIDL>[];
-  // FYI: accounts under InstructioNDisplay is the space-separated capitalized
-  // version of the fields for the corresponding #[Accounts].
-  // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
-  formatted: InstructionDisplay | null;
-  accountKeys: PublicKey[];
-};
-export type TCompPricedIx = { amount: BN; currency: PublicKey | null };
-export type TCompBuyIx = { maxAmount: BN; currency: PublicKey | null };
-
 // --------------------------------------- sdk
 
 export class TCompSDK {
@@ -401,8 +382,9 @@ export class TCompSDK {
     expireInSec = null,
     currency = null,
     privateTaker = null,
-    compute = DEFAULT_COMPUTE_UNITS,
-    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    // Not a heavy ix, no need
+    compute = null,
+    priorityMicroLamports = null,
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
@@ -640,35 +622,23 @@ export class TCompSDK {
 
   // --------------------------------------- parsing raw txs
 
-  parseIxs(tx: TransactionResponse): ParsedTCompIx[] {
+  parseIxs(tx: TransactionResponse): ParsedAnchorTcompIx<TcompIDL>[] {
     return parseAnchorTcompIxs<TcompIDL>({
       coder: this.coder,
       tx,
       programId: this.program.programId,
-      // (!) INTENTIONALLY DO NOT PASS THIS IN, SINCE WE DONT HAVE EVENTS. OR IT WILL BREAK.
-      // eventParser: this.eventParser,
     });
   }
 
-  findAllNoopIxs(ix: ParsedTCompIx): CompiledInstruction[] {
-    const noopProgramIndex = ix.accountKeys.findIndex((a) =>
-      a.equals(TCOMP_ADDR)
-    );
-    return (ix.innerIxs ?? []).filter(
-      (ix) => ix.programIdIndex === noopProgramIndex
-    );
-  }
-
-  getIxAmounts(ix: ParsedTCompIx): {
+  getIxAmounts(ix: ParsedAnchorTcompIx<TcompIDL>): {
     amount: BN;
     tcompFee: BN | null;
     brokerFee: BN | null;
     creatorFee: BN | null;
     currency: PublicKey | null;
   } | null {
-    const noopIxs = this.findAllNoopIxs(ix);
-    if (!noopIxs.length) return null;
-    const cpiData = Buffer.from(bs58.decode(noopIxs[0].data));
+    if (!ix.noopIx) return null;
+    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
     try {
       const e = deserializeTcompEvent(cpiData);
       return {
@@ -689,7 +659,7 @@ export class TCompSDK {
   // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   // shared.sol_escrow -> "Shared > Sol Escrow"
   getAccountByName(
-    ix: ParsedTCompIx,
+    ix: ParsedAnchorTcompIx<TcompIDL>,
     name: AccountSuffix
   ): ParsedAccount | undefined {
     // We use endsWith since composite nested accounts (eg shared.sol_escrow)
@@ -784,13 +754,16 @@ export const takeEventSchema = new Map([
   ],
 ]);
 
-// --------------------------------------- ETL parsing
+// --------------------------------------- parsing
+
+export type TCompIxName = (typeof IDL_latest)["instructions"][number]["name"];
+export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
 
 // This map serves 2 purposes:
 // 1) lists discriminators (in hex) for each ix
 // 2) lists whether an ix calls NOOP. This is needed for ETL parsing where we match ix # with noop #
 // Intentionally made it a dict so that we don't forget an ix
-const TCOMP_DISC_MAP: Record<
+export const TCOMP_DISC_MAP: Record<
   TCompIxName,
   { disc: string; callsNoop: boolean }
 > = {
@@ -804,7 +777,7 @@ const TCOMP_DISC_MAP: Record<
   edit: { disc: hash("global:edit").slice(0, 16), callsNoop: true },
 };
 // List of all discriminators that should include a noop ix
-const TCOMP_IXS_WITH_NOOP = Object.entries(TCOMP_DISC_MAP)
+export const TCOMP_IXS_WITH_NOOP = Object.entries(TCOMP_DISC_MAP)
   .filter(([_, ix]) => ix.callsNoop)
   .map(([_, ix]) => ix.disc);
 
@@ -892,9 +865,7 @@ export const extractAllTcompIxs = (
   let otherIxs: TcompExtractedIx[] = [];
 
   allIxs.forEach((ix) => {
-    const disc = Buffer.from(bs58.decode(ix.rawIx.data))
-      .toString("hex")
-      .slice(0, 16);
+    const disc = getDisc(ix.rawIx.data);
     if (disc === TCOMP_DISC_MAP["tcompNoop"].disc) {
       noopIxs.push(ix);
     } else if (TCOMP_IXS_WITH_NOOP.includes(disc)) {
@@ -939,6 +910,7 @@ export type ParsedAnchorTcompIx<IDL extends Idl> = {
   ix: AnchorIx<IDL>;
   /// Presence of field = it's a top-level ix; absence = inner ix itself.
   innerIxs?: CompiledInstruction[];
+  noopIx?: CompiledInstruction;
   events: AnchorEvent<IDL>[];
   /// FYI: accounts under InstructionDisplay is the space-separated capitalized
   /// version of the fields for the corresponding #[Accounts].
@@ -965,41 +937,49 @@ export const parseAnchorTcompIxs = <IDL extends Idl>({
   const logs = tx.meta?.logMessages;
 
   const ixs: ParsedAnchorTcompIx<IDL>[] = [];
-  extractAllTcompIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
-    // Instruction data.
-    const ix = coder.instruction.decode(rawIx.data, "base58");
-    if (!ix) return;
-    const accountMetas = rawIx.accounts.map((acctIdx) => {
-      const pubkey = message.accountKeys[acctIdx];
-      return {
-        pubkey,
-        isSigner: message.isAccountSigner(acctIdx),
-        isWritable: message.isAccountWritable(acctIdx),
-      };
-    });
+  extractAllTcompIxs(tx, programId).forEach(
+    ({ rawIx, ixIdx, innerIxs, noopIx }) => {
+      // Instruction data.
+      const ix = coder.instruction.decode(rawIx.data, "base58");
+      if (!ix) return;
+      const accountMetas = rawIx.accounts.map((acctIdx) => {
+        const pubkey = message.accountKeys[acctIdx];
+        return {
+          pubkey,
+          isSigner: message.isAccountSigner(acctIdx),
+          isWritable: message.isAccountWritable(acctIdx),
+        };
+      });
 
-    // TODO: currently anchor doesn't support parsing events with coder. Tried both tuple and structs.
-    //  In theory this shouldn't be a problem since we're now attaching noopIxs rather than sending them on their own
-    //  But for the record leaving these:
-    //  Tuple: https://discord.com/channels/889577356681945098/889577399308656662/1099868887870345327
-    //  Structs: https://discord.com/channels/889577356681945098/889577399308656662/1100459365535854593
-    // if (ix.name === "tcompNoop") return;
+      // TODO: currently anchor doesn't support parsing events with coder. Tried both tuple and structs.
+      //  In theory this shouldn't be a problem since we're now attaching noopIxs rather than sending them on their own
+      //  But for the record leaving these:
+      //  Tuple: https://discord.com/channels/889577356681945098/889577399308656662/1099868887870345327
+      //  Structs: https://discord.com/channels/889577356681945098/889577399308656662/1100459365535854593
+      // if (ix.name === "tcompNoop") return;
 
-    const formatted = coder.instruction.format(ix, accountMetas);
+      const formatted = coder.instruction.format(ix, accountMetas);
 
-    // Events data.
-    // TODO: partition events properly by ix.
-    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
+      // Events data.
+      // TODO: partition events properly by ix.
+      const events = eventParser
+        ? parseAnchorEvents<IDL>(eventParser, logs)
+        : [];
 
-    ixs.push({
-      ixIdx,
-      ix,
-      innerIxs,
-      events,
-      formatted,
-      accountKeys: message.accountKeys,
-    });
-  });
+      ixs.push({
+        ixIdx,
+        ix,
+        innerIxs,
+        noopIx,
+        events,
+        formatted,
+        accountKeys: message.accountKeys,
+      });
+    }
+  );
 
   return ixs;
 };
+
+export const getDisc = (bs58Data: string) =>
+  Buffer.from(bs58.decode(bs58Data)).toString("hex").slice(0, 16);

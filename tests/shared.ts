@@ -45,8 +45,12 @@ import {
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
+  getDisc,
   getTotalComputeIxs,
   TAKER_BROKER_PCT,
+  TCOMP_ADDR,
+  TCOMP_DISC_MAP,
+  TCompIxName,
 } from "../src";
 import { BN } from "@project-serum/anchor";
 import {
@@ -921,7 +925,10 @@ export const testBuy = async ({
   return { sig };
 };
 
-export const fetchAndCheckSingleIxTx = async (sig: string, name: string) => {
+export const fetchAndCheckSingleIxTx = async (
+  sig: string,
+  ixName: TCompIxName
+) => {
   const tx = (await TEST_PROVIDER.connection.getTransaction(sig, {
     commitment: "confirmed",
   }))!;
@@ -929,6 +936,19 @@ export const fetchAndCheckSingleIxTx = async (sig: string, name: string) => {
   const ixs = tcompSdk.parseIxs(tx);
   expect(ixs).length(1);
   const ix = ixs[0];
-  expect(ix.ix.name).eq(name);
+  expect(ix.ix.name).eq(ixName);
+
+  // check discriminator (skipped if we CPIed)
+  const tcompIx = tx.transaction.message.instructions.find(
+    (ix) =>
+      ix.programIdIndex ===
+      tx.transaction.message.accountKeys.findIndex(
+        (a) => a.toString() === TCOMP_ADDR.toString()
+      )
+  );
+  if (tcompIx) {
+    expect(getDisc(tcompIx.data)).eq(TCOMP_DISC_MAP[ixName].disc);
+  }
+
   return ix;
 };

@@ -4,6 +4,7 @@ skip-lint = false
 
 [programs.localnet]
 tcomp = "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+cpi_test = "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq"
 
 [registry]
 url = "https://api.apr.dev"

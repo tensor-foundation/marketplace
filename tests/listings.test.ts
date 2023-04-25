@@ -16,10 +16,17 @@ import {
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { ALREADY_IN_USE_ERR, FEE_PCT, HAS_ONE_ERR, tcompSdk } from "./utils";
+import {
+  ALREADY_IN_USE_ERR,
+  buildAndSendTx,
+  FEE_PCT,
+  HAS_ONE_ERR,
+  tcompSdk,
+} from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { TAKER_BROKER_PCT } from "../src";
+import { getDisc, TAKER_BROKER_PCT } from "../src";
+import { cpiEdit } from "./cpi_test";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -554,7 +561,7 @@ describe("tcomp", () => {
         expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
-      // --------------------------------------- Edit
+      // --------------------------------------- Edit (direct)
 
       //new settings
       amount = amount * 2;
@@ -569,6 +576,30 @@ describe("tcomp", () => {
           privateTaker: traderC.publicKey,
           currency,
         });
+        const ix = await fetchAndCheckSingleIxTx(sig, "edit");
+        expect(ix.ix.data);
+        const amounts = tcompSdk.getIxAmounts(ix);
+        expect(amounts?.amount.toNumber()).eq(amount);
+        expect(amounts?.currency?.toString()).eq(currency.toString());
+      }
+
+      // --------------------------------------- Edit (via cpi)
+
+      //new settings
+      amount = amount * 2;
+      currency = Keypair.generate().publicKey;
+
+      {
+        const {
+          tx: { ixs },
+        } = await cpiEdit({
+          amount: new BN(amount),
+          merkleTree,
+          nonce: new BN(index),
+          owner: traderA.publicKey,
+          currency,
+        });
+        const sig = await buildAndSendTx({ ixs, extraSigners: [traderA] });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);

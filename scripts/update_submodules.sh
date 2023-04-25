@@ -3,7 +3,7 @@
 cd deps/metaplex-mpl
 git pull origin master
 
-cd ../metaplex-auth
+cd ../solana-spl
 git pull origin main
 
 cd ../..
