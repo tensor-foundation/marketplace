@@ -10,7 +10,7 @@ on:
       - main
 env:
   SOLANA_CLI_VERSION: 1.10.35
-  NODE_VERSION: 17.0.1
+  NODE_VERSION: 16.14.0
   GH_AUTH_TOKEN: ${{ secrets.TENSORSWAP_GPR_PAT }}
 
 jobs:
