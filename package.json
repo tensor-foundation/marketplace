@@ -9,7 +9,7 @@
     "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"
   },
   "engines" : {
-    "node" : "^16.13.0"
+    "node" : "16.14.0"
   },
   "dependencies": {
     "@metaplex-foundation/mpl-bubblegum": "^0.6.2",
