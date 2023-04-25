@@ -16,13 +16,7 @@ import {
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import {
-  ALREADY_IN_USE_ERR,
-  FEE_PCT,
-  HAS_ONE_ERR,
-  tcompSdk,
-  TEST_PROVIDER,
-} from "./utils";
+import { ALREADY_IN_USE_ERR, FEE_PCT, HAS_ONE_ERR, tcompSdk } from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
 import { TAKER_BROKER_PCT } from "../src";
@@ -555,10 +549,9 @@ describe("tcomp", () => {
           currency,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "list");
-        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
-        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
-          currency.toString()
-        );
+        const amounts = tcompSdk.getIxAmounts(ix);
+        expect(amounts?.amount.toNumber()).eq(amount);
+        expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
       // --------------------------------------- Edit
@@ -577,10 +570,9 @@ describe("tcomp", () => {
           currency,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
-        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
-        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
-          currency.toString()
-        );
+        const amounts = tcompSdk.getIxAmounts(ix);
+        expect(amounts?.amount.toNumber()).eq(amount);
+        expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
       // --------------------------------------- Buy
@@ -599,19 +591,18 @@ describe("tcomp", () => {
           optionalRoyaltyPct: 100,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
-        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
-        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
-          currency.toString()
-        );
+        const amounts = tcompSdk.getIxAmounts(ix);
+        expect(amounts?.amount.toNumber()).eq(amount);
+        expect(amounts?.currency?.toString()).eq(currency.toString());
         if (TAKER_BROKER_PCT > 0) {
-          expect(tcompSdk.getFeeAmount(ix)?.brokerFee?.toNumber()).eq(
+          expect(amounts?.brokerFee?.toNumber()).eq(
             Math.trunc((amount * FEE_PCT * TAKER_BROKER_PCT) / 100)
           );
         }
-        expect(tcompSdk.getFeeAmount(ix)?.tcompFee?.toNumber()).eq(
+        expect(amounts?.tcompFee?.toNumber()).eq(
           Math.trunc(amount * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
         );
-        expect(tcompSdk.getFeeAmount(ix)?.creatorFee?.toNumber()).eq(
+        expect(amounts?.creatorFee?.toNumber()).eq(
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
       }

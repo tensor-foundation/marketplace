@@ -24,10 +24,8 @@ import {
 import {
   AccountInfo,
   Commitment,
-  CompiledInnerInstruction,
   CompiledInstruction,
   ComputeBudgetProgram,
-  Connection,
   PublicKey,
   SystemProgram,
   TransactionResponse,
@@ -50,7 +48,6 @@ import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
 import {
   AnchorEvent,
   AnchorIx,
-  filterNullLike,
   isNullLike,
   parseAnchorEvents,
 } from "@tensor-hq/tensor-common";
@@ -662,42 +659,28 @@ export class TCompSDK {
     );
   }
 
-  getFeeAmount(ix: ParsedTCompIx): {
-    tcompFee: BN;
-    brokerFee: BN;
-    creatorFee: BN;
+  getIxAmounts(ix: ParsedTCompIx): {
+    amount: BN;
+    tcompFee: BN | null;
+    brokerFee: BN | null;
+    creatorFee: BN | null;
     currency: PublicKey | null;
   } | null {
     const noopIxs = this.findAllNoopIxs(ix);
-
     if (!noopIxs.length) return null;
-
     const cpiData = Buffer.from(bs58.decode(noopIxs[0].data));
-    const e = deserializeTcompEvent(cpiData);
-    if (e.type === "maker") return null;
-    return e as TakeEvent;
-  }
-
-  // TODO: idea - what if we just listened to noops?
-  // TODO: 0xrwu - we could parse events from noop, but if we're CPIed into we won't see them, so this might actually be better
-  getAmount(
-    ix: ParsedTCompIx
-  ): { amount: BN; currency: PublicKey | null } | null {
-    switch (ix.ix.name) {
-      case "list":
-      case "edit":
-        return {
-          amount: (ix.ix.data as TCompPricedIx).amount,
-          currency: (ix.ix.data as TCompPricedIx).currency,
-        };
-      case "buy":
-        return {
-          amount: (ix.ix.data as TCompBuyIx).maxAmount,
-          currency: (ix.ix.data as TCompBuyIx).currency,
-        };
-      case "delist":
-      case "tcompNoop":
-        return null;
+    try {
+      const e = deserializeTcompEvent(cpiData);
+      return {
+        amount: e.amount,
+        tcompFee: e.tcompFee ?? null,
+        brokerFee: e.brokerFee ?? null,
+        creatorFee: e.creatorFee ?? null,
+        currency: e.currency,
+      };
+    } catch (e) {
+      console.log("ERROR parsing tcomp event", e);
+      return null;
     }
   }
 
