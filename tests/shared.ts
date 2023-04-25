@@ -46,7 +46,6 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
   getTotalComputeIxs,
-  parseTcompEvent,
   TAKER_BROKER_PCT,
 } from "../src";
 import { BN } from "@project-serum/anchor";
@@ -677,6 +676,8 @@ export const testEdit = async ({
       privateTaker.toString()
     );
   }
+
+  return { sig };
 };
 
 export const testDelist = async ({
@@ -918,4 +919,16 @@ export const testBuy = async ({
   memTree.updateLeaf(index, leaf);
 
   return { sig };
+};
+
+export const fetchAndCheckSingleIxTx = async (sig: string, name: string) => {
+  const tx = (await TEST_PROVIDER.connection.getTransaction(sig, {
+    commitment: "confirmed",
+  }))!;
+  expect(tx).not.null;
+  const ixs = tcompSdk.parseIxs(tx);
+  expect(ixs).length(1);
+  const ix = ixs[0];
+  expect(ix.ix.name).eq(name);
+  return ix;
 };

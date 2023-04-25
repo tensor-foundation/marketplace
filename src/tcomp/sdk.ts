@@ -644,11 +644,12 @@ export class TCompSDK {
   // --------------------------------------- parsing raw txs
 
   parseIxs(tx: TransactionResponse): ParsedTCompIx[] {
-    return parseAnchorIxs<TcompIDL>({
+    return parseAnchorTcompIxs<TcompIDL>({
       coder: this.coder,
       tx,
       programId: this.program.programId,
-      eventParser: this.eventParser,
+      // (!) INTENTIONALLY DO NOT PASS THIS IN, SINCE WE DONT HAVE EVENTS. OR IT WILL BREAK.
+      // eventParser: this.eventParser,
     });
   }
 
@@ -800,10 +801,32 @@ export const takeEventSchema = new Map([
   ],
 ]);
 
+// --------------------------------------- ETL parsing
+
+// This map serves 2 purposes:
+// 1) lists discriminators (in hex) for each ix
+// 2) lists whether an ix calls NOOP. This is needed for ETL parsing where we match ix # with noop #
+// Intentionally made it a dict so that we don't forget an ix
+const TCOMP_DISC_MAP: Record<
+  TCompIxName,
+  { disc: string; callsNoop: boolean }
+> = {
+  tcompNoop: {
+    disc: hash("global:tcomp_noop").slice(0, 16),
+    callsNoop: false,
+  },
+  buy: { disc: hash("global:buy").slice(0, 16), callsNoop: true },
+  list: { disc: hash("global:list").slice(0, 16), callsNoop: true },
+  delist: { disc: hash("global:delist").slice(0, 16), callsNoop: false },
+  edit: { disc: hash("global:edit").slice(0, 16), callsNoop: true },
+};
+// List of all discriminators that should include a noop ix
+const TCOMP_IXS_WITH_NOOP = Object.entries(TCOMP_DISC_MAP)
+  .filter(([_, ix]) => ix.callsNoop)
+  .map(([_, ix]) => ix.disc);
+
 export function deserializeTcompEvent(data: Buffer) {
-  if (
-    data.slice(0, 8).toString("hex") !== hash("global:tcomp_noop").slice(0, 16)
-  ) {
+  if (data.slice(0, 8).toString("hex") !== TCOMP_DISC_MAP["tcompNoop"].disc) {
     throw new Error("not tcomp noop buffer data");
   }
   // cut off anchor discriminator
@@ -846,49 +869,19 @@ export function deserializeTcompEvent(data: Buffer) {
   }
 }
 
-// TODO: remove
-export const parseTcompEvent = async ({
-  conn,
-  sig,
-  tx,
-}: {
-  sig: string;
-  tx?: TransactionResponse;
-  conn: Connection;
-}) => {
-  const tempConn = new Connection(conn.rpcEndpoint, "confirmed");
-  let usedTx =
-    tx ??
-    (await tempConn.getTransaction(sig, { maxSupportedTransactionVersion: 0 }));
-  if (!usedTx) return;
-
-  // Get noop program instruction
-  const accountKeys = usedTx.transaction.message.getAccountKeys();
-  const noopInstruction = usedTx
-    .meta!.innerInstructions![0].instructions.reverse()
-    .find((i) => {
-      return accountKeys.get(i.programIdIndex)?.equals(TCOMP_ADDR);
-    });
-  if (!noopInstruction) return;
-
-  const cpiData = Buffer.from(bs58.decode(noopInstruction.data));
-  const event = deserializeTcompEvent(cpiData);
-  console.log("event", JSON.stringify(event, null, 4));
-
-  return event;
-};
-
-// TODO: move to tensor common when done
-export const extractAllIxs = (
-  tx: TransactionResponse,
-  /// If passed, will filter for ixs w/ this program ID.
-  programId?: PublicKey
-): {
+export type TcompExtractedIx = {
   rawIx: CompiledInstruction;
   ixIdx: number;
   /// Presence of field = it's a top-level ix; absence = inner ix itself.
   innerIxs?: CompiledInstruction[];
-}[] => {
+  /// Optionally a tcomp ix might have a noop ix attached. Not all will.
+  noopIx?: CompiledInstruction;
+};
+export const extractAllTcompIxs = (
+  tx: TransactionResponse,
+  /// If passed, will filter for ixs w/ this program ID.
+  programId?: PublicKey
+): TcompExtractedIx[] => {
   const message = tx.transaction.message;
 
   let allIxs = [
@@ -896,6 +889,7 @@ export const extractAllIxs = (
     ...message.instructions.map((rawIx, ixIdx) => ({
       rawIx,
       ixIdx,
+      // This will break if Tcomp is being CPIed into
       innerIxs:
         tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx)
           ?.instructions ?? [],
@@ -907,20 +901,56 @@ export const extractAllIxs = (
     ) ?? []),
   ];
 
+  // Pure noop sub-ixs. These will be attached and not returned separately.
+  const noopIxs: TcompExtractedIx[] = [];
+  // Tcomp ixs that are expected to have a noop associated with them. These will be returned.
+  const tcompIxsWithNoop: TcompExtractedIx[] = [];
+  // Remaining ixs. These will be returned.
+  let otherIxs: TcompExtractedIx[] = [];
+
+  allIxs.forEach((ix) => {
+    const disc = Buffer.from(bs58.decode(ix.rawIx.data))
+      .toString("hex")
+      .slice(0, 16);
+    if (disc === TCOMP_DISC_MAP["tcompNoop"].disc) {
+      noopIxs.push(ix);
+    } else if (TCOMP_IXS_WITH_NOOP.includes(disc)) {
+      tcompIxsWithNoop.push(ix);
+    } else {
+      otherIxs.push(ix);
+    }
+  });
+
+  console.log(
+    "noop / with noop / other",
+    noopIxs.length,
+    tcompIxsWithNoop.length,
+    otherIxs.length
+  );
+
+  //(!) Strong assumption here that protocol and noop ixs come in pairs, ordered the same way
+  if (noopIxs.length !== tcompIxsWithNoop.length) {
+    throw new Error(
+      "expected # of NOOPs to match # of ixs with NOOPs. Check callsNoop in TCOMP_DISC_MAP."
+    );
+  }
+  tcompIxsWithNoop.forEach((ix, i) => {
+    ix.noopIx = noopIxs[i].rawIx;
+  });
+
   if (!isNullLike(programId)) {
     const programIdIndex = message.accountKeys.findIndex((k) =>
       k.equals(programId)
     );
-    allIxs = allIxs.filter(
+    otherIxs = otherIxs.filter(
       ({ rawIx }) => rawIx.programIdIndex === programIdIndex
     );
   }
 
-  return allIxs;
+  return [...tcompIxsWithNoop, ...otherIxs];
 };
 
-// TODO: move to tensor common when done
-export type ParsedAnchorIx<IDL extends Idl> = {
+export type ParsedAnchorTcompIx<IDL extends Idl> = {
   /// Index of top-level instruction.
   ixIdx: number;
   ix: AnchorIx<IDL>;
@@ -934,9 +964,7 @@ export type ParsedAnchorIx<IDL extends Idl> = {
   /// Needed to be able to figure out correct programs for sub-ixs
   accountKeys: PublicKey[];
 };
-
-// TODO: move to tensor common when done
-export const parseAnchorIxs = <IDL extends Idl>({
+export const parseAnchorTcompIxs = <IDL extends Idl>({
   coder,
   tx,
   eventParser,
@@ -949,12 +977,12 @@ export const parseAnchorIxs = <IDL extends Idl>({
   eventParser?: EventParser;
   /// If passed, will only process ixs w/ this program ID.
   programId?: PublicKey;
-}): ParsedAnchorIx<IDL>[] => {
+}): ParsedAnchorTcompIx<IDL>[] => {
   const message = tx.transaction.message;
   const logs = tx.meta?.logMessages;
 
-  const ixs: ParsedAnchorIx<IDL>[] = [];
-  extractAllIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
+  const ixs: ParsedAnchorTcompIx<IDL>[] = [];
+  extractAllTcompIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
     // Instruction data.
     const ix = coder.instruction.decode(rawIx.data, "base58");
     if (!ix) return;
@@ -967,15 +995,18 @@ export const parseAnchorIxs = <IDL extends Idl>({
       };
     });
 
-    // TODO: temp, anchor doesn't work for enums
-    if (ix.name === "tcompNoop") return;
+    // TODO: currently anchor doesn't support parsing events with coder. Tried both tuple and structs.
+    //  In theory this shouldn't be a problem since we're now attaching noopIxs rather than sending them on their own
+    //  But for the record leaving these:
+    //  Tuple: https://discord.com/channels/889577356681945098/889577399308656662/1099868887870345327
+    //  Structs: https://discord.com/channels/889577356681945098/889577399308656662/1100459365535854593
+    // if (ix.name === "tcompNoop") return;
+
     const formatted = coder.instruction.format(ix, accountMetas);
 
     // Events data.
     // TODO: partition events properly by ix.
-    // TODO: lol this also breaks
-    // const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
-    const events: any[] = [];
+    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
 
     ixs.push({
       ixIdx,

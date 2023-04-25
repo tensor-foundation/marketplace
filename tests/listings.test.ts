@@ -8,6 +8,7 @@ import {
   beforeAllHook,
   beforeHook,
   delegateCNft,
+  fetchAndCheckSingleIxTx,
   testBuy,
   testDelist,
   testEdit,
@@ -24,7 +25,7 @@ import {
 } from "./utils";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { parseTcompEvent, TAKER_BROKER_PCT } from "../src";
+import { TAKER_BROKER_PCT } from "../src";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -529,87 +530,91 @@ describe("tcomp", () => {
     }
   });
 
-  it.only("parses events ok", async () => {
+  it.only("parses listing txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
+    const [traderC] = await makeNTraders(1);
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      const currency = Keypair.generate().publicKey;
+      let amount = LAMPORTS_PER_SOL;
+      let currency = Keypair.generate().publicKey;
 
-      // --------------------------------------- Maker event
+      // --------------------------------------- List
 
-      const { sig } = await testList({
-        amount: new BN(LAMPORTS_PER_SOL),
-        index,
-        memTree,
-        merkleTree,
-        metadata,
-        owner: traderA,
-        canopyDepth,
-        privateTaker: traderB.publicKey,
-        currency,
-      });
-
-      const tx = (await TEST_PROVIDER.connection.getTransaction(sig, {
-        commitment: "confirmed",
-      }))!;
-      await parseTcompEvent({ tx, conn: TEST_PROVIDER.connection, sig });
-
-      expect(tx).not.null;
-      const ixs = tcompSdk.parseIxs(tx);
-      expect(ixs).length(1);
-      const ix = ixs[0];
-      expect(ix.ix.name).eq("list");
-      expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(LAMPORTS_PER_SOL);
-      expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
-        currency.toString()
-      );
-
-      // --------------------------------------- Taker event
-
-      const { sig: sig2 } = await testBuy({
-        index,
-        maxAmount: new BN(LAMPORTS_PER_SOL),
-        memTree,
-        merkleTree,
-        metadata,
-        buyer: traderB,
-        owner: traderA.publicKey,
-        canopyDepth,
-        currency,
-        optionalRoyaltyPct: 100,
-      });
-
-      const tx2 = (await TEST_PROVIDER.connection.getTransaction(sig2!, {
-        commitment: "confirmed",
-      }))!;
-      await parseTcompEvent({
-        tx: tx2,
-        conn: TEST_PROVIDER.connection,
-        sig: sig2!,
-      });
-
-      expect(tx2).not.null;
-      const ixs2 = tcompSdk.parseIxs(tx2);
-      expect(ixs2).length(1);
-      const ix2 = ixs2[0];
-      expect(ix2.ix.name).eq("buy");
-      expect(tcompSdk.getAmount(ix2)?.amount.toNumber()).eq(LAMPORTS_PER_SOL);
-      expect(tcompSdk.getAmount(ix2)?.currency?.toString()).eq(
-        currency.toString()
-      );
-      if (TAKER_BROKER_PCT > 0) {
-        expect(tcompSdk.getFeeAmount(ix2)?.brokerFee?.toNumber()).eq(
-          Math.trunc((LAMPORTS_PER_SOL * FEE_PCT * TAKER_BROKER_PCT) / 100)
+      {
+        const { sig } = await testList({
+          amount: new BN(amount),
+          index,
+          memTree,
+          merkleTree,
+          metadata,
+          owner: traderA,
+          canopyDepth,
+          privateTaker: traderB.publicKey,
+          currency,
+        });
+        const ix = await fetchAndCheckSingleIxTx(sig, "list");
+        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
+        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
+          currency.toString()
         );
       }
-      expect(tcompSdk.getFeeAmount(ix2)?.tcompFee?.toNumber()).eq(
-        Math.trunc(LAMPORTS_PER_SOL * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
-      );
-      expect(tcompSdk.getFeeAmount(ix2)?.creatorFee?.toNumber()).eq(
-        Math.trunc((LAMPORTS_PER_SOL * metadata.sellerFeeBasisPoints) / 10000)
-      );
+
+      // --------------------------------------- Edit
+
+      //new settings
+      amount = amount * 2;
+      currency = Keypair.generate().publicKey;
+
+      {
+        const { sig } = await testEdit({
+          amount: new BN(amount),
+          index,
+          merkleTree,
+          owner: traderA,
+          privateTaker: traderC.publicKey,
+          currency,
+        });
+        const ix = await fetchAndCheckSingleIxTx(sig, "edit");
+        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
+        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
+          currency.toString()
+        );
+      }
+
+      // --------------------------------------- Buy
+
+      {
+        const { sig } = await testBuy({
+          index,
+          maxAmount: new BN(amount),
+          memTree,
+          merkleTree,
+          metadata,
+          buyer: traderC,
+          owner: traderA.publicKey,
+          canopyDepth,
+          currency,
+          optionalRoyaltyPct: 100,
+        });
+        const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
+        expect(tcompSdk.getAmount(ix)?.amount.toNumber()).eq(amount);
+        expect(tcompSdk.getAmount(ix)?.currency?.toString()).eq(
+          currency.toString()
+        );
+        if (TAKER_BROKER_PCT > 0) {
+          expect(tcompSdk.getFeeAmount(ix)?.brokerFee?.toNumber()).eq(
+            Math.trunc((amount * FEE_PCT * TAKER_BROKER_PCT) / 100)
+          );
+        }
+        expect(tcompSdk.getFeeAmount(ix)?.tcompFee?.toNumber()).eq(
+          Math.trunc(amount * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
+        );
+        expect(tcompSdk.getFeeAmount(ix)?.creatorFee?.toNumber()).eq(
+          Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
+        );
+      }
     }
   });
 });
