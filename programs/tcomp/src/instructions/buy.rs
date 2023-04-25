@@ -88,7 +88,7 @@ pub fn handler<'info>(
     seller_fee_basis_points: u16,
     // Passing these in so buyer doesn't get rugged
     max_amount: u64,
-    currency: Option<Pubkey>,
+    _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
@@ -102,22 +102,17 @@ pub fn handler<'info>(
             data_hash,
             creator_shares,
             creator_verified,
-            seller_fee_basis_points,
         }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
         leaf_delegate: &ctx.accounts.list_state.to_account_info(),
-        compression_program: &ctx.accounts.compression_program.to_account_info(),
         creator_accounts,
         proof_accounts,
     })?;
 
-    // TODO: destructuring doesn't work due to Box<>
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
-    let expiry = list_state.expiry;
     let currency = list_state.currency;
-    let private_taker = list_state.private_taker;
     require!(amount <= max_amount, TcompError::PriceMismatch);
 
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;

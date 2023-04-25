@@ -42,11 +42,10 @@ describe("tcomp", () => {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators,
-          numMints: 3,
+          numMints: 2,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //list
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
@@ -68,7 +67,6 @@ describe("tcomp", () => {
             lookupTableAccount,
           })
         ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
-        //edit the price (up)
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
           index,
@@ -88,14 +86,12 @@ describe("tcomp", () => {
             lookupTableAccount,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-        //edit the price again (down)
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL / 2),
           index,
           merkleTree,
           owner: traderA,
         });
-        //buy at the correct price
         await testBuy({
           index,
           maxAmount: new BN(LAMPORTS_PER_SOL / 2),
@@ -110,6 +106,39 @@ describe("tcomp", () => {
     }
   });
 
+  it("lists + buys (optional royalties)", async () => {
+    for (const optionalRoyaltyPct of [0, 50, 100]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators: 4,
+          numMints: 2,
+        });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await testList({
+          amount: new BN(LAMPORTS_PER_SOL),
+          index,
+          memTree,
+          merkleTree,
+          metadata,
+          owner: traderA,
+          lookupTableAccount,
+        });
+        await testBuy({
+          index,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata,
+          buyer: traderB,
+          owner: traderA.publicKey,
+          lookupTableAccount,
+          optionalRoyaltyPct,
+        });
+      }
+    }
+  });
+
   it("tries to buy with false creators", async () => {
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
@@ -118,7 +147,6 @@ describe("tcomp", () => {
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      //list
       await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -188,7 +216,6 @@ describe("tcomp", () => {
           lookupTableAccount,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
-      //finally buy
       await testBuy({
         index,
         maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -243,10 +270,9 @@ describe("tcomp", () => {
     let canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({ nrCreators, numMints: 3, canopyDepth });
+        await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //list
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
@@ -257,7 +283,6 @@ describe("tcomp", () => {
           canopyDepth,
           // lookupTableAccount, //<-- intentionally not passing
         });
-        //edit the price (up)
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
           index,
@@ -278,7 +303,6 @@ describe("tcomp", () => {
             // lookupTableAccount, //<-- intentionally not passing
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-        //buy at the correct price
         await testBuy({
           index,
           maxAmount: new BN(LAMPORTS_PER_SOL * 2),
@@ -298,7 +322,7 @@ describe("tcomp", () => {
     let canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({ nrCreators, numMints: 3, canopyDepth });
+        await beforeHook({ nrCreators, numMints: 2, canopyDepth });
       const [delegate, payer] = await makeNTraders(2);
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -324,7 +348,6 @@ describe("tcomp", () => {
           canopyDepth,
           payer, //<-- separate payer
         });
-        //buy
         await testBuy({
           index,
           maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -346,7 +369,6 @@ describe("tcomp", () => {
         await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //list 1st time
         await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
@@ -367,7 +389,6 @@ describe("tcomp", () => {
             owner: traderB,
           })
         ).to.be.rejectedWith(HAS_ONE_ERR);
-        //succeeds with correct trader
         await testDelist({
           index,
           memTree,
@@ -385,7 +406,6 @@ describe("tcomp", () => {
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      //lists 1st time
       await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -396,7 +416,6 @@ describe("tcomp", () => {
         canopyDepth,
         expireInSec: new BN(1),
       });
-      //waits
       await waitMS(3000);
       //time expires, fails to buy
       await expect(
@@ -411,7 +430,6 @@ describe("tcomp", () => {
           canopyDepth,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
-      //relists with more expiry
       await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -419,7 +437,6 @@ describe("tcomp", () => {
         owner: traderA,
         expireInSec: new BN(100),
       });
-      //succeeds this time
       await testBuy({
         index,
         maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -440,7 +457,6 @@ describe("tcomp", () => {
     const [traderC] = await makeNTraders(1);
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      //lists 1st time
       await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -464,7 +480,6 @@ describe("tcomp", () => {
           canopyDepth,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
-      //succeeds with correct taker
       await testBuy({
         index,
         maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -485,7 +500,6 @@ describe("tcomp", () => {
     const [traderC] = await makeNTraders(1);
 
     for (const { leaf, index, metadata, assetId } of leaves) {
-      //lists
       await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -509,7 +523,6 @@ describe("tcomp", () => {
           canopyDepth,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
-      //edits the listing to remove private taker
       await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
@@ -517,7 +530,6 @@ describe("tcomp", () => {
         owner: traderA,
         privateTaker: null,
       });
-      //succeeds with correct taker
       await testBuy({
         index,
         maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -531,7 +543,7 @@ describe("tcomp", () => {
     }
   });
 
-  it.only("parses listing txs ok", async () => {
+  it("parses listing txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });

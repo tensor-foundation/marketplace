@@ -32,7 +32,6 @@ pub(crate) struct DataHashArgs {
     pub data_hash: [u8; 32],
     pub creator_shares: Vec<u8>,
     pub creator_verified: Vec<bool>,
-    pub seller_fee_basis_points: u16,
 }
 pub(crate) enum MetadataSrc {
     Metadata(TMetadataArgs),
@@ -46,7 +45,6 @@ pub(crate) struct VerifyArgs<'a, 'info> {
     pub(crate) merkle_tree: &'a AccountInfo<'info>,
     pub(crate) leaf_owner: &'a AccountInfo<'info>,
     pub(crate) leaf_delegate: &'a AccountInfo<'info>,
-    pub(crate) compression_program: &'a AccountInfo<'info>,
     pub(crate) creator_accounts: &'a [AccountInfo<'info>],
     pub(crate) proof_accounts: &'a [AccountInfo<'info>],
 }
@@ -59,7 +57,6 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
         merkle_tree,
         leaf_owner,
         leaf_delegate,
-        compression_program,
         creator_accounts,
         proof_accounts,
     } = args;
@@ -102,7 +99,6 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
             data_hash,
             creator_shares,
             creator_verified,
-            seller_fee_basis_points,
         }) => {
             let creators = creator_accounts
                 .iter()
@@ -158,9 +154,7 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
     fill_in_proof_from_canopy(canopy_bytes, header.get_max_depth(), index, &mut proof)?;
     let id = merkle_tree.key();
 
-    return match merkle_tree_apply_fn!(
-        header, id, tree_bytes, prove_leaf, root, leaf, &proof, index
-    ) {
+    match merkle_tree_apply_fn!(header, id, tree_bytes, prove_leaf, root, leaf, &proof, index) {
         Ok(_) => {
             msg!("Leaf Valid");
             Ok((asset_id, creator_hash, data_hash, creators))
@@ -169,7 +163,7 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
             msg!("FAILED LEAF VERIFICATION: {:?}", e);
             Err(TcompError::FailedLeafVerification.into())
         }
-    };
+    }
 }
 
 pub(crate) enum TcompSigner<'a, 'info> {
@@ -242,29 +236,29 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
     let mut transfer_account_metas = transfer_accounts.to_account_metas(Some(true));
     for acct in transfer_account_metas.iter_mut() {
         if acct.pubkey == leaf_delegate.key() && leaf_delegate.is_signer {
-            (*acct).is_signer = true;
+            acct.is_signer = true;
         }
         if acct.pubkey == leaf_owner.key() && (leaf_owner.is_signer) {
-            (*acct).is_signer = true;
+            acct.is_signer = true;
         }
         //for cpi to work
         if let Some(signer) = signer {
             match signer {
                 TcompSigner::Bid(bid) => {
                     if acct.pubkey == bid.key() {
-                        (*acct).is_signer = true;
+                        acct.is_signer = true;
                     }
                 }
                 TcompSigner::List(list) => {
                     if acct.pubkey == list.key() {
-                        (*acct).is_signer = true;
+                        acct.is_signer = true;
                     }
                 }
             }
         }
 
         if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
-            (*acct).is_signer = true;
+            acct.is_signer = true;
         }
     }
     for node in proof_accounts {

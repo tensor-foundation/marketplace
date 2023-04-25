@@ -57,7 +57,7 @@ pub fn handler<'info>(
         compression_program: &ctx.accounts.compression_program.to_account_info(),
         system_program: &ctx.accounts.system_program.to_account_info(),
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
-        proof_accounts: &ctx.remaining_accounts,
+        proof_accounts: ctx.remaining_accounts,
         signer: Some(&TcompSigner::List(&ctx.accounts.list_state)),
     })
 }

@@ -128,21 +128,9 @@ impl TMetadataArgs {
             primary_sale_happened: self.primary_sale_happened,
             is_mutable: self.is_mutable,
             edition_nonce: self.edition_nonce,
-            token_standard: if let Some(std) = self.token_standard {
-                Some(TokenStandard::from(std))
-            } else {
-                None
-            },
-            collection: if let Some(coll) = self.collection {
-                Some(Collection::from(coll))
-            } else {
-                None
-            },
-            uses: if let Some(uses) = self.uses {
-                Some(Uses::from(uses))
-            } else {
-                None
-            },
+            token_standard: self.token_standard.map(TokenStandard::from),
+            collection: self.collection.map(Collection::from),
+            uses: self.uses.map(Uses::from),
             token_program_version: TokenProgramVersion::from(
                 self.token_program_version,
             ),
