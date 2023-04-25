@@ -172,7 +172,7 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
     };
 }
 
-pub(crate) enum TransferSigner<'a, 'info> {
+pub(crate) enum TcompSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
     List(&'a Account<'info, ListState>),
 }
@@ -192,7 +192,7 @@ pub(crate) struct TransferArgs<'a, 'info> {
     pub system_program: &'a AccountInfo<'info>,
     pub bubblegum_program: &'a AccountInfo<'info>,
     pub proof_accounts: &'a [AccountInfo<'info>],
-    pub(crate) signer: Option<&'a TransferSigner<'a, 'info>>,
+    pub(crate) signer: Option<&'a TcompSigner<'a, 'info>>,
 }
 
 pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
@@ -250,12 +250,12 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
         //for cpi to work
         if let Some(signer) = signer {
             match signer {
-                TransferSigner::Bid(bid) => {
+                TcompSigner::Bid(bid) => {
                     if acct.pubkey == bid.key() {
                         (*acct).is_signer = true;
                     }
                 }
-                TransferSigner::List(list) => {
+                TcompSigner::List(list) => {
                     if acct.pubkey == list.key() {
                         (*acct).is_signer = true;
                     }
@@ -276,7 +276,7 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
 
     if let Some(signer) = signer {
         match signer {
-            TransferSigner::Bid(bid) => {
+            TcompSigner::Bid(bid) => {
                 invoke_signed(
                     &Instruction {
                         program_id: bubblegum_program.key(),
@@ -287,7 +287,7 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
                     &[&bid.seeds()],
                 )?;
             }
-            TransferSigner::List(list) => {
+            TcompSigner::List(list) => {
                 invoke_signed(
                     &Instruction {
                         program_id: bubblegum_program.key(),

@@ -5,7 +5,6 @@ pub mod bubblegum_adapter;
 pub mod error;
 pub mod event;
 pub mod instructions;
-pub mod noop;
 pub mod shared;
 pub mod state;
 
@@ -52,8 +51,8 @@ pub mod tcomp {
     use super::*;
 
     // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
-    pub fn tcomp_noop(_ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
-        Ok(())
+    pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
+        instructions::noop::handler(ctx)
     }
 
     pub fn buy<'info>(

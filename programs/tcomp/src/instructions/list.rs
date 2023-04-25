@@ -105,6 +105,7 @@ pub fn handler<'info>(
             private_taker,
         }),
         &ctx.accounts.tcomp_program,
+        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     Ok(())

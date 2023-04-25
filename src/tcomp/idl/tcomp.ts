@@ -47,9 +47,9 @@ export type Tcomp = {
       "name": "tcompNoop",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "tcompSigner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         }
       ],
       "args": [
@@ -967,9 +967,9 @@ export const IDL: Tcomp = {
       "name": "tcompNoop",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "tcompSigner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         }
       ],
       "args": [
