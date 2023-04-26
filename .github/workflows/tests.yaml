@@ -63,13 +63,14 @@ jobs:
             ./target/
           key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
 
-      - run: sudo apt install libssl-dev
-      - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
+# Run this if you need to reinstall anchor cli manually
+#      - run: sudo apt install libssl-dev
+#      - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
 
-#      - run: |
-#          if [ ! -f ~/.cargo/bin/anchor ] ; then
-#            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
-#          fi
+      - run: |
+          if [ ! -f ~/.cargo/bin/anchor ] ; then
+            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
+          fi
 
       - run: anchor --version
       - run: chmod +x ~/.cargo/bin/anchor
