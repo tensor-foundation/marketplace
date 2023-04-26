@@ -4,7 +4,7 @@ cd deps/metaplex-mpl
 git pull origin master
 
 cd ../solana-spl
-git pull origin main
+git pull origin master
 
 cd ../..
 git add .
