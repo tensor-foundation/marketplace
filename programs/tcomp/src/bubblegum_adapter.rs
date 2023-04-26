@@ -30,9 +30,7 @@ impl From<TTokenStandard> for TokenStandard {
             TTokenStandard::NonFungible => TokenStandard::NonFungible,
             TTokenStandard::FungibleAsset => TokenStandard::FungibleAsset,
             TTokenStandard::Fungible => TokenStandard::Fungible,
-            TTokenStandard::NonFungibleEdition => {
-                TokenStandard::NonFungibleEdition
-            }
+            TTokenStandard::NonFungibleEdition => TokenStandard::NonFungibleEdition,
         }
     }
 }
@@ -57,9 +55,9 @@ impl From<TUseMethod> for UseMethod {
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TUses {
     // 17 bytes + Option byte
-    pub use_method: TUseMethod, //1
-    pub remaining: u64,        //8
-    pub total: u64,            //8
+    pub use_method: TUseMethod,
+    pub remaining: u64,
+    pub total: u64,
 }
 
 impl From<TUses> for Uses {
@@ -131,9 +129,7 @@ impl TMetadataArgs {
             token_standard: self.token_standard.map(TokenStandard::from),
             collection: self.collection.map(Collection::from),
             uses: self.uses.map(Uses::from),
-            token_program_version: TokenProgramVersion::from(
-                self.token_program_version,
-            ),
+            token_program_version: TokenProgramVersion::from(self.token_program_version),
             creators: creators
                 .iter()
                 .enumerate()
