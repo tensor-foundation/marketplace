@@ -185,7 +185,7 @@ export const delegateCNft = async ({
   depthSizePair?: ValidDepthSizePair;
 }) => {
   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-  const proof = memTree.getProof(index, false, depthSizePair.maxDepth, true);
+  const proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
   const dataHash = computeDataHash(metadata);
   const creatorHash = computeCreatorHashPATCHED(metadata.creators);
   const delegateIx = createDelegateInstruction(
@@ -405,62 +405,6 @@ export const beforeHook = async ({
 }) => {
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
-  // TODO: debug
-  console.log(
-    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-    await getLamports(
-      new PublicKey("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp")
-    )
-  );
-  console.log(
-    "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
-    await getLamports(
-      new PublicKey("5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq")
-    )
-  );
-  console.log(
-    "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
-    await getLamports(
-      new PublicKey("BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY")
-    )
-  );
-  console.log(
-    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
-    await getLamports(
-      new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
-    )
-  );
-  console.log(
-    "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK",
-    await getLamports(
-      new PublicKey("cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK")
-    )
-  );
-  console.log(
-    "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV",
-    await getLamports(
-      new PublicKey("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")
-    )
-  );
-  console.log(
-    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-    await getLamports(
-      new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
-    )
-  );
-  console.log(
-    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-    await getLamports(
-      new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
-    )
-  );
-  console.log(
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-    await getLamports(
-      new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
-    )
-  );
-
   //setup collection and tree
   const { collectionMint } = await initCollection({ owner: treeOwner });
   const { merkleTree } = await makeTree({
@@ -521,7 +465,7 @@ export const beforeHook = async ({
       //   l.index,
       //   false,
       //   depthSizePair.maxDepth,
-      //   true
+      //   false
       // ).root;
       // console.log("root", Array.from(root));
       // console.log(

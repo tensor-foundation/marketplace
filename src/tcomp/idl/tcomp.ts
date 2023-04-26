@@ -318,7 +318,7 @@ export type Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -1238,7 +1238,7 @@ export const IDL: Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {

@@ -5,6 +5,7 @@ use crate::*;
 pub struct Delist<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+    #[account(mut)]
     pub owner: Signer<'info>,
     /// CHECK: downstream
     #[account(mut)]

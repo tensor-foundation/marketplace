@@ -9,7 +9,7 @@ on:
     branches:
       - main
 env:
-  SOLANA_CLI_VERSION: 1.15.2
+  SOLANA_CLI_VERSION: 1.14.17
   NODE_VERSION: 16.16.0
 
 jobs:
@@ -65,7 +65,7 @@ jobs:
       - run: sudo apt -y install libssl-dev
       - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
 
-# TODO: if we run this it pulls 0.25, which leads to enum failures. Has to be 0.26. We can't use cache.
+# TODO: if we run this it pulls 0.25, which leads to enum failures (need 0.26). Need to find a way to cache 0.26.
 #      - run: |
 #          if [ ! -f ~/.cargo/bin/anchor ] ; then
 #            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
