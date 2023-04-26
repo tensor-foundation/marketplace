@@ -63,9 +63,11 @@ jobs:
             ./target/
           key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
 
-      - run: |
+      - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
+
+#      - run: |
 #          if [ ! -f ~/.cargo/bin/anchor ] ; then
-            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
+#            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
 #          fi
 
       - run: anchor --version
