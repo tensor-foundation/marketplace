@@ -9,9 +9,8 @@ on:
     branches:
       - main
 env:
-  SOLANA_CLI_VERSION: 1.14.14
+  SOLANA_CLI_VERSION: 1.15.2
   NODE_VERSION: 16.16.0
-  GH_AUTH_TOKEN: ${{ secrets.TENSORSWAP_GPR_PAT }}
 
 jobs:
   test-rust:
@@ -123,6 +122,13 @@ jobs:
         with:
           cache: 'yarn'
           cache-dependency-path: yarn.lock
+
+      # TODO debug
+      - run: solana --version
+      - run: ls ./target/deploy
+      - run: ls ./deps/metaplex-mpl/bubblegum/program/target/deploy
+      - run: ls ./deps/metaplex-mpl/token-metadata/target/deploy
+      - run: ls ./deps/solana-spl/account-compression/target/deploy
 
       - run: yarn install
       - run: yarn test
