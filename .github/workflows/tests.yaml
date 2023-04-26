@@ -62,14 +62,14 @@ jobs:
             ./target/
           key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
 
-# Run this if you need to reinstall anchor cli manually
-#      - run: sudo apt install libssl-dev
-#      - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
+      - run: sudo apt install libssl-dev
+      - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
 
-      - run: |
-          if [ ! -f ~/.cargo/bin/anchor ] ; then
-            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
-          fi
+# TODO: if we run this it pulls 0.25, which leads to enum failures. Has to be 0.26. We can't use cache.
+#      - run: |
+#          if [ ! -f ~/.cargo/bin/anchor ] ; then
+#            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
+#          fi
 
       - run: anchor --version
       - run: chmod +x ~/.cargo/bin/anchor
@@ -122,13 +122,6 @@ jobs:
         with:
           cache: 'yarn'
           cache-dependency-path: yarn.lock
-
-      # TODO debug
-#      - run: solana --version
-#      - run: ls ./target/deploy
-#      - run: ls ./deps/metaplex-mpl/bubblegum/program/target/deploy
-#      - run: ls ./deps/metaplex-mpl/token-metadata/target/deploy
-#      - run: ls ./deps/solana-spl/account-compression/target/deploy
 
       - run: yarn install
       - run: yarn test
