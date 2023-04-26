@@ -124,11 +124,11 @@ jobs:
           cache-dependency-path: yarn.lock
 
       # TODO debug
-      - run: solana --version
-      - run: ls ./target/deploy
-      - run: ls ./deps/metaplex-mpl/bubblegum/program/target/deploy
-      - run: ls ./deps/metaplex-mpl/token-metadata/target/deploy
-      - run: ls ./deps/solana-spl/account-compression/target/deploy
+#      - run: solana --version
+#      - run: ls ./target/deploy
+#      - run: ls ./deps/metaplex-mpl/bubblegum/program/target/deploy
+#      - run: ls ./deps/metaplex-mpl/token-metadata/target/deploy
+#      - run: ls ./deps/solana-spl/account-compression/target/deploy
 
       - run: yarn install
       - run: yarn test
