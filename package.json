@@ -8,14 +8,14 @@
     "push": "git push --atomic",
     "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"
   },
-  "engines" : {
-    "node" : "^16.14.0"
+  "engines": {
+    "node": "^16.14.0"
   },
   "dependencies": {
     "@metaplex-foundation/mpl-bubblegum": "^0.6.2",
     "@metaplex-foundation/mpl-token-metadata": "^2.9.1",
     "@msgpack/msgpack": "^3.0.0-beta2",
-    "@project-serum/anchor": "^0.26.0",
+    "@project-serum/anchor": "0.26.0",
     "@solana/spl-account-compression": "^0.1.7",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
@@ -30,13 +30,13 @@
     "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^10.0.1",
+    "@types/node": "^18.7.11",
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
     "exponential-backoff": "^3.1.1",
     "mocha": "^10.2.0",
     "prettier": "^2.6.2",
     "ts-mocha": "^10.0.0",
-    "typescript": "^4.3.5",
-    "@types/node": "^18.7.11"
+    "typescript": "^4.3.5"
   }
 }
