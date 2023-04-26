@@ -9,7 +9,7 @@ on:
     branches:
       - main
 env:
-  SOLANA_CLI_VERSION: 1.14.17
+  SOLANA_CLI_VERSION: 1.15.2
   NODE_VERSION: 16.16.0
 
 jobs:
