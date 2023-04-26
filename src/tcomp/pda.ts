@@ -1,5 +1,10 @@
 import { PublicKey } from "@solana/web3.js";
 import { TCOMP_ADDR } from "./constants";
+import { BUBBLEGUM_PROGRAM_ID } from "./sdk";
+
+export const findTCompPda = ({ program }: { program?: PublicKey }) => {
+  return PublicKey.findProgramAddressSync([], program ?? TCOMP_ADDR);
+};
 
 export const findBidStatePda = ({
   program,
@@ -15,6 +20,7 @@ export const findBidStatePda = ({
     program ?? TCOMP_ADDR
   );
 };
+
 export const findListStatePda = ({
   program,
   assetId,
@@ -23,7 +29,18 @@ export const findListStatePda = ({
   assetId: PublicKey;
 }) => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("bid_state"), assetId.toBytes()],
+    [Buffer.from("list_state"), assetId.toBytes()],
     program ?? TCOMP_ADDR
+  );
+};
+
+export const findTreeAuthorityPda = ({
+  merkleTree,
+}: {
+  merkleTree: PublicKey;
+}) => {
+  return PublicKey.findProgramAddressSync(
+    [merkleTree.toBytes()],
+    BUBBLEGUM_PROGRAM_ID
   );
 };

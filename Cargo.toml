@@ -4,7 +4,9 @@ members = [
     "lib/*"
 ]
 exclude = [
-    "deps/metaplex-mpl/bubblegum/program"
+    "deps/metaplex-mpl/bubblegum/program",
+    "deps/metaplex-mpl/token-metadata/program",
+    "deps/solana-spl/account-compression/programs",
 ]
 
 

@@ -1,164 +1,181 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{
-        instruction::Instruction,
-        keccak::hashv,
-        program::{invoke, invoke_signed},
-    },
-};
-use mpl_bubblegum::{
-    self,
-    program::Bubblegum,
-    state::{leaf_schema::LeafSchema, metaplex_adapter::Creator},
-    utils::get_asset_id,
-};
-use spl_account_compression::{
-    program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
-};
-
 use crate::*;
 
 #[derive(Accounts)]
+#[instruction(nonce: u64)]
 pub struct Buy<'info> {
+    // Acts purely as a fee account
+    /// CHECK: seeds
+    #[account(mut, seeds=[], bump)]
+    pub tcomp: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+    pub buyer: Signer<'info>,
     /// CHECK: downstream
-    pub leaf_owner: Signer<'info>,
-    /// CHECK: downstream
-    pub leaf_delegate: Signer<'info>,
-    /// CHECK: downstream
-    pub new_leaf_owner: UncheckedAccount<'info>,
     #[account(mut)]
-    /// CHECK: downstream
     pub merkle_tree: UncheckedAccount<'info>,
     pub log_wrapper: Program<'info, Noop>,
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
-    pub bubblegum: Program<'info, Bubblegum>,
+    pub bubblegum_program: Program<'info, Bubblegum>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
+    /// CHECK: this ensures that specific asset_id belongs to specific owner
+    #[account(mut, close = owner,
+        seeds=[
+            b"list_state".as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+        ],
+        bump = list_state.bump[0],
+        has_one = owner
+    )]
+    pub list_state: Box<Account<'info, ListState>>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    // Owner needs to be passed in as mutable account, so we reassign lamports back to them
+    /// CHECK: has_one = owner on list_state
+    #[account(mut)]
+    pub owner: UncheckedAccount<'info>,
+    /// CHECK: none, can be anything
+    pub taker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
-    // 1. 1-5 creators
-    // 2. proof accounts
+    // 1. creators (1-5)
+    // 2. proof accounts (less canopy)
 }
 
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
+        let list_state = &self.list_state;
+        // Verify expiry
+        require!(
+            list_state.expiry >= Clock::get()?.unix_timestamp,
+            TcompError::OfferExpired
+        );
+        // Verify private taker
+        if let Some(private_taker) = list_state.private_taker {
+            require!(
+                private_taker == self.buyer.key(),
+                TcompError::TakerNotAllowed
+            );
+        }
         Ok(())
+    }
+}
+
+impl<'info> Buy<'info> {
+    fn transfer_lamports(&self, to: &AccountInfo<'info>, lamports: u64) -> Result<()> {
+        invoke(
+            &system_instruction::transfer(self.payer.key, to.key, lamports),
+            &[
+                self.payer.to_account_info(),
+                to.clone(),
+                self.system_program.to_account_info(),
+            ],
+        )
+        .map_err(Into::into)
     }
 }
 
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
-    root: [u8; 32],
     nonce: u64,
     index: u32,
-    metadata: MetadataArgs,
+    root: [u8; 32],
+    data_hash: [u8; 32],
+    // Below 3 used for creator verification
+    // Creators themseleves taken from extra accounts
+    creator_shares: Vec<u8>,
+    creator_verified: Vec<bool>,
+    seller_fee_basis_points: u16,
+    // Passing these in so buyer doesn't get rugged
+    max_amount: u64,
+    _currency: Option<Pubkey>,
+    optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    // --------------------------------------- verify collection first
-    // @dev: most of the stuff below is taken from process_mint_v1 in bubblegum
+    let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
-    let merkle_tree = ctx.accounts.merkle_tree.to_account_info();
-    let (creator_accounts, proof_accounts) = ctx
-        .remaining_accounts
-        .split_at(metadata.creator_shares.len());
-    let owner = ctx.accounts.leaf_owner.to_account_info();
-    let delegate = ctx.accounts.leaf_delegate.to_account_info();
-    let compression_program = &ctx.accounts.compression_program.to_account_info();
-
-    //this is the correct metadat that matches metaplex's format
-    let mplexMetadata = metadata.into(creator_accounts);
-
-    let creator_hash = hash_creators(&mplexMetadata.creators)?;
-
-    let metadata_args_hash = hashv(&[mplexMetadata.try_to_vec()?.as_slice()]);
-    let data_hash = hashv(&[
-        &metadata_args_hash.to_bytes(),
-        &mplexMetadata.seller_fee_basis_points.to_le_bytes(),
-    ]);
-
-    if mplexMetadata.collection.is_some() {
-        let asset_id = get_asset_id(&merkle_tree.key(), nonce);
-        let leaf = LeafSchema::new_v0(
-            asset_id,
-            owner.key(),
-            delegate.key(),
-            nonce,
-            data_hash.to_bytes(),
-            creator_hash,
-        );
-
-        let cpi_ctx = CpiContext::new(
-            compression_program.clone(),
-            spl_account_compression::cpi::accounts::VerifyLeaf {
-                merkle_tree: merkle_tree.clone(),
-            },
-        )
-        .with_remaining_accounts(proof_accounts.to_vec());
-        spl_account_compression::cpi::verify_leaf(cpi_ctx, root, leaf.to_node(), index)?;
-
-        msg!("yay valid");
-    }
-
-    // --------------------------------------- TODO pay sol & royalties
-
-    // --------------------------------------- transfer next
-
-    let transfer_instruction_data = mpl_bubblegum::instruction::Transfer {
+    // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
+    let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
         root,
-        data_hash: data_hash.to_bytes(),
-        creator_hash,
+        index,
+        nonce,
+        metadata_src: MetadataSrc::DataHash(DataHashArgs {
+            data_hash,
+            creator_shares,
+            creator_verified,
+        }),
+        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
+        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
+        creator_accounts,
+        proof_accounts,
+    })?;
+
+    let list_state = &ctx.accounts.list_state;
+    let amount = list_state.amount;
+    let currency = list_state.currency;
+    require!(amount <= max_amount, TcompError::PriceMismatch);
+
+    let (tcomp_fee, broker_fee) = calc_fees(amount)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
+
+    // --------------------------------------- sol transfers
+
+    // TODO: handle currency (not v1)
+
+    // Pay fees
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
+
+    // Pay creators
+    let actual_creator_fee = transfer_creators_fee(
+        &FromAcc::External(&FromExternal {
+            from: &ctx.accounts.payer.to_account_info(),
+            sys_prog: &ctx.accounts.system_program,
+        }),
+        &creators,
+        &mut creator_accounts.iter(),
+        creator_fee,
+    )?;
+
+    // Pay the seller
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
+    // --------------------------------------- nft transfer
+
+    transfer_cnft(TransferArgs {
+        root,
         nonce,
         index,
-    };
+        data_hash,
+        creator_hash,
+        tree_authority: &ctx.accounts.tree_authority.to_account_info(),
+        leaf_owner: &ctx.accounts.list_state.to_account_info(),
+        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
+        new_leaf_owner: &ctx.accounts.buyer.to_account_info(),
+        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
+        compression_program: &ctx.accounts.compression_program.to_account_info(),
+        system_program: &ctx.accounts.system_program.to_account_info(),
+        bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
+        proof_accounts,
+        signer: Some(&TcompSigner::List(&ctx.accounts.list_state)),
+    })?;
 
-    const INSTRUCTION_DATA_SIZE: usize = 108 + 8;
-    const INSTRUCTION_TAG: [u8; 8] = [163, 52, 200, 231, 140, 3, 69, 186];
-
-    let mut data: Vec<u8> = Vec::with_capacity(INSTRUCTION_DATA_SIZE);
-    data.extend_from_slice(&INSTRUCTION_TAG);
-    data.extend_from_slice(&root);
-    data.extend_from_slice(&data_hash.to_bytes());
-    data.extend_from_slice(&creator_hash);
-    data.extend_from_slice(&nonce.to_le_bytes());
-    data.extend_from_slice(&index.to_le_bytes());
-
-    // Get the account metas for the CPI call
-    // @notice: the reason why we need to manually call `to_account_metas` is because `Bubblegum::transfer` takes
-    //          either the owner or the delegate as an optional signer. Since the delegate is a PDA in this case the
-    //          client side code cannot set its is_signer flag to true, and Anchor drops it's is_signer flag when converting
-    //          CpiContext to account metas on the CPI call since there is no Signer specified in the instructions context.
-    // @TODO:   Consider TransferWithOwner and TransferWithDelegate instructions to avoid this slightly messy CPI
-    let transfer_accounts = mpl_bubblegum::cpi::accounts::Transfer {
-        tree_authority: ctx.accounts.tree_authority.to_account_info(),
-        leaf_owner: ctx.accounts.leaf_owner.to_account_info(),
-        leaf_delegate: ctx.accounts.leaf_delegate.to_account_info(),
-        new_leaf_owner: ctx.accounts.new_leaf_owner.to_account_info(),
-        merkle_tree: ctx.accounts.merkle_tree.to_account_info(),
-        log_wrapper: ctx.accounts.log_wrapper.to_account_info(),
-        compression_program: ctx.accounts.compression_program.to_account_info(),
-        system_program: ctx.accounts.system_program.to_account_info(),
-    };
-    let mut transfer_account_metas = transfer_accounts.to_account_metas(Some(true));
-    for acct in transfer_account_metas.iter_mut() {
-        if acct.pubkey == ctx.accounts.leaf_owner.key() {
-            (*acct).is_signer = true;
-        }
-    }
-    for node in proof_accounts {
-        transfer_account_metas.push(AccountMeta::new_readonly(*node.key, false));
-    }
-
-    // TODO not currently taking into account the canopy
-
-    let mut transfer_cpi_account_infos = transfer_accounts.to_account_infos();
-    transfer_cpi_account_infos.extend_from_slice(proof_accounts);
-    invoke(
-        &Instruction {
-            program_id: ctx.accounts.bubblegum.key(),
-            accounts: transfer_account_metas,
-            data,
-        },
-        &(transfer_cpi_account_infos[..]),
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            tcomp_fee,
+            broker_fee,
+            creator_fee: actual_creator_fee,
+            currency,
+        }),
+        &ctx.accounts.tcomp_program,
+        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     Ok(())

@@ -5,10 +5,13 @@ pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
 pub const FEE_BPS: u16 = 169;
 #[constant]
-pub const MAX_EXPIRY_SEC: i64 = 5184000; //60 days
-                                         // TODO currently disabled
+pub const MAX_EXPIRY_SEC: i64 = 5184000; // Max 60 days
 #[constant]
-pub const TAKER_BROKER_PCT: u16 = 0;
+pub const HUNDRED_PCT_BPS: u16 = 10000;
+
+// TODO: currently disabled
+#[constant]
+pub const TAKER_BROKER_PCT: u16 = 0; // Out of 100
 
 // --------------------------------------- listing
 
@@ -16,23 +19,23 @@ pub const TAKER_BROKER_PCT: u16 = 0;
 pub struct ListState {
     pub version: u8,
     pub bump: [u8; 1],
-    //ids
+    // IDs
     pub owner: Pubkey,
     pub asset_id: Pubkey,
-    //amount
+    // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
-    //extras
+    // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
 
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64;
+pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128;
 
 impl ListState {
     pub fn seeds(&self) -> [&[u8]; 3] {
@@ -46,24 +49,24 @@ impl ListState {
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],
-    //ids
+    // IDs
     pub owner: Pubkey,
     pub asset_id: Pubkey,
-    //amount
+    // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
-    //extras
+    // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
 
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64;
+pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {
@@ -74,28 +77,4 @@ impl BidState {
             &self.bump,
         ]
     }
-}
-
-// --------------------------------------- events
-
-#[event]
-pub struct MakeEvent {
-    pub owner: Pubkey,
-    pub asset_id: Pubkey,
-    pub amount: u64,
-    pub currency: Pubkey,
-    pub expiry: i64,
-    pub private_taker: Pubkey,
-}
-
-#[event]
-pub struct TakeEvent {
-    pub owner: Pubkey,
-    pub asset_id: Pubkey,
-    pub amount: u64,
-    pub tcomp_fee: u64,
-    pub creators_fee: u64,
-    pub currency: Pubkey,
-    pub expiry: i64,
-    pub private_taker: Pubkey,
 }

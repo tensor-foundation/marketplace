@@ -18,6 +18,11 @@ export type Tcomp = {
       "value": "5184000"
     },
     {
+      "name": "HUNDRED_PCT_BPS",
+      "type": "u16",
+      "value": "10000"
+    },
+    {
       "name": "TAKER_BROKER_PCT",
       "type": "u16",
       "value": "0"
@@ -27,19 +32,165 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
     {
+      "name": "tcompNoop",
+      "accounts": [
+        {
+          "name": "tcompSigner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "event",
+          "type": {
+            "defined": "TcompEvent"
+          }
+        }
+      ]
+    },
+    {
       "name": "buy",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
       "accounts": [
         {
           "name": "treeAuthority",
@@ -47,17 +198,12 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "leafOwner",
+          "name": "owner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
-          "name": "leafDelegate",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "newLeafOwner",
+          "name": "delegate",
           "isMut": false,
           "isSigner": false
         },
@@ -82,12 +228,35 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "bubblegum",
+          "name": "bubblegumProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
         {
           "name": "root",
           "type": {
@@ -98,6 +267,93 @@ export type Tcomp = {
           }
         },
         {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delist",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
           "name": "nonce",
           "type": "u64"
         },
@@ -106,9 +362,83 @@ export type Tcomp = {
           "type": "u32"
         },
         {
-          "name": "metadata",
+          "name": "root",
           "type": {
-            "defined": "MetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "edit",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]
@@ -166,7 +496,7 @@ export type Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -230,7 +560,7 @@ export type Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -240,14 +570,14 @@ export type Tcomp = {
   ],
   "types": [
     {
-      "name": "Uses",
+      "name": "TUses",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "useMethod",
             "type": {
-              "defined": "UseMethod"
+              "defined": "TUseMethod"
             }
           },
           {
@@ -262,7 +592,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "Collection",
+      "name": "TCollection",
       "type": {
         "kind": "struct",
         "fields": [
@@ -278,7 +608,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "MetadataArgs",
+      "name": "TMetadataArgs",
       "type": {
         "kind": "struct",
         "fields": [
@@ -334,7 +664,7 @@ export type Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "TokenStandard"
+                "defined": "TTokenStandard"
               }
             }
           },
@@ -345,7 +675,7 @@ export type Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "Collection"
+                "defined": "TCollection"
               }
             }
           },
@@ -356,14 +686,14 @@ export type Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "Uses"
+                "defined": "TUses"
               }
             }
           },
           {
             "name": "tokenProgramVersion",
             "type": {
-              "defined": "TokenProgramVersion"
+              "defined": "TTokenProgramVersion"
             }
           },
           {
@@ -380,7 +710,81 @@ export type Tcomp = {
       }
     },
     {
-      "name": "TokenProgramVersion",
+      "name": "MakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "tcompFee",
+            "type": "u64"
+          },
+          {
+            "name": "brokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "creatorFee",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
         "variants": [
@@ -394,7 +798,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "TokenStandard",
+      "name": "TTokenStandard",
       "type": {
         "kind": "enum",
         "variants": [
@@ -414,7 +818,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "UseMethod",
+      "name": "TUseMethod",
       "type": {
         "kind": "enum",
         "variants": [
@@ -429,88 +833,30 @@ export type Tcomp = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "MakeEvent",
-      "fields": [
-        {
-          "name": "owner",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
     },
     {
-      "name": "TakeEvent",
-      "fields": [
-        {
-          "name": "owner",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "tcompFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "creatorsFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
+      "name": "TcompEvent",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Maker",
+            "fields": [
+              {
+                "defined": "MakeEvent"
+              }
+            ]
+          },
+          {
+            "name": "Taker",
+            "fields": [
+              {
+                "defined": "TakeEvent"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -518,6 +864,56 @@ export type Tcomp = {
       "code": 6000,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
+    },
+    {
+      "code": 6001,
+      "name": "ExpiryTooLarge",
+      "msg": "expiry too large"
+    },
+    {
+      "code": 6002,
+      "name": "BadOwner",
+      "msg": "bad owner"
+    },
+    {
+      "code": 6003,
+      "name": "BadListState",
+      "msg": "bad list state"
+    },
+    {
+      "code": 6004,
+      "name": "BadRoyaltiesPct",
+      "msg": "royalties pct must be between 0 and 100"
+    },
+    {
+      "code": 6005,
+      "name": "PriceMismatch",
+      "msg": "price mismatch"
+    },
+    {
+      "code": 6006,
+      "name": "CreatorMismatch",
+      "msg": "creator mismatch"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientBalance",
+      "msg": "insufficient balance"
+    },
+    {
+      "code": 6008,
+      "name": "FailedLeafVerification",
+      "msg": "failed leaf verification"
+    },
+    {
+      "code": 6009,
+      "name": "OfferExpired",
+      "msg": "offer has expired"
+    },
+    {
+      "code": 6010,
+      "name": "TakerNotAllowed",
+      "msg": "taker not allowed"
     }
   ]
 };
@@ -542,6 +938,11 @@ export const IDL: Tcomp = {
       "value": "5184000"
     },
     {
+      "name": "HUNDRED_PCT_BPS",
+      "type": "u16",
+      "value": "10000"
+    },
+    {
       "name": "TAKER_BROKER_PCT",
       "type": "u16",
       "value": "0"
@@ -551,19 +952,165 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 64"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
     {
+      "name": "tcompNoop",
+      "accounts": [
+        {
+          "name": "tcompSigner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "event",
+          "type": {
+            "defined": "TcompEvent"
+          }
+        }
+      ]
+    },
+    {
       "name": "buy",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
       "accounts": [
         {
           "name": "treeAuthority",
@@ -571,17 +1118,12 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "leafOwner",
+          "name": "owner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
-          "name": "leafDelegate",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "newLeafOwner",
+          "name": "delegate",
           "isMut": false,
           "isSigner": false
         },
@@ -606,12 +1148,35 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "bubblegum",
+          "name": "bubblegumProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
         {
           "name": "root",
           "type": {
@@ -622,6 +1187,93 @@ export const IDL: Tcomp = {
           }
         },
         {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delist",
+      "accounts": [
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
           "name": "nonce",
           "type": "u64"
         },
@@ -630,9 +1282,83 @@ export const IDL: Tcomp = {
           "type": "u32"
         },
         {
-          "name": "metadata",
+          "name": "root",
           "type": {
-            "defined": "MetadataArgs"
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "dataHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "edit",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "merkleTree",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
           }
         }
       ]
@@ -690,7 +1416,7 @@ export const IDL: Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -754,7 +1480,7 @@ export const IDL: Tcomp = {
             "type": {
               "array": [
                 "u8",
-                64
+                128
               ]
             }
           }
@@ -764,14 +1490,14 @@ export const IDL: Tcomp = {
   ],
   "types": [
     {
-      "name": "Uses",
+      "name": "TUses",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "useMethod",
             "type": {
-              "defined": "UseMethod"
+              "defined": "TUseMethod"
             }
           },
           {
@@ -786,7 +1512,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "Collection",
+      "name": "TCollection",
       "type": {
         "kind": "struct",
         "fields": [
@@ -802,7 +1528,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "MetadataArgs",
+      "name": "TMetadataArgs",
       "type": {
         "kind": "struct",
         "fields": [
@@ -858,7 +1584,7 @@ export const IDL: Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "TokenStandard"
+                "defined": "TTokenStandard"
               }
             }
           },
@@ -869,7 +1595,7 @@ export const IDL: Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "Collection"
+                "defined": "TCollection"
               }
             }
           },
@@ -880,14 +1606,14 @@ export const IDL: Tcomp = {
             ],
             "type": {
               "option": {
-                "defined": "Uses"
+                "defined": "TUses"
               }
             }
           },
           {
             "name": "tokenProgramVersion",
             "type": {
-              "defined": "TokenProgramVersion"
+              "defined": "TTokenProgramVersion"
             }
           },
           {
@@ -904,7 +1630,81 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "TokenProgramVersion",
+      "name": "MakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TakeEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "assetId",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "tcompFee",
+            "type": "u64"
+          },
+          {
+            "name": "brokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "creatorFee",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
         "variants": [
@@ -918,7 +1718,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "TokenStandard",
+      "name": "TTokenStandard",
       "type": {
         "kind": "enum",
         "variants": [
@@ -938,7 +1738,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "UseMethod",
+      "name": "TUseMethod",
       "type": {
         "kind": "enum",
         "variants": [
@@ -953,88 +1753,30 @@ export const IDL: Tcomp = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "MakeEvent",
-      "fields": [
-        {
-          "name": "owner",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
     },
     {
-      "name": "TakeEvent",
-      "fields": [
-        {
-          "name": "owner",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "assetId",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "amount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "tcompFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "creatorsFee",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "currency",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "expiry",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "privateTaker",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
+      "name": "TcompEvent",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Maker",
+            "fields": [
+              {
+                "defined": "MakeEvent"
+              }
+            ]
+          },
+          {
+            "name": "Taker",
+            "fields": [
+              {
+                "defined": "TakeEvent"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -1042,6 +1784,56 @@ export const IDL: Tcomp = {
       "code": 6000,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
+    },
+    {
+      "code": 6001,
+      "name": "ExpiryTooLarge",
+      "msg": "expiry too large"
+    },
+    {
+      "code": 6002,
+      "name": "BadOwner",
+      "msg": "bad owner"
+    },
+    {
+      "code": 6003,
+      "name": "BadListState",
+      "msg": "bad list state"
+    },
+    {
+      "code": 6004,
+      "name": "BadRoyaltiesPct",
+      "msg": "royalties pct must be between 0 and 100"
+    },
+    {
+      "code": 6005,
+      "name": "PriceMismatch",
+      "msg": "price mismatch"
+    },
+    {
+      "code": 6006,
+      "name": "CreatorMismatch",
+      "msg": "creator mismatch"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientBalance",
+      "msg": "insufficient balance"
+    },
+    {
+      "code": 6008,
+      "name": "FailedLeafVerification",
+      "msg": "failed leaf verification"
+    },
+    {
+      "code": 6009,
+      "name": "OfferExpired",
+      "msg": "offer has expired"
+    },
+    {
+      "code": 6010,
+      "name": "TakerNotAllowed",
+      "msg": "taker not allowed"
     }
   ]
 };

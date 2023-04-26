@@ -1,33 +1,39 @@
+import * as borsh from "borsh";
 import {
   AccountSuffix,
   decodeAcct,
+  DEFAULT_COMPUTE_UNITS,
+  DEFAULT_MICRO_LAMPORTS,
   DiscMap,
   genDiscToDecoderMap,
   getAccountRent,
   getRentSync,
   hexCode,
   parseStrFn,
-} from "../common";
+} from "../shared";
 import {
   BN,
   BorshCoder,
   Coder,
   EventParser,
+  Idl,
+  Instruction,
   Program,
   Provider,
-  Event,
-  Instruction,
 } from "@project-serum/anchor";
 import {
   AccountInfo,
   Commitment,
-  LAMPORTS_PER_SOL,
+  CompiledInstruction,
+  ComputeBudgetProgram,
   PublicKey,
   SystemProgram,
   TransactionResponse,
 } from "@solana/web3.js";
 import { TCOMP_ADDR } from "./constants";
 import {
+  computeDataHash,
+  getLeafAssetId,
   MetadataArgs,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
@@ -39,14 +45,23 @@ import {
 } from "@solana/spl-account-compression";
 import { Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
-import { isNullLike } from "@tensor-hq/tensor-common";
-
-// --------------------------------------- idl
-
-import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
-import { Bid } from "../../deps/metaplex-mpl/auctioneer/js/src/generated";
+import {
+  AnchorEvent,
+  AnchorIx,
+  isNullLike,
+  parseAnchorEvents,
+} from "@tensor-hq/tensor-common";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
+import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
+import { computeCreatorHashPATCHED } from "../../tests/shared";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
+import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
+
+export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
+
+// --------------------------------------- idl
 
 export const tcompIDL_latest = IDL_latest;
 export const tcompIDL_latest_EffSlot = 0;
@@ -92,7 +107,7 @@ export const TokenStandardAnchor = {
   NonFungibleEdition: { nonFungibleEdition: {} },
 };
 export type TokenStandardAnchor =
-  typeof TokenStandardAnchor[keyof typeof TokenStandardAnchor];
+  (typeof TokenStandardAnchor)[keyof typeof TokenStandardAnchor];
 export const castTokenStandard = (
   t: TokenStandard | null
 ): TokenStandardAnchor | null => {
@@ -115,7 +130,7 @@ export const UseMethodAnchor = {
   Single: { single: {} },
 };
 export type UseMethodAnchor =
-  typeof UseMethodAnchor[keyof typeof UseMethodAnchor];
+  (typeof UseMethodAnchor)[keyof typeof UseMethodAnchor];
 export const castUseMethod = (u: UseMethod): UseMethodAnchor => {
   switch (u) {
     case UseMethod.Burn:
@@ -146,7 +161,7 @@ const TokenProgramVersionAnchor = {
   Token2022: { token2022: {} },
 };
 export type TokenProgramVersionAnchor =
-  typeof TokenProgramVersionAnchor[keyof typeof TokenProgramVersionAnchor];
+  (typeof TokenProgramVersionAnchor)[keyof typeof TokenProgramVersionAnchor];
 export const castTokenProgramVersion = (
   t: TokenProgramVersion
 ): TokenProgramVersionAnchor => {
@@ -206,23 +221,6 @@ export type TaggedTCompPdaAnchor =
       account: ListStateAnchor;
     };
 
-export type TCompEventAnchor = Event<typeof IDL_latest["events"][number]>;
-
-// ------------- Types for parsed ixs from raw tx.
-
-export type TCompIxName = typeof IDL_latest["instructions"][number]["name"];
-export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
-export type ParsedTCompIx = {
-  ixIdx: number;
-  ix: TCompIx;
-  events: TCompEventAnchor[];
-  // FYI: accounts under InstructioNDisplay is the space-separated capitalized
-  // version of the fields for the corresponding #[Accounts].
-  // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
-  formatted: InstructionDisplay | null;
-};
-export type TCompPricedIx = { amount: BN; currency: PublicKey | null };
-
 // --------------------------------------- sdk
 
 export class TCompSDK {
@@ -273,29 +271,267 @@ export class TCompSDK {
 
   // --------------------------------------- ixs
 
-  async buy({
+  async list({
     merkleTree,
-    leafOwner,
-    newLeafOwner,
+    owner,
+    delegate = owner,
     proof,
     root,
     metadata,
     nonce,
     index,
+    amount,
+    expireInSec = null,
+    currency = null,
+    privateTaker = null,
+    payer = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
-    leafOwner: PublicKey;
-    newLeafOwner: PublicKey;
-    proof: PublicKey[];
+    owner: PublicKey;
+    delegate?: PublicKey;
+    proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
-    nonce: BN;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
     index: number;
+    amount: BN;
+    expireInSec?: BN | null;
+    currency?: PublicKey | null;
+    privateTaker?: PublicKey | null;
+    payer?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
   }) {
-    const [treeAuthority, _bump] = await PublicKey.findProgramAddress(
-      [merkleTree.toBuffer()],
-      BUBBLEGUM_PROGRAM_ID
-    );
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const dataHash = computeDataHash(metadata);
+    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
+    const builder = this.program.methods
+      .list(
+        nonce,
+        index,
+        root,
+        [...dataHash],
+        [...creatorsHash],
+        amount,
+        expireInSec,
+        currency,
+        privateTaker
+      )
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
+        merkleTree,
+        treeAuthority,
+        delegate,
+        owner,
+        listState,
+        payer: payer ?? owner,
+      })
+      .remainingAccounts(proofPath);
+
+    //because EITHER of the two has to sign, mark one of them as signer
+    const ix = await builder.instruction();
+    if (!!delegate && !delegate.equals(owner)) {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(delegate));
+      ix["keys"][i]["isSigner"] = true;
+    } else {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(owner));
+      ix["keys"][i]["isSigner"] = true;
+    }
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, ix],
+        extraSigners: [],
+      },
+      treeAuthority,
+      assetId,
+      listState,
+      proofPath,
+    };
+  }
+
+  async edit({
+    merkleTree,
+    owner,
+    nonce,
+    amount,
+    expireInSec = null,
+    currency = null,
+    privateTaker = null,
+    // Not a heavy ix, no need
+    compute = null,
+    priorityMicroLamports = null,
+  }: {
+    merkleTree: PublicKey;
+    owner: PublicKey;
+    nonce: BN;
+    amount: BN;
+    expireInSec?: BN | null;
+    currency?: PublicKey | null;
+    privateTaker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+  }) {
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+
+    const builder = this.program.methods
+      .edit(nonce, amount, expireInSec, currency, privateTaker)
+      .accounts({
+        merkleTree,
+        owner,
+        listState,
+        tcompProgram: TCOMP_ADDR,
+      });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      assetId,
+      listState,
+    };
+  }
+
+  async delist({
+    merkleTree,
+    owner,
+    proof,
+    root,
+    metadata,
+    nonce,
+    index,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
+  }: {
+    merkleTree: PublicKey;
+    owner: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    metadata: MetadataArgs;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
+  }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const dataHash = computeDataHash(metadata);
+    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
+    const builder = this.program.methods
+      .delist(nonce, index, root, [...dataHash], [...creatorsHash])
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        merkleTree,
+        treeAuthority,
+        owner,
+        listState,
+      })
+      .remainingAccounts(proofPath);
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      treeAuthority,
+      assetId,
+      listState,
+      proofPath,
+    };
+  }
+
+  async buy({
+    merkleTree,
+    proof,
+    root,
+    metadata,
+    nonce,
+    index,
+    maxAmount,
+    currency = null,
+    optionalRoyaltyPct = null,
+    owner,
+    buyer,
+    payer = null,
+    takerBroker = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
+  }: {
+    merkleTree: PublicKey;
+    delegate?: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    metadata: MetadataArgs;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
+    maxAmount: BN;
+    currency?: PublicKey | null;
+    optionalRoyaltyPct?: number | null;
+    owner: PublicKey;
+    buyer: PublicKey;
+    payer?: PublicKey | null;
+    takerBroker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
+  }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const [tcomp] = findTCompPda({});
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
 
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
@@ -303,33 +539,57 @@ export class TCompSDK {
       isWritable: true,
     }));
 
-    let proofPath = proof.map((node: PublicKey) => ({
-      pubkey: node,
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
       isSigner: false,
       isWritable: false,
     }));
 
-    console.log(metadata.creators.map((c) => c.share));
-    console.log(metadata.creators.map((c) => c.verified));
+    const dataHash = computeDataHash(metadata);
 
     const builder = this.program.methods
-      .buy(root, nonce, index, castMetadata(metadata))
+      .buy(
+        nonce,
+        index,
+        root,
+        [...dataHash],
+        Buffer.from(metadata.creators.map((c) => c.share)),
+        metadata.creators.map((c) => c.verified),
+        metadata.sellerFeeBasisPoints,
+        maxAmount,
+        currency,
+        optionalRoyaltyPct
+      )
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
-        leafDelegate: leafOwner,
-        leafOwner,
-        newLeafOwner,
-        bubblegum: BUBBLEGUM_PROGRAM_ID,
+        buyer,
+        payer: payer ?? buyer,
+        owner,
+        listState,
+        tcomp,
+        takerBroker: takerBroker ?? tcomp,
       })
       .remainingAccounts([...creators, ...proofPath]);
 
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
     return {
       builder,
-      tx: { ixs: [await builder.instruction()], extraSigners: [] },
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      listState,
+      treeAuthority,
+      tcomp,
+      creators,
+      proofPath,
     };
   }
 
@@ -350,57 +610,337 @@ export class TCompSDK {
   }
 
   getError(
-    name: typeof IDL_latest["errors"][number]["name"]
-  ): typeof IDL_latest["errors"][number] {
+    name: (typeof IDL_latest)["errors"][number]["name"]
+  ): (typeof IDL_latest)["errors"][number] {
     //@ts-ignore (throwing weird ts errors for me)
     return this.program.idl.errors.find((e) => e.name === name)!;
   }
 
-  getErrorCodeHex(name: typeof IDL_latest["errors"][number]["name"]): string {
+  getErrorCodeHex(name: (typeof IDL_latest)["errors"][number]["name"]): string {
     return hexCode(this.getError(name).code);
   }
 
   // --------------------------------------- parsing raw txs
 
-  // Stolen from https://github.com/saber-hq/saber-common/blob/4b533d77af8ad5c26f033fd5e69bace96b0e1840/packages/anchor-contrib/src/utils/coder.ts#L171-L185
-  parseEvents = (logs: string[] | undefined | null) => {
-    if (!logs) {
-      return [];
+  parseIxs(tx: TransactionResponse): ParsedAnchorTcompIx<TcompIDL>[] {
+    return parseAnchorTcompIxs<TcompIDL>({
+      coder: this.coder,
+      tx,
+      programId: this.program.programId,
+    });
+  }
+
+  getIxAmounts(ix: ParsedAnchorTcompIx<TcompIDL>): {
+    amount: BN;
+    tcompFee: BN | null;
+    brokerFee: BN | null;
+    creatorFee: BN | null;
+    currency: PublicKey | null;
+  } | null {
+    if (!ix.noopIx) return null;
+    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
+    try {
+      const e = deserializeTcompEvent(cpiData);
+      return {
+        amount: e.amount,
+        tcompFee: e.tcompFee ?? null,
+        brokerFee: e.brokerFee ?? null,
+        creatorFee: e.creatorFee ?? null,
+        currency: e.currency,
+      };
+    } catch (e) {
+      console.log("ERROR parsing tcomp event", e);
+      return null;
     }
+  }
 
-    const events: TCompEventAnchor[] = [];
-    const parsedLogsIter = this.eventParser.parseLogs(logs ?? []);
-    let parsedEvent = parsedLogsIter.next();
-    while (!parsedEvent.done) {
-      events.push(parsedEvent.value as unknown as TCompEventAnchor);
-      parsedEvent = parsedLogsIter.next();
-    }
+  // FYI: accounts under InstructioNDisplay is the space-separated capitalized
+  // version of the fields for the corresponding #[Accounts].
+  // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
+  // shared.sol_escrow -> "Shared > Sol Escrow"
+  getAccountByName(
+    ix: ParsedAnchorTcompIx<TcompIDL>,
+    name: AccountSuffix
+  ): ParsedAccount | undefined {
+    // We use endsWith since composite nested accounts (eg shared.sol_escrow)
+    // will prefix it as "Shared > Sol Escrow"
+    return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(name));
+  }
+}
 
-    return events;
-  };
-
-  parseIxs(tx: TransactionResponse): ParsedTCompIx[] {
-    const message = tx.transaction.message;
-    const logs = tx.meta?.logMessages;
-
-    const programIdIndex = message.accountKeys.findIndex((k) =>
-      k.equals(this.program.programId)
+export const getTotalComputeIxs = (
+  compute: number | null,
+  priorityMicroLamports: number | null
+) => {
+  const finalIxs = [];
+  //optionally include extra compute]
+  if (!isNullLike(compute)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitLimit({
+        units: compute,
+      })
     );
+  }
+  //optionally include priority fee
+  if (!isNullLike(priorityMicroLamports)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityMicroLamports,
+      })
+    );
+  }
+  return finalIxs;
+};
 
-    const ixs: ParsedTCompIx[] = [];
-    [
-      // Top-level ixs.
-      ...message.instructions.map((rawIx, ixIdx) => ({ rawIx, ixIdx })),
-      // Inner ixs (eg in CPI calls).
-      ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
-        instructions.map((rawIx) => ({ rawIx, ixIdx: index }))
-      ) ?? []),
-    ].forEach(({ rawIx, ixIdx }) => {
-      // Ignore ixs that are not from our program.
-      if (rawIx.programIdIndex !== programIdIndex) return;
+// --------------------------------------- events
 
+export class MakeEvent {
+  maker!: PublicKey;
+  assetId!: PublicKey;
+  amount!: BN;
+  currency!: PublicKey | null;
+  expiry!: BN;
+  privateTaker!: PublicKey | null;
+
+  constructor(fields?: Partial<MakeEvent>) {
+    Object.assign(this, fields);
+  }
+}
+export const makeEventSchema = new Map([
+  [
+    MakeEvent,
+    {
+      kind: "struct",
+      fields: [
+        ["maker", [32]],
+        ["assetId", [32]],
+        ["amount", "u64"],
+        ["currency", { kind: "option", type: [32] }],
+        ["expiry", "u64"],
+        ["privateTaker", { kind: "option", type: [32] }],
+      ],
+    },
+  ],
+]);
+
+export class TakeEvent {
+  taker!: PublicKey;
+  assetId!: PublicKey;
+  amount!: BN;
+  tcompFee!: BN;
+  brokerFee!: BN;
+  creatorFee!: BN;
+  currency!: PublicKey | null;
+
+  constructor(fields?: Partial<TakeEvent>) {
+    Object.assign(this, fields);
+  }
+}
+export const takeEventSchema = new Map([
+  [
+    TakeEvent,
+    {
+      kind: "struct",
+      fields: [
+        ["taker", [32]],
+        ["assetId", [32]],
+        ["amount", "u64"],
+        ["tcompFee", "u64"],
+        ["brokerFee", "u64"],
+        ["creatorFee", "u64"],
+        ["currency", { kind: "option", type: [32] }],
+      ],
+    },
+  ],
+]);
+
+// --------------------------------------- parsing
+
+export type TCompIxName = (typeof IDL_latest)["instructions"][number]["name"];
+export type TCompIx = Omit<Instruction, "name"> & { name: TCompIxName };
+
+// This map serves 2 purposes:
+// 1) lists discriminators (in hex) for each ix
+// 2) lists whether an ix calls NOOP. This is needed for ETL parsing where we match ix # with noop #
+// Intentionally made it a dict so that we don't forget an ix
+export const TCOMP_DISC_MAP: Record<
+  TCompIxName,
+  { disc: string; callsNoop: boolean }
+> = {
+  tcompNoop: {
+    disc: hash("global:tcomp_noop").slice(0, 16),
+    callsNoop: false,
+  },
+  buy: { disc: hash("global:buy").slice(0, 16), callsNoop: true },
+  list: { disc: hash("global:list").slice(0, 16), callsNoop: true },
+  delist: { disc: hash("global:delist").slice(0, 16), callsNoop: false },
+  edit: { disc: hash("global:edit").slice(0, 16), callsNoop: true },
+};
+// List of all discriminators that should include a noop ix
+export const TCOMP_IXS_WITH_NOOP = Object.entries(TCOMP_DISC_MAP)
+  .filter(([_, ix]) => ix.callsNoop)
+  .map(([_, ix]) => ix.disc);
+
+export function deserializeTcompEvent(data: Buffer) {
+  if (data.slice(0, 8).toString("hex") !== TCOMP_DISC_MAP["tcompNoop"].disc) {
+    throw new Error("not tcomp noop buffer data");
+  }
+  // cut off anchor discriminator
+  data = data.slice(8, data.length);
+  if (data[0] === 0) {
+    console.log("🟩 Maker event detected", data.length - 64);
+    const e = borsh.deserialize(
+      makeEventSchema,
+      MakeEvent,
+      data.slice(1, data.length)
+    );
+    return {
+      type: "maker",
+      maker: new PublicKey(e.maker),
+      assetId: new PublicKey(e.assetId),
+      amount: new BN(e.amount),
+      currency: e.currency ? new PublicKey(e.currency) : null,
+      expiry: new BN(e.expiry),
+      privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
+    };
+  } else if (data[0] === 1) {
+    console.log("🟥 Taker event detected", data.length - 64);
+    const e = borsh.deserialize(
+      takeEventSchema,
+      TakeEvent,
+      data.slice(1, data.length)
+    );
+    return {
+      type: "taker",
+      taker: new PublicKey(e.taker),
+      assetId: new PublicKey(e.assetId),
+      amount: new BN(e.amount),
+      tcompFee: new BN(e.tcompFee),
+      creatorFee: new BN(e.creatorFee),
+      brokerFee: new BN(e.brokerFee),
+      currency: e.currency ? new PublicKey(e.currency) : null,
+    };
+  } else {
+    throw new Error("unknown event");
+  }
+}
+
+export type TcompExtractedIx = {
+  rawIx: CompiledInstruction;
+  ixIdx: number;
+  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  innerIxs?: CompiledInstruction[];
+  /// Optionally a tcomp ix might have a noop ix attached. Not all will.
+  noopIx?: CompiledInstruction;
+};
+export const extractAllTcompIxs = (
+  tx: TransactionResponse,
+  /// If passed, will filter for ixs w/ this program ID.
+  programId?: PublicKey
+): TcompExtractedIx[] => {
+  const message = tx.transaction.message;
+
+  let allIxs = [
+    // Top-level ixs.
+    ...message.instructions.map((rawIx, ixIdx) => ({
+      rawIx,
+      ixIdx,
+      // This will break if Tcomp is being CPIed into
+      innerIxs:
+        tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx)
+          ?.instructions ?? [],
+    })),
+    // Inner ixs (eg in CPI calls).
+    // TODO: do we need to filter out self-CPI subixs?
+    ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
+      instructions.map((rawIx) => ({ rawIx, ixIdx: index }))
+    ) ?? []),
+  ];
+
+  // Pure noop sub-ixs. These will be attached and not returned separately.
+  const noopIxs: TcompExtractedIx[] = [];
+  // Tcomp ixs that are expected to have a noop associated with them. These will be returned.
+  const tcompIxsWithNoop: TcompExtractedIx[] = [];
+  // Remaining ixs. These will be returned.
+  let otherIxs: TcompExtractedIx[] = [];
+
+  allIxs.forEach((ix) => {
+    const disc = getDisc(ix.rawIx.data);
+    if (disc === TCOMP_DISC_MAP["tcompNoop"].disc) {
+      noopIxs.push(ix);
+    } else if (TCOMP_IXS_WITH_NOOP.includes(disc)) {
+      tcompIxsWithNoop.push(ix);
+    } else {
+      otherIxs.push(ix);
+    }
+  });
+
+  console.log(
+    "noop / with noop / other",
+    noopIxs.length,
+    tcompIxsWithNoop.length,
+    otherIxs.length
+  );
+
+  //(!) Strong assumption here that protocol and noop ixs come in pairs, ordered the same way
+  if (noopIxs.length !== tcompIxsWithNoop.length) {
+    throw new Error(
+      "expected # of NOOPs to match # of ixs with NOOPs. Check callsNoop in TCOMP_DISC_MAP."
+    );
+  }
+  tcompIxsWithNoop.forEach((ix, i) => {
+    ix.noopIx = noopIxs[i].rawIx;
+  });
+
+  if (!isNullLike(programId)) {
+    const programIdIndex = message.accountKeys.findIndex((k) =>
+      k.equals(programId)
+    );
+    otherIxs = otherIxs.filter(
+      ({ rawIx }) => rawIx.programIdIndex === programIdIndex
+    );
+  }
+
+  return [...tcompIxsWithNoop, ...otherIxs];
+};
+
+export type ParsedAnchorTcompIx<IDL extends Idl> = {
+  /// Index of top-level instruction.
+  ixIdx: number;
+  ix: AnchorIx<IDL>;
+  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  innerIxs?: CompiledInstruction[];
+  noopIx?: CompiledInstruction;
+  events: AnchorEvent<IDL>[];
+  /// FYI: accounts under InstructionDisplay is the space-separated capitalized
+  /// version of the fields for the corresponding #[Accounts].
+  /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
+  formatted: InstructionDisplay | null;
+  /// Needed to be able to figure out correct programs for sub-ixs
+  accountKeys: PublicKey[];
+};
+export const parseAnchorTcompIxs = <IDL extends Idl>({
+  coder,
+  tx,
+  eventParser,
+  programId,
+}: {
+  coder: BorshCoder;
+  tx: TransactionResponse;
+  /// If provided, will try to parse events.
+  /// Do not initialize if there are no events defined!
+  eventParser?: EventParser;
+  /// If passed, will only process ixs w/ this program ID.
+  programId?: PublicKey;
+}): ParsedAnchorTcompIx<IDL>[] => {
+  const message = tx.transaction.message;
+  const logs = tx.meta?.logMessages;
+
+  const ixs: ParsedAnchorTcompIx<IDL>[] = [];
+  extractAllTcompIxs(tx, programId).forEach(
+    ({ rawIx, ixIdx, innerIxs, noopIx }) => {
       // Instruction data.
-      const ix = this.coder.instruction.decode(rawIx.data, "base58");
+      const ix = coder.instruction.decode(rawIx.data, "base58");
       if (!ix) return;
       const accountMetas = rawIx.accounts.map((acctIdx) => {
         const pubkey = message.accountKeys[acctIdx];
@@ -410,48 +950,36 @@ export class TCompSDK {
           isWritable: message.isAccountWritable(acctIdx),
         };
       });
-      const formatted = this.coder.instruction.format(ix, accountMetas);
+
+      // TODO: currently anchor doesn't support parsing events with coder. Tried both tuple and structs.
+      //  In theory this shouldn't be a problem since we're now attaching noopIxs rather than sending them on their own
+      //  But for the record leaving these:
+      //  Tuple: https://discord.com/channels/889577356681945098/889577399308656662/1099868887870345327
+      //  Structs: https://discord.com/channels/889577356681945098/889577399308656662/1100459365535854593
+      // if (ix.name === "tcompNoop") return;
+
+      const formatted = coder.instruction.format(ix, accountMetas);
 
       // Events data.
+      // TODO: partition events properly by ix.
+      const events = eventParser
+        ? parseAnchorEvents<IDL>(eventParser, logs)
+        : [];
 
-      const events = this.parseEvents(logs);
-      ixs.push({ ixIdx, ix: ix as TCompIx, events, formatted });
-    });
-
-    return ixs;
-  }
-
-  // TODO throwing an error
-  // getFeeAmount(ix: ParsedTCompIx): BN | null {
-  //   switch (ix.ix.name) {
-  //     case "buy":
-  //       const event = ix.events[0].data;
-  //       return event.tswapFee.add(event.creatorsFee);
-  //   }
-  // }
-
-  getAmount(
-    ix: ParsedTCompIx
-  ): { amount: BN; currency: PublicKey | null } | null {
-    switch (ix.ix.name) {
-      case "buy":
-        return {
-          amount: (ix.ix.data as TCompPricedIx).amount,
-          currency: (ix.ix.data as TCompPricedIx).currency,
-        };
+      ixs.push({
+        ixIdx,
+        ix,
+        innerIxs,
+        noopIx,
+        events,
+        formatted,
+        accountKeys: message.accountKeys,
+      });
     }
-  }
+  );
 
-  // FYI: accounts under InstructioNDisplay is the space-separated capitalized
-  // version of the fields for the corresponding #[Accounts].
-  // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
-  // shared.sol_escrow -> "Shared > Sol Escrow"
-  getAccountByName(
-    ix: ParsedTCompIx,
-    name: AccountSuffix
-  ): ParsedAccount | undefined {
-    // We use endsWith since composite nested accounts (eg shared.sol_escrow)
-    // will prefix it as "Shared > Sol Escrow"
-    return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(name));
-  }
-}
+  return ixs;
+};
+
+export const getDisc = (bs58Data: string) =>
+  Buffer.from(bs58.decode(bs58Data)).toString("hex").slice(0, 16);

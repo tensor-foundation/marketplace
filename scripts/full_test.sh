@@ -13,6 +13,12 @@ git submodule update
 pushd deps/metaplex-mpl/bubblegum/program
 cargo build-bpf
 popd
+pushd deps/metaplex-mpl/token-metadata/program
+cargo build-bpf
+popd
+pushd deps/solana-spl/account-compression/programs
+cargo build-bpf
+popd
 
 # Run tests
 anchor test --skip-build -- --features testing

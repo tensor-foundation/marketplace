@@ -1,16 +1,47 @@
-#![allow(unknown_lints)] //needed otherwise complains during github actions
-#![allow(clippy::result_large_err)] //needed otherwise unhappy w/ anchor errors
+#![allow(unknown_lints)] // Needed otherwise clippy complains during github actions
+#![allow(clippy::result_large_err)] // Needed otherwise clippy unhappy w/ anchor errors
 
 pub mod bubblegum_adapter;
+pub mod error;
+pub mod event;
 pub mod instructions;
+pub mod shared;
 pub mod state;
-pub mod utils;
 
-pub use anchor_lang::prelude::*;
+pub use std::{slice::Iter, str::FromStr};
+
+use anchor_lang::solana_program::hash;
+pub use anchor_lang::{
+    prelude::*,
+    solana_program::{
+        instruction::Instruction,
+        keccak::hashv,
+        program::{invoke, invoke_signed},
+        system_instruction,
+    },
+    InstructionData,
+};
 pub use bubblegum_adapter::*;
+pub use error::*;
+pub use event::*;
 pub use instructions::*;
+pub use mpl_bubblegum::{
+    self,
+    program::Bubblegum,
+    state::{
+        leaf_schema::LeafSchema,
+        metaplex_adapter::{
+            Collection, Creator, MetadataArgs, TokenProgramVersion, TokenStandard, UseMethod, Uses,
+        },
+    },
+    utils::get_asset_id,
+};
+pub use noop::*;
+pub use shared::*;
+pub use spl_account_compression::{
+    program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
+};
 pub use state::*;
-pub use utils::*;
 pub use vipers::prelude::*;
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
@@ -19,21 +50,84 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 pub mod tcomp {
     use super::*;
 
+    // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
+    pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
+        instructions::noop::handler(ctx)
+    }
+
     pub fn buy<'info>(
         ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
-        root: [u8; 32],
         nonce: u64,
         index: u32,
-        metadata: MetadataArgs,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        max_amount: u64,
+        currency: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::buy::handler(ctx, root, nonce, index, metadata)
+        instructions::buy::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            data_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            max_amount,
+            currency,
+            optional_royalty_pct,
+        )
     }
-}
 
-// --------------------------------------- errors
+    pub fn list<'info>(
+        ctx: Context<'_, '_, '_, 'info, List<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::list::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            data_hash,
+            creator_hash,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+        )
+    }
 
-#[error_code]
-pub enum ErrorCode {
-    #[msg("arithmetic error")]
-    ArithmeticError = 0,
+    pub fn delist<'info>(
+        ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
+    ) -> Result<()> {
+        instructions::delist::handler(ctx, nonce, index, root, data_hash, creator_hash)
+    }
+
+    pub fn edit<'info>(
+        ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
+        nonce: u64,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::edit::handler(ctx, nonce, amount, expire_in_sec, currency, private_taker)
+    }
 }
