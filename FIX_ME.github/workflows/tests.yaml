@@ -62,7 +62,7 @@ jobs:
             ./target/
           key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
 
-      - run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y pkg-config build-essential libudev-dev
+      - run: sudo apt -y install libssl-dev
       - run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225 --force
 
 # TODO: if we run this it pulls 0.25, which leads to enum failures (need 0.26). Need to find a way to cache 0.26.
