@@ -24,4 +24,8 @@ pub enum TcompError {
     OfferExpired = 9,
     #[msg("taker not allowed")]
     TakerNotAllowed = 10,
+    #[msg("bid expired")]
+    BidExpired = 11,
+    #[msg("bid not yet expired")]
+    BidNotYetExpired = 12,
 }

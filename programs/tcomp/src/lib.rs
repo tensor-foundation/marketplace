@@ -42,6 +42,7 @@ pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
 pub use state::*;
+pub use tensorswap::{self, assert_decode_margin_account, TSwap};
 pub use vipers::prelude::*;
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
@@ -54,6 +55,8 @@ pub mod tcomp {
     pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
         instructions::noop::handler(ctx)
     }
+
+    // --------------------------------------- listings
 
     pub fn buy<'info>(
         ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
@@ -129,5 +132,39 @@ pub mod tcomp {
         private_taker: Option<Pubkey>,
     ) -> Result<()> {
         instructions::edit::handler(ctx, nonce, amount, expire_in_sec, currency, private_taker)
+    }
+
+    // --------------------------------------- bids
+
+    pub fn bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
+        asset_id: Pubkey,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::bid::handler(
+            ctx,
+            asset_id,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+        )
+    }
+
+    pub fn cancel_bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>,
+        _asset_id: Pubkey,
+    ) -> Result<()> {
+        instructions::cancel_bid::handler(ctx)
+    }
+
+    pub fn close_expired_bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
+        _asset_id: Pubkey,
+    ) -> Result<()> {
+        instructions::close_expired_bid::handler(ctx)
     }
 }

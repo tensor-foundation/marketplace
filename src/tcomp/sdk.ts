@@ -649,6 +649,7 @@ export class TCompSDK {
         currency: e.currency,
       };
     } catch (e) {
+      // TODO: no try catch, need to fail hard
       console.log("ERROR parsing tcomp event", e);
       return null;
     }
