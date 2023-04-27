@@ -9,8 +9,9 @@ pub struct TakeBid<'info> {
     pub tcomp: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+    /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
     pub seller: UncheckedAccount<'info>,
-    /// CHECK: downstream (dont make Signer coz either this or owner will sign)
+    /// CHECK: downstream (dont make Signer coz either this or seller will sign)
     pub delegate: UncheckedAccount<'info>,
     /// CHECK: downstream
     #[account(mut)]
@@ -81,7 +82,7 @@ pub fn handler<'info>(
     creator_shares: Vec<u8>,
     creator_verified: Vec<bool>,
     seller_fee_basis_points: u16,
-    // Passing these in so buyer doesn't get rugged
+    // Passing these in so seller doesn't get rugged
     min_amount: u64,
     _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,

@@ -50,10 +50,16 @@ import {
   AnchorIx,
   isNullLike,
   parseAnchorEvents,
+  TENSORSWAP_ADDR,
 } from "@tensor-hq/tensor-common";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
-import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
+import {
+  findBidStatePda,
+  findListStatePda,
+  findTCompPda,
+  findTreeAuthorityPda,
+} from "./pda";
 import {
   computeCreatorHashPATCHED,
   computeMetadataArgsHash,
@@ -61,6 +67,7 @@ import {
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
+import { findTSwapPDA, TSWAP_COSIGNER } from "@tensor-hq/tensorswap-sdk";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -596,6 +603,244 @@ export class TCompSDK {
     };
   }
 
+  async bid({
+    assetId,
+    owner,
+    amount,
+    expireInSec = null,
+    currency = null,
+    privateTaker = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    margin = null,
+  }: {
+    assetId: PublicKey;
+    owner: PublicKey;
+    amount: BN;
+    expireInSec?: BN | null;
+    currency?: PublicKey | null;
+    privateTaker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    margin?: PublicKey | null;
+  }) {
+    const [bidState] = findBidStatePda({ assetId, owner });
+    const [tswap] = findTSwapPDA({});
+
+    const builder = this.program.methods
+      .bid(assetId, amount, expireInSec, currency, privateTaker)
+      .accounts({
+        owner,
+        systemProgram: SystemProgram.programId,
+        tcompProgram: TCOMP_ADDR,
+        bidState,
+        marginAccount: margin ?? owner,
+        tswap,
+      });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      assetId,
+      bidState,
+      tswap,
+    };
+  }
+
+  async cancelBid({
+    assetId,
+    owner,
+    compute = null,
+    priorityMicroLamports = null,
+  }: {
+    assetId: PublicKey;
+    owner: PublicKey;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+  }) {
+    const [bidState] = findBidStatePda({ assetId, owner });
+
+    const builder = this.program.methods.cancelBid(assetId).accounts({
+      owner,
+      systemProgram: SystemProgram.programId,
+      bidState,
+    });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      assetId,
+      bidState,
+    };
+  }
+
+  async closeExpiredBid({
+    assetId,
+    owner,
+    compute = null,
+    priorityMicroLamports = null,
+    cosigner = null,
+  }: {
+    assetId: PublicKey;
+    owner: PublicKey;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    cosigner?: PublicKey | null;
+  }) {
+    const [bidState] = findBidStatePda({ assetId, owner });
+    const [tswap] = findTSwapPDA({});
+
+    const builder = this.program.methods.closeExpiredBid(assetId).accounts({
+      owner,
+      systemProgram: SystemProgram.programId,
+      bidState,
+      tswap,
+      cosigner: cosigner ?? TSWAP_COSIGNER,
+    });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      assetId,
+      bidState,
+    };
+  }
+
+  async takeBid({
+    merkleTree,
+    proof,
+    root,
+    metadata,
+    nonce,
+    index,
+    minAmount,
+    currency = null,
+    optionalRoyaltyPct = null,
+    owner,
+    seller,
+    delegate = seller,
+    margin = null,
+    takerBroker = null,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
+  }: {
+    merkleTree: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    metadata: MetadataArgs;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
+    minAmount: BN;
+    currency?: PublicKey | null;
+    optionalRoyaltyPct?: number | null;
+    owner: PublicKey;
+    seller: PublicKey;
+    delegate?: PublicKey;
+    margin?: PublicKey | null;
+    takerBroker?: PublicKey | null;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
+  }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const [tcomp] = findTCompPda({});
+    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const [bidState] = findBidStatePda({ assetId, owner });
+    const [tswap] = findTSwapPDA({});
+
+    let creators = metadata.creators.map((c) => ({
+      pubkey: c.address,
+      isSigner: false,
+      isWritable: true,
+    }));
+
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const metaHash = computeMetadataArgsHash(metadata);
+
+    const builder = this.program.methods
+      .takeBid(
+        nonce,
+        index,
+        root,
+        [...metaHash],
+        Buffer.from(metadata.creators.map((c) => c.share)),
+        metadata.creators.map((c) => c.verified),
+        metadata.sellerFeeBasisPoints,
+        minAmount,
+        currency,
+        optionalRoyaltyPct
+      )
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
+        merkleTree,
+        treeAuthority,
+        seller,
+        owner,
+        bidState,
+        tcomp,
+        takerBroker: takerBroker ?? tcomp,
+        delegate: delegate,
+        tswap,
+        marginAccount: margin ?? seller,
+        tensorswapProgram: TENSORSWAP_ADDR,
+      })
+      .remainingAccounts([...creators, ...proofPath]);
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    //because EITHER of the two has to sign, mark one of them as signer
+    const ix = await builder.instruction();
+    if (!!delegate && !delegate.equals(seller)) {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(delegate));
+      ix["keys"][i]["isSigner"] = true;
+    } else {
+      const i = ix.keys.findIndex((k) => k.pubkey.equals(seller));
+      ix["keys"][i]["isSigner"] = true;
+    }
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, ix],
+        extraSigners: [],
+      },
+      listState: bidState,
+      treeAuthority,
+      tcomp,
+      creators,
+      proofPath,
+      tswap,
+    };
+  }
+
   // --------------------------------------- helpers
 
   async getBidStateRent() {
@@ -779,6 +1024,13 @@ export const TCOMP_DISC_MAP: Record<
   list: { disc: hash("global:list").slice(0, 16), callsNoop: true },
   delist: { disc: hash("global:delist").slice(0, 16), callsNoop: false },
   edit: { disc: hash("global:edit").slice(0, 16), callsNoop: true },
+  bid: { disc: hash("global:bid").slice(0, 16), callsNoop: true },
+  cancelBid: { disc: hash("global:cancel_bid").slice(0, 16), callsNoop: true },
+  closeExpiredBid: {
+    disc: hash("global:close_expired_bid").slice(0, 16),
+    callsNoop: true,
+  },
+  takeBid: { disc: hash("global:take_bid").slice(0, 16), callsNoop: true },
 };
 // List of all discriminators that should include a noop ix
 export const TCOMP_IXS_WITH_NOOP = Object.entries(TCOMP_DISC_MAP)

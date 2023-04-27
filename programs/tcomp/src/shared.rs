@@ -35,6 +35,7 @@ pub(crate) struct DataHashArgs {
     pub seller_fee_basis_points: u16,
 }
 pub(crate) enum MetadataSrc {
+    #[allow(dead_code)]
     Metadata(TMetadataArgs),
     DataHash(DataHashArgs),
 }
