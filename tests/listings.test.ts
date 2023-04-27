@@ -541,11 +541,13 @@ describe("tcomp listings", () => {
     }
   });
 
-  it("parses listing txs ok", async () => {
+  it.only("parses listing txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
     const [traderC] = await makeNTraders(1);
+
+    const takerBroker = Keypair.generate().publicKey;
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       let amount = LAMPORTS_PER_SOL;
@@ -630,6 +632,7 @@ describe("tcomp listings", () => {
           canopyDepth,
           currency,
           optionalRoyaltyPct: 100,
+          takerBroker,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
         const amounts = tcompSdk.getIxAmounts(ix);

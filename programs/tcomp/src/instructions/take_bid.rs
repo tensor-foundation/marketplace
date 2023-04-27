@@ -36,6 +36,7 @@ pub struct TakeBid<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
+    #[account(mut)]
     pub taker_broker: UncheckedAccount<'info>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]

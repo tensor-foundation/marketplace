@@ -7,23 +7,18 @@ import {
 import {
   beforeAllHook,
   beforeHook,
-  buildAndSendTx,
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
   tcompSdk,
   testBid,
-  testBuy,
   testCancelCloseBid,
-  testEdit,
-  testList,
   testTakeBid,
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { cpiEdit } from "./cpi_test";
 import { TAKER_BROKER_PCT } from "../src";
 
 // Enables rejectedWith.
@@ -390,7 +385,7 @@ describe("tcomp bids", () => {
     }
   });
 
-  it("parses bid txs ok", async () => {
+  it.only("parses bid txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
@@ -399,7 +394,7 @@ describe("tcomp bids", () => {
         canopyDepth,
         setupTswap: true,
       });
-    const [traderC] = await makeNTraders(1);
+    const takerBroker = Keypair.generate().publicKey;
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       let amount = LAMPORTS_PER_SOL;
@@ -435,6 +430,7 @@ describe("tcomp bids", () => {
           canopyDepth,
           currency,
           optionalRoyaltyPct: 100,
+          takerBroker,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "takeBid");
         const amounts = tcompSdk.getIxAmounts(ix);

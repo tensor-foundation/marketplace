@@ -35,6 +35,7 @@ pub struct Buy<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
+    #[account(mut)]
     pub taker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)

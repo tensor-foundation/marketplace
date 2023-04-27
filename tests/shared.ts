@@ -314,6 +314,7 @@ export const calcFees = (amount: number) => {
   const totalFee = Math.trunc(amount * FEE_PCT);
   const brokerFee = Math.trunc((totalFee * TAKER_BROKER_PCT) / 100);
   const tcompFee = totalFee - brokerFee;
+
   return { totalFee, brokerFee, tcompFee };
 };
 
