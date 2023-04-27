@@ -9,7 +9,9 @@ import {
   beforeHook,
   tcompSdk,
   testBid,
+  testBuy,
   testCancelCloseBid,
+  testList,
   testTakeBid,
 } from "./shared";
 import chai, { expect } from "chai";
@@ -37,7 +39,8 @@ describe("tcomp bids", () => {
           canopyDepth,
         });
 
-      const currency = Keypair.generate().publicKey;
+      let currency = Keypair.generate().publicKey;
+      let privateTaker = Keypair.generate().publicKey;
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
@@ -45,16 +48,20 @@ describe("tcomp bids", () => {
           assetId,
           currency,
           owner: traderB,
-          prevBidAmount: 0,
-          privateTaker: traderA.publicKey,
+          privateTaker,
         });
+
+        //edit
+        currency = Keypair.generate().publicKey;
+        privateTaker = traderA.publicKey;
+
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
           assetId,
           currency,
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
-          privateTaker: traderA.publicKey,
+          privateTaker,
         });
         //try to take at the wrong price
         await expect(
@@ -82,6 +89,36 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
+        });
+      }
+    }
+  });
+
+  it("bids + takes (optional royalties)", async () => {
+    for (const optionalRoyaltyPct of [0, 50, 100]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators: 1,
+          numMints: 2,
+          tswap: true,
+        });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          assetId,
+          owner: traderB,
+        });
+        await testTakeBid({
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          owner: traderB.publicKey,
+          seller: traderA,
+          optionalRoyaltyPct,
         });
       }
     }
