@@ -56,6 +56,7 @@ import { BN } from "@project-serum/anchor";
 import {
   computeDataHash,
   Creator,
+  metadataArgsBeet,
 } from "../deps/metaplex-mpl/bubblegum/js/src";
 import { keccak_256 } from "js-sha3";
 import chai, { expect } from "chai";
@@ -231,6 +232,12 @@ export const delegateCNft = async ({
     proof: proof.proof,
   });
 };
+
+// Version from metaplex but without seller fee basis points
+export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
+  const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
+  return Buffer.from(keccak_256.digest(serializedMetadata));
+}
 
 // TODO: temp patch over metaplex's code
 export function computeCreatorHashPATCHED(creators: Creator[]) {

@@ -80,7 +80,7 @@ pub fn handler<'info>(
     nonce: u64,
     index: u32,
     root: [u8; 32],
-    data_hash: [u8; 32],
+    meta_hash: [u8; 32],
     // Below 3 used for creator verification
     // Creators themseleves taken from extra accounts
     creator_shares: Vec<u8>,
@@ -99,9 +99,10 @@ pub fn handler<'info>(
         index,
         nonce,
         metadata_src: MetadataSrc::DataHash(DataHashArgs {
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
+            seller_fee_basis_points,
         }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner

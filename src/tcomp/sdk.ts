@@ -54,7 +54,10 @@ import {
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
 import { findListStatePda, findTCompPda, findTreeAuthorityPda } from "./pda";
-import { computeCreatorHashPATCHED } from "../../tests/shared";
+import {
+  computeCreatorHashPATCHED,
+  computeMetadataArgsHash,
+} from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
@@ -545,14 +548,14 @@ export class TCompSDK {
       isWritable: false,
     }));
 
-    const dataHash = computeDataHash(metadata);
+    const metaHash = computeMetadataArgsHash(metadata);
 
     const builder = this.program.methods
       .buy(
         nonce,
         index,
         root,
-        [...dataHash],
+        [...metaHash],
         Buffer.from(metadata.creators.map((c) => c.share)),
         metadata.creators.map((c) => c.verified),
         metadata.sellerFeeBasisPoints,

@@ -94,7 +94,7 @@ pub fn handler<'info>(
         Ok(margin_account) => {
             require!(
                 margin_account.owner == *ctx.accounts.owner.key,
-                TcompError::BadOwner
+                TcompError::BadMargin
             );
             bid_state.margin = Some(margin_account_info.key());
             //transfer any existing balance back to user (this is in case they're editing an existing non-marginated bid)

@@ -42,7 +42,7 @@ pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
 pub use state::*;
-pub use tensorswap::{self, assert_decode_margin_account, TSwap};
+pub use tensorswap::{self, assert_decode_margin_account, program::Tensorswap, TSwap};
 pub use vipers::prelude::*;
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
@@ -63,7 +63,7 @@ pub mod tcomp {
         nonce: u64,
         index: u32,
         root: [u8; 32],
-        data_hash: [u8; 32],
+        meta_hash: [u8; 32],
         creator_shares: Vec<u8>,
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
@@ -76,7 +76,7 @@ pub mod tcomp {
             nonce,
             index,
             root,
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
             seller_fee_basis_points,
@@ -166,5 +166,33 @@ pub mod tcomp {
         _asset_id: Pubkey,
     ) -> Result<()> {
         instructions::close_expired_bid::handler(ctx)
+    }
+
+    pub fn take_bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        min_amount: u64,
+        currency: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::take_bid::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            min_amount,
+            currency,
+            optional_royalty_pct,
+        )
     }
 }

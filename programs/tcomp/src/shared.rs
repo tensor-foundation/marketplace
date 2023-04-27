@@ -29,9 +29,10 @@ pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
 }
 
 pub(crate) struct DataHashArgs {
-    pub data_hash: [u8; 32],
+    pub meta_hash: [u8; 32],
     pub creator_shares: Vec<u8>,
     pub creator_verified: Vec<bool>,
+    pub seller_fee_basis_points: u16,
 }
 pub(crate) enum MetadataSrc {
     Metadata(TMetadataArgs),
@@ -67,19 +68,6 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
         MetadataSrc::Metadata(metadata) => {
             // Serialize metadata into original metaplex format
             let mplex_metadata = metadata.into(creator_accounts);
-
-            // msg!("creators {:?}", creator_accounts.len());
-            // msg!("proof {:?}", proof_accounts.len());
-            // msg!("root {:?}", root);
-            // msg!(
-            //     "leaf: {:?}{:?}{:?}{}{:?}",
-            //     get_asset_id(&merkle_tree.key(), nonce),
-            //     leaf_owner,
-            //     leaf_delegate,
-            //     nonce,
-            //     mplex_metadata.clone()
-            // );
-
             let creator_hash = hash_creators(&mplex_metadata.creators)?;
             let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
             let data_hash = hashv(&[
@@ -88,18 +76,17 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
             ])
             .to_bytes();
 
-            // msg!("data_hash {:?}", data_hash);
-            // msg!("creator_hash {:?}", creator_hash);
-            // msg!("proof accounts {:?}", proof_accounts);
-            // msg!("tree {:?}", merkle_tree.key());
-
             (data_hash, creator_hash, mplex_metadata.creators)
         }
         MetadataSrc::DataHash(DataHashArgs {
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
+            seller_fee_basis_points,
         }) => {
+            // Verify seller fee basis points
+            let data_hash = hashv(&[&meta_hash, &seller_fee_basis_points.to_le_bytes()]).to_bytes();
+            // Verify creators
             let creators = creator_accounts
                 .iter()
                 .zip(creator_shares.iter())

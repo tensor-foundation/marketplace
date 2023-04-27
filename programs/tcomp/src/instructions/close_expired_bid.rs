@@ -31,7 +31,7 @@ pub fn handler(ctx: Context<CloseExpiredBid>) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
     require!(
         bid_state.expiry < Clock::get()?.unix_timestamp,
-        TcompError::BidNotYetExpired
+        TcompError::OfferNotYetExpired
     );
     Ok(())
 }

@@ -149,7 +149,7 @@ export type Tcomp = {
           }
         },
         {
-          "name": "dataHash",
+          "name": "metaHash",
           "type": {
             "array": [
               "u8",
@@ -440,6 +440,131 @@ export type Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        }
+      ]
+    },
+    {
+      "name": "bid",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancelBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "closeExpiredBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
         }
       ]
     }
@@ -914,6 +1039,11 @@ export type Tcomp = {
       "code": 6010,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
+    },
+    {
+      "code": 6012,
+      "name": "OfferNotYetExpired",
+      "msg": "bid not yet expired"
     }
   ]
 };
@@ -1069,7 +1199,7 @@ export const IDL: Tcomp = {
           }
         },
         {
-          "name": "dataHash",
+          "name": "metaHash",
           "type": {
             "array": [
               "u8",
@@ -1360,6 +1490,131 @@ export const IDL: Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        }
+      ]
+    },
+    {
+      "name": "bid",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancelBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "closeExpiredBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "assetId",
+          "type": "publicKey"
         }
       ]
     }
@@ -1834,6 +2089,11 @@ export const IDL: Tcomp = {
       "code": 6010,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
+    },
+    {
+      "code": 6012,
+      "name": "OfferNotYetExpired",
+      "msg": "bid not yet expired"
     }
   ]
 };
