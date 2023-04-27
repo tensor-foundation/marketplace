@@ -2,7 +2,7 @@ import { findListStatePda, TCOMP_ADDR } from "../../src";
 import { BN, Program } from "@project-serum/anchor";
 import { getLeafAssetId } from "@metaplex-foundation/mpl-bubblegum";
 import { PublicKey } from "@solana/web3.js";
-import { TEST_PROVIDER } from "../utils";
+import { TEST_PROVIDER } from "../shared";
 import { CpiTest, IDL } from "./idl/cpi_test";
 
 export const cpiEdit = async ({

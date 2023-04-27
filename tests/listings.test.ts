@@ -9,29 +9,27 @@ import {
   beforeHook,
   delegateCNft,
   fetchAndCheckSingleIxTx,
+  tcompSdk,
   testBuy,
   testDelist,
   testEdit,
   testList,
-} from "./shared";
-import chai, { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
-import {
   ALREADY_IN_USE_ERR,
   buildAndSendTx,
   FEE_PCT,
   HAS_ONE_ERR,
-  tcompSdk,
-} from "./utils";
+} from "./shared";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { getDisc, TAKER_BROKER_PCT } from "../src";
+import { TAKER_BROKER_PCT } from "../src";
 import { cpiEdit } from "./cpi_test";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
 
-describe("tcomp", () => {
+describe("tcomp listings", () => {
   let lookupTableAccount: AddressLookupTableAccount | undefined;
   before(async () => {
     lookupTableAccount = (await beforeAllHook()) ?? undefined;

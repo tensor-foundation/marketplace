@@ -115,6 +115,42 @@ pub fn handler<'info>(
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;
     let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
+    // --------------------------------------- nft transfer
+    // (!) has to go before SOL transfers to prevent this error: https://solana.stackexchange.com/questions/4519/anchor-error-error-processing-instruction-0-sum-of-account-balances-before-and
+
+    transfer_cnft(TransferArgs {
+        root,
+        nonce,
+        index,
+        data_hash,
+        creator_hash,
+        tree_authority: &ctx.accounts.tree_authority.to_account_info(),
+        leaf_owner: &ctx.accounts.seller.to_account_info(),
+        leaf_delegate: &ctx.accounts.delegate.to_account_info(),
+        new_leaf_owner: &ctx.accounts.owner.to_account_info(),
+        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
+        compression_program: &ctx.accounts.compression_program.to_account_info(),
+        system_program: &ctx.accounts.system_program.to_account_info(),
+        bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
+        proof_accounts,
+        signer: None,
+    })?;
+
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            tcomp_fee,
+            broker_fee,
+            creator_fee, //can't use actual :(
+            currency,
+        }),
+        &ctx.accounts.tcomp_program,
+        TcompSigner::Bid(&ctx.accounts.bid_state),
+    )?;
+
     // --------------------------------------- sol transfers
 
     // TODO: handle currency (not v1)
@@ -161,6 +197,7 @@ pub fn handler<'info>(
         &ctx.accounts.tcomp.to_account_info(),
         tcomp_fee,
     )?;
+
     transfer_lamports_from_pda(
         &ctx.accounts.bid_state.to_account_info(),
         &ctx.accounts.taker_broker.to_account_info(),
@@ -178,48 +215,13 @@ pub fn handler<'info>(
     // Pay the seller
     transfer_lamports_from_pda(
         &ctx.accounts.bid_state.to_account_info(),
-        &ctx.accounts.owner.to_account_info(),
+        &ctx.accounts.seller.to_account_info(),
         unwrap_checked!({
             amount
                 .checked_sub(tcomp_fee)?
                 .checked_sub(broker_fee)?
                 .checked_sub(actual_creator_fee)
         }),
-    )?;
-
-    // --------------------------------------- nft transfer
-
-    transfer_cnft(TransferArgs {
-        root,
-        nonce,
-        index,
-        data_hash,
-        creator_hash,
-        tree_authority: &ctx.accounts.tree_authority.to_account_info(),
-        leaf_owner: &ctx.accounts.seller.to_account_info(),
-        leaf_delegate: &ctx.accounts.delegate.to_account_info(),
-        new_leaf_owner: &ctx.accounts.owner.to_account_info(),
-        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
-        compression_program: &ctx.accounts.compression_program.to_account_info(),
-        system_program: &ctx.accounts.system_program.to_account_info(),
-        bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
-        proof_accounts,
-        signer: None,
-    })?;
-
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.owner.key,
-            asset_id,
-            amount,
-            tcomp_fee,
-            broker_fee,
-            creator_fee: actual_creator_fee,
-            currency,
-        }),
-        &ctx.accounts.tcomp_program,
-        TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
 
     Ok(())

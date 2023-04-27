@@ -832,7 +832,7 @@ export class TCompSDK {
         ixs: [...computeIxs, ix],
         extraSigners: [],
       },
-      listState: bidState,
+      bidState,
       treeAuthority,
       tcomp,
       creators,
