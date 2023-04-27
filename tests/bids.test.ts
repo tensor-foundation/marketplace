@@ -10,6 +10,8 @@ import {
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
+  getLamports,
+  INTEGER_OVERFLOW_ERR,
   tcompSdk,
   testBid,
   testCancelCloseBid,
@@ -20,6 +22,11 @@ import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
 import { TAKER_BROKER_PCT } from "../src";
+import {
+  testDepositIntoMargin,
+  testMakeMargin,
+  testWithdrawFromMargin,
+} from "./tswap";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -385,7 +392,7 @@ describe("tcomp bids", () => {
     }
   });
 
-  it.only("parses bid txs ok", async () => {
+  it("parses bid txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
@@ -448,6 +455,162 @@ describe("tcomp bids", () => {
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
       }
+    }
+  });
+
+  it("margin buy: works", async () => {
+    let canopyDepth = 10;
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 4,
+        numMints: 2,
+        canopyDepth,
+        setupTswap: true,
+      });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const { marginPda, marginNr, marginRent } = await testMakeMargin({
+        owner: traderB,
+      });
+      await testDepositIntoMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: LAMPORTS_PER_SOL,
+      });
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        assetId,
+        owner: traderB,
+        privateTaker: null,
+        margin: marginPda,
+      });
+      await testTakeBid({
+        index,
+        minAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        seller: traderA, //A can now sell
+        owner: traderB.publicKey,
+        canopyDepth,
+        margin: marginPda,
+      });
+    }
+  });
+
+  it("margin buy: edit", async () => {
+    let canopyDepth = 10;
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 4,
+        numMints: 2,
+        canopyDepth,
+        setupTswap: true,
+      });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const { marginPda, marginNr, marginRent } = await testMakeMargin({
+        owner: traderB,
+      });
+      await testDepositIntoMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: LAMPORTS_PER_SOL,
+      });
+      // do a non-marginated bid
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        assetId,
+        owner: traderB,
+        privateTaker: null,
+      });
+      // do a marginated bid
+      const bidderLamports1 = await getLamports(traderB.publicKey);
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        assetId,
+        owner: traderB,
+        privateTaker: null,
+        margin: marginPda,
+      });
+      const bidderLamports2 = await getLamports(traderB.publicKey);
+      //the amount that got initially deposited is returned to the bidder, since the order is now marginated
+      expect(bidderLamports2! - bidderLamports1!).to.eq(LAMPORTS_PER_SOL);
+
+      // non-marginated again
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        assetId,
+        owner: traderB,
+        privateTaker: null,
+      });
+      const bidderLamports3 = await getLamports(traderB.publicKey);
+      //editing a bid to be non-marginated once again deposits lamports
+      expect(bidderLamports3! - bidderLamports2!).to.eq(-LAMPORTS_PER_SOL);
+
+      await testTakeBid({
+        index,
+        minAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        seller: traderA, //A can now sell
+        owner: traderB.publicKey,
+        canopyDepth,
+      });
+    }
+  });
+
+  it("margin buy: insufficient balance", async () => {
+    let canopyDepth = 10;
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 4,
+        numMints: 2,
+        canopyDepth,
+        setupTswap: true,
+      });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const { marginPda, marginNr, marginRent } = await testMakeMargin({
+        owner: traderB,
+      });
+      await testDepositIntoMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: LAMPORTS_PER_SOL,
+      });
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        assetId,
+        owner: traderB,
+        privateTaker: null,
+        margin: marginPda,
+      });
+      //intentionally withdraw
+      await testWithdrawFromMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: 0.3 * LAMPORTS_PER_SOL,
+        expectedLamports: 0.7 * LAMPORTS_PER_SOL,
+      });
+      await expect(
+        testTakeBid({
+          index,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          memTree,
+          merkleTree,
+          metadata,
+          seller: traderA, //A can now sell
+          owner: traderB.publicKey,
+          canopyDepth,
+          margin: marginPda,
+        })
+      ).to.be.rejectedWith(INTEGER_OVERFLOW_ERR);
     }
   });
 });

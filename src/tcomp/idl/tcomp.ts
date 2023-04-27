@@ -25,7 +25,7 @@ export type Tcomp = {
     {
       "name": "TAKER_BROKER_PCT",
       "type": "u16",
-      "value": "10"
+      "value": "0"
     },
     {
       "name": "LIST_STATE_SIZE",
@@ -583,7 +583,7 @@ export type Tcomp = {
         },
         {
           "name": "seller",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1223,7 +1223,7 @@ export const IDL: Tcomp = {
     {
       "name": "TAKER_BROKER_PCT",
       "type": "u16",
-      "value": "10"
+      "value": "0"
     },
     {
       "name": "LIST_STATE_SIZE",
@@ -1781,7 +1781,7 @@ export const IDL: Tcomp = {
         },
         {
           "name": "seller",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {

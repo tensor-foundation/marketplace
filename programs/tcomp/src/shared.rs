@@ -143,10 +143,7 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
     let id = merkle_tree.key();
 
     match merkle_tree_apply_fn!(header, id, tree_bytes, prove_leaf, root, leaf, &proof, index) {
-        Ok(_) => {
-            msg!("Leaf Valid");
-            Ok((asset_id, creator_hash, data_hash, creators))
-        }
+        Ok(_) => Ok((asset_id, creator_hash, data_hash, creators)),
         Err(e) => {
             msg!("FAILED LEAF VERIFICATION: {:?}", e);
             Err(TcompError::FailedLeafVerification.into())

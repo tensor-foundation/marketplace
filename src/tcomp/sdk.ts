@@ -627,21 +627,6 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ assetId, owner });
     const [tswap] = findTSwapPDA({});
 
-    console.log(
-      JSON.stringify(
-        {
-          owner,
-          systemProgram: SystemProgram.programId,
-          tcompProgram: TCOMP_ADDR,
-          bidState,
-          marginAccount: margin ?? owner,
-          tswap,
-        },
-        null,
-        4
-      )
-    );
-
     const builder = this.program.methods
       .bid(assetId, amount, expireInSec, currency, privateTaker)
       .accounts({

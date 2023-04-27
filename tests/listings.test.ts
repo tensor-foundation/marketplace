@@ -5,19 +5,19 @@ import {
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import {
+  ALREADY_IN_USE_ERR,
   beforeAllHook,
   beforeHook,
+  buildAndSendTx,
   delegateCNft,
+  FEE_PCT,
   fetchAndCheckSingleIxTx,
+  HAS_ONE_ERR,
   tcompSdk,
   testBuy,
   testDelist,
   testEdit,
   testList,
-  ALREADY_IN_USE_ERR,
-  buildAndSendTx,
-  FEE_PCT,
-  HAS_ONE_ERR,
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -541,7 +541,7 @@ describe("tcomp listings", () => {
     }
   });
 
-  it.only("parses listing txs ok", async () => {
+  it("parses listing txs ok", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });

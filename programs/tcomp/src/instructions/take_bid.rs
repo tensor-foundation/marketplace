@@ -10,6 +10,7 @@ pub struct TakeBid<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
+    #[account(mut)]
     pub seller: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or seller will sign)
     pub delegate: UncheckedAccount<'info>,
