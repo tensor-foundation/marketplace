@@ -774,13 +774,13 @@ export const beforeHook = async ({
   nrCreators = 4,
   depthSizePair = DEFAULT_DEPTH_SIZE,
   canopyDepth = 0,
-  tswap = false,
+  setupTswap = false,
 }: {
   numMints: number;
   nrCreators?: number;
   depthSizePair?: ValidDepthSizePair;
   canopyDepth?: number;
-  tswap?: boolean;
+  setupTswap?: boolean;
 }) => {
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
@@ -885,7 +885,7 @@ export const beforeHook = async ({
     })
   );
 
-  if (tswap) {
+  if (setupTswap) {
     // Tswap
     const {
       tx: { ixs },
@@ -1399,7 +1399,7 @@ export const testBid = async ({
       prevBidStateLamports,
       prevMarginLamports,
     }) => {
-      const sig = await buildAndSendTx({
+      sig = await buildAndSendTx({
         ixs,
         extraSigners: [owner],
       });
