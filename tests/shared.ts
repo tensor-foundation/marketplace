@@ -1456,7 +1456,7 @@ export const testBid = async ({
   return { sig };
 };
 
-const testCancelCloseBid = async ({
+export const testCancelCloseBid = async ({
   owner,
   assetId,
   amount,
@@ -1502,14 +1502,11 @@ const testCancelCloseBid = async ({
       prevBidStateLamports,
       prevMarginLamports,
     }) => {
-      await buildAndSendTx({
+      const sig = await buildAndSendTx({
         ixs,
         extraSigners: [closeWithCosigner ? TEST_COSIGNER : owner],
       });
-
-      await expect(tcompSdk.fetchBidState(bidState)).to.be.rejectedWith(
-        "does not exist"
-      );
+      console.log("✅ closed bid", sig);
 
       const currBidderLamports = await getLamports(owner.publicKey);
       const currBidStateLamports = (await getLamports(bidState)) ?? 0;

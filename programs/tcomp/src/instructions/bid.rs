@@ -81,6 +81,20 @@ pub fn handler<'info>(
     };
     bid_state.expiry = expiry;
 
+    // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            asset_id,
+            amount,
+            currency,
+            expiry,
+            private_taker,
+        }),
+        &ctx.accounts.tcomp_program,
+        TcompSigner::Bid(&ctx.accounts.bid_state),
+    )?;
+
     //transfer lamports
     let margin_account_info = &ctx.accounts.margin_account.to_account_info();
     let margin_account_result = assert_decode_margin_account(
@@ -96,6 +110,7 @@ pub fn handler<'info>(
                 margin_account.owner == *ctx.accounts.owner.key,
                 TcompError::BadMargin
             );
+            let bid_state = &mut ctx.accounts.bid_state;
             bid_state.margin = Some(margin_account_info.key());
             //transfer any existing balance back to user (this is in case they're editing an existing non-marginated bid)
             let bid_rent =
@@ -140,19 +155,6 @@ pub fn handler<'info>(
             }
         }
     }
-
-    record_event(
-        &TcompEvent::Maker(MakeEvent {
-            maker: *ctx.accounts.owner.key,
-            asset_id,
-            amount,
-            currency,
-            expiry,
-            private_taker,
-        }),
-        &ctx.accounts.tcomp_program,
-        TcompSigner::Bid(&ctx.accounts.bid_state),
-    )?;
 
     Ok(())
 }

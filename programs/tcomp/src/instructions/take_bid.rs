@@ -116,7 +116,7 @@ pub fn handler<'info>(
     let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // --------------------------------------- nft transfer
-    // (!) has to go before SOL transfers to prevent this error: https://solana.stackexchange.com/questions/4519/anchor-error-error-processing-instruction-0-sum-of-account-balances-before-and
+    // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
 
     transfer_cnft(TransferArgs {
         root,
@@ -144,7 +144,7 @@ pub fn handler<'info>(
             amount,
             tcomp_fee,
             broker_fee,
-            creator_fee, //can't use actual :(
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
         }),
         &ctx.accounts.tcomp_program,

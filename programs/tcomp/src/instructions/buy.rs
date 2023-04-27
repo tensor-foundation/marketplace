@@ -119,32 +119,8 @@ pub fn handler<'info>(
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;
     let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
-    // --------------------------------------- sol transfers
-
-    // TODO: handle currency (not v1)
-
-    // Pay fees
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
-
-    // Pay creators
-    let actual_creator_fee = transfer_creators_fee(
-        &FromAcc::External(&FromExternal {
-            from: &ctx.accounts.payer.to_account_info(),
-            sys_prog: &ctx.accounts.system_program,
-        }),
-        &creators,
-        &mut creator_accounts.iter(),
-        creator_fee,
-    )?;
-
-    // Pay the seller
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
-
     // --------------------------------------- nft transfer
+    // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
 
     transfer_cnft(TransferArgs {
         root,
@@ -172,12 +148,37 @@ pub fn handler<'info>(
             amount,
             tcomp_fee,
             broker_fee,
-            creator_fee: actual_creator_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    // --------------------------------------- sol transfers
+
+    // TODO: handle currency (not v1)
+
+    // Pay fees
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
+
+    // Pay creators
+    transfer_creators_fee(
+        &FromAcc::External(&FromExternal {
+            from: &ctx.accounts.payer.to_account_info(),
+            sys_prog: &ctx.accounts.system_program,
+        }),
+        &creators,
+        &mut creator_accounts.iter(),
+        creator_fee,
+    )?;
+
+    // Pay the seller
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 
     Ok(())
 }
