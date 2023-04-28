@@ -247,8 +247,17 @@ pub fn handler_full_meta<'info>(
             }
         },
         BidTarget::Name => {
+            let mut name_arr = [0u8; 32];
+            name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
+            msg!(
+                "{:?}{:?}{:?}{:?}",
+                meta_args.name,
+                name_arr,
+                bid_state.target_id,
+                bid_state.target_id.to_bytes()
+            );
             require!(
-                meta_args.name.as_bytes() == bid_state.target_id.to_bytes(),
+                name_arr == bid_state.target_id.to_bytes(),
                 TcompError::WrongTargetId
             );
         }

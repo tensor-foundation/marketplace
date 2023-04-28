@@ -8,7 +8,7 @@ pub mod instructions;
 pub mod shared;
 pub mod state;
 
-pub use std::{slice::Iter, str::FromStr};
+pub use std::{io::Write, slice::Iter, str::FromStr};
 
 pub use anchor_lang::{
     prelude::*,

@@ -19,6 +19,7 @@ import {
   createCreateTreeInstruction,
   createDelegateInstruction,
   createMintV1Instruction,
+  createVerifyCreatorInstruction,
   getLeafAssetId,
   MetadataArgs,
   TokenProgramVersion,
@@ -108,6 +109,7 @@ export const ACCT_NOT_EXISTS_ERR = "Account does not exist";
 export const INTEGER_OVERFLOW_ERR = "0x44f";
 export const HAS_ONE_ERR = "0x7d1";
 export const ALREADY_IN_USE_ERR = "0x0";
+export const ACC_NOT_INIT_ERR = "0xbc4";
 
 export const getLamports = (acct: PublicKey) =>
   _getLamports(TEST_PROVIDER.connection, acct);
@@ -123,6 +125,19 @@ type BuildAndSendTxArgs = {
   lookupTableAccounts?: [AddressLookupTableAccount] | undefined;
   blockhash?: string;
 };
+
+function makeRandomStr(length: number) {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
 
 export const buildAndSendTx = async ({
   provider = TEST_PROVIDER,
@@ -696,6 +711,85 @@ export const verifyCNft = async ({
   return { leaf, assetId };
 };
 
+export const verifyCNftCreator = async ({
+  conn = TEST_PROVIDER.connection,
+  index,
+  owner,
+  delegate,
+  merkleTree,
+  memTree,
+  metadata,
+  proof,
+  verifiedCreator,
+}: {
+  conn?: Connection;
+  index: number;
+  owner: PublicKey;
+  delegate?: PublicKey;
+  merkleTree: PublicKey;
+  metadata: MetadataArgs;
+  proof: Buffer[];
+  verifiedCreator: Keypair;
+  memTree: MerkleTree;
+}) => {
+  const accountInfo = await conn.getAccountInfo(merkleTree, {
+    commitment: "confirmed",
+  });
+  const account = ConcurrentMerkleTreeAccount.fromBuffer(accountInfo!.data!);
+
+  const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+  const verifyCreatorIx = await createVerifyCreatorInstruction(
+    {
+      merkleTree,
+      treeAuthority,
+      leafOwner: owner,
+      leafDelegate: owner,
+      payer: TEST_KEYPAIR.publicKey,
+      creator: verifiedCreator.publicKey,
+      logWrapper: SPL_NOOP_PROGRAM_ID,
+      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      anchorRemainingAccounts: proof.map((p) => ({
+        pubkey: new PublicKey(p),
+        isWritable: false,
+        isSigner: false,
+      })),
+    },
+    {
+      root: [...account.getCurrentRoot()],
+      creatorHash: [...computeCreatorHashPATCHED(metadata.creators)],
+      dataHash: [...computeDataHash(metadata)],
+      index,
+      message: metadata,
+      nonce: new BN(index),
+    }
+  );
+
+  const sig = await buildAndSendTx({
+    ixs: [verifyCreatorIx],
+    extraSigners: [TEST_KEYPAIR, verifiedCreator],
+  });
+  console.log("✅ creator verified:", sig);
+
+  metadata.creators.forEach((c) => {
+    if (c.address.equals(verifiedCreator.publicKey)) {
+      c.verified = true;
+    }
+  });
+
+  //update mem tree
+  const { leaf, assetId } = await makeLeaf({
+    index,
+    owner,
+    delegate,
+    merkleTree,
+    metadata,
+  });
+  memTree.updateLeaf(index, leaf);
+
+  return { metadata, leaf, assetId };
+};
+
 export const makeLeaf = async ({
   index,
   owner,
@@ -742,9 +836,7 @@ export const makeCNftMeta = ({
   }
 
   return {
-    name: randomizeName
-      ? (Math.random() + 1).toString(36).substring(10)
-      : "Compressed NFT",
+    name: randomizeName ? makeRandomStr(20) : "Compressed NFT",
     symbol: "COMP",
     uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
     creators: Array(nrCreators)
@@ -783,6 +875,8 @@ export const beforeHook = async ({
   canopyDepth = 0,
   setupTswap = false,
   randomizeName,
+  verifiedCreator,
+  collectionless = false,
 }: {
   numMints: number;
   nrCreators?: number;
@@ -790,6 +884,8 @@ export const beforeHook = async ({
   canopyDepth?: number;
   setupTswap?: boolean;
   randomizeName?: boolean;
+  verifiedCreator?: Keypair;
+  collectionless?: boolean;
 }) => {
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
@@ -810,10 +906,31 @@ export const beforeHook = async ({
   }[] = [];
   for (let index = 0; index < numMints; index++) {
     const metadata = await makeCNftMeta({
-      collectionMint,
+      collectionMint: collectionless ? undefined : collectionMint,
       nrCreators,
       randomizeName,
     });
+
+    //attach optioonal verified creators
+    if (verifiedCreator) {
+      //nullify existing shares
+      metadata.creators = metadata.creators.map((c) => ({ ...c, share: 0 }));
+      //insert new creator at the start
+      metadata.creators.push({
+        address: verifiedCreator.publicKey,
+        verified: false,
+        //doesn't matter, we're not testing share
+        share: 100,
+      });
+      //keep the last 4
+      if (metadata.creators.length > 4) {
+        metadata.creators = metadata.creators.slice(
+          metadata.creators.length - 4,
+          metadata.creators.length
+        );
+      }
+    }
+
     await mintCNft({
       merkleTree,
       metadata,
@@ -840,58 +957,34 @@ export const beforeHook = async ({
     depthSizePair.maxDepth
   );
 
-  await Promise.all(
+  leaves = await Promise.all(
     leaves.map(async (l) => {
-      const { index, assetId, leaf, metadata } = l;
-      const proof = memTree.getProof(
-        l.index,
-        false,
-        depthSizePair.maxDepth,
-        false
-      ).proof;
+      let { index, assetId, leaf, metadata } = l;
+      let proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
 
-      // const root = memTree.getProof(
-      //   l.index,
-      //   false,
-      //   depthSizePair.maxDepth,
-      //   false
-      // ).root;
-      // console.log("root", Array.from(root));
-      // console.log(
-      //   "leaf",
-      //   assetId.toString(),
-      //   traderA.publicKey.toString(),
-      //   traderA.publicKey?.toString(),
-      //   index,
-      //   JSON.stringify(metadata)
-      // );
-      // console.log("data hash", Array.from(computeDataHash(metadata)));
-      // console.log(
-      //   "creator hash",
-      //   Array.from(computeCreatorHashPATCHED(metadata.creators))
-      // );
-      // console.log(
-      //   "hashed leaf",
-      //   Array.from(
-      //     computeCompressedNFTHash(
-      //       assetId,
-      //       traderA.publicKey,
-      //       traderA.publicKey,
-      //       new BN(index),
-      //       metadata
-      //     )
-      //   )
-      // );
-      // console.log("proof", JSON.stringify(proof.map((p) => new PublicKey(p))));
-      // console.log("tree", merkleTree.toString());
+      if (verifiedCreator) {
+        ({ metadata, leaf, assetId } = await verifyCNftCreator({
+          index,
+          merkleTree,
+          memTree,
+          metadata,
+          owner: traderA.publicKey,
+          proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
+          verifiedCreator,
+        }));
+        //get new proof after verification
+        proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
+      }
 
       await verifyCNft({
-        index: l.index,
+        index,
         merkleTree,
-        metadata: l.metadata,
+        metadata,
         owner: traderA.publicKey,
-        proof: proof.slice(0, proof.length - canopyDepth),
+        proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
       });
+
+      return { index, assetId, leaf, metadata };
     })
   );
 
@@ -926,6 +1019,7 @@ export const beforeHook = async ({
     treeOwner,
     traderA,
     traderB,
+    collectionMint,
   };
 };
 
