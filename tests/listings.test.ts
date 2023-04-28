@@ -227,7 +227,7 @@ describe("tcomp listings", () => {
     }
   });
 
-  it.only("lists + buys (separate payer)", async () => {
+  it("lists + buys (separate payer)", async () => {
     for (const nrCreators of [4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
@@ -567,7 +567,7 @@ describe("tcomp listings", () => {
           privateTaker: traderB.publicKey,
           currency,
         });
-        const ix = await fetchAndCheckSingleIxTx(sig, "list");
+        const ix = await fetchAndCheckSingleIxTx(sig!, "list");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         expect(amounts?.currency?.toString()).eq(currency.toString());

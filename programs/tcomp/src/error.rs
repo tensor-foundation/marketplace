@@ -28,4 +28,14 @@ pub enum TcompError {
     OfferNotYetExpired = 12,
     #[msg("bad margin")]
     BadMargin = 13,
+    #[msg("wrong ix for bid target called")]
+    WrongIxForBidTarget = 14,
+    #[msg("wrong target id")]
+    WrongTargetId = 15,
+    #[msg("creator array missing first verified creator")]
+    MissingFvc = 16,
+    #[msg("metadata missing collection")]
+    MissingCollection = 17,
+    #[msg("cannot modify bid target, create a new bid")]
+    CannotModifyTarget = 18,
 }

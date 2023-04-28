@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(asset_id: Pubkey)]
+#[instruction(target_id: Pubkey)]
 pub struct Bid<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -11,7 +11,7 @@ pub struct Bid<'info> {
         seeds=[
             b"bid_state".as_ref(),
             owner.key().as_ref(),
-            asset_id.as_ref()
+            target_id.as_ref(),
         ],
         bump,
         space = BID_STATE_SIZE,
@@ -51,7 +51,8 @@ impl<'info> Validate<'info> for Bid<'info> {
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
-    asset_id: Pubkey,
+    target_id: Pubkey,
+    target: BidTarget,
     amount: u64,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -60,16 +61,24 @@ pub fn handler<'info>(
     let bid_state = &mut ctx.accounts.bid_state;
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
-    bid_state.asset_id = asset_id;
     bid_state.owner = ctx.accounts.owner.key();
     bid_state.amount = amount;
     bid_state.currency = currency;
     bid_state.private_taker = private_taker;
     bid_state.margin = None; //overwritten below if margin present
 
-    //grab current expiry in case they're editing a bid
+    // TODO: write a test
+    // Since target is not part of seeds, we need to make sure it's only assigned once
+    if bid_state.target_id == Pubkey::default() {
+        bid_state.target = target;
+    } else {
+        require!(bid_state.target == target, TcompError::CannotModifyTarget);
+    }
+    bid_state.target_id = target_id;
+
+    // Grab current expiry in case they're editing a bid
     let current_expiry = bid_state.expiry;
-    //figure out new expiry
+    // Figure out new expiry
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
@@ -85,7 +94,7 @@ pub fn handler<'info>(
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
-            asset_id,
+            asset_id: target_id,
             amount,
             currency,
             expiry,

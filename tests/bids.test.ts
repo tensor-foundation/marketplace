@@ -54,7 +54,7 @@ describe("tcomp bids", () => {
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          assetId,
+          targetId: assetId,
           currency,
           owner: traderB,
         });
@@ -64,7 +64,7 @@ describe("tcomp bids", () => {
 
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
-          assetId,
+          targetId: assetId,
           currency,
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
@@ -82,6 +82,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
+            targetId: assetId,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
         await testTakeBid({
@@ -95,6 +96,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
+          targetId: assetId,
         });
       }
     }
@@ -112,7 +114,7 @@ describe("tcomp bids", () => {
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          assetId,
+          targetId: assetId,
           owner: traderB,
         });
         await testTakeBid({
@@ -125,6 +127,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           optionalRoyaltyPct,
+          targetId: assetId,
         });
       }
     }
@@ -144,7 +147,7 @@ describe("tcomp bids", () => {
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          assetId,
+          targetId: assetId,
           owner: traderB,
           prevBidAmount: 0,
           expireInSec: new BN(closeWithCosigner ? 0 : 10000),
@@ -174,7 +177,7 @@ describe("tcomp bids", () => {
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
       });
       //fake addresses
@@ -195,6 +198,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       //fake shares
@@ -215,6 +219,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       //fake verified
@@ -235,6 +240,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       await testTakeBid({
@@ -246,6 +252,7 @@ describe("tcomp bids", () => {
         seller: traderA,
         owner: traderB.publicKey,
         lookupTableAccount,
+        targetId: assetId,
       });
     }
   });
@@ -276,7 +283,7 @@ describe("tcomp bids", () => {
         //list using delegate
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          assetId,
+          targetId: assetId,
           owner: traderB,
         });
         await testTakeBid({
@@ -289,6 +296,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           delegate,
+          targetId: assetId,
         });
       }
     }
@@ -297,12 +305,17 @@ describe("tcomp bids", () => {
   it("bids + takes (expired listing)", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-      await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
+      await beforeHook({
+        nrCreators: 4,
+        numMints: 2,
+        canopyDepth,
+        setupTswap: true,
+      });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         expireInSec: new BN(1),
       });
@@ -319,13 +332,15 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           lookupTableAccount,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
       await testBid({
-        assetId,
         amount: new BN(LAMPORTS_PER_SOL),
-        owner: traderA,
-        expireInSec: new BN(100),
+        targetId: assetId,
+        owner: traderB,
+        expireInSec: new BN(1000),
+        prevBidAmount: LAMPORTS_PER_SOL,
       });
       await testTakeBid({
         index,
@@ -337,6 +352,7 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         canopyDepth,
         lookupTableAccount,
+        targetId: assetId,
       });
     }
   });
@@ -355,7 +371,7 @@ describe("tcomp bids", () => {
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: traderC.publicKey, //C whitelisted
       });
@@ -370,11 +386,12 @@ describe("tcomp bids", () => {
           seller: traderA, //A can't sell
           owner: traderB.publicKey,
           canopyDepth,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
         prevBidAmount: LAMPORTS_PER_SOL,
@@ -388,6 +405,7 @@ describe("tcomp bids", () => {
         seller: traderA, //A can now sell
         owner: traderB.publicKey,
         canopyDepth,
+        targetId: assetId,
       });
     }
   });
@@ -412,7 +430,7 @@ describe("tcomp bids", () => {
       {
         const { sig } = await testBid({
           amount: new BN(amount),
-          assetId,
+          targetId: assetId,
           owner: traderB,
           privateTaker: traderA.publicKey,
           currency,
@@ -438,8 +456,9 @@ describe("tcomp bids", () => {
           currency,
           optionalRoyaltyPct: 100,
           takerBroker,
+          targetId: assetId,
         });
-        const ix = await fetchAndCheckSingleIxTx(sig!, "takeBid");
+        const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidMetaHash");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         expect(amounts?.currency?.toString()).eq(currency.toString());
@@ -480,7 +499,7 @@ describe("tcomp bids", () => {
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
         margin: marginPda,
@@ -495,6 +514,7 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         canopyDepth,
         margin: marginPda,
+        targetId: assetId,
       });
     }
   });
@@ -522,7 +542,7 @@ describe("tcomp bids", () => {
       // do a non-marginated bid
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
       });
@@ -530,7 +550,7 @@ describe("tcomp bids", () => {
       const bidderLamports1 = await getLamports(traderB.publicKey);
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
         margin: marginPda,
@@ -542,7 +562,7 @@ describe("tcomp bids", () => {
       // non-marginated again
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
       });
@@ -559,6 +579,7 @@ describe("tcomp bids", () => {
         seller: traderA, //A can now sell
         owner: traderB.publicKey,
         canopyDepth,
+        targetId: assetId,
       });
     }
   });
@@ -585,7 +606,7 @@ describe("tcomp bids", () => {
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        assetId,
+        targetId: assetId,
         owner: traderB,
         privateTaker: null,
         margin: marginPda,
@@ -609,6 +630,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           margin: marginPda,
+          targetId: assetId,
         })
       ).to.be.rejectedWith(INTEGER_OVERFLOW_ERR);
     }

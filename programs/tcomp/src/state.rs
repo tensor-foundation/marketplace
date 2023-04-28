@@ -45,13 +45,24 @@ impl ListState {
 
 // --------------------------------------- bidding
 
+#[repr(u8)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub enum BidTarget {
+    AssetId = 0,
+    Voc = 1,
+    Fvc = 2,
+    Name = 3,
+}
+
 #[account]
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],
     // IDs
     pub owner: Pubkey,
-    pub asset_id: Pubkey,
+    // Obviously would be better to use an enum-tuple / enum-struct but anchor doesn't serialize them
+    pub target: BidTarget,
+    pub target_id: Pubkey,
     // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
@@ -66,14 +77,14 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128;
+pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {
         [
             b"bid_state".as_ref(),
             self.owner.as_ref(),
-            self.asset_id.as_ref(),
+            self.target_id.as_ref(),
             &self.bump,
         ]
     }

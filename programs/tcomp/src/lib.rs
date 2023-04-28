@@ -10,10 +10,10 @@ pub mod state;
 
 pub use std::{slice::Iter, str::FromStr};
 
-use anchor_lang::solana_program::hash;
 pub use anchor_lang::{
     prelude::*,
     solana_program::{
+        hash,
         instruction::Instruction,
         keccak::hashv,
         program::{invoke, invoke_signed},
@@ -43,7 +43,7 @@ pub use spl_account_compression::{
 };
 pub use state::*;
 pub use tensorswap::{self, assert_decode_margin_account, program::Tensorswap, TSwap};
-pub use vipers::prelude::*;
+pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 
@@ -147,7 +147,8 @@ pub mod tcomp {
 
     pub fn bid<'info>(
         ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
-        asset_id: Pubkey,
+        target_id: Pubkey,
+        target: BidTarget,
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -155,7 +156,8 @@ pub mod tcomp {
     ) -> Result<()> {
         instructions::bid::handler(
             ctx,
-            asset_id,
+            target_id,
+            target,
             amount,
             expire_in_sec,
             currency,
@@ -165,20 +167,21 @@ pub mod tcomp {
 
     pub fn cancel_bid<'info>(
         ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>,
-        _asset_id: Pubkey,
+        _target_id: Pubkey,
     ) -> Result<()> {
         instructions::cancel_bid::handler(ctx)
     }
 
     pub fn close_expired_bid<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
-        _asset_id: Pubkey,
+        _target_id: Pubkey,
     ) -> Result<()> {
         instructions::close_expired_bid::handler(ctx)
     }
 
-    pub fn take_bid<'info>(
+    pub fn take_bid_meta_hash<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        _target_id: Pubkey,
         nonce: u64,
         index: u32,
         root: [u8; 32],
@@ -190,7 +193,7 @@ pub mod tcomp {
         currency: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::take_bid::handler(
+        instructions::take_bid::handler_meta_hash(
             ctx,
             nonce,
             index,
@@ -199,6 +202,29 @@ pub mod tcomp {
             creator_shares,
             creator_verified,
             seller_fee_basis_points,
+            min_amount,
+            currency,
+            optional_royalty_pct,
+        )
+    }
+
+    pub fn take_bid_full_meta<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        _target_id: Pubkey,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_args: TMetadataArgs,
+        min_amount: u64,
+        currency: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::take_bid::handler_full_meta(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_args,
             min_amount,
             currency,
             optional_royalty_pct,

@@ -8,15 +8,15 @@ export const findTCompPda = ({ program }: { program?: PublicKey }) => {
 
 export const findBidStatePda = ({
   program,
-  assetId,
+  targetId,
   owner,
 }: {
   program?: PublicKey;
-  assetId: PublicKey;
+  targetId: PublicKey;
   owner: PublicKey;
 }) => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("bid_state"), owner.toBytes(), assetId.toBytes()],
+    [Buffer.from("bid_state"), owner.toBytes(), targetId.toBytes()],
     program ?? TCOMP_ADDR
   );
 };

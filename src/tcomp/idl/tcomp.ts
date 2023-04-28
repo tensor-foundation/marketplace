@@ -39,7 +39,7 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
@@ -523,8 +523,14 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
+        },
+        {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
         },
         {
           "name": "amount",
@@ -571,7 +577,7 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
         }
       ]
@@ -607,13 +613,13 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
         }
       ]
     },
     {
-      "name": "takeBid",
+      "name": "takeBidMetaHash",
       "accounts": [
         {
           "name": "tcomp",
@@ -698,6 +704,10 @@ export type Tcomp = {
       ],
       "args": [
         {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
           "name": "nonce",
           "type": "u64"
         },
@@ -736,6 +746,136 @@ export type Tcomp = {
         {
           "name": "sellerFeeBasisPoints",
           "type": "u16"
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "takeBidFullMeta",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaArgs",
+          "type": {
+            "defined": "TMetadataArgs"
+          }
         },
         {
           "name": "minAmount",
@@ -838,7 +978,13 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "target",
+            "type": {
+              "defined": "BidTarget"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
           },
           {
@@ -1169,6 +1315,26 @@ export type Tcomp = {
           }
         ]
       }
+    },
+    {
+      "name": "BidTarget",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AssetId"
+          },
+          {
+            "name": "Voc"
+          },
+          {
+            "name": "Fvc"
+          },
+          {
+            "name": "Name"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -1236,6 +1402,31 @@ export type Tcomp = {
       "code": 6013,
       "name": "BadMargin",
       "msg": "bad margin"
+    },
+    {
+      "code": 6014,
+      "name": "WrongIxForBidTarget",
+      "msg": "wrong ix for bid target called"
+    },
+    {
+      "code": 6015,
+      "name": "WrongTargetId",
+      "msg": "wrong target id"
+    },
+    {
+      "code": 6016,
+      "name": "MissingFvc",
+      "msg": "creator array missing first verified creator"
+    },
+    {
+      "code": 6017,
+      "name": "MissingCollection",
+      "msg": "metadata missing collection"
+    },
+    {
+      "code": 6018,
+      "name": "CannotModifyTarget",
+      "msg": "cannot modify bid target, create a new bid"
     }
   ]
 };
@@ -1281,7 +1472,7 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
@@ -1765,8 +1956,14 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
+        },
+        {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
         },
         {
           "name": "amount",
@@ -1813,7 +2010,7 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
         }
       ]
@@ -1849,13 +2046,13 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "assetId",
+          "name": "targetId",
           "type": "publicKey"
         }
       ]
     },
     {
-      "name": "takeBid",
+      "name": "takeBidMetaHash",
       "accounts": [
         {
           "name": "tcomp",
@@ -1940,6 +2137,10 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
           "name": "nonce",
           "type": "u64"
         },
@@ -1978,6 +2179,136 @@ export const IDL: Tcomp = {
         {
           "name": "sellerFeeBasisPoints",
           "type": "u16"
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "takeBidFullMeta",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tswap",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaArgs",
+          "type": {
+            "defined": "TMetadataArgs"
+          }
         },
         {
           "name": "minAmount",
@@ -2080,7 +2411,13 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "target",
+            "type": {
+              "defined": "BidTarget"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
           },
           {
@@ -2411,6 +2748,26 @@ export const IDL: Tcomp = {
           }
         ]
       }
+    },
+    {
+      "name": "BidTarget",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AssetId"
+          },
+          {
+            "name": "Voc"
+          },
+          {
+            "name": "Fvc"
+          },
+          {
+            "name": "Name"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -2478,6 +2835,31 @@ export const IDL: Tcomp = {
       "code": 6013,
       "name": "BadMargin",
       "msg": "bad margin"
+    },
+    {
+      "code": 6014,
+      "name": "WrongIxForBidTarget",
+      "msg": "wrong ix for bid target called"
+    },
+    {
+      "code": 6015,
+      "name": "WrongTargetId",
+      "msg": "wrong target id"
+    },
+    {
+      "code": 6016,
+      "name": "MissingFvc",
+      "msg": "creator array missing first verified creator"
+    },
+    {
+      "code": 6017,
+      "name": "MissingCollection",
+      "msg": "metadata missing collection"
+    },
+    {
+      "code": 6018,
+      "name": "CannotModifyTarget",
+      "msg": "cannot modify bid target, create a new bid"
     }
   ]
 };

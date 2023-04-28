@@ -34,7 +34,9 @@ import {
   ValidDepthSizePair,
 } from "@solana/spl-account-compression";
 import {
+  BidTarget,
   BUBBLEGUM_PROGRAM_ID,
+  castBidTargetAnchor,
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -1383,7 +1385,8 @@ export const fetchAndCheckSingleIxTx = async (
 };
 
 export const testBid = async ({
-  assetId,
+  target = BidTarget.AssetId,
+  targetId,
   owner,
   amount,
   prevBidAmount,
@@ -1392,7 +1395,8 @@ export const testBid = async ({
   privateTaker,
   margin,
 }: {
-  assetId: PublicKey;
+  target?: BidTarget;
+  targetId: PublicKey;
   owner: Keypair;
   amount: BN;
   prevBidAmount?: number;
@@ -1405,7 +1409,8 @@ export const testBid = async ({
     tx: { ixs },
     bidState,
   } = await tcompSdk.bid({
-    assetId,
+    target,
+    targetId,
     owner: owner.publicKey,
     amount,
     currency,
@@ -1435,7 +1440,8 @@ export const testBid = async ({
 
       const bidStateAcc = await tcompSdk.fetchBidState(bidState);
       expect(bidStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
-      expect(bidStateAcc.assetId.toString()).to.eq(assetId.toString());
+      expect(castBidTargetAnchor(bidStateAcc.target)).to.eq(target);
+      expect(bidStateAcc.targetId.toString()).to.eq(targetId.toString());
       expect(bidStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
       expect(bidStateAcc.amount.toNumber()).to.eq(amount.toNumber());
       if (!isNullLike(currency)) {
@@ -1506,7 +1512,7 @@ export const testCancelCloseBid = async ({
       bidState,
     } = await tcompSdk.closeExpiredBid({
       owner: owner.publicKey,
-      assetId,
+      targetId: assetId,
       cosigner: TEST_COSIGNER.publicKey,
     }));
   } else {
@@ -1515,7 +1521,7 @@ export const testCancelCloseBid = async ({
       bidState,
     } = await tcompSdk.cancelBid({
       owner: owner.publicKey,
-      assetId,
+      targetId: assetId,
     }));
   }
 
@@ -1567,6 +1573,8 @@ export const testCancelCloseBid = async ({
 };
 
 export const testTakeBid = async ({
+  target = BidTarget.AssetId,
+  targetId,
   memTree,
   index,
   owner,
@@ -1583,6 +1591,8 @@ export const testTakeBid = async ({
   canopyDepth = 0,
   margin,
 }: {
+  target?: BidTarget;
+  targetId: PublicKey;
   memTree: MerkleTree;
   index: number;
   owner: PublicKey;
@@ -1611,6 +1621,8 @@ export const testTakeBid = async ({
     tx: { ixs: takeIxs },
     bidState,
   } = await tcompSdk.takeBid({
+    target,
+    targetId,
     proof: proof.proof,
     seller: seller.publicKey,
     delegate: delegate?.publicKey,
