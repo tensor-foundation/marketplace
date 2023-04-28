@@ -35,11 +35,12 @@ import {
   testWithdrawFromMargin,
 } from "./tswap";
 import { MerkleTree } from "@solana/spl-account-compression";
+import { Key } from "@metaplex-foundation/mpl-token-metadata";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
 
-describe("tcomp bids", () => {
+describe.only("tcomp bids", () => {
   let lookupTableAccount: AddressLookupTableAccount | undefined;
   before(async () => {
     lookupTableAccount = (await beforeAllHook()) ?? undefined;
@@ -1044,7 +1045,6 @@ describe("tcomp bids", () => {
 
   it("FVC: fails to accept bid on a mint with a non verified creator", async () => {
     const canopyDepth = 10;
-    const verifiedCreator = Keypair.generate();
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
         nrCreators: 1,
@@ -1052,15 +1052,16 @@ describe("tcomp bids", () => {
         setupTswap: true,
         canopyDepth,
         randomizeName: true,
-        verifiedCreator,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
+      const bidId = Keypair.generate().publicKey;
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
         target: BidTarget.Fvc,
-        targetId: verifiedCreator.publicKey,
+        targetId: metadata.creators[0].address,
         owner: traderB,
+        bidId,
       });
       await expect(
         testTakeBid({
@@ -1074,7 +1075,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: metadata.creators[0].address, //exists but isn't verified
+          bidId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingFvc"));
     }
