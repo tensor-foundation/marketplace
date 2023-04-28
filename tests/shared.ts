@@ -728,10 +728,12 @@ export const makeCNftMeta = ({
   nrCreators = 4,
   sellerFeeBasisPoints = 1000,
   collectionMint,
+  randomizeName = false,
 }: {
   nrCreators?: number;
   sellerFeeBasisPoints?: number;
   collectionMint?: PublicKey;
+  randomizeName?: boolean;
 }): MetadataArgs => {
   if (nrCreators < 0 || nrCreators > 4) {
     throw new Error(
@@ -740,7 +742,9 @@ export const makeCNftMeta = ({
   }
 
   return {
-    name: "Compress me hard",
+    name: randomizeName
+      ? (Math.random() + 1).toString(36).substring(10)
+      : "Compressed NFT",
     symbol: "COMP",
     uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
     creators: Array(nrCreators)
@@ -778,12 +782,14 @@ export const beforeHook = async ({
   depthSizePair = DEFAULT_DEPTH_SIZE,
   canopyDepth = 0,
   setupTswap = false,
+  randomizeName,
 }: {
   numMints: number;
   nrCreators?: number;
   depthSizePair?: ValidDepthSizePair;
   canopyDepth?: number;
   setupTswap?: boolean;
+  randomizeName?: boolean;
 }) => {
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
@@ -806,6 +812,7 @@ export const beforeHook = async ({
     const metadata = await makeCNftMeta({
       collectionMint,
       nrCreators,
+      randomizeName,
     });
     await mintCNft({
       merkleTree,

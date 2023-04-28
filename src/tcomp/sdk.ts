@@ -887,6 +887,7 @@ export class TCompSDK {
         .accounts(accounts)
         .remainingAccounts(remAccounts);
     } else {
+      //VOC + name
       builder = this.program.methods
         .takeBidFullMeta(
           targetId,

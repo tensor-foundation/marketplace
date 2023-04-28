@@ -21,7 +21,7 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { TAKER_BROKER_PCT } from "../src";
+import { BidTarget, TAKER_BROKER_PCT } from "../src";
 import {
   testDepositIntoMargin,
   testMakeMargin,
@@ -37,7 +37,6 @@ describe("tcomp bids", () => {
     lookupTableAccount = (await beforeAllHook()) ?? undefined;
   });
 
-  //can't fit in 4 creators without canopy :(
   it("bids + edits + accepts bid (with canopy)", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
@@ -477,6 +476,8 @@ describe("tcomp bids", () => {
     }
   });
 
+  // --------------------------------------- margin
+
   it("margin buy: works", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -633,6 +634,99 @@ describe("tcomp bids", () => {
           targetId: assetId,
         })
       ).to.be.rejectedWith(INTEGER_OVERFLOW_ERR);
+    }
+  });
+
+  // --------------------------------------- VOC bids
+
+  it("bids + edits + accepts bid (VOC)", async () => {
+    const canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators,
+          numMints: 2,
+          setupTswap: true,
+          canopyDepth,
+        });
+
+      let currency = Keypair.generate().publicKey;
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          target: BidTarget.Voc,
+          targetId: metadata.collection!.key,
+          owner: traderB,
+        });
+        //fails if try to change the target
+        await expect(
+          testBid({
+            amount: new BN(LAMPORTS_PER_SOL / 2),
+            target: BidTarget.AssetId, //wrong target
+            targetId: metadata.collection!.key,
+            owner: traderB,
+            prevBidAmount: LAMPORTS_PER_SOL,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL / 2),
+          target: BidTarget.Voc,
+          targetId: metadata.collection!.key,
+          owner: traderB,
+          prevBidAmount: LAMPORTS_PER_SOL,
+        });
+        // -------------------- bas cases
+        await expect(
+          testTakeBid({
+            target: BidTarget.AssetId, //wrong target
+            currency,
+            index,
+            lookupTableAccount,
+            memTree,
+            merkleTree,
+            metadata,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            owner: traderB.publicKey,
+            seller: traderA,
+            canopyDepth,
+            targetId: metadata.collection!.key,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
+        await expect(
+          testTakeBid({
+            target: BidTarget.Fvc, //wrong target
+            currency,
+            index,
+            lookupTableAccount,
+            memTree,
+            merkleTree,
+            metadata,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            owner: traderB.publicKey,
+            seller: traderA,
+            canopyDepth,
+            targetId: metadata.collection!.key,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
+        //can't do a bad case for Name since it's only used for picking branch js side and VOC branch will be picked correctly
+        //can't do o bad case for targetId since it's used for seeds and it'll do a "bid not initialized" error
+        // -------------------- final purchase
+        await testTakeBid({
+          target: BidTarget.Voc,
+          currency,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          targetId: metadata.collection!.key,
+        });
+      }
     }
   });
 });
