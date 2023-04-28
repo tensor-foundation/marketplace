@@ -959,6 +959,7 @@ export const testList = async ({
   const {
     tx: { ixs },
     assetId,
+    listState,
   } = await tcompSdk.list({
     proof: proof.proof,
     owner: owner.publicKey,
@@ -975,46 +976,64 @@ export const testList = async ({
     canopyDepth,
   });
 
-  const sig = await buildAndSendTx({
-    ixs,
-    //if leaf delegate passed in, then skip the owner
-    extraSigners: [delegate ?? owner, payer],
-    lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
-  });
-  console.log("✅ listed", sig);
-  // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
+  let sig;
 
-  //nft moved to escrow
-  const [listState, bump] = findListStatePda({ assetId });
-  await verifyCNft({
-    index,
-    merkleTree,
-    metadata,
-    owner: listState,
-    delegate: listState,
-    proof: proof.proof,
-  });
+  await withLamports(
+    {
+      prevPayerLamports: payer.publicKey,
+      prevOwnerLamports: owner.publicKey,
+    },
+    async ({ prevPayerLamports, prevOwnerLamports }) => {
+      sig = await buildAndSendTx({
+        ixs,
+        //if leaf delegate passed in, then skip the owner
+        extraSigners: [delegate ?? owner, payer],
+        lookupTableAccounts: lookupTableAccount
+          ? [lookupTableAccount]
+          : undefined,
+      });
+      console.log("✅ listed", sig);
+      // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
-  const listStateAcc = await tcompSdk.fetchListState(listState);
-  expect(listStateAcc.assetId.toString()).to.eq(assetId.toString());
-  expect(listStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
-  expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
-  if (!isNullLike(currency)) {
-    expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
-  }
-  if (!isNullLike(expireInSec)) {
-    expect(listStateAcc.expiry.toNumber()).to.approximately(
-      +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
-      MINUTES
-    );
-  }
-  if (!isNullLike(privateTaker)) {
-    expect(listStateAcc.privateTaker!.toString()).to.eq(
-      privateTaker.toString()
-    );
-  }
-  expect(listStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
-  expect(listStateAcc.bump[0]).to.eq(bump);
+      //if payer != buyer, make sure buyer didnt lose lamports
+      if (payer.publicKey.toString() !== owner.publicKey.toString()) {
+        const currOwnerLamports = await getLamports(owner.publicKey);
+        expect(currOwnerLamports! - prevOwnerLamports!).eq(0);
+      }
+
+      //nft moved to escrow
+      const [listState, bump] = findListStatePda({ assetId });
+      await verifyCNft({
+        index,
+        merkleTree,
+        metadata,
+        owner: listState,
+        delegate: listState,
+        proof: proof.proof,
+      });
+
+      const listStateAcc = await tcompSdk.fetchListState(listState);
+      expect(listStateAcc.assetId.toString()).to.eq(assetId.toString());
+      expect(listStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
+      expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
+      if (!isNullLike(currency)) {
+        expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
+      }
+      if (!isNullLike(expireInSec)) {
+        expect(listStateAcc.expiry.toNumber()).to.approximately(
+          +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
+          MINUTES
+        );
+      }
+      if (!isNullLike(privateTaker)) {
+        expect(listStateAcc.privateTaker!.toString()).to.eq(
+          privateTaker.toString()
+        );
+      }
+      expect(listStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
+      expect(listStateAcc.bump[0]).to.eq(bump);
+    }
+  );
 
   //update mem tree
   const { leaf } = await makeLeaf({
@@ -1221,12 +1240,14 @@ export const testBuy = async ({
     {
       prevFeeAccLamports: tcomp,
       prevSellerLamports: owner,
-      prevBuyerLamports: payer.publicKey,
+      prevPayerLamports: payer.publicKey,
+      prevBuyerLamports: buyer.publicKey,
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
     },
     async ({
       prevFeeAccLamports,
       prevSellerLamports,
+      prevPayerLamports,
       prevBuyerLamports,
       prevTakerBroker,
     }) => {
@@ -1297,13 +1318,19 @@ export const testBuy = async ({
         }
       }
 
-      //buyer paid
-      const currBuyerLamports = await getLamports(payer.publicKey);
+      //payer has paid
+      const currPayerLamports = await getLamports(payer.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
       if (!programmable) {
-        expect(currBuyerLamports! - prevBuyerLamports!).eq(
+        expect(currPayerLamports! - prevPayerLamports!).eq(
           -1 * (amount + tcompFee + brokerFee + creatorsFee)
         );
+      }
+
+      //if payer != buyer, make sure buyer didnt lose lamports
+      if (payer.publicKey.toString() !== buyer.publicKey.toString()) {
+        const currBuyerLamports = await getLamports(buyer.publicKey);
+        expect(currBuyerLamports! - prevBuyerLamports!).eq(0);
       }
 
       //seller gained

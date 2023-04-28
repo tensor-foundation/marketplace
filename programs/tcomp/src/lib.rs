@@ -51,9 +51,18 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 pub mod tcomp {
     use super::*;
 
+    // --------------------------------------- admin
+
     // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
     pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
         instructions::noop::handler(ctx)
+    }
+
+    pub fn withdraw_fees<'info>(
+        ctx: Context<'_, '_, '_, 'info, WithdrawFees<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::withdraw_fees::handler(ctx, amount)
     }
 
     // --------------------------------------- listings

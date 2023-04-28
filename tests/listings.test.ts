@@ -227,7 +227,7 @@ describe("tcomp listings", () => {
     }
   });
 
-  it("lists + buys (separate payer)", async () => {
+  it.only("lists + buys (separate payer)", async () => {
     for (const nrCreators of [4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({

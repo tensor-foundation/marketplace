@@ -7,6 +7,7 @@ pub mod edit;
 pub mod list;
 pub mod noop;
 pub mod take_bid;
+pub mod withdraw_fees;
 
 pub use bid::*;
 pub use buy::*;
@@ -17,3 +18,4 @@ pub use edit::*;
 pub use list::*;
 pub use noop::*;
 pub use take_bid::*;
+pub use withdraw_fees::*;
