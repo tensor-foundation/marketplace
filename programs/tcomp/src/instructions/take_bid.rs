@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(target_id: Pubkey)]
+#[instruction(bid_id: Pubkey)]
 pub struct TakeBid<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
@@ -26,11 +26,11 @@ pub struct TakeBid<'info> {
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(
         mut,
-        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), target_id.as_ref()],
+        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump = bid_state.bump[0],
         close = owner,
         has_one = owner,
-        has_one = target_id,
+        has_one = bid_id,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them

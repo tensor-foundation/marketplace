@@ -39,7 +39,7 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
@@ -523,6 +523,10 @@ export type Tcomp = {
       ],
       "args": [
         {
+          "name": "bidId",
+          "type": "publicKey"
+        },
+        {
           "name": "targetId",
           "type": "publicKey"
         },
@@ -577,7 +581,7 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         }
       ]
@@ -613,7 +617,7 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         }
       ]
@@ -704,7 +708,7 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         },
         {
@@ -851,7 +855,7 @@ export type Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         },
         {
@@ -975,6 +979,13 @@ export type Tcomp = {
           },
           {
             "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "bidId",
+            "docs": [
+              "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
+            ],
             "type": "publicKey"
           },
           {
@@ -1427,6 +1438,11 @@ export type Tcomp = {
       "code": 6018,
       "name": "CannotModifyTarget",
       "msg": "cannot modify bid target, create a new bid"
+    },
+    {
+      "code": 6019,
+      "name": "TargetIdMustEqualBidId",
+      "msg": "target id and bid id must be the same for single bids"
     }
   ]
 };
@@ -1472,7 +1488,7 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128"
     }
   ],
   "instructions": [
@@ -1956,6 +1972,10 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
+          "name": "bidId",
+          "type": "publicKey"
+        },
+        {
           "name": "targetId",
           "type": "publicKey"
         },
@@ -2010,7 +2030,7 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         }
       ]
@@ -2046,7 +2066,7 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         }
       ]
@@ -2137,7 +2157,7 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         },
         {
@@ -2284,7 +2304,7 @@ export const IDL: Tcomp = {
       ],
       "args": [
         {
-          "name": "targetId",
+          "name": "bidId",
           "type": "publicKey"
         },
         {
@@ -2408,6 +2428,13 @@ export const IDL: Tcomp = {
           },
           {
             "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "bidId",
+            "docs": [
+              "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
+            ],
             "type": "publicKey"
           },
           {
@@ -2860,6 +2887,11 @@ export const IDL: Tcomp = {
       "code": 6018,
       "name": "CannotModifyTarget",
       "msg": "cannot modify bid target, create a new bid"
+    },
+    {
+      "code": 6019,
+      "name": "TargetIdMustEqualBidId",
+      "msg": "target id and bid id must be the same for single bids"
     }
   ]
 };

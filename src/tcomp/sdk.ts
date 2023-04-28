@@ -663,6 +663,7 @@ export class TCompSDK {
   async bid({
     target,
     targetId,
+    bidId = targetId,
     owner,
     amount,
     expireInSec = null,
@@ -674,6 +675,7 @@ export class TCompSDK {
   }: {
     target: BidTarget;
     targetId: PublicKey;
+    bidId?: PublicKey;
     owner: PublicKey;
     amount: BN;
     expireInSec?: BN | null;
@@ -683,11 +685,12 @@ export class TCompSDK {
     priorityMicroLamports?: number | null;
     margin?: PublicKey | null;
   }) {
-    const [bidState] = findBidStatePda({ targetId, owner });
+    const [bidState] = findBidStatePda({ bidId, owner });
     const [tswap] = findTSwapPDA({});
 
     const builder = this.program.methods
       .bid(
+        bidId,
         targetId,
         castBidTarget(target),
         amount,
@@ -712,26 +715,25 @@ export class TCompSDK {
         ixs: [...computeIxs, await builder.instruction()],
         extraSigners: [],
       },
-      targetId,
       bidState,
       tswap,
     };
   }
 
   async cancelBid({
-    targetId,
+    bidId,
     owner,
     compute = null,
     priorityMicroLamports = null,
   }: {
-    targetId: PublicKey;
+    bidId: PublicKey;
     owner: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
-    const [bidState] = findBidStatePda({ targetId, owner });
+    const [bidState] = findBidStatePda({ bidId, owner });
 
-    const builder = this.program.methods.cancelBid(targetId).accounts({
+    const builder = this.program.methods.cancelBid(bidId).accounts({
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -745,28 +747,27 @@ export class TCompSDK {
         ixs: [...computeIxs, await builder.instruction()],
         extraSigners: [],
       },
-      targetId,
       bidState,
     };
   }
 
   async closeExpiredBid({
-    targetId,
+    bidId,
     owner,
     compute = null,
     priorityMicroLamports = null,
     cosigner = null,
   }: {
-    targetId: PublicKey;
+    bidId: PublicKey;
     owner: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
     cosigner?: PublicKey | null;
   }) {
-    const [bidState] = findBidStatePda({ targetId, owner });
+    const [bidState] = findBidStatePda({ bidId, owner });
     const [tswap] = findTSwapPDA({});
 
-    const builder = this.program.methods.closeExpiredBid(targetId).accounts({
+    const builder = this.program.methods.closeExpiredBid(bidId).accounts({
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -782,14 +783,13 @@ export class TCompSDK {
         ixs: [...computeIxs, await builder.instruction()],
         extraSigners: [],
       },
-      targetId,
       bidState,
     };
   }
 
   async takeBid({
     target,
-    targetId,
+    bidId,
     merkleTree,
     proof,
     root,
@@ -809,7 +809,7 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     target: BidTarget;
-    targetId: PublicKey;
+    bidId: PublicKey;
     merkleTree: PublicKey;
     proof: Buffer[];
     root: number[];
@@ -833,7 +833,7 @@ export class TCompSDK {
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [tcomp] = findTCompPda({});
-    const [bidState] = findBidStatePda({ targetId, owner });
+    const [bidState] = findBidStatePda({ bidId, owner });
     const [tswap] = findTSwapPDA({});
 
     let creators = metadata.creators.map((c) => ({
@@ -872,7 +872,7 @@ export class TCompSDK {
       const metaHash = computeMetadataArgsHash(metadata);
       builder = this.program.methods
         .takeBidMetaHash(
-          targetId,
+          bidId,
           nonce,
           index,
           root,
@@ -890,7 +890,7 @@ export class TCompSDK {
       //VOC + name
       builder = this.program.methods
         .takeBidFullMeta(
-          targetId,
+          bidId,
           nonce,
           index,
           root,

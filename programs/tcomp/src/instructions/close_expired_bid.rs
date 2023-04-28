@@ -1,15 +1,15 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(target_id: Pubkey)]
+#[instruction(bid_id: Pubkey)]
 pub struct CloseExpiredBid<'info> {
     #[account(
         mut,
-        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), target_id.as_ref()],
+        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump = bid_state.bump[0],
         close = owner,
         has_one = owner,
-        has_one = target_id,
+        has_one = bid_id,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
     /// CHECK: stored on bid_state

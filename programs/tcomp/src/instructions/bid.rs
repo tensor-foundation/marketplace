@@ -1,18 +1,14 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(target_id: Pubkey)]
+#[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
     #[account(init_if_needed, payer = owner,
-        seeds=[
-            b"bid_state".as_ref(),
-            owner.key().as_ref(),
-            target_id.as_ref(),
-        ],
+        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,
         space = BID_STATE_SIZE,
     )]
@@ -51,6 +47,7 @@ impl<'info> Validate<'info> for Bid<'info> {
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
+    bid_id: Pubkey,
     target_id: Pubkey,
     target: BidTarget,
     amount: u64,
@@ -61,20 +58,31 @@ pub fn handler<'info>(
     let bid_state = &mut ctx.accounts.bid_state;
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
-    bid_state.owner = ctx.accounts.owner.key();
     bid_state.amount = amount;
     bid_state.currency = currency;
     bid_state.private_taker = private_taker;
     bid_state.margin = None; //overwritten below if margin present
 
-    // TODO: write a test
-    // Since target is not part of seeds, we need to make sure it's only assigned once
+    // Since this is part of the seeds we're safe to always update this
+    bid_state.owner = ctx.accounts.owner.key();
+    bid_state.bid_id = bid_id;
+
+    if target == BidTarget::AssetId {
+        require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
+    }
+
+    // TODO: make sure thoroughly tested
+    // Since target/target_id is not part of seeds, we need to make sure it's only assigned once
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target;
+        bid_state.target_id = target_id;
     } else {
         require!(bid_state.target == target, TcompError::CannotModifyTarget);
+        require!(
+            bid_state.target_id == target_id,
+            TcompError::CannotModifyTarget
+        );
     }
-    bid_state.target_id = target_id;
 
     // Grab current expiry in case they're editing a bid
     let current_expiry = bid_state.expiry;

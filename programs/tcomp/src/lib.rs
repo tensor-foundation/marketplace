@@ -147,6 +147,7 @@ pub mod tcomp {
 
     pub fn bid<'info>(
         ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
+        bid_id: Pubkey,
         target_id: Pubkey,
         target: BidTarget,
         amount: u64,
@@ -156,6 +157,7 @@ pub mod tcomp {
     ) -> Result<()> {
         instructions::bid::handler(
             ctx,
+            bid_id,
             target_id,
             target,
             amount,
@@ -167,21 +169,21 @@ pub mod tcomp {
 
     pub fn cancel_bid<'info>(
         ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>,
-        _target_id: Pubkey,
+        _bid_id: Pubkey,
     ) -> Result<()> {
         instructions::cancel_bid::handler(ctx)
     }
 
     pub fn close_expired_bid<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
-        _target_id: Pubkey,
+        _bid_id: Pubkey,
     ) -> Result<()> {
         instructions::close_expired_bid::handler(ctx)
     }
 
     pub fn take_bid_meta_hash<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
-        _target_id: Pubkey,
+        _bid_id: Pubkey,
         nonce: u64,
         index: u32,
         root: [u8; 32],
@@ -210,7 +212,7 @@ pub mod tcomp {
 
     pub fn take_bid_full_meta<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
-        _target_id: Pubkey,
+        _bid_id: Pubkey,
         nonce: u64,
         index: u32,
         root: [u8; 32],

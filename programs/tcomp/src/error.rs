@@ -38,4 +38,6 @@ pub enum TcompError {
     MissingCollection = 17,
     #[msg("cannot modify bid target, create a new bid")]
     CannotModifyTarget = 18,
+    #[msg("target id and bid id must be the same for single bids")]
+    TargetIdMustEqualBidId = 19,
 }

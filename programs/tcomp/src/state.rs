@@ -60,6 +60,8 @@ pub struct BidState {
     pub bump: [u8; 1],
     // IDs
     pub owner: Pubkey,
+    /// Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here.
+    pub bid_id: Pubkey,
     // Obviously would be better to use an enum-tuple / enum-struct but anchor doesn't serialize them
     pub target: BidTarget,
     pub target_id: Pubkey,
@@ -77,14 +79,14 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128;
+pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {
         [
             b"bid_state".as_ref(),
             self.owner.as_ref(),
-            self.target_id.as_ref(),
+            self.bid_id.as_ref(),
             &self.bump,
         ]
     }

@@ -836,7 +836,7 @@ export const makeCNftMeta = ({
   }
 
   return {
-    name: randomizeName ? makeRandomStr(20) : "Compressed NFT",
+    name: randomizeName ? makeRandomStr(32) : "Compressed NFT",
     symbol: "COMP",
     uri: "https://v6nul6vaqrzhjm7qkcpbtbqcxmhwuzvcw2coxx2wali6sbxu634a.arweave.net/r5tF-qCEcnSz8FCeGYYCuw9qZqK2hOvfVgLR6Qb09vg",
     creators: Array(nrCreators)
@@ -1488,6 +1488,7 @@ export const fetchAndCheckSingleIxTx = async (
 export const testBid = async ({
   target = BidTarget.AssetId,
   targetId,
+  bidId,
   owner,
   amount,
   prevBidAmount,
@@ -1498,6 +1499,7 @@ export const testBid = async ({
 }: {
   target?: BidTarget;
   targetId: PublicKey;
+  bidId?: PublicKey;
   owner: Keypair;
   amount: BN;
   prevBidAmount?: number;
@@ -1512,6 +1514,7 @@ export const testBid = async ({
   } = await tcompSdk.bid({
     target,
     targetId,
+    bidId,
     owner: owner.publicKey,
     amount,
     currency,
@@ -1593,13 +1596,13 @@ export const testBid = async ({
 
 export const testCancelCloseBid = async ({
   owner,
-  assetId,
+  bidId,
   amount,
   margin,
   closeWithCosigner = false,
 }: {
   owner: Keypair;
-  assetId: PublicKey;
+  bidId: PublicKey;
   amount: BN;
   margin?: PublicKey | null;
   closeWithCosigner?: boolean;
@@ -1613,7 +1616,7 @@ export const testCancelCloseBid = async ({
       bidState,
     } = await tcompSdk.closeExpiredBid({
       owner: owner.publicKey,
-      targetId: assetId,
+      bidId,
       cosigner: TEST_COSIGNER.publicKey,
     }));
   } else {
@@ -1622,7 +1625,7 @@ export const testCancelCloseBid = async ({
       bidState,
     } = await tcompSdk.cancelBid({
       owner: owner.publicKey,
-      targetId: assetId,
+      bidId,
     }));
   }
 
@@ -1675,7 +1678,7 @@ export const testCancelCloseBid = async ({
 
 export const testTakeBid = async ({
   target = BidTarget.AssetId,
-  targetId,
+  bidId,
   memTree,
   index,
   owner,
@@ -1693,7 +1696,7 @@ export const testTakeBid = async ({
   margin,
 }: {
   target?: BidTarget;
-  targetId: PublicKey;
+  bidId: PublicKey;
   memTree: MerkleTree;
   index: number;
   owner: PublicKey;
@@ -1723,7 +1726,7 @@ export const testTakeBid = async ({
     bidState,
   } = await tcompSdk.takeBid({
     target,
-    targetId,
+    bidId,
     proof: proof.proof,
     seller: seller.publicKey,
     delegate: delegate?.publicKey,

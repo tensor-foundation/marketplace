@@ -9,26 +9,32 @@ import {
   ACC_NOT_INIT_ERR,
   beforeAllHook,
   beforeHook,
+  DEFAULT_DEPTH_SIZE,
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
   getLamports,
   INTEGER_OVERFLOW_ERR,
+  makeCNftMeta,
+  makeLeaf,
+  mintCNft,
   tcompSdk,
   testBid,
   testCancelCloseBid,
   testTakeBid,
+  verifyCNftCreator,
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
-import { makeNTraders } from "./account";
+import { initCollection, makeNTraders } from "./account";
 import { BidTarget, nameToBuffer, TAKER_BROKER_PCT } from "../src";
 import {
   testDepositIntoMargin,
   testMakeMargin,
   testWithdrawFromMargin,
 } from "./tswap";
+import { MerkleTree } from "@solana/spl-account-compression";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -83,7 +89,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: assetId,
+            bidId: assetId,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
         await testTakeBid({
@@ -97,7 +103,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: assetId,
+          bidId: assetId,
         });
       }
     }
@@ -128,7 +134,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           optionalRoyaltyPct,
-          targetId: assetId,
+          bidId: assetId,
         });
       }
     }
@@ -159,7 +165,7 @@ describe("tcomp bids", () => {
         }
         await testCancelCloseBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          assetId,
+          bidId: assetId,
           closeWithCosigner,
           owner: traderB,
         });
@@ -199,7 +205,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       //fake shares
@@ -220,7 +226,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       //fake verified
@@ -241,7 +247,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           owner: traderB.publicKey,
           lookupTableAccount,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
       await testTakeBid({
@@ -253,7 +259,7 @@ describe("tcomp bids", () => {
         seller: traderA,
         owner: traderB.publicKey,
         lookupTableAccount,
-        targetId: assetId,
+        bidId: assetId,
       });
     }
   });
@@ -297,7 +303,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           delegate,
-          targetId: assetId,
+          bidId: assetId,
         });
       }
     }
@@ -333,7 +339,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           lookupTableAccount,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
       await testBid({
@@ -353,7 +359,7 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         canopyDepth,
         lookupTableAccount,
-        targetId: assetId,
+        bidId: assetId,
       });
     }
   });
@@ -387,7 +393,7 @@ describe("tcomp bids", () => {
           seller: traderA, //A can't sell
           owner: traderB.publicKey,
           canopyDepth,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
       await testBid({
@@ -406,7 +412,7 @@ describe("tcomp bids", () => {
         seller: traderA, //A can now sell
         owner: traderB.publicKey,
         canopyDepth,
-        targetId: assetId,
+        bidId: assetId,
       });
     }
   });
@@ -457,7 +463,7 @@ describe("tcomp bids", () => {
           currency,
           optionalRoyaltyPct: 100,
           takerBroker,
-          targetId: assetId,
+          bidId: assetId,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidMetaHash");
         const amounts = tcompSdk.getIxAmounts(ix);
@@ -517,7 +523,7 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         canopyDepth,
         margin: marginPda,
-        targetId: assetId,
+        bidId: assetId,
       });
     }
   });
@@ -582,7 +588,7 @@ describe("tcomp bids", () => {
         seller: traderA, //A can now sell
         owner: traderB.publicKey,
         canopyDepth,
-        targetId: assetId,
+        bidId: assetId,
       });
     }
   });
@@ -633,9 +639,44 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           canopyDepth,
           margin: marginPda,
-          targetId: assetId,
+          bidId: assetId,
         })
       ).to.be.rejectedWith(INTEGER_OVERFLOW_ERR);
+    }
+  });
+
+  it("Single bids: Can't place a bid with bid_id != assetId", async () => {
+    const canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators,
+          numMints: 2,
+          setupTswap: true,
+          canopyDepth,
+          randomizeName: true,
+        });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await expect(
+          testBid({
+            amount: new BN(LAMPORTS_PER_SOL),
+            target: BidTarget.AssetId,
+            targetId: assetId,
+            owner: traderB,
+            bidId: Keypair.generate().publicKey,
+          })
+        ).to.be.rejectedWith(
+          tcompSdk.getErrorCodeHex("TargetIdMustEqualBidId")
+        );
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          target: BidTarget.AssetId,
+          targetId: assetId,
+          owner: traderB,
+          bidId: assetId,
+        });
+      }
     }
   });
 
@@ -670,6 +711,16 @@ describe("tcomp bids", () => {
             prevBidAmount: LAMPORTS_PER_SOL,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
+        await expect(
+          testBid({
+            amount: new BN(LAMPORTS_PER_SOL / 2),
+            target: BidTarget.Voc, //correct target
+            targetId: Keypair.generate().publicKey, //but wrong targetId
+            owner: traderB,
+            prevBidAmount: LAMPORTS_PER_SOL,
+            bidId: metadata.collection!.key, //make sure correctly address
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
           target: BidTarget.Voc,
@@ -677,7 +728,7 @@ describe("tcomp bids", () => {
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         });
-        // -------------------- bas cases
+        // -------------------- failure cases
         await expect(
           testTakeBid({
             target: BidTarget.AssetId, //wrong target
@@ -690,7 +741,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: metadata.collection!.key,
+            bidId: metadata.collection!.key,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         await expect(
@@ -705,7 +756,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: metadata.collection!.key,
+            bidId: metadata.collection!.key,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         //can't do a bad case for Name since it's only used for picking branch js side and VOC branch will be picked correctly
@@ -721,7 +772,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: metadata.collection!.key,
+          bidId: metadata.collection!.key,
         });
       }
     }
@@ -767,7 +818,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: collectionMint,
+            bidId: collectionMint,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingCollection"));
       }
@@ -808,9 +859,56 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: fakeCollection,
+            bidId: fakeCollection,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+      }
+    }
+  });
+
+  it("VOC: can place multiple bids with different ids", async () => {
+    const canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators,
+          numMints: 2,
+          setupTswap: true,
+          canopyDepth,
+          randomizeName: true,
+        });
+
+      const bidId1 = Keypair.generate().publicKey;
+      const bidId2 = Keypair.generate().publicKey;
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Voc,
+        targetId: leaves[0].metadata.collection!.key,
+        owner: traderB,
+        bidId: bidId1,
+      });
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Voc,
+        targetId: leaves[0].metadata.collection!.key,
+        owner: traderB,
+        bidId: bidId2,
+      });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await testTakeBid({
+          target: BidTarget.Voc,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          bidId: index === 0 ? bidId1 : bidId2,
+        });
       }
     }
   });
@@ -855,7 +953,7 @@ describe("tcomp bids", () => {
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         });
-        // -------------------- bas cases
+        // -------------------- failure cases
         await expect(
           testTakeBid({
             target: BidTarget.Name, //wrong target
@@ -868,7 +966,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: verifiedCreator.publicKey,
+            bidId: verifiedCreator.publicKey,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         await expect(
@@ -883,7 +981,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: verifiedCreator.publicKey,
+            bidId: verifiedCreator.publicKey,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         //can't do a bad case for assetId since it's only used for picking branch js side and VOC branch will be picked correctly
@@ -899,7 +997,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: verifiedCreator.publicKey,
+          bidId: verifiedCreator.publicKey,
         });
       }
     }
@@ -938,7 +1036,7 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: fakeCreator.publicKey,
+          bidId: fakeCreator.publicKey,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingFvc"));
     }
@@ -946,6 +1044,7 @@ describe("tcomp bids", () => {
 
   it("FVC: fails to accept bid on a mint with a non verified creator", async () => {
     const canopyDepth = 10;
+    const verifiedCreator = Keypair.generate();
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
         nrCreators: 1,
@@ -953,13 +1052,14 @@ describe("tcomp bids", () => {
         setupTswap: true,
         canopyDepth,
         randomizeName: true,
+        verifiedCreator,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
         target: BidTarget.Fvc,
-        targetId: metadata.creators[0].address, //exists but isn't verified
+        targetId: verifiedCreator.publicKey,
         owner: traderB,
       });
       await expect(
@@ -974,10 +1074,107 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: metadata.creators[0].address, //exists but isn't verified
+          bidId: metadata.creators[0].address, //exists but isn't verified
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingFvc"));
     }
+  });
+
+  it("FVC: fails to accept bid on a mint with a different verified creator", async () => {
+    const verifiedCreator = Keypair.generate();
+    const canopyDepth = 10;
+    let { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 0,
+        numMints: 1,
+        setupTswap: true,
+        canopyDepth,
+        randomizeName: true,
+        verifiedCreator,
+      });
+
+    //create one more mint with a diff creator
+    const secondVerifiedCreator = Keypair.generate();
+    const { collectionMint } = await initCollection({ owner: treeOwner });
+    let metadata = await makeCNftMeta({
+      collectionMint,
+      nrCreators: 0,
+      randomizeName: true,
+    });
+    let leaf;
+    let assetId;
+    metadata.creators.push({
+      address: secondVerifiedCreator.publicKey,
+      verified: false,
+      share: 100,
+    });
+    await mintCNft({
+      merkleTree,
+      metadata,
+      treeOwner,
+      receiver: traderA.publicKey,
+    });
+    let proof = memTree.getProof(
+      leaves.length,
+      false,
+      DEFAULT_DEPTH_SIZE.maxDepth,
+      false
+    );
+    ({ metadata, assetId, leaf } = await verifyCNftCreator({
+      index: leaves.length,
+      merkleTree,
+      memTree,
+      metadata,
+      owner: traderA.publicKey,
+      proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
+      verifiedCreator: secondVerifiedCreator,
+    }));
+    leaves.push({
+      index: leaves.length,
+      metadata,
+      assetId,
+      leaf,
+    });
+
+    const bidId = Keypair.generate().publicKey;
+    //bid on first mint
+    await testBid({
+      amount: new BN(LAMPORTS_PER_SOL),
+      target: BidTarget.Fvc,
+      targetId: verifiedCreator.publicKey,
+      owner: traderB,
+      bidId,
+    });
+    //try to sell second
+    await expect(
+      testTakeBid({
+        target: BidTarget.Fvc,
+        index: leaves[1].index, //<-- second
+        lookupTableAccount,
+        memTree,
+        merkleTree,
+        metadata: leaves[1].metadata,
+        minAmount: new BN(LAMPORTS_PER_SOL),
+        owner: traderB.publicKey,
+        seller: traderA,
+        canopyDepth,
+        bidId,
+      })
+    ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+    //sell first
+    await testTakeBid({
+      target: BidTarget.Fvc,
+      index: leaves[0].index, //<-- first
+      lookupTableAccount,
+      memTree,
+      merkleTree,
+      metadata: leaves[0].metadata,
+      minAmount: new BN(LAMPORTS_PER_SOL),
+      owner: traderB.publicKey,
+      seller: traderA,
+      canopyDepth,
+      bidId,
+    });
   });
 
   // --------------------------------------- Name bids
@@ -1018,7 +1215,7 @@ describe("tcomp bids", () => {
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         });
-        // -------------------- bas cases
+        // -------------------- failure cases
         await expect(
           testTakeBid({
             target: BidTarget.AssetId, //wrong target
@@ -1031,7 +1228,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId: new PublicKey(nameToBuffer(metadata.name)),
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         await expect(
@@ -1046,7 +1243,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId: new PublicKey(nameToBuffer(metadata.name)),
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         //can't do a bad case for VOC since it's only used for picking branch js side and VOC branch will be picked correctly
@@ -1062,13 +1259,13 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          targetId: new PublicKey(nameToBuffer(metadata.name)),
+          bidId: new PublicKey(nameToBuffer(metadata.name)),
         });
       }
     }
   });
 
-  it("Name: fails to take a collection bid with a collectionless mint", async () => {
+  it("Name: fails to take a collection bid with a mint with wrong name", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const {
@@ -1088,10 +1285,12 @@ describe("tcomp bids", () => {
         collectionless: true,
       });
 
+      const bidId = Keypair.generate().publicKey;
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
         target: BidTarget.Name,
         targetId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
+        bidId,
         owner: traderB,
       });
 
@@ -1109,7 +1308,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId,
           });
           continue;
         }
@@ -1126,9 +1325,9 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            targetId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId,
           })
-        ).to.be.rejectedWith(ACC_NOT_INIT_ERR);
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
       }
     }
   });
