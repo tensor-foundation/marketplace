@@ -917,7 +917,7 @@ describe("tcomp bids", () => {
 
   // --------------------------------------- FVC bids
 
-  it.only("FVC: bids + edits + accepts bid", async () => {
+  it("FVC: bids + edits + accepts bid", async () => {
     const canopyDepth = 10;
     const verifiedCreator = Keypair.generate();
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
