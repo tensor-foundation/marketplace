@@ -23,7 +23,7 @@ import {
   SYSVAR_INSTRUCTIONS_PUBKEY,
   Transaction,
 } from "@solana/web3.js";
-import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./utils";
+import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./shared";
 import {
   Payload,
   PROGRAM_ID as AUTH_PROGRAM_ID,

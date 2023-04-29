@@ -32,14 +32,14 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -58,6 +58,50 @@ export type Tcomp = {
           "type": {
             "defined": "TcompEvent"
           }
+        }
+      ]
+    },
+    {
+      "name": "withdrawFees",
+      "accounts": [
+        {
+          "name": "tswap",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "We ask also for a signature just to make sure this wallet can actually sign things"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "destination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
         }
       ]
     },
@@ -126,7 +170,12 @@ export type Tcomp = {
         },
         {
           "name": "takerBroker",
-          "isMut": false,
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -149,7 +198,7 @@ export type Tcomp = {
           }
         },
         {
-          "name": "dataHash",
+          "name": "metaHash",
           "type": {
             "array": [
               "u8",
@@ -177,6 +226,12 @@ export type Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -302,6 +357,12 @@ export type Tcomp = {
         },
         {
           "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -440,6 +501,409 @@ export type Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "bid",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bidId",
+          "type": "publicKey"
+        },
+        {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancelBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeExpiredBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "takeBidMetaHash",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "takeBidFullMeta",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaArgs",
+          "type": {
+            "defined": "TMetadataArgs"
+          }
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
         }
       ]
     }
@@ -492,6 +956,12 @@ export type Tcomp = {
             }
           },
           {
+            "name": "makerBroker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -526,7 +996,20 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "docs": [
+              "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "BidTarget"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
           },
           {
@@ -545,6 +1028,12 @@ export type Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -857,6 +1346,26 @@ export type Tcomp = {
           }
         ]
       }
+    },
+    {
+      "name": "BidTarget",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AssetId"
+          },
+          {
+            "name": "Voc"
+          },
+          {
+            "name": "Fvc"
+          },
+          {
+            "name": "Name"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -914,6 +1423,61 @@ export type Tcomp = {
       "code": 6010,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
+    },
+    {
+      "code": 6012,
+      "name": "OfferNotYetExpired",
+      "msg": "bid not yet expired"
+    },
+    {
+      "code": 6013,
+      "name": "BadMargin",
+      "msg": "bad margin"
+    },
+    {
+      "code": 6014,
+      "name": "WrongIxForBidTarget",
+      "msg": "wrong ix for bid target called"
+    },
+    {
+      "code": 6015,
+      "name": "WrongTargetId",
+      "msg": "wrong target id"
+    },
+    {
+      "code": 6016,
+      "name": "MissingFvc",
+      "msg": "creator array missing first verified creator"
+    },
+    {
+      "code": 6017,
+      "name": "MissingCollection",
+      "msg": "metadata missing collection"
+    },
+    {
+      "code": 6018,
+      "name": "CannotModifyTarget",
+      "msg": "cannot modify bid target, create a new bid"
+    },
+    {
+      "code": 6019,
+      "name": "TargetIdMustEqualBidId",
+      "msg": "target id and bid id must be the same for single bids"
+    },
+    {
+      "code": 6020,
+      "name": "CurrencyNotYetEnabled",
+      "msg": "currency not yet enabled"
+    },
+    {
+      "code": 6021,
+      "name": "MakerBrokerNotYetEnabled",
+      "msg": "maker broker not yet enabled"
+    },
+    {
+      "code": 6022,
+      "name": "OptionalRoyaltiesNotYetEnabled",
+      "msg": "optional royalties not yet enabled"
     }
   ]
 };
@@ -952,14 +1516,14 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -978,6 +1542,50 @@ export const IDL: Tcomp = {
           "type": {
             "defined": "TcompEvent"
           }
+        }
+      ]
+    },
+    {
+      "name": "withdrawFees",
+      "accounts": [
+        {
+          "name": "tswap",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "We ask also for a signature just to make sure this wallet can actually sign things"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "destination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
         }
       ]
     },
@@ -1046,7 +1654,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "takerBroker",
-          "isMut": false,
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -1069,7 +1682,7 @@ export const IDL: Tcomp = {
           }
         },
         {
-          "name": "dataHash",
+          "name": "metaHash",
           "type": {
             "array": [
               "u8",
@@ -1097,6 +1710,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -1222,6 +1841,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -1360,6 +1985,409 @@ export const IDL: Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "bid",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bidId",
+          "type": "publicKey"
+        },
+        {
+          "name": "targetId",
+          "type": "publicKey"
+        },
+        {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "expireInSec",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancelBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeExpiredBid",
+      "accounts": [
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "takeBidMetaHash",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "takeBidFullMeta",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "metaArgs",
+          "type": {
+            "defined": "TMetadataArgs"
+          }
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
         }
       ]
     }
@@ -1412,6 +2440,12 @@ export const IDL: Tcomp = {
             }
           },
           {
+            "name": "makerBroker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -1446,7 +2480,20 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "docs": [
+              "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "BidTarget"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
           },
           {
@@ -1465,6 +2512,12 @@ export const IDL: Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -1777,6 +2830,26 @@ export const IDL: Tcomp = {
           }
         ]
       }
+    },
+    {
+      "name": "BidTarget",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AssetId"
+          },
+          {
+            "name": "Voc"
+          },
+          {
+            "name": "Fvc"
+          },
+          {
+            "name": "Name"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -1834,6 +2907,61 @@ export const IDL: Tcomp = {
       "code": 6010,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
+    },
+    {
+      "code": 6012,
+      "name": "OfferNotYetExpired",
+      "msg": "bid not yet expired"
+    },
+    {
+      "code": 6013,
+      "name": "BadMargin",
+      "msg": "bad margin"
+    },
+    {
+      "code": 6014,
+      "name": "WrongIxForBidTarget",
+      "msg": "wrong ix for bid target called"
+    },
+    {
+      "code": 6015,
+      "name": "WrongTargetId",
+      "msg": "wrong target id"
+    },
+    {
+      "code": 6016,
+      "name": "MissingFvc",
+      "msg": "creator array missing first verified creator"
+    },
+    {
+      "code": 6017,
+      "name": "MissingCollection",
+      "msg": "metadata missing collection"
+    },
+    {
+      "code": 6018,
+      "name": "CannotModifyTarget",
+      "msg": "cannot modify bid target, create a new bid"
+    },
+    {
+      "code": 6019,
+      "name": "TargetIdMustEqualBidId",
+      "msg": "target id and bid id must be the same for single bids"
+    },
+    {
+      "code": 6020,
+      "name": "CurrencyNotYetEnabled",
+      "msg": "currency not yet enabled"
+    },
+    {
+      "code": 6021,
+      "name": "MakerBrokerNotYetEnabled",
+      "msg": "maker broker not yet enabled"
+    },
+    {
+      "code": 6022,
+      "name": "OptionalRoyaltiesNotYetEnabled",
+      "msg": "optional royalties not yet enabled"
     }
   ]
 };

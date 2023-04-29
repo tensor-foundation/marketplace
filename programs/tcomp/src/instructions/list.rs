@@ -55,7 +55,12 @@ pub fn handler<'info>(
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
+    maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    // TODO: temp while we enable them
+    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
+    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
+
     transfer_cnft(TransferArgs {
         root,
         nonce,
@@ -85,10 +90,11 @@ pub fn handler<'info>(
     list_state.amount = amount;
     list_state.currency = currency;
     list_state.private_taker = private_taker;
+    list_state.maker_broker = maker_broker;
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 < MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,

@@ -8,12 +8,12 @@ pub mod instructions;
 pub mod shared;
 pub mod state;
 
-pub use std::{slice::Iter, str::FromStr};
+pub use std::{io::Write, slice::Iter, str::FromStr};
 
-use anchor_lang::solana_program::hash;
 pub use anchor_lang::{
     prelude::*,
     solana_program::{
+        hash,
         instruction::Instruction,
         keccak::hashv,
         program::{invoke, invoke_signed},
@@ -42,7 +42,8 @@ pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
 pub use state::*;
-pub use vipers::prelude::*;
+pub use tensorswap::{self, program::Tensorswap, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR};
+pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 
@@ -50,22 +51,34 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 pub mod tcomp {
     use super::*;
 
+    // --------------------------------------- admin
+
     // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
     pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
         instructions::noop::handler(ctx)
     }
+
+    pub fn withdraw_fees<'info>(
+        ctx: Context<'_, '_, '_, 'info, WithdrawFees<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::withdraw_fees::handler(ctx, amount)
+    }
+
+    // --------------------------------------- listings
 
     pub fn buy<'info>(
         ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
         nonce: u64,
         index: u32,
         root: [u8; 32],
-        data_hash: [u8; 32],
+        meta_hash: [u8; 32],
         creator_shares: Vec<u8>,
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
         max_amount: u64,
-        currency: Option<Pubkey>,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::buy::handler(
@@ -73,12 +86,11 @@ pub mod tcomp {
             nonce,
             index,
             root,
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
             seller_fee_basis_points,
             max_amount,
-            currency,
             optional_royalty_pct,
         )
     }
@@ -94,6 +106,7 @@ pub mod tcomp {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
         instructions::list::handler(
             ctx,
@@ -106,6 +119,7 @@ pub mod tcomp {
             expire_in_sec,
             currency,
             private_taker,
+            maker_broker,
         )
     }
 
@@ -127,7 +141,102 @@ pub mod tcomp {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::edit::handler(ctx, nonce, amount, expire_in_sec, currency, private_taker)
+        instructions::edit::handler(
+            ctx,
+            nonce,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
+
+    // --------------------------------------- bids
+
+    pub fn bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
+        bid_id: Pubkey,
+        target_id: Pubkey,
+        target: BidTarget,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::bid::handler(
+            ctx,
+            bid_id,
+            target_id,
+            target,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
+
+    pub fn cancel_bid<'info>(ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>) -> Result<()> {
+        instructions::cancel_bid::handler(ctx)
+    }
+
+    pub fn close_expired_bid<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
+    ) -> Result<()> {
+        instructions::close_expired_bid::handler(ctx)
+    }
+
+    pub fn take_bid_meta_hash<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        min_amount: u64,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::take_bid::handler_meta_hash(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            min_amount,
+            optional_royalty_pct,
+        )
+    }
+
+    pub fn take_bid_full_meta<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_args: TMetadataArgs,
+        min_amount: u64,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::take_bid::handler_full_meta(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_args,
+            min_amount,
+            optional_royalty_pct,
+        )
     }
 }

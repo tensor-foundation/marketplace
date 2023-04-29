@@ -8,6 +8,7 @@ use spl_account_compression::{
     zero_copy::ZeroCopy,
     AccountCompressionError, ChangeLogEvent, ConcurrentMerkleTree,
 };
+use tensorswap::{margin_pda, MarginAccount};
 
 use crate::*;
 
@@ -29,9 +30,10 @@ pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
 }
 
 pub(crate) struct DataHashArgs {
-    pub data_hash: [u8; 32],
+    pub meta_hash: [u8; 32],
     pub creator_shares: Vec<u8>,
     pub creator_verified: Vec<bool>,
+    pub seller_fee_basis_points: u16,
 }
 pub(crate) enum MetadataSrc {
     Metadata(TMetadataArgs),
@@ -67,19 +69,6 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
         MetadataSrc::Metadata(metadata) => {
             // Serialize metadata into original metaplex format
             let mplex_metadata = metadata.into(creator_accounts);
-
-            // msg!("creators {:?}", creator_accounts.len());
-            // msg!("proof {:?}", proof_accounts.len());
-            // msg!("root {:?}", root);
-            // msg!(
-            //     "leaf: {:?}{:?}{:?}{}{:?}",
-            //     get_asset_id(&merkle_tree.key(), nonce),
-            //     leaf_owner,
-            //     leaf_delegate,
-            //     nonce,
-            //     mplex_metadata.clone()
-            // );
-
             let creator_hash = hash_creators(&mplex_metadata.creators)?;
             let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
             let data_hash = hashv(&[
@@ -88,18 +77,17 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
             ])
             .to_bytes();
 
-            // msg!("data_hash {:?}", data_hash);
-            // msg!("creator_hash {:?}", creator_hash);
-            // msg!("proof accounts {:?}", proof_accounts);
-            // msg!("tree {:?}", merkle_tree.key());
-
             (data_hash, creator_hash, mplex_metadata.creators)
         }
         MetadataSrc::DataHash(DataHashArgs {
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
+            seller_fee_basis_points,
         }) => {
+            // Verify seller fee basis points
+            let data_hash = hashv(&[&meta_hash, &seller_fee_basis_points.to_le_bytes()]).to_bytes();
+            // Verify creators
             let creators = creator_accounts
                 .iter()
                 .zip(creator_shares.iter())
@@ -155,10 +143,7 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
     let id = merkle_tree.key();
 
     match merkle_tree_apply_fn!(header, id, tree_bytes, prove_leaf, root, leaf, &proof, index) {
-        Ok(_) => {
-            msg!("Leaf Valid");
-            Ok((asset_id, creator_hash, data_hash, creators))
-        }
+        Ok(_) => Ok((asset_id, creator_hash, data_hash, creators)),
         Err(e) => {
             msg!("FAILED LEAF VERIFICATION: {:?}", e);
             Err(TcompError::FailedLeafVerification.into())
@@ -238,7 +223,7 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
         if acct.pubkey == leaf_delegate.key() && leaf_delegate.is_signer {
             acct.is_signer = true;
         }
-        if acct.pubkey == leaf_owner.key() && (leaf_owner.is_signer) {
+        if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
             acct.is_signer = true;
         }
         //for cpi to work
@@ -255,10 +240,6 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
                     }
                 }
             }
-        }
-
-        if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
-            acct.is_signer = true;
         }
     }
     for node in proof_accounts {
@@ -448,4 +429,29 @@ pub(crate) fn transfer_creators_fee<'a, 'info>(
 
     // Return the amount that was sent (minus any dust).
     Ok(unwrap_int!(creator_fee.checked_sub(remaining_fee)))
+}
+
+#[inline(never)]
+pub fn assert_decode_margin_account<'info>(
+    margin_account_info: &AccountInfo<'info>,
+    owner: &AccountInfo<'info>,
+) -> Result<Account<'info, MarginAccount>> {
+    let margin_account: Account<'info, MarginAccount> = Account::try_from(margin_account_info)?;
+
+    let program_id = tensorswap::id();
+    let tswap = &Pubkey::from_str(TSWAP_ADDR).unwrap();
+    let (key, _) = margin_pda(tswap, &owner.key(), margin_account.nr);
+    if key != *margin_account_info.key {
+        throw_err!(TcompError::BadMargin);
+    }
+    // Check program owner (redundant because of find_program_address above, but why not).
+    if *margin_account_info.owner != program_id {
+        throw_err!(TcompError::BadMargin);
+    }
+    // Check normal owner (not redundant - this actually checks if the account is initialized and stores the owner correctly).
+    if margin_account.owner != owner.key() {
+        throw_err!(TcompError::BadMargin);
+    }
+
+    Ok(margin_account)
 }

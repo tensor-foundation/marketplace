@@ -20,6 +20,7 @@
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
     "@tensor-hq/tensor-common": "0.10.0",
+    "@tensor-hq/tensorswap-sdk": "^1.9.1",
     "bn.js": "^5.2.1",
     "borsh": "^0.7.0"
   },

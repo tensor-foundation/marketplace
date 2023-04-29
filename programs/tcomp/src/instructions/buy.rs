@@ -35,7 +35,11 @@ pub struct Buy<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
+    #[account(mut)]
     pub taker_broker: UncheckedAccount<'info>,
+    /// CHECK: none, can be anything
+    #[account(mut)]
+    pub maker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -80,7 +84,7 @@ pub fn handler<'info>(
     nonce: u64,
     index: u32,
     root: [u8; 32],
-    data_hash: [u8; 32],
+    meta_hash: [u8; 32],
     // Below 3 used for creator verification
     // Creators themseleves taken from extra accounts
     creator_shares: Vec<u8>,
@@ -88,9 +92,14 @@ pub fn handler<'info>(
     seller_fee_basis_points: u16,
     // Passing these in so buyer doesn't get rugged
     max_amount: u64,
-    _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    // TODO: for now enforcing
+    require!(
+        optional_royalty_pct == Some(100),
+        TcompError::OptionalRoyaltiesNotYetEnabled
+    );
+
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
     // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
@@ -99,9 +108,10 @@ pub fn handler<'info>(
         index,
         nonce,
         metadata_src: MetadataSrc::DataHash(DataHashArgs {
-            data_hash,
+            meta_hash,
             creator_shares,
             creator_verified,
+            seller_fee_basis_points,
         }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
@@ -118,32 +128,8 @@ pub fn handler<'info>(
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;
     let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
-    // --------------------------------------- sol transfers
-
-    // TODO: handle currency (not v1)
-
-    // Pay fees
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
-
-    // Pay creators
-    let actual_creator_fee = transfer_creators_fee(
-        &FromAcc::External(&FromExternal {
-            from: &ctx.accounts.payer.to_account_info(),
-            sys_prog: &ctx.accounts.system_program,
-        }),
-        &creators,
-        &mut creator_accounts.iter(),
-        creator_fee,
-    )?;
-
-    // Pay the seller
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
-
     // --------------------------------------- nft transfer
+    // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
 
     transfer_cnft(TransferArgs {
         root,
@@ -171,12 +157,37 @@ pub fn handler<'info>(
             amount,
             tcomp_fee,
             broker_fee,
-            creator_fee: actual_creator_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    // --------------------------------------- sol transfers
+
+    // TODO: handle currency (not v1)
+
+    // Pay fees
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.taker_broker.to_account_info(), broker_fee)?;
+
+    // Pay creators
+    transfer_creators_fee(
+        &FromAcc::External(&FromExternal {
+            from: &ctx.accounts.payer.to_account_info(),
+            sys_prog: &ctx.accounts.system_program,
+        }),
+        &creators,
+        &mut creator_accounts.iter(),
+        creator_fee,
+    )?;
+
+    // Pay the seller
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 
     Ok(())
 }

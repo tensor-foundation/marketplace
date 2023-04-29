@@ -9,6 +9,7 @@ on:
     branches:
       - main
 env:
+#  TODO: okay I dont know what to set it to. Look through previous GH action failures to see errors.
   SOLANA_CLI_VERSION: 1.14.17
   NODE_VERSION: 16.16.0
 
