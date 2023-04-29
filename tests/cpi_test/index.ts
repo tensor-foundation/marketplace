@@ -13,6 +13,7 @@ export const cpiEdit = async ({
   expireInSec = null,
   currency = null,
   privateTaker = null,
+  makerTaker = null,
 }: {
   merkleTree: PublicKey;
   owner: PublicKey;
@@ -21,6 +22,7 @@ export const cpiEdit = async ({
   expireInSec?: BN | null;
   currency?: PublicKey | null;
   privateTaker?: PublicKey | null;
+  makerTaker?: PublicKey | null;
 }) => {
   const program = new Program<CpiTest>(
     IDL,
@@ -32,7 +34,7 @@ export const cpiEdit = async ({
   const [listState] = findListStatePda({ assetId });
 
   const builder = program.methods
-    .cpi(nonce, amount, expireInSec, currency, privateTaker)
+    .cpi(nonce, amount, expireInSec, currency, privateTaker, makerTaker)
     .accounts({
       merkleTree,
       owner,

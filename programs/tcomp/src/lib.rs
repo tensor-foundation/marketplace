@@ -77,7 +77,8 @@ pub mod tcomp {
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
         max_amount: u64,
-        currency: Option<Pubkey>,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::buy::handler(
@@ -90,7 +91,6 @@ pub mod tcomp {
             creator_verified,
             seller_fee_basis_points,
             max_amount,
-            currency,
             optional_royalty_pct,
         )
     }
@@ -106,6 +106,7 @@ pub mod tcomp {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
         instructions::list::handler(
             ctx,
@@ -118,6 +119,7 @@ pub mod tcomp {
             expire_in_sec,
             currency,
             private_taker,
+            maker_broker,
         )
     }
 
@@ -139,8 +141,17 @@ pub mod tcomp {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::edit::handler(ctx, nonce, amount, expire_in_sec, currency, private_taker)
+        instructions::edit::handler(
+            ctx,
+            nonce,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
     }
 
     // --------------------------------------- bids
@@ -154,6 +165,7 @@ pub mod tcomp {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
         instructions::bid::handler(
             ctx,
@@ -164,26 +176,22 @@ pub mod tcomp {
             expire_in_sec,
             currency,
             private_taker,
+            maker_broker,
         )
     }
 
-    pub fn cancel_bid<'info>(
-        ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>,
-        _bid_id: Pubkey,
-    ) -> Result<()> {
+    pub fn cancel_bid<'info>(ctx: Context<'_, '_, '_, 'info, CancelBid<'info>>) -> Result<()> {
         instructions::cancel_bid::handler(ctx)
     }
 
     pub fn close_expired_bid<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
-        _bid_id: Pubkey,
     ) -> Result<()> {
         instructions::close_expired_bid::handler(ctx)
     }
 
     pub fn take_bid_meta_hash<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
-        _bid_id: Pubkey,
         nonce: u64,
         index: u32,
         root: [u8; 32],
@@ -192,7 +200,8 @@ pub mod tcomp {
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
         min_amount: u64,
-        currency: Option<Pubkey>,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::take_bid::handler_meta_hash(
@@ -205,20 +214,19 @@ pub mod tcomp {
             creator_verified,
             seller_fee_basis_points,
             min_amount,
-            currency,
             optional_royalty_pct,
         )
     }
 
     pub fn take_bid_full_meta<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
-        _bid_id: Pubkey,
         nonce: u64,
         index: u32,
         root: [u8; 32],
         meta_args: TMetadataArgs,
         min_amount: u64,
-        currency: Option<Pubkey>,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::take_bid::handler_full_meta(
@@ -228,7 +236,6 @@ pub mod tcomp {
             root,
             meta_args,
             min_amount,
-            currency,
             optional_royalty_pct,
         )
     }

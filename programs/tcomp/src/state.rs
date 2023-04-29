@@ -28,6 +28,7 @@ pub struct ListState {
     // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
+    pub maker_broker: Option<Pubkey>,
 
     pub _reserved: [u8; 128],
 }
@@ -35,7 +36,7 @@ pub struct ListState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128;
+pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128;
 
 impl ListState {
     pub fn seeds(&self) -> [&[u8]; 3] {
@@ -71,6 +72,7 @@ pub struct BidState {
     // Extras
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
+    pub maker_broker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
 
     pub _reserved: [u8; 128],
@@ -79,7 +81,7 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128;
+pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {

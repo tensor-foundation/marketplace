@@ -223,7 +223,7 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
         if acct.pubkey == leaf_delegate.key() && leaf_delegate.is_signer {
             acct.is_signer = true;
         }
-        if acct.pubkey == leaf_owner.key() && (leaf_owner.is_signer) {
+        if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
             acct.is_signer = true;
         }
         //for cpi to work
@@ -240,10 +240,6 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
                     }
                 }
             }
-        }
-
-        if acct.pubkey == leaf_owner.key() && leaf_owner.is_signer {
-            acct.is_signer = true;
         }
     }
     for node in proof_accounts {

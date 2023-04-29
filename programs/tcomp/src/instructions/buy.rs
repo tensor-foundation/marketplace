@@ -37,6 +37,9 @@ pub struct Buy<'info> {
     /// CHECK: none, can be anything
     #[account(mut)]
     pub taker_broker: UncheckedAccount<'info>,
+    /// CHECK: none, can be anything
+    #[account(mut)]
+    pub maker_broker: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -89,9 +92,14 @@ pub fn handler<'info>(
     seller_fee_basis_points: u16,
     // Passing these in so buyer doesn't get rugged
     max_amount: u64,
-    _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    // TODO: for now enforcing
+    require!(
+        optional_royalty_pct == Some(100),
+        TcompError::OptionalRoyaltiesNotYetEnabled
+    );
+
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
     // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points

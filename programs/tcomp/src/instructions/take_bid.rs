@@ -1,7 +1,6 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(bid_id: Pubkey)]
 pub struct TakeBid<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
@@ -24,13 +23,11 @@ pub struct TakeBid<'info> {
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
     pub tensorswap_program: Program<'info, Tensorswap>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(
-        mut,
-        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
+    #[account(mut,
+        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
         close = owner,
-        has_one = owner,
-        has_one = bid_id,
+        has_one = owner
     )]
     pub bid_state: Box<Account<'info, BidState>>,
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -40,6 +37,9 @@ pub struct TakeBid<'info> {
     /// CHECK: none, can be anything
     #[account(mut)]
     pub taker_broker: UncheckedAccount<'info>,
+    /// CHECK: none, can be anything
+    #[account(mut)]
+    pub maker_broker: UncheckedAccount<'info>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
@@ -209,9 +209,14 @@ pub fn handler_full_meta<'info>(
     meta_args: TMetadataArgs,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
-    _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    // TODO: for now enforcing
+    require!(
+        optional_royalty_pct == Some(100),
+        TcompError::OptionalRoyaltiesNotYetEnabled
+    );
+
     let (creator_accounts, proof_accounts) = ctx
         .remaining_accounts
         .split_at(meta_args.creator_shares.len());
@@ -262,7 +267,7 @@ pub fn handler_full_meta<'info>(
         nonce,
         metadata_src: MetadataSrc::Metadata(meta_args),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        leaf_owner: &ctx.accounts.seller.to_account_info(), //<-- check with new owner
+        leaf_owner: &ctx.accounts.seller.to_account_info(),
         leaf_delegate: &ctx.accounts.delegate.to_account_info(),
         creator_accounts,
         proof_accounts,
@@ -298,9 +303,14 @@ pub fn handler_meta_hash<'info>(
     seller_fee_basis_points: u16,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
-    _currency: Option<Pubkey>,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    // TODO: for now enforcing
+    require!(
+        optional_royalty_pct == Some(100),
+        TcompError::OptionalRoyaltiesNotYetEnabled
+    );
+
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
     let bid_state = &ctx.accounts.bid_state;
 
@@ -316,7 +326,7 @@ pub fn handler_meta_hash<'info>(
             seller_fee_basis_points,
         }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        leaf_owner: &ctx.accounts.seller.to_account_info(), //<-- check with new owner
+        leaf_owner: &ctx.accounts.seller.to_account_info(),
         leaf_delegate: &ctx.accounts.delegate.to_account_info(),
         creator_accounts,
         proof_accounts,

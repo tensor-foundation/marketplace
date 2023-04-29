@@ -52,6 +52,12 @@ export type CpiTest = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
         }
       ]
     }
@@ -109,6 +115,12 @@ export const IDL: CpiTest = {
         },
         {
           "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }

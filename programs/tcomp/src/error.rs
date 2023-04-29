@@ -40,4 +40,10 @@ pub enum TcompError {
     CannotModifyTarget = 18,
     #[msg("target id and bid id must be the same for single bids")]
     TargetIdMustEqualBidId = 19,
+    #[msg("currency not yet enabled")]
+    CurrencyNotYetEnabled = 20,
+    #[msg("maker broker not yet enabled")]
+    MakerBrokerNotYetEnabled = 21,
+    #[msg("optional royalties not yet enabled")]
+    OptionalRoyaltiesNotYetEnabled = 22,
 }

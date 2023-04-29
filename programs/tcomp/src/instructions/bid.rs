@@ -48,13 +48,19 @@ pub fn handler<'info>(
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
+    maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    // TODO: temp while we enable them
+    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
+    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
+
     let bid_state = &mut ctx.accounts.bid_state;
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
     bid_state.amount = amount;
     bid_state.currency = currency;
     bid_state.private_taker = private_taker;
+    bid_state.maker_broker = maker_broker;
     bid_state.margin = None; //overwritten below if margin present
 
     // Since this is part of the seeds we're safe to always update this

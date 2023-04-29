@@ -32,14 +32,14 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -172,6 +172,11 @@ export type Tcomp = {
           "name": "takerBroker",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -221,6 +226,12 @@ export type Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -346,6 +357,12 @@ export type Tcomp = {
         },
         {
           "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -484,6 +501,12 @@ export type Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
         }
       ]
     },
@@ -552,6 +575,12 @@ export type Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
         }
       ]
     },
@@ -574,12 +603,7 @@ export type Tcomp = {
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        }
-      ]
+      "args": []
     },
     {
       "name": "closeExpiredBid",
@@ -595,27 +619,12 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        }
-      ]
+      "args": []
     },
     {
       "name": "takeBidMetaHash",
@@ -691,16 +700,17 @@ export type Tcomp = {
           "isSigner": false
         },
         {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        },
         {
           "name": "nonce",
           "type": "u64"
@@ -747,6 +757,12 @@ export type Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -833,16 +849,17 @@ export type Tcomp = {
           "isSigner": false
         },
         {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        },
         {
           "name": "nonce",
           "type": "u64"
@@ -872,6 +889,12 @@ export type Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -928,6 +951,12 @@ export type Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -999,6 +1028,12 @@ export type Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -1428,6 +1463,21 @@ export type Tcomp = {
       "code": 6019,
       "name": "TargetIdMustEqualBidId",
       "msg": "target id and bid id must be the same for single bids"
+    },
+    {
+      "code": 6020,
+      "name": "CurrencyNotYetEnabled",
+      "msg": "currency not yet enabled"
+    },
+    {
+      "code": 6021,
+      "name": "MakerBrokerNotYetEnabled",
+      "msg": "maker broker not yet enabled"
+    },
+    {
+      "code": 6022,
+      "name": "OptionalRoyaltiesNotYetEnabled",
+      "msg": "optional royalties not yet enabled"
     }
   ]
 };
@@ -1466,14 +1516,14 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + 33 + 33 + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -1606,6 +1656,11 @@ export const IDL: Tcomp = {
           "name": "takerBroker",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -1655,6 +1710,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -1780,6 +1841,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "privateTaker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -1918,6 +1985,12 @@ export const IDL: Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
         }
       ]
     },
@@ -1986,6 +2059,12 @@ export const IDL: Tcomp = {
           "type": {
             "option": "publicKey"
           }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
         }
       ]
     },
@@ -2008,12 +2087,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        }
-      ]
+      "args": []
     },
     {
       "name": "closeExpiredBid",
@@ -2029,27 +2103,12 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        }
-      ]
+      "args": []
     },
     {
       "name": "takeBidMetaHash",
@@ -2125,16 +2184,17 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        },
         {
           "name": "nonce",
           "type": "u64"
@@ -2181,6 +2241,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -2267,16 +2333,17 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": [
-        {
-          "name": "bidId",
-          "type": "publicKey"
-        },
         {
           "name": "nonce",
           "type": "u64"
@@ -2306,6 +2373,12 @@ export const IDL: Tcomp = {
         },
         {
           "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
           "type": {
             "option": "publicKey"
           }
@@ -2362,6 +2435,12 @@ export const IDL: Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -2433,6 +2512,12 @@ export const IDL: Tcomp = {
           },
           {
             "name": "privateTaker",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "makerBroker",
             "type": {
               "option": "publicKey"
             }
@@ -2862,6 +2947,21 @@ export const IDL: Tcomp = {
       "code": 6019,
       "name": "TargetIdMustEqualBidId",
       "msg": "target id and bid id must be the same for single bids"
+    },
+    {
+      "code": 6020,
+      "name": "CurrencyNotYetEnabled",
+      "msg": "currency not yet enabled"
+    },
+    {
+      "code": 6021,
+      "name": "MakerBrokerNotYetEnabled",
+      "msg": "maker broker not yet enabled"
+    },
+    {
+      "code": 6022,
+      "name": "OptionalRoyaltiesNotYetEnabled",
+      "msg": "optional royalties not yet enabled"
     }
   ]
 };

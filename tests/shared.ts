@@ -1289,7 +1289,7 @@ export const testBuy = async ({
   maxAmount,
   currency,
   takerBroker,
-  optionalRoyaltyPct,
+  optionalRoyaltyPct = 100,
   programmable = false,
   lookupTableAccount,
   canopyDepth = 0,
@@ -1599,25 +1599,24 @@ export const testCancelCloseBid = async ({
   bidId,
   amount,
   margin,
-  closeWithCosigner = false,
+  forceClose = false,
 }: {
   owner: Keypair;
   bidId: PublicKey;
   amount: BN;
   margin?: PublicKey | null;
-  closeWithCosigner?: boolean;
+  forceClose?: boolean;
 }) => {
   let ixs: TransactionInstruction[];
   let bidState: PublicKey;
 
-  if (closeWithCosigner) {
+  if (forceClose) {
     ({
       tx: { ixs },
       bidState,
     } = await tcompSdk.closeExpiredBid({
       owner: owner.publicKey,
       bidId,
-      cosigner: TEST_COSIGNER.publicKey,
     }));
   } else {
     ({
@@ -1642,7 +1641,7 @@ export const testCancelCloseBid = async ({
     }) => {
       const sig = await buildAndSendTx({
         ixs,
-        extraSigners: [closeWithCosigner ? TEST_COSIGNER : owner],
+        extraSigners: forceClose ? [] : [owner],
       });
       console.log("✅ closed bid", sig);
 
@@ -1689,7 +1688,7 @@ export const testTakeBid = async ({
   minAmount,
   currency,
   takerBroker,
-  optionalRoyaltyPct,
+  optionalRoyaltyPct = 100,
   programmable = false,
   lookupTableAccount,
   canopyDepth = 0,
@@ -1817,6 +1816,7 @@ export const testTakeBid = async ({
             amount *
             (1 - skippedCreators / 100)
         );
+
         for (const c of creators) {
           const cBal = await getLamports(c.address);
           //only run the test if share > 1, else it's skipped && cBal exists (it wont if 0 royalties were paid)

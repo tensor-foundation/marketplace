@@ -67,7 +67,6 @@ import {
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
-import { TSWAP_COSIGNER } from "@tensor-hq/tensorswap-sdk";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -263,6 +262,7 @@ export type BidStateAnchor = {
   currency: PublicKey | null;
   expiry: BN;
   privateTaker: PublicKey | null;
+  makerBroker: PublicKey | null;
   margin: PublicKey | null;
 };
 export type ListStateAnchor = {
@@ -274,6 +274,7 @@ export type ListStateAnchor = {
   currency: PublicKey | null;
   expiry: BN;
   privateTaker: PublicKey | null;
+  makerBroker: PublicKey | null;
 };
 
 export type TCompPdaAnchor = BidStateAnchor | ListStateAnchor;
@@ -349,6 +350,7 @@ export class TCompSDK {
     amount,
     expireInSec = null,
     currency = null,
+    makerBroker = null,
     privateTaker = null,
     payer = null,
     compute = DEFAULT_COMPUTE_UNITS,
@@ -367,6 +369,7 @@ export class TCompSDK {
     amount: BN;
     expireInSec?: BN | null;
     currency?: PublicKey | null;
+    makerBroker?: PublicKey | null;
     privateTaker?: PublicKey | null;
     payer?: PublicKey | null;
     compute?: number | null;
@@ -398,7 +401,8 @@ export class TCompSDK {
         amount,
         expireInSec,
         currency,
-        privateTaker
+        privateTaker,
+        makerBroker
       )
       .accounts({
         logWrapper: SPL_NOOP_PROGRAM_ID,
@@ -448,6 +452,7 @@ export class TCompSDK {
     expireInSec = null,
     currency = null,
     privateTaker = null,
+    makerBroker = null,
     // Not a heavy ix, no need
     compute = null,
     priorityMicroLamports = null,
@@ -459,6 +464,7 @@ export class TCompSDK {
     expireInSec?: BN | null;
     currency?: PublicKey | null;
     privateTaker?: PublicKey | null;
+    makerBroker?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
@@ -466,7 +472,7 @@ export class TCompSDK {
     const [listState] = findListStatePda({ assetId });
 
     const builder = this.program.methods
-      .edit(nonce, amount, expireInSec, currency, privateTaker)
+      .edit(nonce, amount, expireInSec, currency, privateTaker, makerBroker)
       .accounts({
         merkleTree,
         owner,
@@ -564,7 +570,8 @@ export class TCompSDK {
     index,
     maxAmount,
     currency = null,
-    optionalRoyaltyPct = null,
+    makerBroker = null,
+    optionalRoyaltyPct = 100,
     owner,
     buyer,
     payer = null,
@@ -583,6 +590,7 @@ export class TCompSDK {
     index: number;
     maxAmount: BN;
     currency?: PublicKey | null;
+    makerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
     buyer: PublicKey;
@@ -604,7 +612,6 @@ export class TCompSDK {
       isSigner: false,
       isWritable: true,
     }));
-
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
@@ -624,6 +631,7 @@ export class TCompSDK {
         metadata.sellerFeeBasisPoints,
         maxAmount,
         currency,
+        makerBroker,
         optionalRoyaltyPct
       )
       .accounts({
@@ -640,6 +648,7 @@ export class TCompSDK {
         listState,
         tcomp,
         takerBroker: takerBroker ?? tcomp,
+        makerBroker: makerBroker ?? tcomp,
       })
       .remainingAccounts([...creators, ...proofPath]);
 
@@ -667,6 +676,7 @@ export class TCompSDK {
     amount,
     expireInSec = null,
     currency = null,
+    makerBroker = null,
     privateTaker = null,
     compute = DEFAULT_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
@@ -679,6 +689,7 @@ export class TCompSDK {
     amount: BN;
     expireInSec?: BN | null;
     currency?: PublicKey | null;
+    makerBroker?: PublicKey | null;
     privateTaker?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
@@ -694,7 +705,8 @@ export class TCompSDK {
         amount,
         expireInSec,
         currency,
-        privateTaker
+        privateTaker,
+        makerBroker
       )
       .accounts({
         owner,
@@ -729,7 +741,7 @@ export class TCompSDK {
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
 
-    const builder = this.program.methods.cancelBid(bidId).accounts({
+    const builder = this.program.methods.cancelBid().accounts({
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -752,21 +764,18 @@ export class TCompSDK {
     owner,
     compute = null,
     priorityMicroLamports = null,
-    cosigner = null,
   }: {
     bidId: PublicKey;
     owner: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
-    cosigner?: PublicKey | null;
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
 
-    const builder = this.program.methods.closeExpiredBid(bidId).accounts({
+    const builder = this.program.methods.closeExpiredBid().accounts({
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
-      cosigner: cosigner ?? TSWAP_COSIGNER,
     });
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
@@ -792,7 +801,8 @@ export class TCompSDK {
     index,
     minAmount,
     currency = null,
-    optionalRoyaltyPct = null,
+    makerBroker = null,
+    optionalRoyaltyPct = 100,
     owner,
     seller,
     delegate = seller,
@@ -813,6 +823,7 @@ export class TCompSDK {
     index: number;
     minAmount: BN;
     currency?: PublicKey | null;
+    makerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
     seller: PublicKey;
@@ -853,6 +864,7 @@ export class TCompSDK {
       bidState,
       tcomp,
       takerBroker: takerBroker ?? tcomp,
+      makerBroker: makerBroker ?? tcomp,
       delegate: delegate,
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
@@ -864,7 +876,6 @@ export class TCompSDK {
       const metaHash = computeMetadataArgsHash(metadata);
       builder = this.program.methods
         .takeBidMetaHash(
-          bidId,
           nonce,
           index,
           root,
@@ -874,6 +885,7 @@ export class TCompSDK {
           metadata.sellerFeeBasisPoints,
           minAmount,
           currency,
+          makerBroker,
           optionalRoyaltyPct
         )
         .accounts(accounts)
@@ -882,13 +894,13 @@ export class TCompSDK {
       //VOC + name
       builder = this.program.methods
         .takeBidFullMeta(
-          bidId,
           nonce,
           index,
           root,
           castMetadata(metadata),
           minAmount,
           currency,
+          makerBroker,
           optionalRoyaltyPct
         )
         .accounts(accounts)

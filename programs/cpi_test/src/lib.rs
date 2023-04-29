@@ -14,6 +14,7 @@ pub mod cpi_test {
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
     ) -> Result<()> {
         let cpi_ctx = CpiContext::new(
             ctx.accounts.tcomp_program.to_account_info(),
@@ -32,6 +33,7 @@ pub mod cpi_test {
             expire_in_sec,
             currency,
             private_taker,
+            maker_broker,
         )?;
         Ok(())
     }

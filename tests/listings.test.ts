@@ -105,7 +105,8 @@ describe("tcomp listings", () => {
   });
 
   it("lists + buys (optional royalties)", async () => {
-    for (const optionalRoyaltyPct of [0, 50, 100]) {
+    // TODO: for now enforced
+    for (const optionalRoyaltyPct of [0, 100]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators: 4,
@@ -122,17 +123,35 @@ describe("tcomp listings", () => {
           owner: traderA,
           lookupTableAccount,
         });
-        await testBuy({
-          index,
-          maxAmount: new BN(LAMPORTS_PER_SOL),
-          memTree,
-          merkleTree,
-          metadata,
-          buyer: traderB,
-          owner: traderA.publicKey,
-          lookupTableAccount,
-          optionalRoyaltyPct,
-        });
+        if (!optionalRoyaltyPct) {
+          await expect(
+            testBuy({
+              index,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
+              memTree,
+              merkleTree,
+              metadata,
+              buyer: traderB,
+              owner: traderA.publicKey,
+              lookupTableAccount,
+              optionalRoyaltyPct,
+            })
+          ).to.be.rejectedWith(
+            tcompSdk.getErrorCodeHex("OptionalRoyaltiesNotYetEnabled")
+          );
+        } else {
+          await testBuy({
+            index,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
+            memTree,
+            merkleTree,
+            metadata,
+            buyer: traderB,
+            owner: traderA.publicKey,
+            lookupTableAccount,
+            optionalRoyaltyPct,
+          });
+        }
       }
     }
   });
@@ -551,7 +570,6 @@ describe("tcomp listings", () => {
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       let amount = LAMPORTS_PER_SOL;
-      let currency = Keypair.generate().publicKey;
 
       // --------------------------------------- List
 
@@ -565,19 +583,16 @@ describe("tcomp listings", () => {
           owner: traderA,
           canopyDepth,
           privateTaker: traderB.publicKey,
-          currency,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "list");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
-        expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
       // --------------------------------------- Edit (direct)
 
       //new settings
       amount = amount * 2;
-      currency = Keypair.generate().publicKey;
 
       {
         const { sig } = await testEdit({
@@ -586,20 +601,17 @@ describe("tcomp listings", () => {
           merkleTree,
           owner: traderA,
           privateTaker: traderC.publicKey,
-          currency,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
         expect(ix.ix.data);
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
-        expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
       // --------------------------------------- Edit (via cpi)
 
       //new settings
       amount = amount * 2;
-      currency = Keypair.generate().publicKey;
 
       {
         const {
@@ -609,13 +621,11 @@ describe("tcomp listings", () => {
           merkleTree,
           nonce: new BN(index),
           owner: traderA.publicKey,
-          currency,
         });
         const sig = await buildAndSendTx({ ixs, extraSigners: [traderA] });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
-        expect(amounts?.currency?.toString()).eq(currency.toString());
       }
 
       // --------------------------------------- Buy
@@ -630,14 +640,12 @@ describe("tcomp listings", () => {
           buyer: traderC,
           owner: traderA.publicKey,
           canopyDepth,
-          currency,
           optionalRoyaltyPct: 100,
           takerBroker,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
-        expect(amounts?.currency?.toString()).eq(currency.toString());
         if (TAKER_BROKER_PCT > 0) {
           expect(amounts?.brokerFee?.toNumber()).eq(
             Math.trunc((amount * FEE_PCT * TAKER_BROKER_PCT) / 100)

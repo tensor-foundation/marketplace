@@ -33,11 +33,17 @@ pub fn handler<'info>(
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
+    maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    // TODO: temp while we enable them
+    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
+    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
+
     let list_state = &mut ctx.accounts.list_state;
     list_state.amount = amount;
     list_state.currency = currency;
     list_state.private_taker = private_taker;
+    list_state.maker_broker = maker_broker;
 
     // Grab current expiry in case they're editing a bid
     let current_expiry = list_state.expiry;
