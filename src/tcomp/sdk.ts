@@ -67,8 +67,7 @@ import {
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
-import { findTSwapPDA, TSWAP_COSIGNER } from "@tensor-hq/tensorswap-sdk";
-import { Bid } from "@metaplex-foundation/js";
+import { TSWAP_COSIGNER } from "@tensor-hq/tensorswap-sdk";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -686,7 +685,6 @@ export class TCompSDK {
     margin?: PublicKey | null;
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
-    const [tswap] = findTSwapPDA({});
 
     const builder = this.program.methods
       .bid(
@@ -704,7 +702,6 @@ export class TCompSDK {
         tcompProgram: TCOMP_ADDR,
         bidState,
         marginAccount: margin ?? owner,
-        tswap,
       });
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
@@ -716,7 +713,6 @@ export class TCompSDK {
         extraSigners: [],
       },
       bidState,
-      tswap,
     };
   }
 
@@ -765,13 +761,11 @@ export class TCompSDK {
     cosigner?: PublicKey | null;
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
-    const [tswap] = findTSwapPDA({});
 
     const builder = this.program.methods.closeExpiredBid(bidId).accounts({
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
-      tswap,
       cosigner: cosigner ?? TSWAP_COSIGNER,
     });
 
@@ -834,7 +828,6 @@ export class TCompSDK {
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [tcomp] = findTCompPda({});
     const [bidState] = findBidStatePda({ bidId, owner });
-    const [tswap] = findTSwapPDA({});
 
     let creators = metadata.creators.map((c) => ({
       pubkey: c.address,
@@ -861,7 +854,6 @@ export class TCompSDK {
       tcomp,
       takerBroker: takerBroker ?? tcomp,
       delegate: delegate,
-      tswap,
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
     };
@@ -926,7 +918,6 @@ export class TCompSDK {
       tcomp,
       creators,
       proofPath,
-      tswap,
     };
   }
 

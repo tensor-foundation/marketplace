@@ -43,12 +43,6 @@ pub struct TakeBid<'info> {
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
-    #[account(
-        seeds = [],
-        bump = tswap.bump[0],
-        seeds::program = tensorswap::id(),
-    )]
-    pub tswap: Box<Account<'info, TSwap>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -140,11 +134,8 @@ impl<'info> TakeBid<'info> {
         //if margin is used, move money into bid first
         if let Some(margin) = bid_state.margin {
             let margin_account_info = &self.margin_account.to_account_info();
-            let margin_account = assert_decode_margin_account(
-                margin_account_info,
-                &self.tswap.to_account_info(),
-                &self.owner.to_account_info(),
-            )?;
+            let margin_account =
+                assert_decode_margin_account(margin_account_info, &self.owner.to_account_info())?;
             //doesn't hurt to check again (even though we checked when bidding)
             require!(
                 margin_account.owner == *self.owner.key,
@@ -155,7 +146,6 @@ impl<'info> TakeBid<'info> {
                 CpiContext::new(
                     self.tensorswap_program.to_account_info(),
                     tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                        tswap: self.tswap.to_account_info(),
                         margin_account: margin_account_info.clone(),
                         bid_state: self.bid_state.to_account_info(),
                         owner: self.owner.to_account_info(),

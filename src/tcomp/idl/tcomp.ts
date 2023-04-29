@@ -514,11 +514,6 @@ export type Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -699,11 +694,6 @@ export type Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -845,11 +835,6 @@ export type Tcomp = {
         {
           "name": "marginAccount",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
           "isSigner": false
         }
       ],
@@ -1963,11 +1948,6 @@ export const IDL: Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -2148,11 +2128,6 @@ export const IDL: Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -2294,11 +2269,6 @@ export const IDL: Tcomp = {
         {
           "name": "marginAccount",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tswap",
-          "isMut": false,
           "isSigner": false
         }
       ],

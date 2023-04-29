@@ -42,7 +42,7 @@ pub use spl_account_compression::{
     program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
 };
 pub use state::*;
-pub use tensorswap::{self, assert_decode_margin_account, program::Tensorswap, TSwap};
+pub use tensorswap::{self, program::Tensorswap, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR};
 pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");

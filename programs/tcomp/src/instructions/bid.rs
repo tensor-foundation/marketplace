@@ -16,12 +16,6 @@ pub struct Bid<'info> {
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
-    #[account(
-        seeds = [],
-        bump = tswap.bump[0],
-        seeds::program = tensorswap::id(),
-    )]
-    pub tswap: Box<Account<'info, TSwap>>,
 }
 
 impl<'info> Bid<'info> {
@@ -71,7 +65,6 @@ pub fn handler<'info>(
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
     }
 
-    // TODO: make sure thoroughly tested
     // Since target/target_id is not part of seeds, we need to make sure it's only assigned once
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target;
@@ -90,7 +83,7 @@ pub fn handler<'info>(
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 < MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
@@ -114,11 +107,8 @@ pub fn handler<'info>(
 
     //transfer lamports
     let margin_account_info = &ctx.accounts.margin_account.to_account_info();
-    let margin_account_result = assert_decode_margin_account(
-        margin_account_info,
-        &ctx.accounts.tswap.to_account_info(),
-        &ctx.accounts.owner.to_account_info(),
-    );
+    let margin_account_result =
+        assert_decode_margin_account(margin_account_info, &ctx.accounts.owner.to_account_info());
 
     match margin_account_result {
         //marginated

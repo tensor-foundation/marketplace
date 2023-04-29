@@ -88,7 +88,7 @@ pub fn handler<'info>(
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 < MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,

@@ -1239,7 +1239,7 @@ dependencies = [
 [[package]]
 name = "merkle_proof"
 version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch#1f2da20797557a763cca6c6d196c04da9cbc1172"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27#cdeab2715e08644639d9583c03e7d33c941e4bc8"
 dependencies = [
  "anchor-lang",
 ]
@@ -2323,19 +2323,19 @@ dependencies = [
 [[package]]
 name = "tensor_whitelist"
 version = "0.2.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch#1f2da20797557a763cca6c6d196c04da9cbc1172"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27#cdeab2715e08644639d9583c03e7d33c941e4bc8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "merkle_proof",
  "mpl-token-metadata",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27)",
 ]
 
 [[package]]
 name = "tensorswap"
 version = "1.8.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch#1f2da20797557a763cca6c6d196c04da9cbc1172"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27#cdeab2715e08644639d9583c03e7d33c941e4bc8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2346,7 +2346,7 @@ dependencies = [
  "spl-math",
  "static_assertions",
  "tensor_whitelist",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27)",
 ]
 
 [[package]]
@@ -2524,7 +2524,7 @@ dependencies = [
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?branch=ilmoi_branch#1f2da20797557a763cca6c6d196c04da9cbc1172"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=cdeab27#cdeab2715e08644639d9583c03e7d33c941e4bc8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

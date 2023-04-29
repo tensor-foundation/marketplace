@@ -8,6 +8,7 @@ use spl_account_compression::{
     zero_copy::ZeroCopy,
     AccountCompressionError, ChangeLogEvent, ConcurrentMerkleTree,
 };
+use tensorswap::{margin_pda, MarginAccount};
 
 use crate::*;
 
@@ -432,4 +433,29 @@ pub(crate) fn transfer_creators_fee<'a, 'info>(
 
     // Return the amount that was sent (minus any dust).
     Ok(unwrap_int!(creator_fee.checked_sub(remaining_fee)))
+}
+
+#[inline(never)]
+pub fn assert_decode_margin_account<'info>(
+    margin_account_info: &AccountInfo<'info>,
+    owner: &AccountInfo<'info>,
+) -> Result<Account<'info, MarginAccount>> {
+    let margin_account: Account<'info, MarginAccount> = Account::try_from(margin_account_info)?;
+
+    let program_id = tensorswap::id();
+    let tswap = &Pubkey::from_str(TSWAP_ADDR).unwrap();
+    let (key, _) = margin_pda(tswap, &owner.key(), margin_account.nr);
+    if key != *margin_account_info.key {
+        throw_err!(TcompError::BadMargin);
+    }
+    // Check program owner (redundant because of find_program_address above, but why not).
+    if *margin_account_info.owner != program_id {
+        throw_err!(TcompError::BadMargin);
+    }
+    // Check normal owner (not redundant - this actually checks if the account is initialized and stores the owner correctly).
+    if margin_account.owner != owner.key() {
+        throw_err!(TcompError::BadMargin);
+    }
+
+    Ok(margin_account)
 }
