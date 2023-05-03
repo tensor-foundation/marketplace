@@ -35,6 +35,7 @@ import {
   ValidDepthSizePair,
 } from "@solana/spl-account-compression";
 import {
+  BidField,
   BidTarget,
   BUBBLEGUM_PROGRAM_ID,
   castBidTargetAnchor,
@@ -1455,6 +1456,8 @@ export const testBid = async ({
   target = BidTarget.AssetId,
   targetId,
   bidId,
+  field = null,
+  fieldId = null,
   owner,
   amount,
   prevBidAmount,
@@ -1466,6 +1469,8 @@ export const testBid = async ({
   target?: BidTarget;
   targetId: PublicKey;
   bidId?: PublicKey;
+  field?: BidField | null;
+  fieldId?: PublicKey | null;
   owner: Keypair;
   amount: BN;
   prevBidAmount?: number;
@@ -1481,6 +1486,8 @@ export const testBid = async ({
     target,
     targetId,
     bidId,
+    field,
+    fieldId,
     owner: owner.publicKey,
     amount,
     currency,
@@ -1643,6 +1650,7 @@ export const testCancelCloseBid = async ({
 
 export const testTakeBid = async ({
   target = BidTarget.AssetId,
+  field = null,
   bidId,
   memTree,
   index,
@@ -1661,6 +1669,7 @@ export const testTakeBid = async ({
   margin,
 }: {
   target?: BidTarget;
+  field?: BidField | null;
   bidId: PublicKey;
   memTree: MerkleTree;
   index: number;
@@ -1691,6 +1700,7 @@ export const testTakeBid = async ({
     bidState,
   } = await tcompSdk.takeBid({
     target,
+    field,
     bidId,
     proof: proof.proof,
     seller: seller.publicKey,

@@ -1115,6 +1115,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tensor-hq/tcomp-ts@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@tensor-hq/tcomp-ts@workspace:."
+  dependencies:
+    "@metaplex-foundation/js": ^0.18.3
+    "@metaplex-foundation/mpl-bubblegum": ^0.6.2
+    "@metaplex-foundation/mpl-token-metadata": ^2.9.1
+    "@msgpack/msgpack": ^3.0.0-beta2
+    "@project-serum/anchor": 0.26.0
+    "@saberhq/solana-contrib": ^1.14.11
+    "@solana/spl-account-compression": ^0.1.7
+    "@solana/spl-token": ^0.3.7
+    "@solana/web3.js": ^1.75.0
+    "@tensor-hq/tensor-common": 0.10.0
+    "@tensor-hq/tensorswap-sdk": ^1.9.1
+    "@types/bn.js": ^5.1.1
+    "@types/chai": ^4.3.4
+    "@types/chai-as-promised": ^7.1.5
+    "@types/mocha": ^10.0.1
+    "@types/node": ^18.7.11
+    bn.js: ^5.2.1
+    borsh: ^0.7.0
+    chai: ^4.3.7
+    chai-as-promised: ^7.1.1
+    exponential-backoff: ^3.1.1
+    mocha: ^10.2.0
+    prettier: ^2.6.2
+    ts-mocha: ^10.0.0
+    typescript: ^4.3.5
+  languageName: unknown
+  linkType: soft
+
 "@tensor-hq/tensor-common@npm:0.10.0":
   version: 0.10.0
   resolution: "@tensor-hq/tensor-common@npm:0.10.0"
@@ -4948,38 +4980,6 @@ __metadata:
   checksum: 3db4dfe5c793f40ac7e0be689a1f75d05e6f2ca0c66189aeb62adab8c436b857ab4420a419251ee60370d41d957a55698fc5e23ab1e1b41715f33217bc4bb558
   languageName: node
   linkType: hard
-
-"root-workspace-0b6124@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "root-workspace-0b6124@workspace:."
-  dependencies:
-    "@metaplex-foundation/js": ^0.18.3
-    "@metaplex-foundation/mpl-bubblegum": ^0.6.2
-    "@metaplex-foundation/mpl-token-metadata": ^2.9.1
-    "@msgpack/msgpack": ^3.0.0-beta2
-    "@project-serum/anchor": 0.26.0
-    "@saberhq/solana-contrib": ^1.14.11
-    "@solana/spl-account-compression": ^0.1.7
-    "@solana/spl-token": ^0.3.7
-    "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": 0.10.0
-    "@tensor-hq/tensorswap-sdk": ^1.9.1
-    "@types/bn.js": ^5.1.1
-    "@types/chai": ^4.3.4
-    "@types/chai-as-promised": ^7.1.5
-    "@types/mocha": ^10.0.1
-    "@types/node": ^18.7.11
-    bn.js: ^5.2.1
-    borsh: ^0.7.0
-    chai: ^4.3.7
-    chai-as-promised: ^7.1.1
-    exponential-backoff: ^3.1.1
-    mocha: ^10.2.0
-    prettier: ^2.6.2
-    ts-mocha: ^10.0.0
-    typescript: ^4.3.5
-  languageName: unknown
-  linkType: soft
 
 "rpc-websockets@npm:^7.5.1":
   version: 7.5.1

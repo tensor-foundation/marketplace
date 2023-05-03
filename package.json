@@ -1,4 +1,17 @@
 {
+  "name": "@tensor-hq/tcomp-ts",
+  "version": "0.1.0",
+  "description": "Anchor/JS SDK for interacting with TCOMP.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "repository": "https://github.com/tensor-hq/tcomp.git",
+  "license": "MIT",
+  "publishConfig": {
+    "@tensor-hq:registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "anchor build && bash scripts/cp_idl.sh",
     "build:test": "anchor build -- --features testing && bash scripts/cp_idl.sh",
@@ -6,7 +19,8 @@
     "test:ss": "bash scripts/full_test_skip_submodules.sh",
     "fast-test": "anchor test --skip-build -- --features testing",
     "push": "git push --atomic",
-    "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push"
+    "pubpush": "rm -rf ./dist && yarn tsc && yarn npm publish && yarn push",
+    "npmpublish": "rm -rf ./dist && yarn tsc && œnpm publish --access public"
   },
   "engines": {
     "node": "^16.14.0"

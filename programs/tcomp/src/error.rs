@@ -48,4 +48,6 @@ pub enum TcompError {
     OptionalRoyaltiesNotYetEnabled = 22,
     #[msg("wrong state version")]
     WrongStateVersion = 23,
+    #[msg("wrong field id")]
+    WrongFieldId = 24,
 }

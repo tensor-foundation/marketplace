@@ -42,8 +42,10 @@ impl<'info> Validate<'info> for Bid<'info> {
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
     bid_id: Pubkey,
-    target_id: Pubkey,
     target: BidTarget,
+    target_id: Pubkey,
+    field: Option<BidField>,
+    field_id: Option<Pubkey>,
     amount: u64,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -71,14 +73,22 @@ pub fn handler<'info>(
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
     }
 
-    // Since target/target_id is not part of seeds, we need to make sure it's only assigned once
+    // Can only be set once.
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target;
         bid_state.target_id = target_id;
+        bid_state.field = field;
+        bid_state.field_id = field_id;
     } else {
+        // Verify to make sure the bidder isn't expecting anything else.
         require!(bid_state.target == target, TcompError::CannotModifyTarget);
         require!(
             bid_state.target_id == target_id,
+            TcompError::CannotModifyTarget
+        );
+        require!(bid_state.field == field, TcompError::CannotModifyTarget);
+        require!(
+            bid_state.field_id == field_id,
             TcompError::CannotModifyTarget
         );
     }

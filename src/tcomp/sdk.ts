@@ -65,6 +65,7 @@ import { computeMetadataArgsHash } from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
+import { Bid } from "@metaplex-foundation/js";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -105,22 +106,20 @@ export const MAX_EXPIRY_SEC: number = +IDL_latest.constants.find(
 export const APPROX_BID_STATE_RENT = getRentSync(BID_STATE_SIZE);
 export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
 
-// --------------------------------------- types
+// --------------------------------------- types (target)
 
 export const BidTargetAnchor = {
   AssetId: { assetId: {} },
   Voc: { voc: {} },
   Fvc: { fvc: {} },
-  Name: { name: {} },
 };
 type BidTargetAnchor = (typeof BidTargetAnchor)[keyof typeof BidTargetAnchor];
 
-export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 | 2 | 3 => {
-  const t: Record<string, 0 | 1 | 2 | 3> = {
+export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 | 2 => {
+  const t: Record<string, 0 | 1 | 2> = {
     assetId: 0,
     voc: 1,
     fvc: 2,
-    name: 3,
   };
   return t[Object.keys(target)[0]];
 };
@@ -129,7 +128,6 @@ export enum BidTarget {
   AssetId = "AssetId",
   Voc = "Voc",
   Fvc = "Fvc",
-  Name = "Name",
 }
 
 export const castBidTargetAnchor = (target: BidTargetAnchor): BidTarget =>
@@ -137,7 +135,6 @@ export const castBidTargetAnchor = (target: BidTargetAnchor): BidTarget =>
     0: BidTarget.AssetId,
     1: BidTarget.Voc,
     2: BidTarget.Fvc,
-    3: BidTarget.Name,
   }[bidTargetU8(target)]);
 
 export const castBidTarget = (target: BidTarget): BidTargetAnchor => {
@@ -148,10 +145,40 @@ export const castBidTarget = (target: BidTarget): BidTargetAnchor => {
       return BidTargetAnchor.Voc;
     case BidTarget.Fvc:
       return BidTargetAnchor.Fvc;
-    case BidTarget.Name:
-      return BidTargetAnchor.Name;
   }
 };
+
+// --------------------------------------- types (field)
+
+export const BidFieldAnchor = {
+  Name: { name: {} },
+};
+type BidFieldAnchor = (typeof BidFieldAnchor)[keyof typeof BidFieldAnchor];
+
+export const bidFieldU8 = (target: BidFieldAnchor): 0 => {
+  const t: Record<string, 0> = {
+    name: 0,
+  };
+  return t[Object.keys(target)[0]];
+};
+
+export enum BidField {
+  Name = "Name",
+}
+
+export const castBidFieldAnchor = (target: BidFieldAnchor): BidField =>
+  ({
+    0: BidField.Name,
+  }[bidFieldU8(target)]);
+
+export const castBidField = (target: BidField): BidFieldAnchor => {
+  switch (target) {
+    case BidField.Name:
+      return BidFieldAnchor.Name;
+  }
+};
+
+// --------------------------------------- types (rest)
 
 export const TokenStandardAnchor = {
   NonFungible: { nonFungible: {} },
@@ -670,6 +697,8 @@ export class TCompSDK {
     target,
     targetId,
     bidId = targetId,
+    field = null,
+    fieldId = null,
     owner,
     amount,
     expireInSec = null,
@@ -683,6 +712,8 @@ export class TCompSDK {
     target: BidTarget;
     targetId: PublicKey;
     bidId?: PublicKey;
+    field?: BidField | null;
+    fieldId?: PublicKey | null;
     owner: PublicKey;
     amount: BN;
     expireInSec?: BN | null;
@@ -698,8 +729,10 @@ export class TCompSDK {
     const builder = this.program.methods
       .bid(
         bidId,
-        targetId,
         castBidTarget(target),
+        targetId,
+        field ? castBidField(field) : null,
+        fieldId,
         amount,
         expireInSec,
         currency,
@@ -790,6 +823,7 @@ export class TCompSDK {
 
   async takeBid({
     target,
+    field,
     bidId,
     merkleTree,
     proof,
@@ -811,6 +845,7 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     target: BidTarget;
+    field?: BidField | null;
     bidId: PublicKey;
     merkleTree: PublicKey;
     proof: Buffer[];
@@ -870,7 +905,12 @@ export class TCompSDK {
     const remAccounts = [...creators, ...proofPath];
 
     let builder;
-    if ([BidTarget.AssetId, BidTarget.Fvc].includes(target)) {
+    if (
+      target === BidTarget.AssetId ||
+      // field is null for FVC
+      (target === BidTarget.Fvc && isNullLike(field))
+    ) {
+      // preferred branch
       const metaHash = computeMetadataArgsHash(metadata);
       builder = this.program.methods
         .takeBidMetaHash(

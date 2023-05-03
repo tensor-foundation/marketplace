@@ -39,7 +39,7 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -545,13 +545,27 @@ export type Tcomp = {
           "type": "publicKey"
         },
         {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
+        },
+        {
           "name": "targetId",
           "type": "publicKey"
         },
         {
-          "name": "target",
+          "name": "field",
           "type": {
-            "defined": "BidTarget"
+            "option": {
+              "defined": "BidField"
+            }
+          }
+        },
+        {
+          "name": "fieldId",
+          "type": {
+            "option": "publicKey"
           }
         },
         {
@@ -1013,6 +1027,20 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "BidField"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "amount",
             "type": "u64"
           },
@@ -1360,7 +1388,15 @@ export type Tcomp = {
           },
           {
             "name": "Fvc"
-          },
+          }
+        ]
+      }
+    },
+    {
+      "name": "BidField",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
             "name": "Name"
           }
@@ -1483,6 +1519,11 @@ export type Tcomp = {
       "code": 6023,
       "name": "WrongStateVersion",
       "msg": "wrong state version"
+    },
+    {
+      "code": 6024,
+      "name": "WrongFieldId",
+      "msg": "wrong field id"
     }
   ]
 };
@@ -1528,7 +1569,7 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -2034,13 +2075,27 @@ export const IDL: Tcomp = {
           "type": "publicKey"
         },
         {
+          "name": "target",
+          "type": {
+            "defined": "BidTarget"
+          }
+        },
+        {
           "name": "targetId",
           "type": "publicKey"
         },
         {
-          "name": "target",
+          "name": "field",
           "type": {
-            "defined": "BidTarget"
+            "option": {
+              "defined": "BidField"
+            }
+          }
+        },
+        {
+          "name": "fieldId",
+          "type": {
+            "option": "publicKey"
           }
         },
         {
@@ -2502,6 +2557,20 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "BidField"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "amount",
             "type": "u64"
           },
@@ -2849,7 +2918,15 @@ export const IDL: Tcomp = {
           },
           {
             "name": "Fvc"
-          },
+          }
+        ]
+      }
+    },
+    {
+      "name": "BidField",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
             "name": "Name"
           }
@@ -2972,6 +3049,11 @@ export const IDL: Tcomp = {
       "code": 6023,
       "name": "WrongStateVersion",
       "msg": "wrong state version"
+    },
+    {
+      "code": 6024,
+      "name": "WrongFieldId",
+      "msg": "wrong field id"
     }
   ]
 };
