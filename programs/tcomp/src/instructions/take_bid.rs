@@ -157,6 +157,7 @@ impl<'info> TakeBid<'info> {
                     },
                 )
                 .with_signer(&[&self.bid_state.seeds()]),
+                //passing these in coz we're not deserializing the account tswap side
                 bid_state.bump[0],
                 bid_state.bid_id,
                 //full amount, which later will be split into fees / royalties (seller pays)

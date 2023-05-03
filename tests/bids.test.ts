@@ -492,7 +492,7 @@ describe("tcomp bids", () => {
 
   // --------------------------------------- margin
 
-  it("margin buy: works", async () => {
+  it.only("margin buy: works", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({
@@ -534,7 +534,7 @@ describe("tcomp bids", () => {
     }
   });
 
-  it("margin buy: works (VOC bid)", async () => {
+  it.only("margin buy: works (VOC bid)", async () => {
     let canopyDepth = 10;
     const {
       merkleTree,

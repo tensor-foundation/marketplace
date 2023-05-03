@@ -38,6 +38,8 @@ import {
   BidTarget,
   BUBBLEGUM_PROGRAM_ID,
   castBidTargetAnchor,
+  computeCompressedNFTHashPATCHED,
+  computeCreatorHashPATCHED,
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -58,7 +60,6 @@ import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, BN, Wallet } from "@project-serum/anchor";
 import {
   computeDataHash,
-  Creator,
   metadataArgsBeet,
 } from "../deps/metaplex-mpl/bubblegum/js/src";
 import { keccak_256 } from "js-sha3";
@@ -625,41 +626,6 @@ export const delegateCNft = async ({
 export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
   const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
   return Buffer.from(keccak_256.digest(serializedMetadata));
-}
-
-// TODO: temp patch over metaplex's code
-export function computeCreatorHashPATCHED(creators: Creator[]) {
-  const bufferOfCreatorData = Buffer.concat(
-    creators.map((creator) => {
-      return Buffer.concat([
-        creator.address.toBuffer(),
-        Buffer.from([creator.verified ? 1 : 0]),
-        Buffer.from([creator.share]),
-      ]);
-    })
-  );
-  return Buffer.from(keccak_256.digest(bufferOfCreatorData));
-}
-
-// TODO: temp patch over metaplex's code
-export function computeCompressedNFTHashPATCHED(
-  assetId: PublicKey,
-  owner: PublicKey,
-  delegate: PublicKey,
-  treeNonce: BN,
-  metadata: MetadataArgs
-): Buffer {
-  const message = Buffer.concat([
-    Buffer.from([0x1]), // All NFTs are version 1 right now
-    assetId.toBuffer(),
-    owner.toBuffer(),
-    delegate.toBuffer(),
-    treeNonce.toBuffer("le", 8),
-    computeDataHash(metadata),
-    computeCreatorHashPATCHED(metadata.creators),
-  ]);
-
-  return Buffer.from(keccak_256.digest(message));
 }
 
 export const verifyCNft = async ({

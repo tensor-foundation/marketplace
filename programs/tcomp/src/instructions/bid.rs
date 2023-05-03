@@ -143,7 +143,7 @@ pub fn handler<'info>(
             }
             //(!)We do NOT transfer lamports to margin if insufficient, assume done in a separate ix if needed
         }
-        //not marginated
+        // Not marginated
         Err(_) => {
             let bid_rent =
                 Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());

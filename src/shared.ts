@@ -1,6 +1,12 @@
 import { AccountClient, BN, Idl, Program, utils } from "@project-serum/anchor";
 import { AllAccountsMap } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
+import { MetadataArgs } from "@metaplex-foundation/mpl-bubblegum";
+import {
+  computeDataHash,
+  Creator,
+} from "../deps/metaplex-mpl/bubblegum/js/src";
+import { keccak_256 } from "js-sha3";
 
 export const getAccountRent = (
   conn: Connection,
@@ -149,8 +155,17 @@ export const isNullLike = <T>(v: T | null | undefined): v is null | undefined =>
 export const DEFAULT_COMPUTE_UNITS = 800_000;
 export const DEFAULT_MICRO_LAMPORTS = 200_000;
 
-// TODO:
-export type AccountSuffix = "";
+export type AccountSuffix =
+  | "Bid State"
+  | "List State"
+  | "Owner"
+  | "Buyer"
+  | "Seller"
+  | "Delegate"
+  | "Payer"
+  | "Margin Account"
+  | "Taker Broker"
+  | "Maker Broker";
 
 export const parseStrFn = (str: string) => {
   return Function(`'use strict'; return (${str})`)();
@@ -163,3 +178,38 @@ export const getRentSync = (dataSize: number) =>
 export const nameToBuffer = (name: string) => {
   return Buffer.from(name.padEnd(32, "\0")).toJSON().data.slice(0, 32);
 };
+
+// TODO: temp patch over metaplex's code
+export function computeCreatorHashPATCHED(creators: Creator[]) {
+  const bufferOfCreatorData = Buffer.concat(
+    creators.map((creator) => {
+      return Buffer.concat([
+        creator.address.toBuffer(),
+        Buffer.from([creator.verified ? 1 : 0]),
+        Buffer.from([creator.share]),
+      ]);
+    })
+  );
+  return Buffer.from(keccak_256.digest(bufferOfCreatorData));
+}
+
+// TODO: temp patch over metaplex's code
+export function computeCompressedNFTHashPATCHED(
+  assetId: PublicKey,
+  owner: PublicKey,
+  delegate: PublicKey,
+  treeNonce: BN,
+  metadata: MetadataArgs
+): Buffer {
+  const message = Buffer.concat([
+    Buffer.from([0x1]), // All NFTs are version 1 right now
+    assetId.toBuffer(),
+    owner.toBuffer(),
+    delegate.toBuffer(),
+    treeNonce.toBuffer("le", 8),
+    computeDataHash(metadata),
+    computeCreatorHashPATCHED(metadata.creators),
+  ]);
+
+  return Buffer.from(keccak_256.digest(message));
+}

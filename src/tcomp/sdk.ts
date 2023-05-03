@@ -1,6 +1,7 @@
 import * as borsh from "borsh";
 import {
   AccountSuffix,
+  computeCreatorHashPATCHED,
   decodeAcct,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -60,10 +61,7 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
 } from "./pda";
-import {
-  computeCreatorHashPATCHED,
-  computeMetadataArgsHash,
-} from "../../tests/shared";
+import { computeMetadataArgsHash } from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
@@ -1217,7 +1215,6 @@ export const extractAllTcompIxs = (
           ?.instructions ?? [],
     })),
     // Inner ixs (eg in CPI calls).
-    // TODO: do we need to filter out self-CPI subixs?
     ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
       instructions.map((rawIx) => ({ rawIx, ixIdx: index }))
     ) ?? []),

@@ -1239,7 +1239,7 @@ dependencies = [
 [[package]]
 name = "merkle_proof"
 version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417#7fd8417a981b45b26ccabde6c9faf92663a8c444"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#cfde61ec49835d56b60b97ef832d9c80d6f7ce62"
 dependencies = [
  "anchor-lang",
 ]
@@ -2323,19 +2323,19 @@ dependencies = [
 [[package]]
 name = "tensor_whitelist"
 version = "0.2.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417#7fd8417a981b45b26ccabde6c9faf92663a8c444"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#cfde61ec49835d56b60b97ef832d9c80d6f7ce62"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "merkle_proof",
  "mpl-token-metadata",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git)",
 ]
 
 [[package]]
 name = "tensorswap"
 version = "1.8.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417#7fd8417a981b45b26ccabde6c9faf92663a8c444"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#cfde61ec49835d56b60b97ef832d9c80d6f7ce62"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2345,7 +2345,7 @@ dependencies = [
  "spl-math",
  "static_assertions",
  "tensor_whitelist",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-hq/tensorswap.git)",
 ]
 
 [[package]]
@@ -2523,7 +2523,7 @@ dependencies = [
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git?rev=7fd8417#7fd8417a981b45b26ccabde6c9faf92663a8c444"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#cfde61ec49835d56b60b97ef832d9c80d6f7ce62"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
