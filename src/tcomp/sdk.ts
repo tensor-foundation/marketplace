@@ -970,6 +970,19 @@ export class TCompSDK {
     });
   }
 
+  getTakerMaker(ix: ParsedAnchorTcompIx<TcompIDL>): {
+    taker: PublicKey | null;
+    maker: PublicKey | null;
+  } | null {
+    if (!ix.noopIx) return null;
+    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
+    const e = deserializeTcompEvent(cpiData);
+    return {
+      taker: e.taker ?? null,
+      maker: e.maker ?? null,
+    };
+  }
+
   getIxAmounts(ix: ParsedAnchorTcompIx<TcompIDL>): {
     amount: BN;
     tcompFee: BN | null;
@@ -979,20 +992,14 @@ export class TCompSDK {
   } | null {
     if (!ix.noopIx) return null;
     const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
-    try {
-      const e = deserializeTcompEvent(cpiData);
-      return {
-        amount: e.amount,
-        tcompFee: e.tcompFee ?? null,
-        brokerFee: e.brokerFee ?? null,
-        creatorFee: e.creatorFee ?? null,
-        currency: e.currency,
-      };
-    } catch (e) {
-      // TODO: no try catch, need to fail hard
-      console.log("ERROR parsing tcomp event", e);
-      return null;
-    }
+    const e = deserializeTcompEvent(cpiData);
+    return {
+      amount: e.amount,
+      tcompFee: e.tcompFee ?? null,
+      brokerFee: e.brokerFee ?? null,
+      creatorFee: e.creatorFee ?? null,
+      currency: e.currency,
+    };
   }
 
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
@@ -1147,7 +1154,7 @@ export function deserializeTcompEvent(data: Buffer) {
   // cut off anchor discriminator
   data = data.slice(8, data.length);
   if (data[0] === 0) {
-    console.log("🟩 Maker event detected", data.length - 64);
+    // console.log("🟩 Maker event detected", data.length - 64);
     const e = borsh.deserialize(
       makeEventSchema,
       MakeEvent,
@@ -1163,7 +1170,7 @@ export function deserializeTcompEvent(data: Buffer) {
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
     };
   } else if (data[0] === 1) {
-    console.log("🟥 Taker event detected", data.length - 64);
+    // console.log("🟥 Taker event detected", data.length - 64);
     const e = borsh.deserialize(
       takeEventSchema,
       TakeEvent,
@@ -1234,12 +1241,12 @@ export const extractAllTcompIxs = (
     }
   });
 
-  console.log(
-    "noop / with noop / other",
-    noopIxs.length,
-    tcompIxsWithNoop.length,
-    otherIxs.length
-  );
+  // console.log(
+  //   "noop / with noop / other",
+  //   noopIxs.length,
+  //   tcompIxsWithNoop.length,
+  //   otherIxs.length
+  // );
 
   //(!) Strong assumption here that protocol and noop ixs come in pairs, ordered the same way
   if (noopIxs.length !== tcompIxsWithNoop.length) {

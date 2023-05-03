@@ -3,7 +3,7 @@ use crate::*;
 #[constant]
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
-pub const FEE_BPS: u16 = 169;
+pub const FEE_BPS: u16 = 150;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 5184000; // Max 60 days
 #[constant]

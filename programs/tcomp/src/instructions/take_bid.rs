@@ -51,12 +51,14 @@ pub struct TakeBid<'info> {
 impl<'info> Validate<'info> for TakeBid<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
-        // Verify expiry
+        require!(
+            bid_state.version == CURRENT_TCOMP_VERSION,
+            TcompError::WrongStateVersion
+        );
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::OfferExpired
         );
-        // Verify private taker
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
@@ -115,7 +117,7 @@ impl<'info> TakeBid<'info> {
 
         record_event(
             &TcompEvent::Taker(TakeEvent {
-                taker: *self.owner.key,
+                taker: *self.seller.key,
                 asset_id,
                 amount,
                 tcomp_fee,
@@ -149,7 +151,6 @@ impl<'info> TakeBid<'info> {
                         margin_account: margin_account_info.clone(),
                         bid_state: self.bid_state.to_account_info(),
                         owner: self.owner.to_account_info(),
-                        merkle_tree: self.merkle_tree.to_account_info(),
                         //transfer to bid state
                         destination: self.bid_state.to_account_info(),
                         system_program: self.system_program.to_account_info(),
@@ -157,7 +158,7 @@ impl<'info> TakeBid<'info> {
                 )
                 .with_signer(&[&self.bid_state.seeds()]),
                 bid_state.bump[0],
-                nonce,
+                bid_state.bid_id,
                 //full amount, which later will be split into fees / royalties (seller pays)
                 amount,
             )?;
@@ -231,7 +232,8 @@ pub fn handler_full_meta<'info>(
         }
         BidTarget::Voc => match meta_args.collection.clone() {
             Some(collection) => {
-                // No need to check if verified, for cNFTs that's a degenrate field
+                // We know from the below verify fn call that the correct collection key has been passed
+                // No need to check if verified, for cNFTs that's a degenerate field
                 require!(
                     collection.key == bid_state.target_id,
                     TcompError::WrongTargetId
@@ -244,13 +246,6 @@ pub fn handler_full_meta<'info>(
         BidTarget::Name => {
             let mut name_arr = [0u8; 32];
             name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
-            msg!(
-                "{:?}{:?}{:?}{:?}",
-                meta_args.name,
-                name_arr,
-                bid_state.target_id,
-                bid_state.target_id.to_bytes()
-            );
             require!(
                 name_arr == bid_state.target_id.to_bytes(),
                 TcompError::WrongTargetId
@@ -314,7 +309,7 @@ pub fn handler_meta_hash<'info>(
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
     let bid_state = &ctx.accounts.bid_state;
 
-    // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
+    // Have to verify to make sure 1)correct creators list, 2)shares, 3)seller_fee_basis_points
     let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
         root,
         index,
@@ -337,6 +332,7 @@ pub fn handler_meta_hash<'info>(
             require!(bid_state.target_id == asset_id, TcompError::WrongTargetId);
         }
         BidTarget::Fvc => {
+            // We know from the above verify fn call that the correct creators list has been passed
             let fvc = creators.iter().find(|c| c.verified);
             match fvc {
                 Some(fvc) => {

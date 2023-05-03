@@ -3,8 +3,6 @@ use crate::*;
 #[derive(Accounts)]
 #[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
     #[account(init_if_needed, payer = owner,
@@ -13,6 +11,8 @@ pub struct Bid<'info> {
         space = BID_STATE_SIZE,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,

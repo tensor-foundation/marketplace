@@ -10,7 +10,7 @@ export type Tcomp = {
     {
       "name": "FEE_BPS",
       "type": "u16",
-      "value": "169"
+      "value": "150"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -119,11 +119,6 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": true,
           "isSigner": false
@@ -157,6 +152,11 @@ export type Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "payer",
@@ -378,11 +378,6 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": true,
           "isSigner": false
@@ -411,6 +406,11 @@ export type Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
@@ -455,11 +455,6 @@ export type Tcomp = {
       "name": "edit",
       "accounts": [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": false,
           "isSigner": false
@@ -468,6 +463,11 @@ export type Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "tcompProgram",
@@ -514,11 +514,6 @@ export type Tcomp = {
       "name": "bid",
       "accounts": [
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -532,6 +527,11 @@ export type Tcomp = {
           "name": "bidState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "marginAccount",
@@ -1478,6 +1478,11 @@ export type Tcomp = {
       "code": 6022,
       "name": "OptionalRoyaltiesNotYetEnabled",
       "msg": "optional royalties not yet enabled"
+    },
+    {
+      "code": 6023,
+      "name": "WrongStateVersion",
+      "msg": "wrong state version"
     }
   ]
 };
@@ -1494,7 +1499,7 @@ export const IDL: Tcomp = {
     {
       "name": "FEE_BPS",
       "type": "u16",
-      "value": "169"
+      "value": "150"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -1603,11 +1608,6 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": true,
           "isSigner": false
@@ -1641,6 +1641,11 @@ export const IDL: Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "payer",
@@ -1862,11 +1867,6 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": true,
           "isSigner": false
@@ -1895,6 +1895,11 @@ export const IDL: Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
@@ -1939,11 +1944,6 @@ export const IDL: Tcomp = {
       "name": "edit",
       "accounts": [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "merkleTree",
           "isMut": false,
           "isSigner": false
@@ -1952,6 +1952,11 @@ export const IDL: Tcomp = {
           "name": "listState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "tcompProgram",
@@ -1998,11 +2003,6 @@ export const IDL: Tcomp = {
       "name": "bid",
       "accounts": [
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2016,6 +2016,11 @@ export const IDL: Tcomp = {
           "name": "bidState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "marginAccount",
@@ -2962,6 +2967,11 @@ export const IDL: Tcomp = {
       "code": 6022,
       "name": "OptionalRoyaltiesNotYetEnabled",
       "msg": "optional royalties not yet enabled"
+    },
+    {
+      "code": 6023,
+      "name": "WrongStateVersion",
+      "msg": "wrong state version"
     }
   ]
 };

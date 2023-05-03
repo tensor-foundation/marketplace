@@ -585,6 +585,8 @@ describe("tcomp listings", () => {
           privateTaker: traderB.publicKey,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "list");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
       }
@@ -603,7 +605,8 @@ describe("tcomp listings", () => {
           privateTaker: traderC.publicKey,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
-        expect(ix.ix.data);
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
       }
@@ -624,6 +627,8 @@ describe("tcomp listings", () => {
         });
         const sig = await buildAndSendTx({ ixs, extraSigners: [traderA] });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
       }
@@ -644,6 +649,8 @@ describe("tcomp listings", () => {
           takerBroker,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.taker?.toString()).eq(traderC.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         if (TAKER_BROKER_PCT > 0) {

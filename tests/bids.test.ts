@@ -448,6 +448,8 @@ describe("tcomp bids", () => {
           privateTaker: traderA.publicKey,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "bid");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.maker?.toString()).eq(traderB.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
       }
@@ -469,6 +471,8 @@ describe("tcomp bids", () => {
           bidId: assetId,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidMetaHash");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.taker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         if (TAKER_BROKER_PCT > 0) {
@@ -526,6 +530,58 @@ describe("tcomp bids", () => {
         canopyDepth,
         margin: marginPda,
         bidId: assetId,
+      });
+    }
+  });
+
+  it("margin buy: works (VOC bid)", async () => {
+    let canopyDepth = 10;
+    const {
+      merkleTree,
+      traderA,
+      leaves,
+      traderB,
+      memTree,
+      treeOwner,
+      collectionMint,
+    } = await beforeHook({
+      nrCreators: 4,
+      numMints: 2,
+      canopyDepth,
+      setupTswap: true,
+    });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const { marginPda, marginNr, marginRent } = await testMakeMargin({
+        owner: traderB,
+      });
+      await testDepositIntoMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: LAMPORTS_PER_SOL,
+      });
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Voc,
+        targetId: collectionMint,
+        bidId: collectionMint,
+        owner: traderB,
+        privateTaker: null,
+        margin: marginPda,
+      });
+      await testTakeBid({
+        index,
+        minAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        seller: traderA, //A can now sell
+        owner: traderB.publicKey,
+        canopyDepth,
+        margin: marginPda,
+        bidId: collectionMint,
+        target: BidTarget.Voc,
       });
     }
   });
