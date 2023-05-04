@@ -85,7 +85,7 @@ import {
   STANDARD_FEE_BPS,
   TensorSwapSDK,
   TSwapConfigAnchor,
-} from "@tensor-hq/tensorswap-sdk";
+} from "@tensor-hq/tensorswap-ts";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,

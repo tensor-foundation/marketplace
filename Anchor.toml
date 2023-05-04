@@ -27,7 +27,7 @@ program = "./deps/solana-spl/account-compression/target/deploy/spl_noop.so"
 
 [[test.genesis]]
 address = "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
-program = "./deps/tensorswap.so"
+program = "./deps/tensorswap/target/deploy/tensorswap.so"
 
 [provider]
 cluster = "localnet"

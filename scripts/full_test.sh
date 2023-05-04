@@ -19,6 +19,9 @@ popd
 pushd deps/solana-spl/account-compression/programs
 cargo build-bpf
 popd
+pushd deps/tensorswap/programs/tensorswap
+cargo build-bpf
+popd
 
 # Run tests
 anchor test --skip-build -- --features testing

@@ -4,29 +4,8 @@ import {
   toBigNumber,
 } from "@metaplex-foundation/js";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAccount,
-  createAssociatedTokenAccountInstruction,
-  createMint,
-  getAccount as _getAccount,
-  getAssociatedTokenAddress,
-  mintTo,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import {
-  Connection,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Signer,
-  SystemProgram,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
-  Transaction,
-} from "@solana/web3.js";
-import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./shared";
-import {
-  Payload,
   PROGRAM_ID as AUTH_PROGRAM_ID,
+  Payload,
 } from "@metaplex-foundation/mpl-token-auth-rules";
 import {
   createCreateInstruction,
@@ -43,9 +22,30 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider } from "@project-serum/anchor";
 import {
+  getAccount as _getAccount,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAccount,
+  createAssociatedTokenAccountInstruction,
+  createMint,
+  getAssociatedTokenAddress,
+  mintTo,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
+  Transaction,
+} from "@solana/web3.js";
+import {
   findTokenRecordPda,
   TOKEN_METADATA_PROGRAM_ID,
 } from "@tensor-hq/tensor-common";
+import { buildAndSendTx, TEST_KEYPAIR, TEST_PROVIDER } from "./shared";
 
 export const transferLamports = async (
   to: PublicKey,

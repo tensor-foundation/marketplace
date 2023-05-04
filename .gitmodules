@@ -6,3 +6,6 @@
 	path = deps/solana-spl
 	url = https://github.com/solana-labs/solana-program-library.git
     ignore = dirty
+[submodule "deps/tensorswap"]
+	path = deps/tensorswap
+	url = git@github.com:tensor-hq/tensorswap.git
