@@ -26,7 +26,7 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { initCollection, makeNTraders } from "./account";
-import { BidTarget, nameToBuffer, TAKER_BROKER_PCT } from "../src";
+import { BidField, BidTarget, nameToBuffer, TAKER_BROKER_PCT } from "../src";
 import {
   testDepositIntoMargin,
   testMakeMargin,
@@ -49,7 +49,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
         });
 
@@ -103,7 +102,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators: 1,
           numMints: 2,
-          setupTswap: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -154,7 +152,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators: 4,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
         });
 
@@ -185,7 +182,6 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 2,
         numMints: 2,
-        setupTswap: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -279,7 +275,6 @@ describe("tcomp bids", () => {
           nrCreators,
           numMints: 2,
           canopyDepth,
-          setupTswap: true,
         });
       const [delegate, payer] = await makeNTraders(2);
 
@@ -323,7 +318,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -378,7 +372,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
     const [traderC] = await makeNTraders(1);
 
@@ -431,7 +424,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
     const takerBroker = Keypair.generate().publicKey;
 
@@ -448,6 +440,8 @@ describe("tcomp bids", () => {
           privateTaker: traderA.publicKey,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "bid");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.maker?.toString()).eq(traderB.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
       }
@@ -469,6 +463,8 @@ describe("tcomp bids", () => {
           bidId: assetId,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidMetaHash");
+        const traders = tcompSdk.getTakerMaker(ix);
+        expect(traders?.taker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         if (TAKER_BROKER_PCT > 0) {
@@ -526,6 +522,58 @@ describe("tcomp bids", () => {
         canopyDepth,
         margin: marginPda,
         bidId: assetId,
+      });
+    }
+  });
+
+  it("margin buy: works (VOC bid)", async () => {
+    let canopyDepth = 12;
+    const {
+      merkleTree,
+      traderA,
+      leaves,
+      traderB,
+      memTree,
+      treeOwner,
+      collectionMint,
+    } = await beforeHook({
+      nrCreators: 4,
+      numMints: 2,
+      canopyDepth,
+      setupTswap: true,
+    });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      const { marginPda, marginNr, marginRent } = await testMakeMargin({
+        owner: traderB,
+      });
+      await testDepositIntoMargin({
+        owner: traderB,
+        marginNr,
+        marginPda,
+        amount: LAMPORTS_PER_SOL,
+      });
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Voc,
+        targetId: collectionMint,
+        bidId: collectionMint,
+        owner: traderB,
+        privateTaker: null,
+        margin: marginPda,
+      });
+      await testTakeBid({
+        index,
+        minAmount: new BN(LAMPORTS_PER_SOL),
+        memTree,
+        merkleTree,
+        metadata,
+        seller: traderA, //A can now sell
+        owner: traderB.publicKey,
+        canopyDepth,
+        margin: marginPda,
+        bidId: collectionMint,
+        target: BidTarget.Voc,
       });
     }
   });
@@ -654,9 +702,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -691,9 +737,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -761,7 +805,6 @@ describe("tcomp bids", () => {
             bidId: metadata.collection!.key,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
-        //can't do a bad case for Name since it's only used for picking branch js side and VOC branch will be picked correctly
         // -------------------- final purchase
         await testTakeBid({
           target: BidTarget.Voc,
@@ -794,9 +837,7 @@ describe("tcomp bids", () => {
       } = await beforeHook({
         nrCreators,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         collectionless: true,
       });
 
@@ -834,9 +875,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       const fakeCollection = Keypair.generate().publicKey;
@@ -875,9 +914,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       const bidId1 = Keypair.generate().publicKey;
@@ -924,9 +961,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0, //keep this at 0 or need to rewrite how skippedCreators work
         numMints: 1, //keep at 1 or need to take into account prev creator earnings, which I CBA
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
@@ -955,37 +990,8 @@ describe("tcomp bids", () => {
         prevBidAmount: LAMPORTS_PER_SOL,
       });
       // -------------------- failure cases
-      await expect(
-        testTakeBid({
-          target: BidTarget.Name, //wrong target
-          index,
-          lookupTableAccount,
-          memTree,
-          merkleTree,
-          metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
-          owner: traderB.publicKey,
-          seller: traderA,
-          canopyDepth,
-          bidId: verifiedCreator.publicKey,
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
-      await expect(
-        testTakeBid({
-          target: BidTarget.Voc, //wrong target
-          index,
-          lookupTableAccount,
-          memTree,
-          merkleTree,
-          metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
-          owner: traderB.publicKey,
-          seller: traderA,
-          canopyDepth,
-          bidId: verifiedCreator.publicKey,
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
       //can't do a bad case for assetId since it's only used for picking branch js side and VOC branch will be picked correctly
+      //can't do a bad case for VOC coz that branch accepts FVC now too
       // -------------------- final purchase
       await testTakeBid({
         target: BidTarget.Fvc,
@@ -1010,9 +1016,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         //intentionally not passing verifiedCreator
       });
 
@@ -1048,9 +1052,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 1,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -1087,9 +1089,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0,
         numMints: 1,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
@@ -1099,7 +1099,6 @@ describe("tcomp bids", () => {
     let metadata = await makeCNftMeta({
       collectionMint,
       nrCreators: 0,
-      randomizeName: true,
     });
     let leaf;
     let assetId;
@@ -1177,41 +1176,57 @@ describe("tcomp bids", () => {
     });
   });
 
-  // --------------------------------------- Name bids
+  // --------------------------------------- VOC + Name bids
 
-  it("Name: bids + edits + accepts bid", async () => {
+  it("VOC + Name: bids + edits + accepts bid", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          target: BidTarget.Name,
-          targetId: new PublicKey(nameToBuffer(metadata.name)),
+          target: BidTarget.Voc,
+          targetId: metadata.collection!.key,
+          field: BidField.Name,
+          fieldId: new PublicKey(nameToBuffer(metadata.name)),
           owner: traderB,
         });
         //fails if try to change the target
         await expect(
           testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
-            target: BidTarget.AssetId, //wrong target
-            targetId: new PublicKey(nameToBuffer(metadata.name)),
+            amount: new BN(LAMPORTS_PER_SOL),
+            target: BidTarget.Voc,
+            targetId: metadata.collection!.key,
+            field: BidField.Name,
+            fieldId: new PublicKey(nameToBuffer("failooooor")), //<-- boo
             owner: traderB,
             prevBidAmount: LAMPORTS_PER_SOL,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
+        await expect(
+          testBid({
+            amount: new BN(LAMPORTS_PER_SOL),
+            target: BidTarget.Voc,
+            targetId: metadata.collection!.key,
+            field: null, //<-- boo
+            fieldId: new PublicKey(nameToBuffer(metadata.name)),
+            owner: traderB,
+            prevBidAmount: LAMPORTS_PER_SOL,
+            bidId: metadata.collection!.key, //make sure correctly address
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
-          target: BidTarget.Name,
-          targetId: new PublicKey(nameToBuffer(metadata.name)),
+          target: BidTarget.Voc,
+          targetId: metadata.collection!.key,
+          field: BidField.Name,
+          fieldId: new PublicKey(nameToBuffer(metadata.name)),
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         });
@@ -1228,7 +1243,7 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId: metadata.collection!.key,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
         await expect(
@@ -1243,13 +1258,12 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: new PublicKey(nameToBuffer(metadata.name)),
+            bidId: metadata.collection!.key,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
-        //can't do a bad case for VOC since it's only used for picking branch js side and VOC branch will be picked correctly
         // -------------------- final purchase
         await testTakeBid({
-          target: BidTarget.Name,
+          target: BidTarget.Voc,
           index,
           lookupTableAccount,
           memTree,
@@ -1259,46 +1273,35 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: new PublicKey(nameToBuffer(metadata.name)),
+          bidId: metadata.collection!.key,
         });
       }
     }
   });
 
-  it("Name: fails to take a collection bid with a mint with wrong name", async () => {
+  it("VOC + Name: rejects an NFT with wrong name", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
-      const {
-        merkleTree,
-        traderA,
-        leaves,
-        traderB,
-        memTree,
-        treeOwner,
-        collectionMint,
-      } = await beforeHook({
-        nrCreators,
-        numMints: 3,
-        setupTswap: true,
-        canopyDepth,
-        randomizeName: true,
-        collectionless: true,
-      });
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({
+          nrCreators,
+          numMints: 2,
+          canopyDepth,
+        });
 
-      const bidId = Keypair.generate().publicKey;
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Name,
-        targetId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
-        bidId,
+        target: BidTarget.Voc,
+        targetId: leaves.at(-1)!.metadata.collection!.key,
+        field: BidField.Name,
+        fieldId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
         owner: traderB,
       });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        //last one should succeed
         if (index === leaves.length - 1) {
           await testTakeBid({
-            target: BidTarget.Name,
+            target: BidTarget.Voc,
             index,
             lookupTableAccount,
             memTree,
@@ -1308,14 +1311,13 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId,
+            bidId: metadata.collection!.key,
           });
           continue;
         }
-        //but not the other ones
         await expect(
           testTakeBid({
-            target: BidTarget.Name,
+            target: BidTarget.Voc,
             index,
             lookupTableAccount,
             memTree,
@@ -1325,10 +1327,158 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId,
+            bidId: metadata.collection!.key,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongFieldId"));
       }
+    }
+  });
+
+  // --------------------------------------- FVC + Name bids
+
+  it("FVC + Name: bids + edits + accepts bid", async () => {
+    const canopyDepth = 10;
+    const verifiedCreator = Keypair.generate();
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 0,
+        numMints: 1,
+        canopyDepth,
+        verifiedCreator,
+      });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Fvc,
+        targetId: verifiedCreator.publicKey,
+        field: BidField.Name,
+        fieldId: new PublicKey(nameToBuffer(metadata.name)),
+        owner: traderB,
+      });
+      //fails if try to change the target
+      await expect(
+        testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          target: BidTarget.Fvc,
+          targetId: verifiedCreator.publicKey,
+          field: BidField.Name,
+          fieldId: new PublicKey(nameToBuffer("failooooor")), //<-- boo
+          owner: traderB,
+          prevBidAmount: LAMPORTS_PER_SOL,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
+      await expect(
+        testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          target: BidTarget.Fvc,
+          targetId: verifiedCreator.publicKey,
+          field: null, //<-- boo
+          fieldId: new PublicKey(nameToBuffer(metadata.name)),
+          owner: traderB,
+          prevBidAmount: LAMPORTS_PER_SOL,
+          bidId: verifiedCreator.publicKey, //make sure correctly address
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL / 2),
+        target: BidTarget.Fvc,
+        targetId: verifiedCreator.publicKey,
+        field: BidField.Name,
+        fieldId: new PublicKey(nameToBuffer(metadata.name)),
+        owner: traderB,
+        prevBidAmount: LAMPORTS_PER_SOL,
+      });
+      // -------------------- failure cases
+      //try to go down the wrong branch
+      await expect(
+        testTakeBid({
+          target: BidTarget.Fvc,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          bidId: verifiedCreator.publicKey,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
+      //can't do a bad case for assetId since/voc it's only used for picking branch js side and FVC branch will be picked correctly
+      // -------------------- final purchase
+      await testTakeBid({
+        target: BidTarget.Fvc,
+        field: BidField.Name,
+        index,
+        lookupTableAccount,
+        memTree,
+        merkleTree,
+        metadata,
+        minAmount: new BN(LAMPORTS_PER_SOL / 2),
+        owner: traderB.publicKey,
+        seller: traderA,
+        canopyDepth,
+        bidId: verifiedCreator.publicKey,
+      });
+    }
+  });
+
+  it("FVC + Name: rejects an NFT with wrong name", async () => {
+    const canopyDepth = 10;
+    const verifiedCreator = Keypair.generate();
+    const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+      await beforeHook({
+        nrCreators: 0,
+        numMints: 2,
+        canopyDepth,
+        verifiedCreator,
+      });
+
+    await testBid({
+      amount: new BN(LAMPORTS_PER_SOL),
+      target: BidTarget.Fvc,
+      targetId: verifiedCreator.publicKey,
+      field: BidField.Name,
+      fieldId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
+      owner: traderB,
+    });
+
+    for (const { leaf, index, metadata, assetId } of leaves) {
+      if (index === leaves.length - 1) {
+        await testTakeBid({
+          target: BidTarget.Fvc,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          bidId: verifiedCreator.publicKey,
+          field: BidField.Name,
+        });
+        continue;
+      }
+      await expect(
+        testTakeBid({
+          target: BidTarget.Fvc,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          bidId: verifiedCreator.publicKey,
+          field: BidField.Name,
+        })
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongFieldId"));
     }
   });
 });

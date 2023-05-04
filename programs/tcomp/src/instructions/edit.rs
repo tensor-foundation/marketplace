@@ -3,7 +3,6 @@ use crate::*;
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
 pub struct Edit<'info> {
-    pub owner: Signer<'info>,
     /// CHECK: only used for pda derivation
     pub merkle_tree: UncheckedAccount<'info>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
@@ -16,16 +15,10 @@ pub struct Edit<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
+    pub owner: Signer<'info>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
 }
 
-impl<'info> Validate<'info> for Edit<'info> {
-    fn validate(&self) -> Result<()> {
-        Ok(())
-    }
-}
-
-#[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
     nonce: u64,

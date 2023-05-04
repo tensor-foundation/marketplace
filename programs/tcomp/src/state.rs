@@ -3,7 +3,7 @@ use crate::*;
 #[constant]
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
-pub const FEE_BPS: u16 = 169;
+pub const FEE_BPS: u16 = 150;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 5184000; // Max 60 days
 #[constant]
@@ -52,7 +52,12 @@ pub enum BidTarget {
     AssetId = 0,
     Voc = 1,
     Fvc = 2,
-    Name = 3,
+}
+
+#[repr(u8)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub enum BidField {
+    Name = 0,
 }
 
 #[account]
@@ -66,6 +71,9 @@ pub struct BidState {
     // Obviously would be better to use an enum-tuple / enum-struct but anchor doesn't serialize them
     pub target: BidTarget,
     pub target_id: Pubkey,
+    // In addition to target can bid on a subset of the collection by choosing a field in the struct
+    pub field: Option<BidField>,
+    pub field_id: Option<Pubkey>,
     // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
@@ -81,7 +89,8 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 1 + 32 + 8 + 33 + 8 + (33 * 3) + 128;
+pub const BID_STATE_SIZE: usize =
+    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128;
 
 impl BidState {
     pub fn seeds(&self) -> [&[u8]; 4] {

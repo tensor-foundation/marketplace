@@ -159,8 +159,10 @@ pub mod tcomp {
     pub fn bid<'info>(
         ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
         bid_id: Pubkey,
-        target_id: Pubkey,
         target: BidTarget,
+        target_id: Pubkey,
+        field: Option<BidField>,
+        field_id: Option<Pubkey>,
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -170,8 +172,10 @@ pub mod tcomp {
         instructions::bid::handler(
             ctx,
             bid_id,
-            target_id,
             target,
+            target_id,
+            field,
+            field_id,
             amount,
             expire_in_sec,
             currency,

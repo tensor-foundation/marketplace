@@ -35,9 +35,12 @@ import {
   ValidDepthSizePair,
 } from "@solana/spl-account-compression";
 import {
+  BidField,
   BidTarget,
   BUBBLEGUM_PROGRAM_ID,
   castBidTargetAnchor,
+  computeCompressedNFTHashPATCHED,
+  computeCreatorHashPATCHED,
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -58,7 +61,6 @@ import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, BN, Wallet } from "@project-serum/anchor";
 import {
   computeDataHash,
-  Creator,
   metadataArgsBeet,
 } from "../deps/metaplex-mpl/bubblegum/js/src";
 import { keccak_256 } from "js-sha3";
@@ -627,41 +629,6 @@ export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
   return Buffer.from(keccak_256.digest(serializedMetadata));
 }
 
-// TODO: temp patch over metaplex's code
-export function computeCreatorHashPATCHED(creators: Creator[]) {
-  const bufferOfCreatorData = Buffer.concat(
-    creators.map((creator) => {
-      return Buffer.concat([
-        creator.address.toBuffer(),
-        Buffer.from([creator.verified ? 1 : 0]),
-        Buffer.from([creator.share]),
-      ]);
-    })
-  );
-  return Buffer.from(keccak_256.digest(bufferOfCreatorData));
-}
-
-// TODO: temp patch over metaplex's code
-export function computeCompressedNFTHashPATCHED(
-  assetId: PublicKey,
-  owner: PublicKey,
-  delegate: PublicKey,
-  treeNonce: BN,
-  metadata: MetadataArgs
-): Buffer {
-  const message = Buffer.concat([
-    Buffer.from([0x1]), // All NFTs are version 1 right now
-    assetId.toBuffer(),
-    owner.toBuffer(),
-    delegate.toBuffer(),
-    treeNonce.toBuffer("le", 8),
-    computeDataHash(metadata),
-    computeCreatorHashPATCHED(metadata.creators),
-  ]);
-
-  return Buffer.from(keccak_256.digest(message));
-}
-
 export const verifyCNft = async ({
   conn = TEST_PROVIDER.connection,
   index,
@@ -822,7 +789,7 @@ export const makeCNftMeta = ({
   nrCreators = 4,
   sellerFeeBasisPoints = 1000,
   collectionMint,
-  randomizeName = false,
+  randomizeName = true,
 }: {
   nrCreators?: number;
   sellerFeeBasisPoints?: number;
@@ -874,7 +841,7 @@ export const beforeHook = async ({
   depthSizePair = DEFAULT_DEPTH_SIZE,
   canopyDepth = 0,
   setupTswap = false,
-  randomizeName,
+  randomizeName = true,
   verifiedCreator,
   collectionless = false,
 }: {
@@ -1489,6 +1456,8 @@ export const testBid = async ({
   target = BidTarget.AssetId,
   targetId,
   bidId,
+  field = null,
+  fieldId = null,
   owner,
   amount,
   prevBidAmount,
@@ -1500,6 +1469,8 @@ export const testBid = async ({
   target?: BidTarget;
   targetId: PublicKey;
   bidId?: PublicKey;
+  field?: BidField | null;
+  fieldId?: PublicKey | null;
   owner: Keypair;
   amount: BN;
   prevBidAmount?: number;
@@ -1515,6 +1486,8 @@ export const testBid = async ({
     target,
     targetId,
     bidId,
+    field,
+    fieldId,
     owner: owner.publicKey,
     amount,
     currency,
@@ -1677,6 +1650,7 @@ export const testCancelCloseBid = async ({
 
 export const testTakeBid = async ({
   target = BidTarget.AssetId,
+  field = null,
   bidId,
   memTree,
   index,
@@ -1695,6 +1669,7 @@ export const testTakeBid = async ({
   margin,
 }: {
   target?: BidTarget;
+  field?: BidField | null;
   bidId: PublicKey;
   memTree: MerkleTree;
   index: number;
@@ -1725,6 +1700,7 @@ export const testTakeBid = async ({
     bidState,
   } = await tcompSdk.takeBid({
     target,
+    field,
     bidId,
     proof: proof.proof,
     seller: seller.publicKey,

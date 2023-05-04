@@ -32,13 +32,6 @@ pub struct List<'info> {
     // 1. proof accounts (less canopy)
 }
 
-impl<'info> Validate<'info> for List<'info> {
-    fn validate(&self) -> Result<()> {
-        Ok(())
-    }
-}
-
-#[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, List<'info>>,
     // What is the difference between nonce and index?

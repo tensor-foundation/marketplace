@@ -5,8 +5,6 @@ use crate::*;
 pub struct Delist<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub owner: Signer<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
@@ -24,17 +22,12 @@ pub struct Delist<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
 
-impl<'info> Validate<'info> for Delist<'info> {
-    fn validate(&self) -> Result<()> {
-        Ok(())
-    }
-}
-
-#[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
     nonce: u64,

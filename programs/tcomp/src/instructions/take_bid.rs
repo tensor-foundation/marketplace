@@ -51,12 +51,14 @@ pub struct TakeBid<'info> {
 impl<'info> Validate<'info> for TakeBid<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
-        // Verify expiry
+        require!(
+            bid_state.version == CURRENT_TCOMP_VERSION,
+            TcompError::WrongStateVersion
+        );
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::OfferExpired
         );
-        // Verify private taker
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
@@ -115,7 +117,7 @@ impl<'info> TakeBid<'info> {
 
         record_event(
             &TcompEvent::Taker(TakeEvent {
-                taker: *self.owner.key,
+                taker: *self.seller.key,
                 asset_id,
                 amount,
                 tcomp_fee,
@@ -149,15 +151,15 @@ impl<'info> TakeBid<'info> {
                         margin_account: margin_account_info.clone(),
                         bid_state: self.bid_state.to_account_info(),
                         owner: self.owner.to_account_info(),
-                        merkle_tree: self.merkle_tree.to_account_info(),
                         //transfer to bid state
                         destination: self.bid_state.to_account_info(),
                         system_program: self.system_program.to_account_info(),
                     },
                 )
                 .with_signer(&[&self.bid_state.seeds()]),
+                //passing these in coz we're not deserializing the account tswap side
                 bid_state.bump[0],
-                nonce,
+                bid_state.bid_id,
                 //full amount, which later will be split into fees / royalties (seller pays)
                 amount,
             )?;
@@ -221,17 +223,29 @@ pub fn handler_full_meta<'info>(
         .remaining_accounts
         .split_at(meta_args.creator_shares.len());
     let bid_state = &ctx.accounts.bid_state;
+    let seller_fee_basis_points = meta_args.seller_fee_basis_points;
+
+    // Have to verify to make sure 1)correct creators list and 2)correct metadata
+    let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
+        root,
+        index,
+        nonce,
+        metadata_src: MetadataSrc::Metadata(meta_args.clone()),
+        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        leaf_owner: &ctx.accounts.seller.to_account_info(),
+        leaf_delegate: &ctx.accounts.delegate.to_account_info(),
+        creator_accounts,
+        proof_accounts,
+    })?;
 
     match bid_state.target {
         BidTarget::AssetId => {
             throw_err!(TcompError::WrongIxForBidTarget);
         }
-        BidTarget::Fvc => {
-            throw_err!(TcompError::WrongIxForBidTarget);
-        }
-        BidTarget::Voc => match meta_args.collection.clone() {
+        BidTarget::Voc => match meta_args.collection {
             Some(collection) => {
-                // No need to check if verified, for cNFTs that's a degenrate field
+                // We know from the above verify fn call that the correct collection key has been passed
+                // No need to check if verified, for cNFTs that's a degenerate field
                 require!(
                     collection.key == bid_state.target_id,
                     TcompError::WrongTargetId
@@ -241,37 +255,36 @@ pub fn handler_full_meta<'info>(
                 throw_err!(TcompError::MissingCollection);
             }
         },
-        BidTarget::Name => {
-            let mut name_arr = [0u8; 32];
-            name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
-            msg!(
-                "{:?}{:?}{:?}{:?}",
-                meta_args.name,
-                name_arr,
-                bid_state.target_id,
-                bid_state.target_id.to_bytes()
-            );
-            require!(
-                name_arr == bid_state.target_id.to_bytes(),
-                TcompError::WrongTargetId
-            );
+        BidTarget::Fvc => {
+            // We know from the above verify fn call that the correct creators list has been passed
+            let fvc = creators.iter().find(|c| c.verified);
+            match fvc {
+                Some(fvc) => {
+                    require!(
+                        bid_state.target_id == fvc.address,
+                        TcompError::WrongTargetId
+                    );
+                }
+                None => {
+                    throw_err!(TcompError::MissingFvc);
+                }
+            }
         }
     }
 
-    let seller_fee_basis_points = meta_args.seller_fee_basis_points;
-
-    // Have to verify to make sure 1)correct creators list and 2)correct metadata
-    let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
-        root,
-        index,
-        nonce,
-        metadata_src: MetadataSrc::Metadata(meta_args),
-        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        leaf_owner: &ctx.accounts.seller.to_account_info(),
-        leaf_delegate: &ctx.accounts.delegate.to_account_info(),
-        creator_accounts,
-        proof_accounts,
-    })?;
+    // Optionally check the field.
+    if let Some(field) = &bid_state.field {
+        match field {
+            BidField::Name => {
+                let mut name_arr = [0u8; 32];
+                name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
+                require!(
+                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    TcompError::WrongFieldId
+                );
+            }
+        }
+    }
 
     ctx.accounts.take_bid_shared(
         asset_id,
@@ -314,7 +327,7 @@ pub fn handler_meta_hash<'info>(
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
     let bid_state = &ctx.accounts.bid_state;
 
-    // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
+    // Have to verify to make sure 1)correct creators list, 2)shares, 3)seller_fee_basis_points
     let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
         root,
         index,
@@ -336,7 +349,12 @@ pub fn handler_meta_hash<'info>(
         BidTarget::AssetId => {
             require!(bid_state.target_id == asset_id, TcompError::WrongTargetId);
         }
+        BidTarget::Voc => {
+            // No way to do without having the entire metadata struct.
+            throw_err!(TcompError::WrongIxForBidTarget);
+        }
         BidTarget::Fvc => {
+            // We know from the above verify fn call that the correct creators list has been passed
             let fvc = creators.iter().find(|c| c.verified);
             match fvc {
                 Some(fvc) => {
@@ -344,17 +362,13 @@ pub fn handler_meta_hash<'info>(
                         bid_state.target_id == fvc.address,
                         TcompError::WrongTargetId
                     );
+                    // Can't do FVC bids with a field set in thix ix, need Metadata struct
+                    require!(bid_state.field.is_none(), TcompError::WrongIxForBidTarget);
                 }
                 None => {
                     throw_err!(TcompError::MissingFvc);
                 }
             }
-        }
-        BidTarget::Voc => {
-            throw_err!(TcompError::WrongIxForBidTarget);
-        }
-        BidTarget::Name => {
-            throw_err!(TcompError::WrongIxForBidTarget);
         }
     }
 

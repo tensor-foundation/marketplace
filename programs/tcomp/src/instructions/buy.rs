@@ -9,7 +9,6 @@ pub struct Buy<'info> {
     pub tcomp: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
-    pub buyer: Signer<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
@@ -28,6 +27,7 @@ pub struct Buy<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
+    pub buyer: Signer<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -48,12 +48,14 @@ pub struct Buy<'info> {
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
-        // Verify expiry
+        require!(
+            list_state.version == CURRENT_TCOMP_VERSION,
+            TcompError::WrongStateVersion
+        );
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::OfferExpired
         );
-        // Verify private taker
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
@@ -102,7 +104,7 @@ pub fn handler<'info>(
 
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
-    // Have to verify to make sure 1)correct creators list and 2)correct seller_fee_basis_points
+    // Have to verify to make sure 1)correct creators list, 2)shares, 3)seller_fee_basis_points
     let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
         root,
         index,
@@ -152,7 +154,7 @@ pub fn handler<'info>(
 
     record_event(
         &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.owner.key,
+            taker: *ctx.accounts.buyer.key,
             asset_id,
             amount,
             tcomp_fee,

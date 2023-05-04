@@ -3,8 +3,6 @@ use crate::*;
 #[derive(Accounts)]
 #[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
     #[account(init_if_needed, payer = owner,
@@ -13,6 +11,8 @@ pub struct Bid<'info> {
         space = BID_STATE_SIZE,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
@@ -42,8 +42,10 @@ impl<'info> Validate<'info> for Bid<'info> {
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
     bid_id: Pubkey,
-    target_id: Pubkey,
     target: BidTarget,
+    target_id: Pubkey,
+    field: Option<BidField>,
+    field_id: Option<Pubkey>,
     amount: u64,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -71,14 +73,22 @@ pub fn handler<'info>(
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
     }
 
-    // Since target/target_id is not part of seeds, we need to make sure it's only assigned once
+    // Can only be set once.
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target;
         bid_state.target_id = target_id;
+        bid_state.field = field;
+        bid_state.field_id = field_id;
     } else {
+        // Verify to make sure the bidder isn't expecting anything else.
         require!(bid_state.target == target, TcompError::CannotModifyTarget);
         require!(
             bid_state.target_id == target_id,
+            TcompError::CannotModifyTarget
+        );
+        require!(bid_state.field == field, TcompError::CannotModifyTarget);
+        require!(
+            bid_state.field_id == field_id,
             TcompError::CannotModifyTarget
         );
     }
@@ -143,7 +153,7 @@ pub fn handler<'info>(
             }
             //(!)We do NOT transfer lamports to margin if insufficient, assume done in a separate ix if needed
         }
-        //not marginated
+        // Not marginated
         Err(_) => {
             let bid_rent =
                 Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());

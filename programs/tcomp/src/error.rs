@@ -46,4 +46,8 @@ pub enum TcompError {
     MakerBrokerNotYetEnabled = 21,
     #[msg("optional royalties not yet enabled")]
     OptionalRoyaltiesNotYetEnabled = 22,
+    #[msg("wrong state version")]
+    WrongStateVersion = 23,
+    #[msg("wrong field id")]
+    WrongFieldId = 24,
 }

@@ -1,5 +1,6 @@
 use crate::*;
 
+// TODO: write a similar ix for closing expired listings
 #[derive(Accounts)]
 pub struct CloseExpiredBid<'info> {
     #[account(
@@ -10,7 +11,7 @@ pub struct CloseExpiredBid<'info> {
         has_one = owner,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
-    /// CHECK: stored on bid_state
+    /// CHECK: stored on bid_state. In this case doesn't have to sign since the bid expired.
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
