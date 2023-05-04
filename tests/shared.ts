@@ -789,7 +789,7 @@ export const makeCNftMeta = ({
   nrCreators = 4,
   sellerFeeBasisPoints = 1000,
   collectionMint,
-  randomizeName = false,
+  randomizeName = true,
 }: {
   nrCreators?: number;
   sellerFeeBasisPoints?: number;
@@ -841,7 +841,7 @@ export const beforeHook = async ({
   depthSizePair = DEFAULT_DEPTH_SIZE,
   canopyDepth = 0,
   setupTswap = false,
-  randomizeName,
+  randomizeName = true,
   verifiedCreator,
   collectionless = false,
 }: {

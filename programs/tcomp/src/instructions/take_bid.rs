@@ -250,20 +250,6 @@ pub fn handler_full_meta<'info>(
                     collection.key == bid_state.target_id,
                     TcompError::WrongTargetId
                 );
-                // Optionally check the field.
-                if let Some(field) = &bid_state.field {
-                    match field {
-                        BidField::Name => {
-                            let mut name_arr = [0u8; 32];
-                            name_arr[..meta_args.name.len()]
-                                .copy_from_slice(meta_args.name.as_bytes());
-                            require!(
-                                name_arr == bid_state.field_id.unwrap().to_bytes(),
-                                TcompError::WrongFieldId
-                            );
-                        }
-                    }
-                }
             }
             None => {
                 throw_err!(TcompError::MissingCollection);
@@ -278,24 +264,24 @@ pub fn handler_full_meta<'info>(
                         bid_state.target_id == fvc.address,
                         TcompError::WrongTargetId
                     );
-                    // Optionally check the field.
-                    if let Some(field) = &bid_state.field {
-                        match field {
-                            BidField::Name => {
-                                let mut name_arr = [0u8; 32];
-                                name_arr[..meta_args.name.len()]
-                                    .copy_from_slice(meta_args.name.as_bytes());
-                                require!(
-                                    name_arr == bid_state.field_id.unwrap().to_bytes(),
-                                    TcompError::WrongFieldId
-                                );
-                            }
-                        }
-                    }
                 }
                 None => {
                     throw_err!(TcompError::MissingFvc);
                 }
+            }
+        }
+    }
+
+    // Optionally check the field.
+    if let Some(field) = &bid_state.field {
+        match field {
+            BidField::Name => {
+                let mut name_arr = [0u8; 32];
+                name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
+                require!(
+                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    TcompError::WrongFieldId
+                );
             }
         }
     }

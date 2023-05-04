@@ -49,7 +49,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
         });
 
@@ -103,7 +102,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators: 1,
           numMints: 2,
-          setupTswap: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -154,7 +152,6 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators: 4,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
         });
 
@@ -185,7 +182,6 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 2,
         numMints: 2,
-        setupTswap: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -279,7 +275,6 @@ describe("tcomp bids", () => {
           nrCreators,
           numMints: 2,
           canopyDepth,
-          setupTswap: true,
         });
       const [delegate, payer] = await makeNTraders(2);
 
@@ -323,7 +318,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -378,7 +372,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
     const [traderC] = await makeNTraders(1);
 
@@ -431,7 +424,6 @@ describe("tcomp bids", () => {
         nrCreators: 4,
         numMints: 2,
         canopyDepth,
-        setupTswap: true,
       });
     const takerBroker = Keypair.generate().publicKey;
 
@@ -535,7 +527,7 @@ describe("tcomp bids", () => {
   });
 
   it("margin buy: works (VOC bid)", async () => {
-    let canopyDepth = 10;
+    let canopyDepth = 12;
     const {
       merkleTree,
       traderA,
@@ -710,9 +702,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -747,9 +737,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -849,9 +837,7 @@ describe("tcomp bids", () => {
       } = await beforeHook({
         nrCreators,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         collectionless: true,
       });
 
@@ -889,9 +875,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       const fakeCollection = Keypair.generate().publicKey;
@@ -930,9 +914,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       const bidId1 = Keypair.generate().publicKey;
@@ -979,9 +961,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0, //keep this at 0 or need to rewrite how skippedCreators work
         numMints: 1, //keep at 1 or need to take into account prev creator earnings, which I CBA
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
@@ -1010,22 +990,8 @@ describe("tcomp bids", () => {
         prevBidAmount: LAMPORTS_PER_SOL,
       });
       // -------------------- failure cases
-      await expect(
-        testTakeBid({
-          target: BidTarget.Voc, //wrong target
-          index,
-          lookupTableAccount,
-          memTree,
-          merkleTree,
-          metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
-          owner: traderB.publicKey,
-          seller: traderA,
-          canopyDepth,
-          bidId: verifiedCreator.publicKey,
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
       //can't do a bad case for assetId since it's only used for picking branch js side and VOC branch will be picked correctly
+      //can't do a bad case for VOC coz that branch accepts FVC now too
       // -------------------- final purchase
       await testTakeBid({
         target: BidTarget.Fvc,
@@ -1050,9 +1016,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         //intentionally not passing verifiedCreator
       });
 
@@ -1088,9 +1052,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 1,
         numMints: 2,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
@@ -1127,9 +1089,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0,
         numMints: 1,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
@@ -1139,7 +1099,6 @@ describe("tcomp bids", () => {
     let metadata = await makeCNftMeta({
       collectionMint,
       nrCreators: 0,
-      randomizeName: true,
     });
     let leaf;
     let assetId;
@@ -1226,9 +1185,7 @@ describe("tcomp bids", () => {
         await beforeHook({
           nrCreators,
           numMints: 2,
-          setupTswap: true,
           canopyDepth,
-          randomizeName: true,
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
@@ -1330,7 +1287,6 @@ describe("tcomp bids", () => {
           nrCreators,
           numMints: 2,
           canopyDepth,
-          randomizeName: true,
         });
 
       await testBid({
@@ -1387,9 +1343,7 @@ describe("tcomp bids", () => {
       await beforeHook({
         nrCreators: 0,
         numMints: 1,
-        setupTswap: true,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
@@ -1479,7 +1433,6 @@ describe("tcomp bids", () => {
         nrCreators: 0,
         numMints: 2,
         canopyDepth,
-        randomizeName: true,
         verifiedCreator,
       });
 
