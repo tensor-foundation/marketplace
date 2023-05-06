@@ -63,22 +63,22 @@ import {
   findTreeAuthorityPda,
 } from "./pda";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
+import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
 
-export const tcompIDL_latest = IDL_latest;
-export const tcompIDL_latest_EffSlot = 0;
+export const TCompIDL_latest = IDL_latest;
+export const TCompIDL_latest_EffSlot = 0;
 
-export type TcompIDL = tcomp_latest;
+export type TcompIDL = TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
 export const triageBidIDL = (slot: number | bigint): TcompIDL | null => {
-  if (slot < tcompIDL_latest_EffSlot) return null;
-  return tcompIDL_latest;
+  if (slot < TCompIDL_latest_EffSlot) return null;
+  return TCompIDL_latest;
 };
 
 // --------------------------------------- constants
@@ -1023,7 +1023,8 @@ export class TCompSDK {
   getIxAmounts(ix: ParsedAnchorTcompIx<TcompIDL>): {
     amount: BN;
     tcompFee: BN | null;
-    brokerFee: BN | null;
+    takerBrokerFee: BN | null;
+    makerBrokerFee: BN | null;
     creatorFee: BN | null;
     currency: PublicKey | null;
   } | null {
@@ -1033,7 +1034,8 @@ export class TCompSDK {
     return {
       amount: e.amount,
       tcompFee: e.tcompFee ?? null,
-      brokerFee: e.brokerFee ?? null,
+      takerBrokerFee: e.takerBrokerFee ?? null,
+      makerBrokerFee: e.makerBrokerFee ?? null,
       creatorFee: e.creatorFee ?? null,
       currency: e.currency,
     };
@@ -1113,7 +1115,8 @@ export class TakeEvent {
   assetId!: PublicKey;
   amount!: BN;
   tcompFee!: BN;
-  brokerFee!: BN;
+  takerBrokerFee!: BN;
+  makerBrokerFee!: BN;
   creatorFee!: BN;
   currency!: PublicKey | null;
 
@@ -1131,7 +1134,8 @@ export const takeEventSchema = new Map([
         ["assetId", [32]],
         ["amount", "u64"],
         ["tcompFee", "u64"],
-        ["brokerFee", "u64"],
+        ["takerBrokerFee", "u64"],
+        ["makerBrokerFee", "u64"],
         ["creatorFee", "u64"],
         ["currency", { kind: "option", type: [32] }],
       ],
@@ -1220,7 +1224,8 @@ export function deserializeTcompEvent(data: Buffer) {
       amount: new BN(e.amount),
       tcompFee: new BN(e.tcompFee),
       creatorFee: new BN(e.creatorFee),
-      brokerFee: new BN(e.brokerFee),
+      takerBrokerFee: new BN(e.takerBrokerFee),
+      makerBrokerFee: new BN(e.makerBrokerFee),
       currency: e.currency ? new PublicKey(e.currency) : null,
     };
   } else {

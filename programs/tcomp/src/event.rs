@@ -24,7 +24,8 @@ pub struct TakeEvent {
     pub asset_id: Pubkey,
     pub amount: u64,
     pub tcomp_fee: u64,
-    pub broker_fee: u64,
+    pub taker_broker_fee: u64,
+    pub maker_broker_fee: u64,
     pub creator_fee: u64,
     pub currency: Option<Pubkey>,
 }

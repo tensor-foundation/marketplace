@@ -158,7 +158,9 @@ pub fn handler<'info>(
             asset_id,
             amount,
             tcomp_fee,
-            broker_fee,
+            taker_broker_fee: broker_fee,
+            //TODO: maker broker disabled
+            maker_broker_fee: 0,
             creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
         }),

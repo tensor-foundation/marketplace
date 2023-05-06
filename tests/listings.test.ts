@@ -654,7 +654,7 @@ describe("tcomp listings", () => {
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
         if (TAKER_BROKER_PCT > 0) {
-          expect(amounts?.brokerFee?.toNumber()).eq(
+          expect(amounts?.takerBrokerFee?.toNumber()).eq(
             Math.trunc((amount * FEE_PCT * TAKER_BROKER_PCT) / 100)
           );
         }

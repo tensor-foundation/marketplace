@@ -1284,7 +1284,11 @@ export type Tcomp = {
             "type": "u64"
           },
           {
-            "name": "brokerFee",
+            "name": "takerBrokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "makerBrokerFee",
             "type": "u64"
           },
           {
@@ -2814,7 +2818,11 @@ export const IDL: Tcomp = {
             "type": "u64"
           },
           {
-            "name": "brokerFee",
+            "name": "takerBrokerFee",
+            "type": "u64"
+          },
+          {
+            "name": "makerBrokerFee",
             "type": "u64"
           },
           {
