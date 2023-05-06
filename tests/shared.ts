@@ -59,11 +59,7 @@ import {
 } from "../src";
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, BN, Wallet } from "@project-serum/anchor";
-import {
-  computeDataHash,
-  metadataArgsBeet,
-} from "../deps/metaplex-mpl/bubblegum/js/src";
-import { keccak_256 } from "js-sha3";
+import { computeDataHash } from "../deps/metaplex-mpl/bubblegum/js/src";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import {
@@ -622,12 +618,6 @@ export const delegateCNft = async ({
     proof: proof.proof,
   });
 };
-
-// Version from metaplex but without seller fee basis points
-export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
-  const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
-  return Buffer.from(keccak_256.digest(serializedMetadata));
-}
 
 export const verifyCNft = async ({
   conn = TEST_PROVIDER.connection,

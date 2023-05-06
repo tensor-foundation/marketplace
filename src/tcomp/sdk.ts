@@ -2,6 +2,7 @@ import * as borsh from "borsh";
 import {
   AccountSuffix,
   computeCreatorHashPATCHED,
+  computeMetadataArgsHash,
   decodeAcct,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -39,13 +40,13 @@ import {
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
   TokenStandard,
+  UseMethod,
 } from "@metaplex-foundation/mpl-bubblegum";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
 } from "@solana/spl-account-compression";
 import { Uses } from "@metaplex-foundation/mpl-token-metadata";
-import { UseMethod } from "../../deps/metaplex-mpl/bubblegum/js/src";
 import {
   AnchorEvent,
   AnchorIx,
@@ -61,11 +62,9 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
 } from "./pda";
-import { computeMetadataArgsHash } from "../../tests/shared";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL as IDL_latest, Tcomp as tcomp_latest } from "./idl/tcomp";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
-import { Bid } from "@metaplex-foundation/js";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 

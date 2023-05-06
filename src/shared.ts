@@ -1,11 +1,12 @@
 import { AccountClient, BN, Idl, Program, utils } from "@project-serum/anchor";
 import { AllAccountsMap } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import { MetadataArgs } from "@metaplex-foundation/mpl-bubblegum";
 import {
+  MetadataArgs,
+  metadataArgsBeet,
   computeDataHash,
   Creator,
-} from "../deps/metaplex-mpl/bubblegum/js/src";
+} from "@metaplex-foundation/mpl-bubblegum";
 import { keccak_256 } from "js-sha3";
 
 export const getAccountRent = (
@@ -212,4 +213,10 @@ export function computeCompressedNFTHashPATCHED(
   ]);
 
   return Buffer.from(keccak_256.digest(message));
+}
+
+// Version from metaplex but without seller fee basis points
+export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
+  const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
+  return Buffer.from(keccak_256.digest(serializedMetadata));
 }
