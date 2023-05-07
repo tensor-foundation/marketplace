@@ -291,7 +291,7 @@ pub(crate) fn transfer_cnft(args: TransferArgs) -> Result<()> {
 
 pub fn calc_fees(amount: u64) -> Result<(u64, u64)> {
     let full_fee = unwrap_checked!({
-        (FEE_BPS as u64)
+        (TCOMP_FEE_BPS as u64)
             .checked_mul(amount)?
             .checked_div(HUNDRED_PCT_BPS as u64)
     });

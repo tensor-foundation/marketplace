@@ -8,7 +8,7 @@ export type Tcomp = {
       "value": "1"
     },
     {
-      "name": "FEE_BPS",
+      "name": "TCOMP_FEE_BPS",
       "type": "u16",
       "value": "150"
     },
@@ -1542,7 +1542,7 @@ export const IDL: Tcomp = {
       "value": "1"
     },
     {
-      "name": "FEE_BPS",
+      "name": "TCOMP_FEE_BPS",
       "type": "u16",
       "value": "150"
     },

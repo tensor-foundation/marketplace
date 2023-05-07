@@ -45,7 +45,7 @@ import {
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
-  FEE_BPS,
+  TCOMP_FEE_BPS,
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
@@ -325,7 +325,7 @@ export const DEFAULT_DEPTH_SIZE: ValidDepthSizePair = {
   maxBufferSize: 64,
 };
 
-export const FEE_PCT = FEE_BPS / 1e4;
+export const FEE_PCT = TCOMP_FEE_BPS / 1e4;
 export const calcFees = (amount: number) => {
   const totalFee = Math.trunc(amount * FEE_PCT);
   const brokerFee = Math.trunc((totalFee * TAKER_BROKER_PCT) / 100);

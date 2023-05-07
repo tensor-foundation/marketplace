@@ -86,8 +86,8 @@ export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
 export const CURRENT_TCOMP_VERSION: number = +IDL_latest.constants.find(
   (c) => c.name === "CURRENT_TCOMP_VERSION"
 )!.value;
-export const FEE_BPS: number = +IDL_latest.constants.find(
-  (c) => c.name === "FEE_BPS"
+export const TCOMP_FEE_BPS: number = +IDL_latest.constants.find(
+  (c) => c.name === "TCOMP_FEE_BPS"
 )!.value;
 export const TAKER_BROKER_PCT: number = +IDL_latest.constants.find(
   (c) => c.name === "TAKER_BROKER_PCT"
@@ -608,7 +608,6 @@ export class TCompSDK {
     canopyDepth = 0,
   }: {
     merkleTree: PublicKey;
-    delegate?: PublicKey;
     proof: Buffer[];
     root: number[];
     metadata: MetadataArgs;
