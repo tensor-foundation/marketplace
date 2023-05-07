@@ -76,7 +76,7 @@ export const TCompIDL_latest_EffSlot = 0;
 export type TcompIDL = TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
-export const triageBidIDL = (slot: number | bigint): TcompIDL | null => {
+export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
   if (slot < TCompIDL_latest_EffSlot) return null;
   return TCompIDL_latest;
 };
