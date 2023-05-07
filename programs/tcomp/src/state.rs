@@ -47,7 +47,7 @@ impl ListState {
 // --------------------------------------- bidding
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum BidTarget {
     AssetId = 0,
     Voc = 1,
@@ -55,7 +55,7 @@ pub enum BidTarget {
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum BidField {
     Name = 0,
 }

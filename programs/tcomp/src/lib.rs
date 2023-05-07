@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 #![allow(unknown_lints)] // Needed otherwise clippy complains during github actions
 #![allow(clippy::result_large_err)] // Needed otherwise clippy unhappy w/ anchor errors
 
@@ -38,9 +39,7 @@ pub use mpl_bubblegum::{
 };
 pub use noop::*;
 pub use shared::*;
-pub use spl_account_compression::{
-    program::SplAccountCompression, wrap_application_data_v1, Node, Noop,
-};
+pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
 pub use tensorswap::{self, program::Tensorswap, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR};
 pub use vipers::{prelude::*, throw_err};
@@ -136,7 +135,6 @@ pub mod tcomp {
 
     pub fn edit<'info>(
         ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
-        nonce: u64,
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -145,7 +143,6 @@ pub mod tcomp {
     ) -> Result<()> {
         instructions::edit::handler(
             ctx,
-            nonce,
             amount,
             expire_in_sec,
             currency,
@@ -192,6 +189,12 @@ pub mod tcomp {
         ctx: Context<'_, '_, '_, 'info, CloseExpiredBid<'info>>,
     ) -> Result<()> {
         instructions::close_expired_bid::handler(ctx)
+    }
+
+    pub fn close_expired_listing<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListing<'info>>,
+    ) -> Result<()> {
+        instructions::close_expired_listing::handler(ctx)
     }
 
     pub fn take_bid_meta_hash<'info>(

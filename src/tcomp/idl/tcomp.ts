@@ -455,11 +455,6 @@ export type Tcomp = {
       "name": "edit",
       "accounts": [
         {
-          "name": "merkleTree",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -476,10 +471,6 @@ export type Tcomp = {
         }
       ],
       "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
         {
           "name": "amount",
           "type": "u64"
@@ -624,6 +615,27 @@ export type Tcomp = {
       "accounts": [
         {
           "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeExpiredListing",
+      "accounts": [
+        {
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
@@ -1410,124 +1422,144 @@ export type Tcomp = {
   ],
   "errors": [
     {
-      "code": 6000,
+      "code": 6100,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
     },
     {
-      "code": 6001,
+      "code": 6101,
       "name": "ExpiryTooLarge",
       "msg": "expiry too large"
     },
     {
-      "code": 6002,
+      "code": 6102,
       "name": "BadOwner",
       "msg": "bad owner"
     },
     {
-      "code": 6003,
+      "code": 6103,
       "name": "BadListState",
       "msg": "bad list state"
     },
     {
-      "code": 6004,
+      "code": 6104,
       "name": "BadRoyaltiesPct",
       "msg": "royalties pct must be between 0 and 100"
     },
     {
-      "code": 6005,
+      "code": 6105,
       "name": "PriceMismatch",
       "msg": "price mismatch"
     },
     {
-      "code": 6006,
+      "code": 6106,
       "name": "CreatorMismatch",
       "msg": "creator mismatch"
     },
     {
-      "code": 6007,
+      "code": 6107,
       "name": "InsufficientBalance",
       "msg": "insufficient balance"
     },
     {
-      "code": 6008,
-      "name": "FailedLeafVerification",
-      "msg": "failed leaf verification"
+      "code": 6108,
+      "name": "BidExpired",
+      "msg": "bid has expired"
     },
     {
-      "code": 6009,
-      "name": "OfferExpired",
-      "msg": "offer has expired"
-    },
-    {
-      "code": 6010,
+      "code": 6109,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
     },
     {
-      "code": 6012,
-      "name": "OfferNotYetExpired",
+      "code": 6110,
+      "name": "BadBidField",
+      "msg": "cannot pass bid field"
+    },
+    {
+      "code": 6111,
+      "name": "BidNotYetExpired",
       "msg": "bid not yet expired"
     },
     {
-      "code": 6013,
+      "code": 6112,
       "name": "BadMargin",
       "msg": "bad margin"
     },
     {
-      "code": 6014,
+      "code": 6113,
       "name": "WrongIxForBidTarget",
       "msg": "wrong ix for bid target called"
     },
     {
-      "code": 6015,
+      "code": 6114,
       "name": "WrongTargetId",
       "msg": "wrong target id"
     },
     {
-      "code": 6016,
+      "code": 6115,
       "name": "MissingFvc",
       "msg": "creator array missing first verified creator"
     },
     {
-      "code": 6017,
+      "code": 6116,
       "name": "MissingCollection",
       "msg": "metadata missing collection"
     },
     {
-      "code": 6018,
+      "code": 6117,
       "name": "CannotModifyTarget",
       "msg": "cannot modify bid target, create a new bid"
     },
     {
-      "code": 6019,
+      "code": 6118,
       "name": "TargetIdMustEqualBidId",
       "msg": "target id and bid id must be the same for single bids"
     },
     {
-      "code": 6020,
+      "code": 6119,
       "name": "CurrencyNotYetEnabled",
       "msg": "currency not yet enabled"
     },
     {
-      "code": 6021,
+      "code": 6120,
       "name": "MakerBrokerNotYetEnabled",
       "msg": "maker broker not yet enabled"
     },
     {
-      "code": 6022,
+      "code": 6121,
       "name": "OptionalRoyaltiesNotYetEnabled",
       "msg": "optional royalties not yet enabled"
     },
     {
-      "code": 6023,
+      "code": 6122,
       "name": "WrongStateVersion",
       "msg": "wrong state version"
     },
     {
-      "code": 6024,
-      "name": "WrongFieldId",
+      "code": 6123,
+      "name": "WrongBidFieldId",
       "msg": "wrong field id"
+    },
+    {
+      "code": 6124,
+      "name": "BrokerMismatch",
+      "msg": "broker mismatch"
+    },
+    {
+      "code": 6125,
+      "name": "AssetIdMismatch",
+      "msg": "asset id mismatch"
+    },
+    {
+      "code": 6126,
+      "name": "ListingExpired",
+      "msg": "listing has expired"
+    },
+    {
+      "code": 6127,
+      "name": "ListingNotYetExpired",
+      "msg": "listing not yet expired"
     }
   ]
 };
@@ -1989,11 +2021,6 @@ export const IDL: Tcomp = {
       "name": "edit",
       "accounts": [
         {
-          "name": "merkleTree",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -2010,10 +2037,6 @@ export const IDL: Tcomp = {
         }
       ],
       "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
         {
           "name": "amount",
           "type": "u64"
@@ -2158,6 +2181,27 @@ export const IDL: Tcomp = {
       "accounts": [
         {
           "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeExpiredListing",
+      "accounts": [
+        {
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
@@ -2944,124 +2988,144 @@ export const IDL: Tcomp = {
   ],
   "errors": [
     {
-      "code": 6000,
+      "code": 6100,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
     },
     {
-      "code": 6001,
+      "code": 6101,
       "name": "ExpiryTooLarge",
       "msg": "expiry too large"
     },
     {
-      "code": 6002,
+      "code": 6102,
       "name": "BadOwner",
       "msg": "bad owner"
     },
     {
-      "code": 6003,
+      "code": 6103,
       "name": "BadListState",
       "msg": "bad list state"
     },
     {
-      "code": 6004,
+      "code": 6104,
       "name": "BadRoyaltiesPct",
       "msg": "royalties pct must be between 0 and 100"
     },
     {
-      "code": 6005,
+      "code": 6105,
       "name": "PriceMismatch",
       "msg": "price mismatch"
     },
     {
-      "code": 6006,
+      "code": 6106,
       "name": "CreatorMismatch",
       "msg": "creator mismatch"
     },
     {
-      "code": 6007,
+      "code": 6107,
       "name": "InsufficientBalance",
       "msg": "insufficient balance"
     },
     {
-      "code": 6008,
-      "name": "FailedLeafVerification",
-      "msg": "failed leaf verification"
+      "code": 6108,
+      "name": "BidExpired",
+      "msg": "bid has expired"
     },
     {
-      "code": 6009,
-      "name": "OfferExpired",
-      "msg": "offer has expired"
-    },
-    {
-      "code": 6010,
+      "code": 6109,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
     },
     {
-      "code": 6012,
-      "name": "OfferNotYetExpired",
+      "code": 6110,
+      "name": "BadBidField",
+      "msg": "cannot pass bid field"
+    },
+    {
+      "code": 6111,
+      "name": "BidNotYetExpired",
       "msg": "bid not yet expired"
     },
     {
-      "code": 6013,
+      "code": 6112,
       "name": "BadMargin",
       "msg": "bad margin"
     },
     {
-      "code": 6014,
+      "code": 6113,
       "name": "WrongIxForBidTarget",
       "msg": "wrong ix for bid target called"
     },
     {
-      "code": 6015,
+      "code": 6114,
       "name": "WrongTargetId",
       "msg": "wrong target id"
     },
     {
-      "code": 6016,
+      "code": 6115,
       "name": "MissingFvc",
       "msg": "creator array missing first verified creator"
     },
     {
-      "code": 6017,
+      "code": 6116,
       "name": "MissingCollection",
       "msg": "metadata missing collection"
     },
     {
-      "code": 6018,
+      "code": 6117,
       "name": "CannotModifyTarget",
       "msg": "cannot modify bid target, create a new bid"
     },
     {
-      "code": 6019,
+      "code": 6118,
       "name": "TargetIdMustEqualBidId",
       "msg": "target id and bid id must be the same for single bids"
     },
     {
-      "code": 6020,
+      "code": 6119,
       "name": "CurrencyNotYetEnabled",
       "msg": "currency not yet enabled"
     },
     {
-      "code": 6021,
+      "code": 6120,
       "name": "MakerBrokerNotYetEnabled",
       "msg": "maker broker not yet enabled"
     },
     {
-      "code": 6022,
+      "code": 6121,
       "name": "OptionalRoyaltiesNotYetEnabled",
       "msg": "optional royalties not yet enabled"
     },
     {
-      "code": 6023,
+      "code": 6122,
       "name": "WrongStateVersion",
       "msg": "wrong state version"
     },
     {
-      "code": 6024,
-      "name": "WrongFieldId",
+      "code": 6123,
+      "name": "WrongBidFieldId",
       "msg": "wrong field id"
+    },
+    {
+      "code": 6124,
+      "name": "BrokerMismatch",
+      "msg": "broker mismatch"
+    },
+    {
+      "code": 6125,
+      "name": "AssetIdMismatch",
+      "msg": "asset id mismatch"
+    },
+    {
+      "code": 6126,
+      "name": "ListingExpired",
+      "msg": "listing has expired"
+    },
+    {
+      "code": 6127,
+      "name": "ListingNotYetExpired",
+      "msg": "listing not yet expired"
     }
   ]
 };

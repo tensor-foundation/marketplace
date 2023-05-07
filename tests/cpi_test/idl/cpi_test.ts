@@ -11,11 +11,6 @@ export type CpiTest = {
           "isSigner": true
         },
         {
-          "name": "merkleTree",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -27,10 +22,6 @@ export type CpiTest = {
         }
       ],
       "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
         {
           "name": "amount",
           "type": "u64"
@@ -77,11 +68,6 @@ export const IDL: CpiTest = {
           "isSigner": true
         },
         {
-          "name": "merkleTree",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "listState",
           "isMut": true,
           "isSigner": false
@@ -93,10 +79,6 @@ export const IDL: CpiTest = {
         }
       ],
       "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
         {
           "name": "amount",
           "type": "u64"

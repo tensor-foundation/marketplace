@@ -34,9 +34,8 @@ export const cpiEdit = async ({
   const [listState] = findListStatePda({ assetId });
 
   const builder = program.methods
-    .cpi(nonce, amount, expireInSec, currency, privateTaker, makerTaker)
+    .cpi(amount, expireInSec, currency, privateTaker, makerTaker)
     .accounts({
-      merkleTree,
       owner,
       listState,
       tcompProgram: TCOMP_ADDR,

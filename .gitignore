@@ -6,8 +6,18 @@ target
 **/*.rs.bk
 node_modules
 test-ledger
+
+# Ignore so git-diff in GH actions doesn't complain.
+deps/*
+
+# Yarn (ignore only some for zero-install: https://stackoverflow.com/a/58550620)
 .yarn/*
-!.yarn/releases/
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+!.yarn/sdks
 
 # Private keys/secrets
 *.jks
@@ -70,5 +80,3 @@ TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN.json
 validator-stdout.txt
 
 ilmoi_full_test.sh
-
-deps/

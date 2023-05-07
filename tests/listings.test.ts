@@ -9,6 +9,7 @@ import {
   beforeAllHook,
   beforeHook,
   buildAndSendTx,
+  CONC_MERKLE_TREE_ERROR,
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
@@ -44,7 +45,7 @@ describe("tcomp listings", () => {
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
-        await testList({
+        const { listState } = await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
           memTree,
@@ -67,9 +68,8 @@ describe("tcomp listings", () => {
         ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
-          index,
-          merkleTree,
           owner: traderA,
+          listState,
         });
         //try to buy at the wrong price
         await expect(
@@ -86,9 +86,8 @@ describe("tcomp listings", () => {
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL / 2),
-          index,
-          merkleTree,
           owner: traderA,
+          listState,
         });
         await testBuy({
           index,
@@ -192,7 +191,7 @@ describe("tcomp listings", () => {
           owner: traderA.publicKey,
           lookupTableAccount,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       //fake shares
       await expect(
         testBuy({
@@ -212,7 +211,7 @@ describe("tcomp listings", () => {
           owner: traderA.publicKey,
           lookupTableAccount,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       //fake verified
       await expect(
         testBuy({
@@ -232,7 +231,7 @@ describe("tcomp listings", () => {
           owner: traderA.publicKey,
           lookupTableAccount,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       await testBuy({
         index,
         maxAmount: new BN(LAMPORTS_PER_SOL),
@@ -289,8 +288,8 @@ describe("tcomp listings", () => {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
-      for (const { leaf, index, metadata, assetId } of leaves) {
-        await testList({
+      for (const { index, metadata } of leaves) {
+        const { listState } = await testList({
           amount: new BN(LAMPORTS_PER_SOL),
           index,
           memTree,
@@ -302,9 +301,8 @@ describe("tcomp listings", () => {
         });
         await testEdit({
           amount: new BN(LAMPORTS_PER_SOL * 2),
-          index,
-          merkleTree,
           owner: traderA,
+          listState,
         });
         //try to buy at the wrong price
         await expect(
@@ -422,8 +420,8 @@ describe("tcomp listings", () => {
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
 
-    for (const { leaf, index, metadata, assetId } of leaves) {
-      await testList({
+    for (const { index, metadata } of leaves) {
+      const { listState } = await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
         memTree,
@@ -446,13 +444,12 @@ describe("tcomp listings", () => {
           owner: traderA.publicKey,
           canopyDepth,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingExpired"));
       await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
-        index,
-        merkleTree,
         owner: traderA,
         expireInSec: new BN(100),
+        listState,
       });
       await testBuy({
         index,
@@ -516,8 +513,8 @@ describe("tcomp listings", () => {
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
     const [traderC] = await makeNTraders(1);
 
-    for (const { leaf, index, metadata, assetId } of leaves) {
-      await testList({
+    for (const { index, metadata } of leaves) {
+      const { listState } = await testList({
         amount: new BN(LAMPORTS_PER_SOL),
         index,
         memTree,
@@ -542,9 +539,8 @@ describe("tcomp listings", () => {
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
       await testEdit({
         amount: new BN(LAMPORTS_PER_SOL),
-        index,
-        merkleTree,
         owner: traderA,
+        listState,
         privateTaker: null,
       });
       await testBuy({
@@ -568,23 +564,24 @@ describe("tcomp listings", () => {
 
     const takerBroker = Keypair.generate().publicKey;
 
-    for (const { leaf, index, metadata, assetId } of leaves) {
+    for (const { index, metadata } of leaves) {
       let amount = LAMPORTS_PER_SOL;
 
       // --------------------------------------- List
 
+      const { sig, listState } = await testList({
+        amount: new BN(amount),
+        index,
+        memTree,
+        merkleTree,
+        metadata,
+        owner: traderA,
+        canopyDepth,
+        privateTaker: traderB.publicKey,
+      });
+
       {
-        const { sig } = await testList({
-          amount: new BN(amount),
-          index,
-          memTree,
-          merkleTree,
-          metadata,
-          owner: traderA,
-          canopyDepth,
-          privateTaker: traderB.publicKey,
-        });
-        const ix = await fetchAndCheckSingleIxTx(sig!, "list");
+        const ix = await fetchAndCheckSingleIxTx(sig, "list");
         const traders = tcompSdk.getTakerMaker(ix);
         expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
@@ -599,10 +596,9 @@ describe("tcomp listings", () => {
       {
         const { sig } = await testEdit({
           amount: new BN(amount),
-          index,
-          merkleTree,
           owner: traderA,
           privateTaker: traderC.publicKey,
+          listState,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
         const traders = tcompSdk.getTakerMaker(ix);

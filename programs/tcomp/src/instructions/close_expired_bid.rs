@@ -1,6 +1,5 @@
 use crate::*;
 
-// TODO: write a similar ix for closing expired listings
 #[derive(Accounts)]
 pub struct CloseExpiredBid<'info> {
     #[account(
@@ -21,7 +20,7 @@ pub fn handler(ctx: Context<CloseExpiredBid>) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
     require!(
         bid_state.expiry < Clock::get()?.unix_timestamp,
-        TcompError::OfferNotYetExpired
+        TcompError::BidNotYetExpired
     );
     Ok(())
 }

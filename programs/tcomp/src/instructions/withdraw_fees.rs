@@ -1,7 +1,6 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(nonce: u64)]
 pub struct WithdrawFees<'info> {
     #[account(mut, seeds = [], bump = tswap.bump[0], has_one = cosigner, has_one = owner)]
     pub tswap: Box<Account<'info, TSwap>>,

@@ -1,13 +1,3 @@
-use spl_account_compression::{
-    _merkle_tree_apply_fn, _merkle_tree_depth_size_apply_fn,
-    canopy::fill_in_proof_from_canopy,
-    merkle_tree_apply_fn,
-    state::{
-        merkle_tree_get_size, ConcurrentMerkleTreeHeader, CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1,
-    },
-    zero_copy::ZeroCopy,
-    AccountCompressionError, ChangeLogEvent, ConcurrentMerkleTree,
-};
 use tensorswap::{margin_pda, MarginAccount};
 
 use crate::*;
@@ -39,28 +29,26 @@ pub(crate) enum MetadataSrc {
     Metadata(TMetadataArgs),
     DataHash(DataHashArgs),
 }
-pub(crate) struct VerifyArgs<'a, 'info> {
-    pub(crate) root: [u8; 32],
+pub(crate) struct MakeCnftArgs<'a, 'info> {
     pub(crate) nonce: u64,
-    pub(crate) index: u32,
     pub(crate) metadata_src: MetadataSrc,
     pub(crate) merkle_tree: &'a AccountInfo<'info>,
-    pub(crate) leaf_owner: &'a AccountInfo<'info>,
-    pub(crate) leaf_delegate: &'a AccountInfo<'info>,
     pub(crate) creator_accounts: &'a [AccountInfo<'info>],
-    pub(crate) proof_accounts: &'a [AccountInfo<'info>],
 }
-pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Vec<Creator>)> {
-    let VerifyArgs {
-        root,
-        nonce,
-        index,
+
+pub(crate) struct CnftArgs {
+    pub(crate) asset_id: Pubkey,
+    pub(crate) data_hash: [u8; 32],
+    pub(crate) creator_hash: [u8; 32],
+    pub(crate) creators: Vec<Creator>,
+}
+
+pub(crate) fn make_cnft_args(args: MakeCnftArgs) -> Result<CnftArgs> {
+    let MakeCnftArgs {
         metadata_src,
-        merkle_tree,
-        leaf_owner,
-        leaf_delegate,
         creator_accounts,
-        proof_accounts,
+        nonce,
+        merkle_tree,
     } = args;
 
     // --------------------------------------- from bubblegum/process_mint_v1
@@ -104,51 +92,12 @@ pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32
         }
     };
 
-    // Nonce is used for asset it, not index
-    let asset_id = get_asset_id(&merkle_tree.key(), nonce);
-
-    let leaf = LeafSchema::new_v0(
-        asset_id,
-        leaf_owner.key(),
-        leaf_delegate.key(),
-        nonce, // Nonce is also stored in the schema, not index
+    Ok(CnftArgs {
+        asset_id: get_asset_id(&merkle_tree.key(), nonce),
         data_hash,
         creator_hash,
-    )
-    .to_node();
-
-    // --------------------------------------- from spl_compression/verify_leaf
-    // Can't CPI into it because failed CPI calls can't be caught with match
-
-    require_eq!(
-        *merkle_tree.owner,
-        spl_account_compression::id(),
-        TcompError::FailedLeafVerification
-    );
-    let merkle_tree_bytes = merkle_tree.try_borrow_data()?;
-    let (header_bytes, rest) = merkle_tree_bytes.split_at(CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1);
-
-    let header = ConcurrentMerkleTreeHeader::try_from_slice(header_bytes)?;
-    header.assert_valid()?;
-    header.assert_valid_leaf_index(index)?;
-
-    let merkle_tree_size = merkle_tree_get_size(&header)?;
-    let (tree_bytes, canopy_bytes) = rest.split_at(merkle_tree_size);
-
-    let mut proof = vec![];
-    for node in proof_accounts.iter() {
-        proof.push(node.key().to_bytes());
-    }
-    fill_in_proof_from_canopy(canopy_bytes, header.get_max_depth(), index, &mut proof)?;
-    let id = merkle_tree.key();
-
-    match merkle_tree_apply_fn!(header, id, tree_bytes, prove_leaf, root, leaf, &proof, index) {
-        Ok(_) => Ok((asset_id, creator_hash, data_hash, creators)),
-        Err(e) => {
-            msg!("FAILED LEAF VERIFICATION: {:?}", e);
-            Err(TcompError::FailedLeafVerification.into())
-        }
-    }
+        creators,
+    })
 }
 
 pub(crate) enum TcompSigner<'a, 'info> {
@@ -455,3 +404,116 @@ pub fn assert_decode_margin_account<'info>(
 
     Ok(margin_account)
 }
+
+// NB: Keep verify here in case we need for future reference.
+// pub(crate) struct VerifyArgs<'a, 'info> {
+//     pub(crate) root: [u8; 32],
+//     pub(crate) nonce: u64,
+//     pub(crate) index: u32,
+//     pub(crate) metadata_src: MetadataSrc,
+//     pub(crate) merkle_tree: &'a AccountInfo<'info>,
+//     pub(crate) leaf_owner: &'a AccountInfo<'info>,
+//     pub(crate) leaf_delegate: &'a AccountInfo<'info>,
+//     pub(crate) creator_accounts: &'a [AccountInfo<'info>],
+//     pub(crate) proof_accounts: &'a [AccountInfo<'info>],
+// }
+// pub(crate) fn verify_cnft(args: VerifyArgs) -> Result<(Pubkey, [u8; 32], [u8; 32], Vec<Creator>)> {
+//     let VerifyArgs {
+//         root,
+//         nonce,
+//         index,
+//         metadata_src,
+//         merkle_tree,
+//         leaf_owner,
+//         leaf_delegate,
+//         creator_accounts,
+//         proof_accounts,
+//     } = args;
+
+//     // --------------------------------------- from bubblegum/process_mint_v1
+
+//     let (data_hash, creator_hash, creators) = match metadata_src {
+//         MetadataSrc::Metadata(metadata) => {
+//             // Serialize metadata into original metaplex format
+//             let mplex_metadata = metadata.into(creator_accounts);
+//             let creator_hash = hash_creators(&mplex_metadata.creators)?;
+//             let metadata_args_hash = hashv(&[mplex_metadata.try_to_vec()?.as_slice()]);
+//             let data_hash = hashv(&[
+//                 &metadata_args_hash.to_bytes(),
+//                 &mplex_metadata.seller_fee_basis_points.to_le_bytes(),
+//             ])
+//             .to_bytes();
+
+//             (data_hash, creator_hash, mplex_metadata.creators)
+//         }
+//         MetadataSrc::DataHash(DataHashArgs {
+//             meta_hash,
+//             creator_shares,
+//             creator_verified,
+//             seller_fee_basis_points,
+//         }) => {
+//             // Verify seller fee basis points
+//             let data_hash = hashv(&[&meta_hash, &seller_fee_basis_points.to_le_bytes()]).to_bytes();
+//             // Verify creators
+//             let creators = creator_accounts
+//                 .iter()
+//                 .zip(creator_shares.iter())
+//                 .zip(creator_verified.iter())
+//                 .map(|((c, s), v)| Creator {
+//                     address: c.key(),
+//                     verified: *v,
+//                     share: *s,
+//                 })
+//                 .collect::<Vec<_>>();
+//             let creator_hash = hash_creators(&creators)?;
+
+//             (data_hash, creator_hash, creators)
+//         }
+//     };
+
+//     // Nonce is used for asset it, not index
+//     let asset_id = get_asset_id(&merkle_tree.key(), nonce);
+
+//     let leaf = LeafSchema::new_v0(
+//         asset_id,
+//         leaf_owner.key(),
+//         leaf_delegate.key(),
+//         nonce, // Nonce is also stored in the schema, not index
+//         data_hash,
+//         creator_hash,
+//     )
+//     .to_node();
+
+//     // --------------------------------------- from spl_compression/verify_leaf
+//     // Can't CPI into it because failed CPI calls can't be caught with match
+
+//     require_eq!(
+//         *merkle_tree.owner,
+//         spl_account_compression::id(),
+//         TcompError::FailedLeafVerification
+//     );
+//     let merkle_tree_bytes = merkle_tree.try_borrow_data()?;
+//     let (header_bytes, rest) = merkle_tree_bytes.split_at(CONCURRENT_MERKLE_TREE_HEADER_SIZE_V1);
+
+//     let header = ConcurrentMerkleTreeHeader::try_from_slice(header_bytes)?;
+//     header.assert_valid()?;
+//     header.assert_valid_leaf_index(index)?;
+
+//     let merkle_tree_size = merkle_tree_get_size(&header)?;
+//     let (tree_bytes, canopy_bytes) = rest.split_at(merkle_tree_size);
+
+//     let mut proof = vec![];
+//     for node in proof_accounts.iter() {
+//         proof.push(node.key().to_bytes());
+//     }
+//     fill_in_proof_from_canopy(canopy_bytes, header.get_max_depth(), index, &mut proof)?;
+//     let id = merkle_tree.key();
+
+//     match merkle_tree_apply_fn!(header, id, tree_bytes, prove_leaf, root, leaf, &proof, index) {
+//         Ok(_) => Ok((asset_id, creator_hash, data_hash, creators)),
+//         Err(e) => {
+//             msg!("FAILED LEAF VERIFICATION: {:?}", e);
+//             Err(TcompError::FailedLeafVerification.into())
+//         }
+//     }
+// }

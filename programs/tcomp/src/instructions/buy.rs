@@ -1,7 +1,6 @@
 use crate::*;
 
 #[derive(Accounts)]
-#[instruction(nonce: u64)]
 pub struct Buy<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
@@ -17,11 +16,10 @@ pub struct Buy<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
-    /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut, close = owner,
         seeds=[
             b"list_state".as_ref(),
-            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+            list_state.asset_id.as_ref(),
         ],
         bump = list_state.bump[0],
         has_one = owner
@@ -54,13 +52,19 @@ impl<'info> Validate<'info> for Buy<'info> {
         );
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
-            TcompError::OfferExpired
+            TcompError::ListingExpired
         );
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
+        }
+        if let Some(maker_broker) = list_state.maker_broker {
+            require!(
+                maker_broker == self.maker_broker.key(),
+                TcompError::BrokerMismatch
+            )
         }
         Ok(())
     }
@@ -104,10 +108,13 @@ pub fn handler<'info>(
 
     let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
 
-    // Have to verify to make sure 1)correct creators list, 2)shares, 3)seller_fee_basis_points
-    let (asset_id, creator_hash, data_hash, creators) = verify_cnft(VerifyArgs {
-        root,
-        index,
+    // Verification occurs during transfer_cnft (ie creator_shares/verified/royalty checked via creator_hash).
+    let CnftArgs {
+        asset_id,
+        data_hash,
+        creator_hash,
+        creators,
+    } = make_cnft_args(MakeCnftArgs {
         nonce,
         metadata_src: MetadataSrc::DataHash(DataHashArgs {
             meta_hash,
@@ -116,16 +123,15 @@ pub fn handler<'info>(
             seller_fee_basis_points,
         }),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        leaf_owner: &ctx.accounts.list_state.to_account_info(), //<-- check with new owner
-        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
         creator_accounts,
-        proof_accounts,
     })?;
 
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
+    // Should be checked in transfer_cnft, but why not.
+    require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
     let (tcomp_fee, broker_fee) = calc_fees(amount)?;
     let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
@@ -189,7 +195,7 @@ pub fn handler<'info>(
         creator_fee,
     )?;
 
-    // Pay the seller
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
         .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 

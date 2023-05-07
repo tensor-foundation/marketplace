@@ -1,0 +1,301 @@
+# Adapted from Anchor's GH actions file.
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+#  TODO: okay I dont know what to set it to. Look through previous GH action failures to see errors.
+  SOLANA_CLI_VERSION: 1.14.14
+  NODE_VERSION: 16.16.0
+
+jobs:
+  test-rust:
+    name: Rust Tests
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+
+      - run: cargo build
+      - run: cargo fmt -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  setup-anchor-cli:
+    name: Setup Anchor cli
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: anchor
+
+      - run: |
+          if [ ! -f ~/.cargo/bin/anchor ] ; then
+            cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --rev 347c225
+          fi
+
+      - run: anchor --version
+      - run: chmod +x ~/.cargo/bin/anchor
+      - uses: actions/upload-artifact@v3
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/anchor
+
+  # ==================== Sub-programs ====================
+
+  setup-bubblegum:
+    name: Setup bubblegum
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-solana/
+
+      - run: git submodule update --init --recursive --depth 1 deps/metaplex-mpl
+        name: Checkout submodule
+
+      - uses: actions/cache@v2
+        name: Cache bubblegum
+        with:
+          path: ./deps/metaplex-mpl/bubblegum/program/target/deploy/
+          key: bubblegum-${{ runner.os }}
+
+      - run: |
+          cd deps/metaplex-mpl/bubblegum/program
+          cargo build-bpf
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: bubblegum-so
+          path: ./deps/metaplex-mpl/bubblegum/program/target/deploy/
+
+  setup-token-metadata:
+    name: Setup token metadata 
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-solana/
+
+      - run: git submodule update --init --recursive --depth 1 deps/metaplex-mpl
+        name: Checkout submodule
+
+      - uses: actions/cache@v2
+        name: Cache token metadata
+        with:
+          path: ./deps/metaplex-mpl/token-metadata/target/deploy/
+          key: token-metadata-${{ runner.os }}
+
+      - run: |
+          cd deps/metaplex-mpl/token-metadata/program
+          cargo build-bpf
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: token-metadata-so
+          path: ./deps/metaplex-mpl/token-metadata/target/deploy/
+
+  setup-account-compression:
+    name: Setup account compression 
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-solana/
+
+      - run: git submodule update --init --recursive --depth 1 deps/solana-spl
+        name: Checkout submodule
+
+      - uses: actions/cache@v2
+        name: Cache account compression
+        with:
+          path: ./deps/solana-spl/account-compression/target/deploy/
+          key: account-compression-${{ runner.os }}
+
+      - run: |
+          cd deps/solana-spl/account-compression/programs
+          cargo build-bpf
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: account-compression-so
+          path: ./deps/solana-spl/account-compression/target/deploy/
+
+  setup-tensorswap:
+    name: Setup tensorswap
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-solana/
+
+      - run: git submodule update --init --recursive --depth 1 deps/tensorswap
+        name: Checkout submodule
+
+      - uses: actions/cache@v2
+        name: Cache tensorswap
+        with:
+          path: ./deps/tensorswap/target/deploy/
+          key: tensorswap-${{ runner.os }}
+
+      - run: |
+          cd deps/tensorswap/programs/tensorswap
+          cargo build-bpf
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: tensorswap-so
+          path: ./deps/tensorswap/target/deploy/
+
+  # ==================== Tcomp ====================
+
+  setup-target-build:
+    needs: setup-anchor-cli
+    name: Setup build
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-solana/
+
+      - uses: actions/cache@v2
+        name: Cache target
+        with:
+          path: ./target/
+          key: target-build-${{ runner.os }}
+
+      - uses: actions/download-artifact@v2
+        name: Download anchor binary
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/
+      - run: chmod +x ~/.cargo/bin/anchor
+
+      - run: yarn build:test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: target-build
+          path: ./target/
+
+      # This ensures the IDL generated matches what's checked in!
+      - uses: ./.github/actions/git-diff/
+
+  # ==================== Typescript test ====================
+
+  test-typescript:
+    needs: [setup-bubblegum, setup-token-metadata, setup-account-compression, setup-tensorswap, setup-target-build]
+    name: Test ${{ matrix.node.glob }}
+    runs-on: [self-hosted, linux, x64]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - glob: tests/listings.test.ts
+          - glob: tests/bids.test.ts
+    steps:
+      - name: Clone main repo
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/setup/
+        with:
+          deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          cargo-cache-name: no-anchor
+      - uses: ./.github/actions/setup-ts/
+      - uses: ./.github/actions/setup-solana/
+
+      - run: grep -Evqz 'it.only\(|describe.only\(' ${{ matrix.node.glob }}
+        name: No only tests
+
+      - uses: actions/download-artifact@v2
+        name: Download anchor binary
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/
+      - run: chmod +x ~/.cargo/bin/anchor
+
+      - uses: actions/download-artifact@v2
+        name: Download bubblegum
+        with:
+          name: bubblegum-so
+          path: ./deps/metaplex-mpl/bubblegum/program/target/deploy/
+
+      - uses: actions/download-artifact@v2
+        name: Download token-metadata
+        with:
+          name: token-metadata-so
+          path: ./deps/metaplex-mpl/token-metadata/target/deploy/
+
+      - uses: actions/download-artifact@v2
+        name: Download account-compression
+        with:
+          name: account-compression-so
+          path: ./deps/solana-spl/account-compression/target/deploy/
+
+      - uses: actions/download-artifact@v2
+        name: Download tensorswap
+        with:
+          name: tensorswap-so
+          path: ./deps/tensorswap/target/deploy/
+
+      - uses: actions/download-artifact@v2
+        name: Download target build
+        with:
+          name: target-build
+          path: ./target/
+
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
+
+      - run: yarn install
+      - run: yarn fast-test
+        env:
+          TESTS_GLOB: ${{ matrix.node.glob }}

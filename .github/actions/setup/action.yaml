@@ -1,0 +1,43 @@
+name: "Setup"
+description: "Setup"
+inputs:
+  deploy-key:
+    description: 'The deploy key for tswap'
+    required: true
+  cargo-cache-name:
+    description: 'Name to use for cargo cache'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: cardoe/ssh-agent-deploy-key@v1
+      with:
+        ssh-private-key: ${{ inputs.deploy-key }}
+        ssh-known-hosts: 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
+    # - name: Clone tswap
+    #   uses: actions/checkout@v2
+    #   with:
+    #     repository: tensor-hq/tensorswap
+    #     path: deps/tensorswap
+    #     ssh-key: ${{ inputs.deploy-key }}
+    #     persist-credentials: false
+
+    # - uses: webfactory/ssh-agent@v0.7.0
+    #   with:
+    #     ssh-private-key: ${{ inputs.deploy-key }}
+
+    - uses: actions/cache@v2
+      name: Cache Cargo registry + index
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          ./target/
+        key: cargo-${{ runner.os }}-${{ inputs.cargo-cache-name }}-${{ hashFiles('**/Cargo.lock') }}
+      # Only necessary on github runners (not self-hosted AWS)
+      # - run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
+      #   shell: bash
+      # - run: git submodule update --init --recursive --depth 1
+      #   shell: bash

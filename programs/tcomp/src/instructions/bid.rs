@@ -71,6 +71,8 @@ pub fn handler<'info>(
 
     if target == BidTarget::AssetId {
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
+        require!(field.is_none(), TcompError::BadBidField);
+        require!(field_id.is_none(), TcompError::BadBidField);
     }
 
     // Can only be set once.
@@ -102,7 +104,9 @@ pub fn handler<'info>(
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
             Clock::get()?.unix_timestamp + expire_in_i64
         }
+        // When creating bid for the first time.
         None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
+        // Editing a bid.
         None => current_expiry,
     };
     bid_state.expiry = expiry;
@@ -121,6 +125,15 @@ pub fn handler<'info>(
         TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
 
+    let bid_rent =
+        Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());
+    let bid_balance = unwrap_int!(ctx
+        .accounts
+        .bid_state
+        .to_account_info()
+        .lamports()
+        .checked_sub(bid_rent));
+
     //transfer lamports
     let margin_account_info = &ctx.accounts.margin_account.to_account_info();
     let margin_account_result =
@@ -129,6 +142,7 @@ pub fn handler<'info>(
     match margin_account_result {
         //marginated
         Ok(margin_account) => {
+            // Redundant (assert_decode_margin_account already checks this) but why not
             require!(
                 margin_account.owner == *ctx.accounts.owner.key,
                 TcompError::BadMargin
@@ -136,14 +150,6 @@ pub fn handler<'info>(
             let bid_state = &mut ctx.accounts.bid_state;
             bid_state.margin = Some(margin_account_info.key());
             //transfer any existing balance back to user (this is in case they're editing an existing non-marginated bid)
-            let bid_rent =
-                Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());
-            let bid_balance = unwrap_int!(ctx
-                .accounts
-                .bid_state
-                .to_account_info()
-                .lamports()
-                .checked_sub(bid_rent));
             if bid_balance > 0 {
                 transfer_lamports_from_pda(
                     &ctx.accounts.bid_state.to_account_info(),
@@ -155,14 +161,6 @@ pub fn handler<'info>(
         }
         // Not marginated
         Err(_) => {
-            let bid_rent =
-                Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());
-            let bid_balance = unwrap_int!(ctx
-                .accounts
-                .bid_state
-                .to_account_info()
-                .lamports()
-                .checked_sub(bid_rent));
             if bid_balance > amount {
                 let diff = unwrap_int!(bid_balance.checked_sub(amount));
                 //transfer the excess back to user

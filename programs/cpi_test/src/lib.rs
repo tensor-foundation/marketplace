@@ -1,3 +1,5 @@
+#![allow(clippy::result_large_err)] // Needed otherwise clippy unhappy w/ anchor errors
+
 use anchor_lang::prelude::*;
 use tcomp::{self};
 
@@ -7,9 +9,8 @@ declare_id!("5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq");
 pub mod cpi_test {
     use super::*;
 
-    pub fn cpi<'info>(
-        ctx: Context<Cpi<'info>>,
-        nonce: u64,
+    pub fn cpi(
+        ctx: Context<Cpi>,
         amount: u64,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
@@ -20,7 +21,6 @@ pub mod cpi_test {
             ctx.accounts.tcomp_program.to_account_info(),
             tcomp::cpi::accounts::Edit {
                 owner: ctx.accounts.owner.to_account_info(),
-                merkle_tree: ctx.accounts.merkle_tree.to_account_info(),
                 list_state: ctx.accounts.list_state.to_account_info(),
                 tcomp_program: ctx.accounts.tcomp_program.to_account_info(),
             },
@@ -28,7 +28,6 @@ pub mod cpi_test {
 
         tcomp::cpi::edit(
             cpi_ctx,
-            nonce,
             amount,
             expire_in_sec,
             currency,
@@ -42,8 +41,6 @@ pub mod cpi_test {
 #[derive(Accounts)]
 pub struct Cpi<'info> {
     pub owner: Signer<'info>,
-    /// CHECK: downstream
-    pub merkle_tree: UncheckedAccount<'info>,
     /// CHECK: downstream
     #[account(mut)]
     pub list_state: UncheckedAccount<'info>,

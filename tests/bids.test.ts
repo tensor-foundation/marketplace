@@ -8,6 +8,7 @@ import {
 import {
   beforeAllHook,
   beforeHook,
+  CONC_MERKLE_TREE_ERROR,
   DEFAULT_DEPTH_SIZE,
   delegateCNft,
   FEE_PCT,
@@ -165,7 +166,7 @@ describe("tcomp bids", () => {
         });
         if (closeWithCosigner) {
           //wait for bid to expire
-          await waitMS(1000);
+          await waitMS(3000);
         }
         await testCancelCloseBid({
           amount: new BN(LAMPORTS_PER_SOL),
@@ -210,7 +211,7 @@ describe("tcomp bids", () => {
           lookupTableAccount,
           bidId: assetId,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       //fake shares
       await expect(
         testTakeBid({
@@ -231,7 +232,7 @@ describe("tcomp bids", () => {
           lookupTableAccount,
           bidId: assetId,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       //fake verified
       await expect(
         testTakeBid({
@@ -252,7 +253,7 @@ describe("tcomp bids", () => {
           lookupTableAccount,
           bidId: assetId,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("FailedLeafVerification"));
+      ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
       await testTakeBid({
         index,
         minAmount: new BN(LAMPORTS_PER_SOL),
@@ -342,7 +343,7 @@ describe("tcomp bids", () => {
           lookupTableAccount,
           bidId: assetId,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("OfferExpired"));
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BidExpired"));
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
         targetId: assetId,
@@ -1329,7 +1330,7 @@ describe("tcomp bids", () => {
             canopyDepth,
             bidId: metadata.collection!.key,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongFieldId"));
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongBidFieldId"));
       }
     }
   });
@@ -1478,7 +1479,7 @@ describe("tcomp bids", () => {
           bidId: verifiedCreator.publicKey,
           field: BidField.Name,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongFieldId"));
+      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongBidFieldId"));
     }
   });
 });

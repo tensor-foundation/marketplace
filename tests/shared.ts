@@ -1,4 +1,35 @@
 import {
+  computeDataHash,
+  createCreateTreeInstruction,
+  createDelegateInstruction,
+  createMintV1Instruction,
+  createVerifyCreatorInstruction,
+  getLeafAssetId,
+  MetadataArgs,
+  TokenProgramVersion,
+  TokenStandard,
+} from "@metaplex-foundation/mpl-bubblegum";
+import * as anchor from "@project-serum/anchor";
+import { AnchorProvider, BN, Wallet } from "@project-serum/anchor";
+import {
+  SingleConnectionBroadcaster,
+  SolanaProvider,
+  TransactionEnvelope,
+} from "@saberhq/solana-contrib";
+import {
+  ConcurrentMerkleTreeAccount,
+  createVerifyLeafIx,
+  getConcurrentMerkleTreeAccountSize,
+  MerkleTree,
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID,
+  ValidDepthSizePair,
+} from "@solana/spl-account-compression";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
   AddressLookupTableAccount,
   AddressLookupTableProgram,
   Commitment,
@@ -16,24 +47,24 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import {
-  createCreateTreeInstruction,
-  createDelegateInstruction,
-  createMintV1Instruction,
-  createVerifyCreatorInstruction,
-  getLeafAssetId,
-  MetadataArgs,
-  TokenProgramVersion,
-  TokenStandard,
-} from "@metaplex-foundation/mpl-bubblegum";
+  AUTH_PROG_ID,
+  buildTx,
+  buildTxV0,
+  MINUTES,
+  TENSORSWAP_ADDR,
+  TMETA_PROG_ID,
+  waitMS,
+} from "@tensor-hq/tensor-common";
 import {
-  ConcurrentMerkleTreeAccount,
-  createVerifyLeafIx,
-  getConcurrentMerkleTreeAccountSize,
-  MerkleTree,
-  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  SPL_NOOP_PROGRAM_ID,
-  ValidDepthSizePair,
-} from "@solana/spl-account-compression";
+  STANDARD_FEE_BPS,
+  TensorSwapSDK,
+  TSwapConfigAnchor,
+} from "@tensor-hq/tensorswap-ts";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { backOff } from "exponential-backoff";
+import { resolve } from "path";
+import {} from "../deps/metaplex-mpl/bubblegum/js/src";
 import {
   BidField,
   BidTarget,
@@ -53,55 +84,25 @@ import {
   getTotalComputeIxs,
   isNullLike,
   TAKER_BROKER_PCT,
-  TCOMP_ADDR,
-  TCOMP_DISC_MAP,
   TCompIxName,
   TCompSDK,
+  TCOMP_ADDR,
+  TCOMP_DISC_MAP,
 } from "../src";
-import * as anchor from "@project-serum/anchor";
-import { AnchorProvider, BN, Wallet } from "@project-serum/anchor";
-import { computeDataHash } from "../deps/metaplex-mpl/bubblegum/js/src";
-import chai, { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
-import {
-  AUTH_PROG_ID,
-  buildTx,
-  buildTxV0,
-  MINUTES,
-  TENSORSWAP_ADDR,
-  TMETA_PROG_ID,
-  waitMS,
-} from "@tensor-hq/tensor-common";
+import { getLamports as _getLamports } from "../src/shared";
 import {
   getAccount,
   initCollection,
   makeNTraders,
   transferLamports,
 } from "./account";
-import {
-  STANDARD_FEE_BPS,
-  TensorSwapSDK,
-  TSwapConfigAnchor,
-} from "@tensor-hq/tensorswap-ts";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import {
-  SingleConnectionBroadcaster,
-  SolanaProvider,
-  TransactionEnvelope,
-} from "@saberhq/solana-contrib";
-import { backOff } from "exponential-backoff";
-import { resolve } from "path";
-import { getLamports as _getLamports } from "../src/shared";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
 
 // Exporting these here vs in each .test.ts file prevents weird undefined issues.
-export { hexCode, stringifyPKsAndBNs } from "../src";
 export { waitMS } from "@tensor-hq/tensor-common";
+export { hexCode, stringifyPKsAndBNs } from "../src";
 
 export const ACCT_NOT_EXISTS_ERR = "Account does not exist";
 // Vipers IntegerOverflow error.
@@ -109,6 +110,7 @@ export const INTEGER_OVERFLOW_ERR = "0x44f";
 export const HAS_ONE_ERR = "0x7d1";
 export const ALREADY_IN_USE_ERR = "0x0";
 export const ACC_NOT_INIT_ERR = "0xbc4";
+export const CONC_MERKLE_TREE_ERROR = "0x1771"; // Error when proof invalid.
 
 export const getLamports = (acct: PublicKey) =>
   _getLamports(TEST_PROVIDER.connection, acct);
@@ -1106,21 +1108,19 @@ export const testList = async ({
   });
   memTree.updateLeaf(index, leaf);
 
-  return { sig };
+  return { sig, listState };
 };
 
 export const testEdit = async ({
-  index,
   owner,
-  merkleTree,
+  listState,
   amount,
   currency,
   expireInSec,
   privateTaker,
 }: {
-  index: number;
   owner: Keypair;
-  merkleTree: PublicKey;
+  listState: PublicKey;
   amount: BN;
   currency?: PublicKey;
   expireInSec?: BN;
@@ -1128,12 +1128,9 @@ export const testEdit = async ({
 }) => {
   const {
     tx: { ixs },
-    listState,
-    assetId,
   } = await tcompSdk.edit({
     owner: owner.publicKey,
-    merkleTree,
-    nonce: new BN(index),
+    listState,
     amount,
     currency,
     expireInSec,

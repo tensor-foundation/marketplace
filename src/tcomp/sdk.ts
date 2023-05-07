@@ -1,3 +1,46 @@
+import {
+  computeDataHash,
+  getLeafAssetId,
+  MetadataArgs,
+  PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
+  TokenProgramVersion,
+  TokenStandard,
+  UseMethod,
+} from "@metaplex-foundation/mpl-bubblegum";
+import { Uses } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  BN,
+  BorshCoder,
+  Coder,
+  EventParser,
+  Idl,
+  Instruction,
+  Program,
+  Provider,
+} from "@project-serum/anchor";
+import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
+import {
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID,
+} from "@solana/spl-account-compression";
+import {
+  AccountInfo,
+  Commitment,
+  CompiledInstruction,
+  ComputeBudgetProgram,
+  PublicKey,
+  SystemProgram,
+  TransactionResponse,
+} from "@solana/web3.js";
+import {
+  AnchorEvent,
+  AnchorIx,
+  isNullLike,
+  parseAnchorEvents,
+  TENSORSWAP_ADDR,
+} from "@tensor-hq/tensor-common";
 import * as borsh from "borsh";
 import {
   AccountSuffix,
@@ -13,58 +56,15 @@ import {
   hexCode,
   parseStrFn,
 } from "../shared";
-import {
-  BN,
-  BorshCoder,
-  Coder,
-  EventParser,
-  Idl,
-  Instruction,
-  Program,
-  Provider,
-} from "@project-serum/anchor";
-import {
-  AccountInfo,
-  Commitment,
-  CompiledInstruction,
-  ComputeBudgetProgram,
-  PublicKey,
-  SystemProgram,
-  TransactionResponse,
-} from "@solana/web3.js";
-import { TCOMP_ADDR } from "./constants";
-import {
-  computeDataHash,
-  getLeafAssetId,
-  MetadataArgs,
-  PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
-  TokenProgramVersion,
-  TokenStandard,
-  UseMethod,
-} from "@metaplex-foundation/mpl-bubblegum";
-import {
-  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  SPL_NOOP_PROGRAM_ID,
-} from "@solana/spl-account-compression";
-import { Uses } from "@metaplex-foundation/mpl-token-metadata";
-import {
-  AnchorEvent,
-  AnchorIx,
-  isNullLike,
-  parseAnchorEvents,
-  TENSORSWAP_ADDR,
-} from "@tensor-hq/tensor-common";
-import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { ParsedAccount } from "../types";
+import { TCOMP_ADDR } from "./constants";
+import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import {
   findBidStatePda,
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
 } from "./pda";
-import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
-import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
 
 export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
@@ -472,9 +472,8 @@ export class TCompSDK {
   }
 
   async edit({
-    merkleTree,
     owner,
-    nonce,
+    listState,
     amount,
     expireInSec = null,
     currency = null,
@@ -484,9 +483,8 @@ export class TCompSDK {
     compute = null,
     priorityMicroLamports = null,
   }: {
-    merkleTree: PublicKey;
     owner: PublicKey;
-    nonce: BN;
+    listState: PublicKey;
     amount: BN;
     expireInSec?: BN | null;
     currency?: PublicKey | null;
@@ -495,13 +493,9 @@ export class TCompSDK {
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
-    const assetId = await getLeafAssetId(merkleTree, nonce);
-    const [listState] = findListStatePda({ assetId });
-
     const builder = this.program.methods
-      .edit(nonce, amount, expireInSec, currency, privateTaker, makerBroker)
+      .edit(amount, expireInSec, currency, privateTaker, makerBroker)
       .accounts({
-        merkleTree,
         owner,
         listState,
         tcompProgram: TCOMP_ADDR,
@@ -515,8 +509,6 @@ export class TCompSDK {
         ixs: [...computeIxs, await builder.instruction()],
         extraSigners: [],
       },
-      assetId,
-      listState,
     };
   }
 
@@ -1177,6 +1169,10 @@ export const TCOMP_DISC_MAP: Record<
   cancelBid: { disc: hash("global:cancel_bid").slice(0, 16), callsNoop: false },
   closeExpiredBid: {
     disc: hash("global:close_expired_bid").slice(0, 16),
+    callsNoop: false,
+  },
+  closeExpiredListing: {
+    disc: hash("global:close_expired_listing").slice(0, 16),
     callsNoop: false,
   },
   takeBidMetaHash: {
