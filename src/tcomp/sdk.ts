@@ -280,8 +280,11 @@ export type BidStateAnchor = {
   version: number;
   bump: number[];
   owner: PublicKey;
+  bidId: PublicKey;
   target: BidTargetAnchor;
   targetId: PublicKey;
+  field?: BidFieldAnchor;
+  fieldId?: PublicKey;
   amount: BN;
   currency: PublicKey | null;
   expiry: BN;
@@ -999,7 +1002,7 @@ export class TCompSDK {
 
   // --------------------------------------- parsing raw txs
 
-  parseIxs(tx: TransactionResponse): ParsedAnchorTcompIx<TcompIDL>[] {
+  parseIxs(tx: TransactionResponse): ParsedTcompIx<TcompIDL>[] {
     return parseAnchorTcompIxs<TcompIDL>({
       coder: this.coder,
       tx,
@@ -1007,7 +1010,7 @@ export class TCompSDK {
     });
   }
 
-  getTakerMaker(ix: ParsedAnchorTcompIx<TcompIDL>): {
+  getTakerMaker(ix: ParsedTcompIx<TcompIDL>): {
     taker: PublicKey | null;
     maker: PublicKey | null;
   } | null {
@@ -1020,7 +1023,14 @@ export class TCompSDK {
     };
   }
 
-  getIxAmounts(ix: ParsedAnchorTcompIx<TcompIDL>): {
+  getAssetId(ix: ParsedTcompIx<TcompIDL>): PublicKey | null {
+    if (!ix.noopIx) return null;
+    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
+    const e = deserializeTcompEvent(cpiData);
+    return e.assetId ?? null;
+  }
+
+  getIxAmounts(ix: ParsedTcompIx<TcompIDL>): {
     amount: BN;
     tcompFee: BN | null;
     takerBrokerFee: BN | null;
@@ -1046,7 +1056,7 @@ export class TCompSDK {
   // eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   // shared.sol_escrow -> "Shared > Sol Escrow"
   getAccountByName(
-    ix: ParsedAnchorTcompIx<TcompIDL>,
+    ix: ParsedTcompIx<TcompIDL>,
     name: AccountSuffix
   ): ParsedAccount | undefined {
     // We use endsWith since composite nested accounts (eg shared.sol_escrow)
@@ -1311,7 +1321,7 @@ export const extractAllTcompIxs = (
   return [...tcompIxsWithNoop, ...otherIxs];
 };
 
-export type ParsedAnchorTcompIx<IDL extends Idl> = {
+export type ParsedTcompIx<IDL extends Idl> = {
   /// Index of top-level instruction.
   ixIdx: number;
   ix: AnchorIx<IDL>;
@@ -1339,11 +1349,11 @@ export const parseAnchorTcompIxs = <IDL extends Idl>({
   eventParser?: EventParser;
   /// If passed, will only process ixs w/ this program ID.
   programId?: PublicKey;
-}): ParsedAnchorTcompIx<IDL>[] => {
+}): ParsedTcompIx<IDL>[] => {
   const message = tx.transaction.message;
   const logs = tx.meta?.logMessages;
 
-  const ixs: ParsedAnchorTcompIx<IDL>[] = [];
+  const ixs: ParsedTcompIx<IDL>[] = [];
   extractAllTcompIxs(tx, programId).forEach(
     ({ rawIx, ixIdx, innerIxs, noopIx }) => {
       // Instruction data.

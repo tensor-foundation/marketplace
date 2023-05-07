@@ -38,6 +38,7 @@ import {
   BidField,
   BidTarget,
   BUBBLEGUM_PROGRAM_ID,
+  castBidFieldAnchor,
   castBidTargetAnchor,
   computeCompressedNFTHashPATCHED,
   computeCreatorHashPATCHED,
@@ -1507,8 +1508,17 @@ export const testBid = async ({
 
       const bidStateAcc = await tcompSdk.fetchBidState(bidState);
       expect(bidStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
+      expect(bidStateAcc.bidId.toString()).to.eq(
+        bidId?.toString() ?? targetId?.toString()
+      );
       expect(castBidTargetAnchor(bidStateAcc.target)).to.eq(target);
       expect(bidStateAcc.targetId.toString()).to.eq(targetId.toString());
+      if (!isNullLike(field)) {
+        expect(castBidFieldAnchor(bidStateAcc.field!)).to.eq(field);
+      }
+      if (!isNullLike(fieldId)) {
+        expect(bidStateAcc.fieldId!.toString()).to.eq(fieldId.toString());
+      }
       expect(bidStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
       expect(bidStateAcc.amount.toNumber()).to.eq(amount.toNumber());
       if (!isNullLike(currency)) {
