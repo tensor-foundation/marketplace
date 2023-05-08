@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tcomp-ts",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Anchor/JS SDK for interacting with TCOMP.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,7 +34,7 @@
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
     "@tensor-hq/tensor-common": "^0.11.0",
-    "@tensor-hq/tensorswap-ts": "^1.9.2",
+    "@tensor-hq/tensorswap-sdk": "1.9.2",
     "bn.js": "^5.2.1",
     "borsh": "^0.7.0",
     "js-sha3": "^0.8.0"

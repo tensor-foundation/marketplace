@@ -59,7 +59,7 @@ import {
   STANDARD_FEE_BPS,
   TensorSwapSDK,
   TSwapConfigAnchor,
-} from "@tensor-hq/tensorswap-ts";
+} from "@tensor-hq/tensorswap-sdk";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { backOff } from "exponential-backoff";
