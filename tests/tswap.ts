@@ -1,6 +1,6 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
-import { TensorWhitelistSDK } from "@tensor-hq/tensorswap-sdk";
+import { TensorWhitelistSDK } from "@tensor-oss/tensorswap-sdk";
 import { buildAndSendTx, swapSdk, TEST_PROVIDER } from "./shared";
 import { getLamports } from "./shared";
 import { BN } from "bn.js";
