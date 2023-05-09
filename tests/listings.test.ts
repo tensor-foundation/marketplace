@@ -581,7 +581,7 @@ describe("tcomp listings", () => {
       });
 
       {
-        const ix = await fetchAndCheckSingleIxTx(sig, "list");
+        const ix = await fetchAndCheckSingleIxTx(sig!, "list");
         const traders = tcompSdk.getTakerMaker(ix);
         expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);

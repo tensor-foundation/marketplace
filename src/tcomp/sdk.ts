@@ -1,5 +1,4 @@
 import {
-  computeDataHash,
   getLeafAssetId,
   MetadataArgs,
   PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
@@ -7,7 +6,7 @@ import {
   TokenStandard,
   UseMethod,
 } from "@metaplex-foundation/mpl-bubblegum";
-import { Uses } from "@metaplex-foundation/mpl-token-metadata";
+import { Creator, Uses } from "@metaplex-foundation/mpl-token-metadata";
 import {
   BN,
   BorshCoder,
@@ -44,8 +43,6 @@ import {
 import * as borsh from "borsh";
 import {
   AccountSuffix,
-  computeCreatorHashPATCHED,
-  computeMetadataArgsHash,
   decodeAcct,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
@@ -371,7 +368,8 @@ export class TCompSDK {
     delegate = owner,
     proof,
     root,
-    metadata,
+    dataHash,
+    creatorsHash,
     nonce,
     index,
     amount,
@@ -389,7 +387,8 @@ export class TCompSDK {
     delegate?: PublicKey;
     proof: Buffer[];
     root: number[];
-    metadata: MetadataArgs;
+    dataHash: Buffer;
+    creatorsHash: Buffer;
     //in most cases nonce == index and doesn't need to passed in separately
     nonce?: BN;
     index: number;
@@ -414,9 +413,6 @@ export class TCompSDK {
       isSigner: false,
       isWritable: false,
     }));
-
-    const dataHash = computeDataHash(metadata);
-    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
 
     const builder = this.program.methods
       .list(
@@ -517,7 +513,8 @@ export class TCompSDK {
     owner,
     proof,
     root,
-    metadata,
+    dataHash,
+    creatorsHash,
     nonce,
     index,
     compute = DEFAULT_COMPUTE_UNITS,
@@ -528,7 +525,8 @@ export class TCompSDK {
     owner: PublicKey;
     proof: Buffer[];
     root: number[];
-    metadata: MetadataArgs;
+    dataHash: Buffer;
+    creatorsHash: Buffer;
     //in most cases nonce == index and doesn't need to passed in separately
     nonce?: BN;
     index: number;
@@ -547,9 +545,6 @@ export class TCompSDK {
       isSigner: false,
       isWritable: false,
     }));
-
-    const dataHash = computeDataHash(metadata);
-    const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
 
     const builder = this.program.methods
       .delist(nonce, index, root, [...dataHash], [...creatorsHash])
@@ -584,7 +579,9 @@ export class TCompSDK {
     merkleTree,
     proof,
     root,
-    metadata,
+    metaHash,
+    creators,
+    sellerFeeBasisPoints,
     nonce,
     index,
     maxAmount,
@@ -602,7 +599,9 @@ export class TCompSDK {
     merkleTree: PublicKey;
     proof: Buffer[];
     root: number[];
-    metadata: MetadataArgs;
+    metaHash: Buffer;
+    creators: Creator[];
+    sellerFeeBasisPoints: number;
     //in most cases nonce == index and doesn't need to passed in separately
     nonce?: BN;
     index: number;
@@ -625,7 +624,7 @@ export class TCompSDK {
     const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
-    let creators = metadata.creators.map((c) => ({
+    let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
       isWritable: true,
@@ -636,17 +635,15 @@ export class TCompSDK {
       isWritable: false,
     }));
 
-    const metaHash = computeMetadataArgsHash(metadata);
-
     const builder = this.program.methods
       .buy(
         nonce,
         index,
         root,
         [...metaHash],
-        Buffer.from(metadata.creators.map((c) => c.share)),
-        metadata.creators.map((c) => c.verified),
-        metadata.sellerFeeBasisPoints,
+        Buffer.from(creators.map((c) => c.share)),
+        creators.map((c) => c.verified),
+        sellerFeeBasisPoints,
         maxAmount,
         currency,
         makerBroker,
@@ -668,7 +665,7 @@ export class TCompSDK {
         takerBroker: takerBroker ?? tcomp,
         makerBroker: makerBroker ?? tcomp,
       })
-      .remainingAccounts([...creators, ...proofPath]);
+      .remainingAccounts([...creatorsPath, ...proofPath]);
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
 
@@ -815,13 +812,11 @@ export class TCompSDK {
   }
 
   async takeBid({
-    target,
-    field,
+    targetData,
     bidId,
     merkleTree,
     proof,
     root,
-    metadata,
     nonce,
     index,
     minAmount,
@@ -837,13 +832,20 @@ export class TCompSDK {
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
   }: {
-    target: BidTarget;
-    field?: BidField | null;
+    targetData:
+      | {
+          target: "assetIdOrFvcWithoutField";
+          data: {
+            metaHash: Buffer;
+            creators: Creator[];
+            sellerFeeBasisPoints: number;
+          };
+        }
+      | { target: "rest"; data: { metadata: MetadataArgs } };
     bidId: PublicKey;
     merkleTree: PublicKey;
     proof: Buffer[];
     root: number[];
-    metadata: MetadataArgs;
     //in most cases nonce == index and doesn't need to passed in separately
     nonce?: BN;
     index: number;
@@ -862,11 +864,16 @@ export class TCompSDK {
   }) {
     nonce = nonce ?? new BN(index);
 
+    const creators =
+      targetData.target === "rest"
+        ? targetData.data.metadata.creators
+        : targetData.data.creators;
+
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [tcomp] = findTCompPda({});
     const [bidState] = findBidStatePda({ bidId, owner });
 
-    let creators = metadata.creators.map((c) => ({
+    let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
       isWritable: true,
@@ -895,25 +902,20 @@ export class TCompSDK {
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
     };
-    const remAccounts = [...creators, ...proofPath];
+    const remAccounts = [...creatorsPath, ...proofPath];
 
     let builder;
-    if (
-      target === BidTarget.AssetId ||
-      // field is null for FVC
-      (target === BidTarget.Fvc && isNullLike(field))
-    ) {
+    if (targetData.target === "assetIdOrFvcWithoutField") {
       // preferred branch
-      const metaHash = computeMetadataArgsHash(metadata);
       builder = this.program.methods
         .takeBidMetaHash(
           nonce,
           index,
           root,
-          [...metaHash],
-          Buffer.from(metadata.creators.map((c) => c.share)),
-          metadata.creators.map((c) => c.verified),
-          metadata.sellerFeeBasisPoints,
+          [...targetData.data.metaHash],
+          Buffer.from(creators.map((c) => c.share)),
+          creators.map((c) => c.verified),
+          targetData.data.sellerFeeBasisPoints,
           minAmount,
           currency,
           makerBroker,
@@ -928,7 +930,7 @@ export class TCompSDK {
           nonce,
           index,
           root,
-          castMetadata(metadata),
+          castMetadata(targetData.data.metadata),
           minAmount,
           currency,
           makerBroker,

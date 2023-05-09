@@ -64,7 +64,6 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { backOff } from "exponential-backoff";
 import { resolve } from "path";
-import {} from "../deps/metaplex-mpl/bubblegum/js/src";
 import {
   BidField,
   BidTarget,
@@ -73,10 +72,10 @@ import {
   castBidTargetAnchor,
   computeCompressedNFTHashPATCHED,
   computeCreatorHashPATCHED,
+  computeMetadataArgsHash,
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
-  TCOMP_FEE_BPS,
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
@@ -84,10 +83,11 @@ import {
   getTotalComputeIxs,
   isNullLike,
   TAKER_BROKER_PCT,
-  TCompIxName,
-  TCompSDK,
   TCOMP_ADDR,
   TCOMP_DISC_MAP,
+  TCOMP_FEE_BPS,
+  TCompIxName,
+  TCompSDK,
 } from "../src";
 import { getLamports as _getLamports } from "../src/shared";
 import {
@@ -1019,6 +1019,9 @@ export const testList = async ({
     false
   );
 
+  const dataHash = computeDataHash(metadata);
+  const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
   const {
     tx: { ixs },
     assetId,
@@ -1028,7 +1031,8 @@ export const testList = async ({
     owner: owner.publicKey,
     payer: payer.publicKey,
     merkleTree,
-    metadata,
+    dataHash,
+    creatorsHash,
     root: [...proof.root],
     index,
     amount,
@@ -1187,6 +1191,9 @@ export const testDelist = async ({
     false
   );
 
+  const dataHash = computeDataHash(metadata);
+  const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
+
   const {
     tx: { ixs },
     assetId,
@@ -1194,7 +1201,8 @@ export const testDelist = async ({
     proof: proof.proof,
     owner: owner.publicKey,
     merkleTree,
-    metadata,
+    dataHash,
+    creatorsHash,
     root: [...proof.root],
     index,
     canopyDepth,
@@ -1273,6 +1281,8 @@ export const testBuy = async ({
   );
   const [tcomp] = findTCompPda({});
 
+  const metaHash = computeMetadataArgsHash(metadata);
+
   const {
     tx: { ixs },
     listState,
@@ -1281,7 +1291,9 @@ export const testBuy = async ({
     buyer: buyer.publicKey,
     payer: payer.publicKey,
     merkleTree,
-    metadata,
+    creators: metadata.creators,
+    metaHash,
+    sellerFeeBasisPoints: metadata.sellerFeeBasisPoints,
     root: [...proof.root],
     index,
     owner,
@@ -1692,19 +1704,26 @@ export const testTakeBid = async ({
   );
   const [tcomp] = findTCompPda({});
 
+  const hashed =
+    target === BidTarget.AssetId ||
+    (target === BidTarget.Fvc && isNullLike(field));
+
   const {
     tx: { ixs: takeIxs },
     bidState,
   } = await tcompSdk.takeBid({
-    target,
-    field,
+    targetData: hashed
+      ? {
+          target: "assetIdOrFvcWithoutField",
+          data: { ...metadata, metaHash: computeMetadataArgsHash(metadata) },
+        }
+      : { target: "rest", data: { metadata } },
     bidId,
     proof: proof.proof,
     seller: seller.publicKey,
     delegate: delegate?.publicKey,
     owner,
     merkleTree,
-    metadata,
     root: [...proof.root],
     index,
     margin,
