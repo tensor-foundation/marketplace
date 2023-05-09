@@ -1166,7 +1166,7 @@ __metadata:
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
     "@tensor-hq/tensor-common": ^0.11.0
-    "@tensor-hq/tensorswap-sdk": 1.9.2
+    "@tensor-oss/tensorswap-sdk": 1.9.2
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
     "@types/chai-as-promised": ^7.1.5
@@ -1223,9 +1223,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensorswap-sdk@npm:1.9.2":
+"@tensor-oss/tensorswap-sdk@npm:1.9.2":
   version: 1.9.2
-  resolution: "@tensor-hq/tensorswap-sdk@npm:1.9.2"
+  resolution: "@tensor-oss/tensorswap-sdk@npm:1.9.2"
   dependencies:
     "@msgpack/msgpack": ^2.8.0
     "@project-serum/anchor": ^0.26.0
@@ -1239,7 +1239,7 @@ __metadata:
     keccak256: ^1.0.6
     merkletreejs: ^0.2.32
     uuid: ^8.3.2
-  checksum: 4c05a91d66ec645b2e52843e8569ed02066c377c7dbe98ff9091e5d8b94e73238b4eef0d1025a780bd09a3fc05f4af65cfe002b194f9a32265308e25d8621bd1
+  checksum: 0ee012aac993232592aa48bb9ffff41e3ff2490ce98380f4cb0285e1b1f7ef963996fad1ea3a767f35540a6cc82c875d139edb0d5f22fd8d4222d6ca162b5602
   languageName: node
   linkType: hard
 
