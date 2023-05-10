@@ -59,4 +59,10 @@ pub enum TcompError {
     ListingExpired = 126,
     #[msg("listing not yet expired")]
     ListingNotYetExpired = 127,
+    #[msg("bad quantity passed in")]
+    BadQuantity = 128,
+    #[msg("bid fully filled")]
+    BidFullyFilled = 129,
+    #[msg("bad whitelist")]
+    BadWhitelist = 130,
 }

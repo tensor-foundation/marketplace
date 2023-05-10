@@ -24,8 +24,9 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { TAKER_BROKER_PCT } from "../src";
+import { deserializeTcompEvent, TAKER_BROKER_PCT } from "../src";
 import { cpiEdit } from "./cpi_test";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -586,6 +587,10 @@ describe("tcomp listings", () => {
         expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantity).eq(1);
       }
 
       // --------------------------------------- Edit (direct)
@@ -605,6 +610,10 @@ describe("tcomp listings", () => {
         expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantity).eq(1);
       }
 
       // --------------------------------------- Edit (via cpi)
@@ -627,6 +636,10 @@ describe("tcomp listings", () => {
         expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantity).eq(1);
       }
 
       // --------------------------------------- Buy
@@ -660,6 +673,10 @@ describe("tcomp listings", () => {
         expect(amounts?.creatorFee?.toNumber()).eq(
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantityLeft).eq(0);
       }
     }
   });

@@ -163,6 +163,7 @@ pub fn handler<'info>(
             taker: *ctx.accounts.buyer.key,
             asset_id,
             amount,
+            quantity_left: 0,
             tcomp_fee,
             taker_broker_fee: broker_fee,
             //TODO: maker broker disabled

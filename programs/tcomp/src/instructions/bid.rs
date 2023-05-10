@@ -47,6 +47,7 @@ pub fn handler<'info>(
     field: Option<BidField>,
     field_id: Option<Pubkey>,
     amount: u64,
+    quantity: u32,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
@@ -57,9 +58,20 @@ pub fn handler<'info>(
     require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
 
     let bid_state = &mut ctx.accounts.bid_state;
+
+    // Passed in quantity can't be smaller than what's already been filled
+    // Initially this value is 0, so it'll always pass
+    require!(
+        quantity >= bid_state.filled_quantity,
+        TcompError::BadQuantity
+    );
+    // At least 1 seems reasonable, else why bother
+    require!(quantity >= 1, TcompError::BadQuantity);
+
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
     bid_state.amount = amount;
+    bid_state.quantity = quantity;
     bid_state.currency = currency;
     bid_state.private_taker = private_taker;
     bid_state.maker_broker = maker_broker;
@@ -70,6 +82,7 @@ pub fn handler<'info>(
     bid_state.bid_id = bid_id;
 
     if target == BidTarget::AssetId {
+        require!(quantity == 1, TcompError::BadQuantity);
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
         require!(field.is_none(), TcompError::BadBidField);
         require!(field_id.is_none(), TcompError::BadBidField);
@@ -117,6 +130,7 @@ pub fn handler<'info>(
             maker: *ctx.accounts.owner.key,
             asset_id: target_id,
             amount,
+            quantity,
             currency,
             expiry,
             private_taker,
@@ -138,6 +152,8 @@ pub fn handler<'info>(
     let margin_account_info = &ctx.accounts.margin_account.to_account_info();
     let margin_account_result =
         assert_decode_margin_account(margin_account_info, &ctx.accounts.owner.to_account_info());
+
+    let deposit_amount = unwrap_int!(amount.checked_mul(quantity as u64));
 
     match margin_account_result {
         //marginated
@@ -161,8 +177,8 @@ pub fn handler<'info>(
         }
         // Not marginated
         Err(_) => {
-            if bid_balance > amount {
-                let diff = unwrap_int!(bid_balance.checked_sub(amount));
+            if bid_balance > deposit_amount {
+                let diff = unwrap_int!(bid_balance.checked_sub(deposit_amount));
                 //transfer the excess back to user
                 transfer_lamports_from_pda(
                     &ctx.accounts.bid_state.to_account_info(),
@@ -170,7 +186,7 @@ pub fn handler<'info>(
                     diff,
                 )?;
             } else {
-                let diff = unwrap_int!(amount.checked_sub(bid_balance));
+                let diff = unwrap_int!(deposit_amount.checked_sub(bid_balance));
                 ctx.accounts
                     .transfer_lamports(&ctx.accounts.bid_state.to_account_info(), diff)?;
             }

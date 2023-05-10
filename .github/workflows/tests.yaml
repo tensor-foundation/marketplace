@@ -57,6 +57,14 @@ jobs:
           name: anchor-binary
           path: ~/.cargo/bin/anchor
 
+  purge-cache:
+    name: Purge cache
+    runs-on: [ self-hosted, linux, x64 ]
+    # runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/purge-cache/
+
   # ==================== Sub-programs ====================
 
   setup-bubblegum:
@@ -92,7 +100,7 @@ jobs:
           path: ./deps/metaplex-mpl/bubblegum/program/target/deploy/
 
   setup-token-metadata:
-    name: Setup token metadata 
+    name: Setup token metadata
     runs-on: [self-hosted, linux, x64]
     # runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -124,7 +132,7 @@ jobs:
           path: ./deps/metaplex-mpl/token-metadata/target/deploy/
 
   setup-account-compression:
-    name: Setup account compression 
+    name: Setup account compression
     runs-on: [self-hosted, linux, x64]
     # runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -156,7 +164,7 @@ jobs:
           path: ./deps/solana-spl/account-compression/target/deploy/
 
   setup-tensorswap:
-    name: Setup tensorswap
+    name: Setup tensorswap and whitelist
     runs-on: [self-hosted, linux, x64]
     # runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -179,7 +187,10 @@ jobs:
           key: tensorswap-${{ runner.os }}
 
       - run: |
-          cd deps/tensorswap/programs/tensorswap
+          pushd deps/tensorswap/programs/tensorswap
+          cargo build-bpf
+          popd
+          cd deps/tensorswap/programs/tensor_whitelist
           cargo build-bpf
 
       - uses: actions/upload-artifact@v3

@@ -47,6 +47,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/node", "npm:18.16.1"],\
             ["bn.js", "npm:5.2.1"],\
             ["borsh", "npm:0.7.0"],\
+            ["bs58", "npm:5.0.0"],\
             ["chai", "npm:4.3.7"],\
             ["chai-as-promised", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:7.1.1"],\
             ["exponential-backoff", "npm:3.1.1"],\
@@ -1398,6 +1399,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/node", "npm:18.16.1"],\
             ["bn.js", "npm:5.2.1"],\
             ["borsh", "npm:0.7.0"],\
+            ["bs58", "npm:5.0.0"],\
             ["chai", "npm:4.3.7"],\
             ["chai-as-promised", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:7.1.1"],\
             ["exponential-backoff", "npm:3.1.1"],\

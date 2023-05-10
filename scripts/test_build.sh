@@ -21,7 +21,7 @@ anchor build -- --features testing
 bash scripts/cp_idl.sh
 
 if [[ "$skip" == "false" ]]; then
-    echo "UPDATING SUBMODULES..." 
+    echo "UPDATING SUBMODULES..."
     git submodule init
     git submodule update
 
@@ -35,6 +35,9 @@ if [[ "$skip" == "false" ]]; then
     cargo build-bpf
     popd
     pushd deps/tensorswap/programs/tensorswap
+    cargo build-bpf
+    popd
+    pushd deps/tensorswap/programs/tensor_whitelist
     cargo build-bpf
     popd
 fi

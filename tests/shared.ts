@@ -2,6 +2,7 @@ import {
   computeDataHash,
   createCreateTreeInstruction,
   createDelegateInstruction,
+  createMintToCollectionV1Instruction,
   createMintV1Instruction,
   createVerifyCreatorInstruction,
   getLeafAssetId,
@@ -53,11 +54,13 @@ import {
   MINUTES,
   TENSORSWAP_ADDR,
   TMETA_PROG_ID,
+  TOKEN_METADATA_PROGRAM_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
 import {
   STANDARD_FEE_BPS,
   TensorSwapSDK,
+  TensorWhitelistSDK,
   TSwapConfigAnchor,
 } from "@tensor-oss/tensorswap-sdk";
 import chai, { expect } from "chai";
@@ -96,6 +99,7 @@ import {
   makeNTraders,
   transferLamports,
 } from "./account";
+import { testInitWLAuthority } from "./tswap";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -293,6 +297,7 @@ export const TSWAP_CONFIG: TSwapConfigAnchor = {
 };
 
 export const swapSdk = new TensorSwapSDK({ provider: TEST_PROVIDER });
+export const wlSdk = new TensorWhitelistSDK({ provider: TEST_PROVIDER });
 export const tcompSdk = new TCompSDK({ provider: TEST_PROVIDER });
 
 //useful for debugging
@@ -516,36 +521,98 @@ export const makeTree = async ({
   };
 };
 
+export async function getMetadata(mint: PublicKey) {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata"),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      TOKEN_METADATA_PROGRAM_ID
+    )
+  )[0];
+}
+
+export async function getMasterEdition(mint: PublicKey) {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata"),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from("edition"),
+      ],
+      TOKEN_METADATA_PROGRAM_ID
+    )
+  )[0];
+}
+
 export const mintCNft = async ({
   treeOwner,
   receiver,
   metadata,
   merkleTree,
+  unverifiedCollection = false,
 }: {
   treeOwner: Keypair;
   receiver: PublicKey;
   metadata: MetadataArgs;
   merkleTree: PublicKey;
+  unverifiedCollection?: boolean;
 }) => {
   const owner = treeOwner.publicKey;
 
   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
 
-  const mintIx = createMintV1Instruction(
-    {
-      merkleTree,
-      treeAuthority,
-      treeDelegate: owner,
-      payer: owner,
-      leafDelegate: receiver,
-      leafOwner: receiver,
-      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-      logWrapper: SPL_NOOP_PROGRAM_ID,
-    },
-    {
-      message: metadata,
-    }
+  const [bgumSigner, __] = await PublicKey.findProgramAddress(
+    [Buffer.from("collection_cpi", "utf8")],
+    BUBBLEGUM_PROGRAM_ID
   );
+
+  const mintIx =
+    !!metadata.collection && !unverifiedCollection
+      ? createMintToCollectionV1Instruction(
+          {
+            merkleTree,
+            treeAuthority,
+            treeDelegate: owner,
+            payer: owner,
+            leafDelegate: receiver,
+            leafOwner: receiver,
+            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+            logWrapper: SPL_NOOP_PROGRAM_ID,
+            bubblegumSigner: bgumSigner,
+            collectionAuthority: treeOwner.publicKey,
+            collectionAuthorityRecordPda: BUBBLEGUM_PROGRAM_ID,
+            collectionMetadata: await getMetadata(metadata.collection.key),
+            collectionMint: metadata.collection.key,
+            editionAccount: await getMasterEdition(metadata.collection.key),
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          },
+          {
+            metadataArgs: {
+              ...metadata,
+              //we have to pass it in as FALSE, it'll be set to TRUE during the ix
+              collection: { key: metadata.collection.key, verified: false },
+            },
+          }
+        )
+      : createMintV1Instruction(
+          {
+            merkleTree,
+            treeAuthority,
+            treeDelegate: owner,
+            payer: owner,
+            leafDelegate: receiver,
+            leafOwner: receiver,
+            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+            logWrapper: SPL_NOOP_PROGRAM_ID,
+          },
+          {
+            message: metadata,
+          }
+        );
 
   const sig = await buildAndSendTx({
     ixs: [mintIx],
@@ -783,11 +850,13 @@ export const makeCNftMeta = ({
   sellerFeeBasisPoints = 1000,
   collectionMint,
   randomizeName = true,
+  unverifiedCollection = false,
 }: {
   nrCreators?: number;
   sellerFeeBasisPoints?: number;
   collectionMint?: PublicKey;
   randomizeName?: boolean;
+  unverifiedCollection?: boolean;
 }): MetadataArgs => {
   if (nrCreators < 0 || nrCreators > 4) {
     throw new Error(
@@ -810,8 +879,9 @@ export const makeCNftMeta = ({
     tokenProgramVersion: TokenProgramVersion.Original,
     tokenStandard: TokenStandard.NonFungible,
     uses: null,
+    // Will be set to true during mint by bubblegum
     collection: collectionMint
-      ? { key: collectionMint, verified: false }
+      ? { key: collectionMint, verified: !unverifiedCollection }
       : null,
     primarySaleHappened: true,
     sellerFeeBasisPoints,
@@ -820,6 +890,9 @@ export const makeCNftMeta = ({
 };
 
 export const beforeAllHook = async () => {
+  // WL authority
+  await testInitWLAuthority();
+
   //tcomp has to be funded or get rent error
   const [tcomp] = findTCompPda({});
   await transferLamports(tcomp, LAMPORTS_PER_SOL);
@@ -837,6 +910,7 @@ export const beforeHook = async ({
   randomizeName = true,
   verifiedCreator,
   collectionless = false,
+  unverifiedCollection = false,
 }: {
   numMints: number;
   nrCreators?: number;
@@ -846,6 +920,7 @@ export const beforeHook = async ({
   randomizeName?: boolean;
   verifiedCreator?: Keypair;
   collectionless?: boolean;
+  unverifiedCollection?: boolean;
 }) => {
   const [treeOwner, traderA, traderB] = await makeNTraders(3);
 
@@ -869,6 +944,7 @@ export const beforeHook = async ({
       collectionMint: collectionless ? undefined : collectionMint,
       nrCreators,
       randomizeName,
+      unverifiedCollection,
     });
 
     //attach optioonal verified creators
@@ -896,6 +972,7 @@ export const beforeHook = async ({
       metadata,
       treeOwner,
       receiver: traderA.publicKey,
+      unverifiedCollection,
     });
     const { leaf, assetId } = await makeLeaf({
       index,
@@ -1458,6 +1535,7 @@ export const testBid = async ({
   bidId,
   field = null,
   fieldId = null,
+  quantity = 1,
   owner,
   amount,
   prevBidAmount,
@@ -1471,6 +1549,7 @@ export const testBid = async ({
   bidId?: PublicKey;
   field?: BidField | null;
   fieldId?: PublicKey | null;
+  quantity?: number;
   owner: Keypair;
   amount: BN;
   prevBidAmount?: number;
@@ -1490,6 +1569,7 @@ export const testBid = async ({
     fieldId,
     owner: owner.publicKey,
     amount,
+    quantity,
     currency,
     expireInSec,
     privateTaker,
@@ -1530,6 +1610,7 @@ export const testBid = async ({
       }
       expect(bidStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
       expect(bidStateAcc.amount.toNumber()).to.eq(amount.toNumber());
+      expect(bidStateAcc.quantity).to.eq(quantity);
       if (!isNullLike(currency)) {
         expect(bidStateAcc.currency!.toString()).to.eq(currency.toString());
       }
@@ -1557,7 +1638,7 @@ export const testBid = async ({
         //can't check diff, since need more state to calc toUpload
       } else {
         const bidRent = await tcompSdk.getBidStateRent();
-        const bidDiff = amount.toNumber() - (prevBidAmount ?? 0);
+        const bidDiff = amount.toNumber() * quantity - (prevBidAmount ?? 0);
 
         //check owner diff
         expect(currBidderLamports! - prevBidderLamports!).to.eq(
@@ -1568,7 +1649,9 @@ export const testBid = async ({
           bidDiff + (isNullLike(prevBidStateLamports) ? bidRent : 0)
         );
         //check bid acc final
-        expect(currBidStateLamports).to.eq(bidRent + amount.toNumber());
+        expect(currBidStateLamports).to.eq(
+          bidRent + amount.toNumber() * quantity
+        );
       }
     }
   );
@@ -1621,6 +1704,11 @@ export const testCancelCloseBid = async ({
       prevBidStateLamports,
       prevMarginLamports,
     }) => {
+      const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
+        bidState
+      );
+      const left = quantity - filledQuantity;
+
       const sig = await buildAndSendTx({
         ixs,
         extraSigners: forceClose ? [] : [owner],
@@ -1643,7 +1731,7 @@ export const testCancelCloseBid = async ({
         );
       } else {
         const bidRent = await tcompSdk.getBidStateRent();
-        const toGetBack = amount.toNumber();
+        const toGetBack = amount.toNumber() * left;
         //check owner diff
         expect(currBidderLamports! - prevBidderLamports!).to.eq(
           toGetBack + bidRent
@@ -1676,6 +1764,7 @@ export const testTakeBid = async ({
   lookupTableAccount,
   canopyDepth = 0,
   margin,
+  whitelist = null,
 }: {
   target?: BidTarget;
   field?: BidField | null;
@@ -1695,6 +1784,7 @@ export const testTakeBid = async ({
   lookupTableAccount?: AddressLookupTableAccount;
   canopyDepth?: number;
   margin?: PublicKey;
+  whitelist?: PublicKey | null;
 }) => {
   let proof = memTree.getProof(
     index,
@@ -1704,9 +1794,8 @@ export const testTakeBid = async ({
   );
   const [tcomp] = findTCompPda({});
 
-  const hashed =
-    target === BidTarget.AssetId ||
-    (target === BidTarget.Fvc && isNullLike(field));
+  //unfortunately we can no longe rely on the hashed metadata ix since we dont know if it's FVC/VOC on the whitelist
+  const hashed = target === BidTarget.AssetId;
 
   const {
     tx: { ixs: takeIxs },
@@ -1732,6 +1821,7 @@ export const testTakeBid = async ({
     takerBroker,
     canopyDepth,
     currency,
+    whitelist,
   });
 
   let sig;
@@ -1753,6 +1843,15 @@ export const testTakeBid = async ({
       prevFeeAccLamports,
       prevSellerLamports,
     }) => {
+      let prevQuantity = 0;
+      let prevQuantityFilled = 0;
+      try {
+        //stuff into a try block in case doesnt exist
+        ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
+          await tcompSdk.fetchBidState(bidState));
+      } catch {}
+      const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
+
       sig = await buildAndSendTx({
         ixs: takeIxs,
         extraSigners: [delegate ?? seller],
@@ -1772,8 +1871,21 @@ export const testTakeBid = async ({
         proof: proof.proof,
       });
 
-      //bid state closed
-      expect(getAccount(bidState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
+      if (fullyFilled) {
+        //bid state closed
+        expect(getAccount(bidState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
+        // owner gets back rent
+        const currBidderLamports = await getLamports(owner);
+        expect(currBidderLamports! - prevBidderLamports!).equal(
+          await tcompSdk.getBidStateRent()
+        );
+      } else {
+        const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
+          bidState
+        );
+        expect(prevQuantity).to.eq(quantity);
+        expect(prevQuantityFilled + 1).to.eq(filledQuantity);
+      }
 
       const amount = minAmount.toNumber();
       const creators = metadata.creators;
@@ -1829,12 +1941,6 @@ export const testTakeBid = async ({
         );
       }
 
-      // owner gets back rent
-      const currBidderLamports = await getLamports(owner);
-      expect(currBidderLamports! - prevBidderLamports!).equal(
-        await tcompSdk.getBidStateRent()
-      );
-
       // Sol escrow should have the NFT cost deducted
       if (!isNullLike(margin)) {
         const currMarginLamports = await getLamports(margin);
@@ -1842,7 +1948,7 @@ export const testTakeBid = async ({
       } else {
         const currBidStateLamports = await getLamports(bidState);
         expect((currBidStateLamports ?? 0) - prevBidStateLamports!).eq(
-          -1 * (amount + (await tcompSdk.getBidStateRent()))
+          -1 * (amount + (fullyFilled ? await tcompSdk.getBidStateRent() : 0))
         );
       }
     }

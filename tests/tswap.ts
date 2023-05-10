@@ -1,7 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { TensorWhitelistSDK } from "@tensor-oss/tensorswap-sdk";
-import { buildAndSendTx, swapSdk, TEST_PROVIDER } from "./shared";
+import { buildAndSendTx, swapSdk, TEST_PROVIDER, wlSdk } from "./shared";
 import { getLamports } from "./shared";
 import { BN } from "bn.js";
 
@@ -94,4 +94,60 @@ export const testWithdrawFromMargin = async ({
   const marginRent = await swapSdk.getMarginAccountRent();
   const lamports = await getLamports(marginPda);
   expect(lamports).to.eq(Math.round(marginRent + expectedLamports));
+};
+
+//keeping this outside the fn so that it's constant for all tests
+const tlistOwner = Keypair.generate();
+
+export const testInitWLAuthority = async () => {
+  const {
+    tx: { ixs },
+    authPda,
+  } = await wlSdk.initUpdateAuthority({
+    cosigner: TEST_PROVIDER.publicKey,
+    owner: tlistOwner.publicKey,
+    newCosigner: TEST_PROVIDER.publicKey,
+    newOwner: tlistOwner.publicKey,
+  });
+
+  await buildAndSendTx({ ixs, extraSigners: [tlistOwner] });
+
+  let authAcc = await wlSdk.fetchAuthority(authPda);
+  expect(authAcc.cosigner.toBase58()).to.eq(TEST_PROVIDER.publicKey.toBase58());
+
+  return { authPda, tlistOwner };
+};
+
+export const makeVocWhitelist = async (voc: PublicKey) => {
+  const uuid = wlSdk.genWhitelistUUID();
+  const name = "hello_world";
+  const {
+    tx: { ixs },
+    whitelistPda,
+  } = await wlSdk.initUpdateWhitelist({
+    cosigner: TEST_PROVIDER.publicKey,
+    uuid: TensorWhitelistSDK.uuidToBuffer(uuid),
+    name: TensorWhitelistSDK.nameToBuffer(name),
+    voc,
+  });
+  await buildAndSendTx({ provider: TEST_PROVIDER, ixs });
+
+  return { voc, whitelist: whitelistPda };
+};
+
+export const makeFvcWhitelist = async (fvc: PublicKey) => {
+  const uuid = wlSdk.genWhitelistUUID();
+  const name = "hello_world";
+  const {
+    tx: { ixs },
+    whitelistPda,
+  } = await wlSdk.initUpdateWhitelist({
+    cosigner: TEST_PROVIDER.publicKey,
+    uuid: TensorWhitelistSDK.uuidToBuffer(uuid),
+    name: TensorWhitelistSDK.nameToBuffer(name),
+    fvc,
+  });
+  await buildAndSendTx({ provider: TEST_PROVIDER, ixs });
+
+  return { fvc, whitelist: whitelistPda };
 };

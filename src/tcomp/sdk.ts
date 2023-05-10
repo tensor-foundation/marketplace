@@ -18,7 +18,7 @@ import {
   Provider,
 } from "@project-serum/anchor";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
-import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import bs58 from "bs58";
 import { hash } from "@project-serum/anchor/dist/cjs/utils/sha256";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
@@ -106,41 +106,35 @@ export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
 
 export const BidTargetAnchor = {
   AssetId: { assetId: {} },
-  Voc: { voc: {} },
-  Fvc: { fvc: {} },
+  Whitelist: { whitelist: {} },
 };
 type BidTargetAnchor = (typeof BidTargetAnchor)[keyof typeof BidTargetAnchor];
 
-export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 | 2 => {
-  const t: Record<string, 0 | 1 | 2> = {
+export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 => {
+  const t: Record<string, 0 | 1> = {
     assetId: 0,
-    voc: 1,
-    fvc: 2,
+    whitelist: 1,
   };
   return t[Object.keys(target)[0]];
 };
 
 export enum BidTarget {
   AssetId = "AssetId",
-  Voc = "Voc",
-  Fvc = "Fvc",
+  Whitelist = "Whitelist",
 }
 
 export const castBidTargetAnchor = (target: BidTargetAnchor): BidTarget =>
   ({
     0: BidTarget.AssetId,
-    1: BidTarget.Voc,
-    2: BidTarget.Fvc,
+    1: BidTarget.Whitelist,
   }[bidTargetU8(target)]);
 
 export const castBidTarget = (target: BidTarget): BidTargetAnchor => {
   switch (target) {
     case BidTarget.AssetId:
       return BidTargetAnchor.AssetId;
-    case BidTarget.Voc:
-      return BidTargetAnchor.Voc;
-    case BidTarget.Fvc:
-      return BidTargetAnchor.Fvc;
+    case BidTarget.Whitelist:
+      return BidTargetAnchor.Whitelist;
   }
 };
 
@@ -282,6 +276,8 @@ export type BidStateAnchor = {
   targetId: PublicKey;
   field?: BidFieldAnchor;
   fieldId?: PublicKey;
+  quantity: number;
+  filledQuantity: number;
   amount: BN;
   currency: PublicKey | null;
   expiry: BN;
@@ -689,6 +685,7 @@ export class TCompSDK {
     bidId = targetId,
     field = null,
     fieldId = null,
+    quantity = 1,
     owner,
     amount,
     expireInSec = null,
@@ -704,6 +701,7 @@ export class TCompSDK {
     bidId?: PublicKey;
     field?: BidField | null;
     fieldId?: PublicKey | null;
+    quantity?: number;
     owner: PublicKey;
     amount: BN;
     expireInSec?: BN | null;
@@ -724,6 +722,7 @@ export class TCompSDK {
         field ? castBidField(field) : null,
         fieldId,
         amount,
+        quantity,
         expireInSec,
         currency,
         privateTaker,
@@ -831,6 +830,7 @@ export class TCompSDK {
     compute = DEFAULT_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
+    whitelist = null,
   }: {
     targetData:
       | {
@@ -861,6 +861,7 @@ export class TCompSDK {
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
+    whitelist?: PublicKey | null;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -901,6 +902,7 @@ export class TCompSDK {
       delegate: delegate,
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
+      whitelist: whitelist ?? TENSORSWAP_ADDR,
     };
     const remAccounts = [...creatorsPath, ...proofPath];
 
@@ -1088,6 +1090,7 @@ export class MakeEvent {
   maker!: PublicKey;
   assetId!: PublicKey;
   amount!: BN;
+  quantity!: number;
   currency!: PublicKey | null;
   expiry!: BN;
   privateTaker!: PublicKey | null;
@@ -1105,6 +1108,7 @@ export const makeEventSchema = new Map([
         ["maker", [32]],
         ["assetId", [32]],
         ["amount", "u64"],
+        ["quantity", "u32"],
         ["currency", { kind: "option", type: [32] }],
         ["expiry", "u64"],
         ["privateTaker", { kind: "option", type: [32] }],
@@ -1117,6 +1121,7 @@ export class TakeEvent {
   taker!: PublicKey;
   assetId!: PublicKey;
   amount!: BN;
+  quantityLeft!: number;
   tcompFee!: BN;
   takerBrokerFee!: BN;
   makerBrokerFee!: BN;
@@ -1136,6 +1141,7 @@ export const takeEventSchema = new Map([
         ["taker", [32]],
         ["assetId", [32]],
         ["amount", "u64"],
+        ["quantityLeft", "u32"],
         ["tcompFee", "u64"],
         ["takerBrokerFee", "u64"],
         ["makerBrokerFee", "u64"],
@@ -1213,6 +1219,7 @@ export function deserializeTcompEvent(data: Buffer) {
       maker: new PublicKey(e.maker),
       assetId: new PublicKey(e.assetId),
       amount: new BN(e.amount),
+      quantity: e.quantity,
       currency: e.currency ? new PublicKey(e.currency) : null,
       expiry: new BN(e.expiry),
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
@@ -1229,6 +1236,7 @@ export function deserializeTcompEvent(data: Buffer) {
       taker: new PublicKey(e.taker),
       assetId: new PublicKey(e.assetId),
       amount: new BN(e.amount),
+      quantityLeft: e.quantityLeft,
       tcompFee: new BN(e.tcompFee),
       creatorFee: new BN(e.creatorFee),
       takerBrokerFee: new BN(e.takerBrokerFee),

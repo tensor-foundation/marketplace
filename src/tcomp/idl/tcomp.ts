@@ -39,7 +39,7 @@ export type Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -564,6 +564,10 @@ export type Tcomp = {
           "type": "u64"
         },
         {
+          "name": "quantity",
+          "type": "u32"
+        },
+        {
           "name": "expireInSec",
           "type": {
             "option": "u64"
@@ -734,6 +738,11 @@ export type Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -882,6 +891,11 @@ export type Tcomp = {
         {
           "name": "marginAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -1051,6 +1065,14 @@ export type Tcomp = {
             "type": {
               "option": "publicKey"
             }
+          },
+          {
+            "name": "quantity",
+            "type": "u32"
+          },
+          {
+            "name": "filledQuantity",
+            "type": "u32"
           },
           {
             "name": "amount",
@@ -1256,6 +1278,10 @@ export type Tcomp = {
             "type": "u64"
           },
           {
+            "name": "quantity",
+            "type": "u32"
+          },
+          {
             "name": "currency",
             "type": {
               "option": "publicKey"
@@ -1290,6 +1316,10 @@ export type Tcomp = {
           {
             "name": "amount",
             "type": "u64"
+          },
+          {
+            "name": "quantityLeft",
+            "type": "u32"
           },
           {
             "name": "tcompFee",
@@ -1400,10 +1430,7 @@ export type Tcomp = {
             "name": "AssetId"
           },
           {
-            "name": "Voc"
-          },
-          {
-            "name": "Fvc"
+            "name": "Whitelist"
           }
         ]
       }
@@ -1560,6 +1587,21 @@ export type Tcomp = {
       "code": 6127,
       "name": "ListingNotYetExpired",
       "msg": "listing not yet expired"
+    },
+    {
+      "code": 6128,
+      "name": "BadQuantity",
+      "msg": "bad quantity passed in"
+    },
+    {
+      "code": 6129,
+      "name": "BidFullyFilled",
+      "msg": "bid fully filled"
+    },
+    {
+      "code": 6130,
+      "name": "BadWhitelist",
+      "msg": "bad whitelist"
     }
   ]
 };
@@ -1605,7 +1647,7 @@ export const IDL: Tcomp = {
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
   "instructions": [
@@ -2130,6 +2172,10 @@ export const IDL: Tcomp = {
           "type": "u64"
         },
         {
+          "name": "quantity",
+          "type": "u32"
+        },
+        {
           "name": "expireInSec",
           "type": {
             "option": "u64"
@@ -2300,6 +2346,11 @@ export const IDL: Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -2448,6 +2499,11 @@ export const IDL: Tcomp = {
         {
           "name": "marginAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -2617,6 +2673,14 @@ export const IDL: Tcomp = {
             "type": {
               "option": "publicKey"
             }
+          },
+          {
+            "name": "quantity",
+            "type": "u32"
+          },
+          {
+            "name": "filledQuantity",
+            "type": "u32"
           },
           {
             "name": "amount",
@@ -2822,6 +2886,10 @@ export const IDL: Tcomp = {
             "type": "u64"
           },
           {
+            "name": "quantity",
+            "type": "u32"
+          },
+          {
             "name": "currency",
             "type": {
               "option": "publicKey"
@@ -2856,6 +2924,10 @@ export const IDL: Tcomp = {
           {
             "name": "amount",
             "type": "u64"
+          },
+          {
+            "name": "quantityLeft",
+            "type": "u32"
           },
           {
             "name": "tcompFee",
@@ -2966,10 +3038,7 @@ export const IDL: Tcomp = {
             "name": "AssetId"
           },
           {
-            "name": "Voc"
-          },
-          {
-            "name": "Fvc"
+            "name": "Whitelist"
           }
         ]
       }
@@ -3126,6 +3195,21 @@ export const IDL: Tcomp = {
       "code": 6127,
       "name": "ListingNotYetExpired",
       "msg": "listing not yet expired"
+    },
+    {
+      "code": 6128,
+      "name": "BadQuantity",
+      "msg": "bad quantity passed in"
+    },
+    {
+      "code": 6129,
+      "name": "BidFullyFilled",
+      "msg": "bid fully filled"
+    },
+    {
+      "code": 6130,
+      "name": "BadWhitelist",
+      "msg": "bad whitelist"
     }
   ]
 };

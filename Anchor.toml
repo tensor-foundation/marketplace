@@ -29,6 +29,10 @@ program = "./deps/solana-spl/account-compression/target/deploy/spl_noop.so"
 address = "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
 program = "./deps/tensorswap/target/deploy/tensorswap.so"
 
+[[test.genesis]]
+address = "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW"
+program = "./deps/tensorswap/target/deploy/tensor_whitelist.so"
+
 [provider]
 cluster = "localnet"
 wallet = "tests/test-keypair.json"

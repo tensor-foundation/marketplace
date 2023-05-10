@@ -9,9 +9,10 @@ pub mod instructions;
 pub mod shared;
 pub mod state;
 
-pub use std::{io::Write, slice::Iter, str::FromStr};
+pub use std::{io::Write, ops::DerefMut, slice::Iter, str::FromStr};
 
 pub use anchor_lang::{
+    __private::CLOSED_ACCOUNT_DISCRIMINATOR,
     prelude::*,
     solana_program::{
         hash,
@@ -41,7 +42,10 @@ pub use noop::*;
 pub use shared::*;
 pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
-pub use tensorswap::{self, program::Tensorswap, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR};
+pub use tensor_whitelist::{self, Whitelist};
+pub use tensorswap::{
+    self, margin_pda, program::Tensorswap, MarginAccount, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR,
+};
 pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
@@ -161,6 +165,7 @@ pub mod tcomp {
         field: Option<BidField>,
         field_id: Option<Pubkey>,
         amount: u64,
+        quantity: u32,
         expire_in_sec: Option<u64>,
         currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
@@ -174,6 +179,7 @@ pub mod tcomp {
             field,
             field_id,
             amount,
+            quantity,
             expire_in_sec,
             currency,
             private_taker,

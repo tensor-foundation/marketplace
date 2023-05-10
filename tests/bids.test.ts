@@ -6,6 +6,7 @@ import {
   PublicKey,
 } from "@solana/web3.js";
 import {
+  ACC_NOT_INIT_ERR,
   beforeAllHook,
   beforeHook,
   CONC_MERKLE_TREE_ERROR,
@@ -22,17 +23,27 @@ import {
   testCancelCloseBid,
   testTakeBid,
   verifyCNftCreator,
+  wlSdk,
 } from "./shared";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { initCollection, makeNTraders } from "./account";
-import { BidField, BidTarget, nameToBuffer, TAKER_BROKER_PCT } from "../src";
 import {
+  BidField,
+  BidTarget,
+  deserializeTcompEvent,
+  nameToBuffer,
+  TAKER_BROKER_PCT,
+} from "../src";
+import {
+  makeFvcWhitelist,
+  makeVocWhitelist,
   testDepositIntoMargin,
   testMakeMargin,
   testWithdrawFromMargin,
 } from "./tswap";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -445,6 +456,10 @@ describe("tcomp bids", () => {
         expect(traders?.maker?.toString()).eq(traderB.publicKey.toString());
         const amounts = tcompSdk.getIxAmounts(ix);
         expect(amounts?.amount.toNumber()).eq(amount);
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantity).eq(1);
       }
 
       // --------------------------------------- Take Bid
@@ -479,6 +494,10 @@ describe("tcomp bids", () => {
         expect(amounts?.creatorFee?.toNumber()).eq(
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
+        //quantity
+        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
+        const e = deserializeTcompEvent(cpiData);
+        expect(e.quantityLeft).eq(0);
       }
     }
   });
@@ -528,7 +547,8 @@ describe("tcomp bids", () => {
   });
 
   it("margin buy: works (VOC bid)", async () => {
-    let canopyDepth = 12;
+    //this is the smallest canopy that fits
+    let canopyDepth = 7;
     const {
       merkleTree,
       traderA,
@@ -543,6 +563,7 @@ describe("tcomp bids", () => {
       canopyDepth,
       setupTswap: true,
     });
+    const { whitelist } = await makeVocWhitelist(collectionMint);
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       const { marginPda, marginNr, marginRent } = await testMakeMargin({
@@ -556,9 +577,9 @@ describe("tcomp bids", () => {
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: collectionMint,
-        bidId: collectionMint,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
+        bidId: whitelist,
         owner: traderB,
         privateTaker: null,
         margin: marginPda,
@@ -573,8 +594,10 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         canopyDepth,
         margin: marginPda,
-        bidId: collectionMint,
-        target: BidTarget.Voc,
+        bidId: whitelist,
+        target: BidTarget.Whitelist,
+        lookupTableAccount,
+        whitelist,
       });
     }
   });
@@ -742,10 +765,11 @@ describe("tcomp bids", () => {
         });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
+        const { whitelist } = await makeVocWhitelist(metadata.collection!.key);
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          target: BidTarget.Voc,
-          targetId: metadata.collection!.key,
+          target: BidTarget.Whitelist,
+          targetId: whitelist,
           owner: traderB,
         });
         //fails if try to change the target
@@ -753,25 +777,15 @@ describe("tcomp bids", () => {
           testBid({
             amount: new BN(LAMPORTS_PER_SOL / 2),
             target: BidTarget.AssetId, //wrong target
-            targetId: metadata.collection!.key,
+            targetId: whitelist,
             owner: traderB,
             prevBidAmount: LAMPORTS_PER_SOL,
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
-        await expect(
-          testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
-            target: BidTarget.Voc, //correct target
-            targetId: Keypair.generate().publicKey, //but wrong targetId
-            owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
-            bidId: metadata.collection!.key, //make sure correctly address
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
-          target: BidTarget.Voc,
-          targetId: metadata.collection!.key,
+          target: BidTarget.Whitelist,
+          targetId: whitelist,
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         });
@@ -788,27 +802,13 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: metadata.collection!.key,
+            bidId: whitelist,
+            whitelist,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
-        await expect(
-          testTakeBid({
-            target: BidTarget.Fvc, //wrong target
-            index,
-            lookupTableAccount,
-            memTree,
-            merkleTree,
-            metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
-            owner: traderB.publicKey,
-            seller: traderA,
-            canopyDepth,
-            bidId: metadata.collection!.key,
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
+        ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedVocVerification"));
         // -------------------- final purchase
         await testTakeBid({
-          target: BidTarget.Voc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -818,7 +818,8 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: metadata.collection!.key,
+          bidId: whitelist,
+          whitelist,
         });
       }
     }
@@ -841,18 +842,19 @@ describe("tcomp bids", () => {
         canopyDepth,
         collectionless: true,
       });
+      const { whitelist } = await makeVocWhitelist(collectionMint);
 
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: collectionMint,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
       });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await expect(
           testTakeBid({
-            target: BidTarget.Voc,
+            target: BidTarget.Whitelist,
             index,
             lookupTableAccount,
             memTree,
@@ -862,9 +864,58 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: collectionMint,
+            bidId: whitelist,
+            whitelist,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingCollection"));
+        ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedVocVerification"));
+      }
+    }
+  });
+
+  it("VOC: fails to take a collection bid with a unverified collection mint", async () => {
+    const canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const {
+        merkleTree,
+        traderA,
+        leaves,
+        traderB,
+        memTree,
+        treeOwner,
+        collectionMint,
+      } = await beforeHook({
+        nrCreators,
+        numMints: 2,
+        canopyDepth,
+        //this will add the collection to metadata but it wont be verified and we wont use mint_to_collection ix
+        unverifiedCollection: true,
+      });
+      const { whitelist } = await makeVocWhitelist(collectionMint);
+
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
+        owner: traderB,
+      });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await expect(
+          testTakeBid({
+            target: BidTarget.Whitelist,
+            index,
+            lookupTableAccount,
+            memTree,
+            merkleTree,
+            metadata,
+            minAmount: new BN(LAMPORTS_PER_SOL),
+            owner: traderB.publicKey,
+            seller: traderA,
+            canopyDepth,
+            bidId: whitelist,
+            whitelist,
+          })
+        ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedVocVerification"));
       }
     }
   });
@@ -880,18 +931,19 @@ describe("tcomp bids", () => {
         });
 
       const fakeCollection = Keypair.generate().publicKey;
+      const { whitelist } = await makeVocWhitelist(fakeCollection);
 
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: fakeCollection,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
       });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await expect(
           testTakeBid({
-            target: BidTarget.Voc,
+            target: BidTarget.Whitelist,
             index,
             lookupTableAccount,
             memTree,
@@ -901,9 +953,10 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: fakeCollection,
+            bidId: whitelist,
+            whitelist,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+        ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedVocVerification"));
       }
     }
   });
@@ -918,26 +971,30 @@ describe("tcomp bids", () => {
           canopyDepth,
         });
 
+      const { whitelist } = await makeVocWhitelist(
+        leaves[0].metadata.collection!.key
+      );
+
       const bidId1 = Keypair.generate().publicKey;
       const bidId2 = Keypair.generate().publicKey;
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: leaves[0].metadata.collection!.key,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
         bidId: bidId1,
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: leaves[0].metadata.collection!.key,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
         bidId: bidId2,
       });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testTakeBid({
-          target: BidTarget.Voc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -948,6 +1005,7 @@ describe("tcomp bids", () => {
           seller: traderA,
           canopyDepth,
           bidId: index === 0 ? bidId1 : bidId2,
+          whitelist,
         });
       }
     }
@@ -966,11 +1024,13 @@ describe("tcomp bids", () => {
         verifiedCreator,
       });
 
+    const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
+
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Fvc,
-        targetId: verifiedCreator.publicKey,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
       });
       //fails if try to change the target
@@ -978,24 +1038,23 @@ describe("tcomp bids", () => {
         testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
           target: BidTarget.AssetId, //wrong target
-          targetId: verifiedCreator.publicKey,
+          targetId: whitelist,
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL / 2),
-        target: BidTarget.Fvc,
-        targetId: verifiedCreator.publicKey,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
         prevBidAmount: LAMPORTS_PER_SOL,
       });
       // -------------------- failure cases
       //can't do a bad case for assetId since it's only used for picking branch js side and VOC branch will be picked correctly
-      //can't do a bad case for VOC coz that branch accepts FVC now too
       // -------------------- final purchase
       await testTakeBid({
-        target: BidTarget.Fvc,
+        target: BidTarget.Whitelist,
         index,
         lookupTableAccount,
         memTree,
@@ -1005,7 +1064,8 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         seller: traderA,
         canopyDepth,
-        bidId: verifiedCreator.publicKey,
+        bidId: whitelist,
+        whitelist,
       });
     }
   });
@@ -1020,18 +1080,19 @@ describe("tcomp bids", () => {
         canopyDepth,
         //intentionally not passing verifiedCreator
       });
+    const { whitelist } = await makeFvcWhitelist(fakeCreator.publicKey);
 
     await testBid({
       amount: new BN(LAMPORTS_PER_SOL),
-      target: BidTarget.Fvc,
-      targetId: fakeCreator.publicKey,
+      target: BidTarget.Whitelist,
+      targetId: whitelist,
       owner: traderB,
     });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       await expect(
         testTakeBid({
-          target: BidTarget.Fvc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -1041,9 +1102,10 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: fakeCreator.publicKey,
+          bidId: whitelist,
+          whitelist,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingFvc"));
+      ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedFvcVerification"));
     }
   });
 
@@ -1057,17 +1119,20 @@ describe("tcomp bids", () => {
       });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
+      const { whitelist } = await makeFvcWhitelist(
+        metadata.creators[0].address
+      );
       const bidId = Keypair.generate().publicKey;
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Fvc,
-        targetId: metadata.creators[0].address,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         owner: traderB,
         bidId,
       });
       await expect(
         testTakeBid({
-          target: BidTarget.Fvc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -1078,8 +1143,9 @@ describe("tcomp bids", () => {
           seller: traderA,
           canopyDepth,
           bidId,
+          whitelist,
         })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("MissingFvc"));
+      ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedFvcVerification"));
     }
   });
 
@@ -1136,19 +1202,21 @@ describe("tcomp bids", () => {
       leaf,
     });
 
+    const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
+
     const bidId = Keypair.generate().publicKey;
     //bid on first mint
     await testBid({
       amount: new BN(LAMPORTS_PER_SOL),
-      target: BidTarget.Fvc,
-      targetId: verifiedCreator.publicKey,
+      target: BidTarget.Whitelist,
+      targetId: whitelist,
       owner: traderB,
       bidId,
     });
     //try to sell second
     await expect(
       testTakeBid({
-        target: BidTarget.Fvc,
+        target: BidTarget.Whitelist,
         index: leaves[1].index, //<-- second
         lookupTableAccount,
         memTree,
@@ -1159,11 +1227,12 @@ describe("tcomp bids", () => {
         seller: traderA,
         canopyDepth,
         bidId,
+        whitelist,
       })
-    ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+    ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedFvcVerification"));
     //sell first
     await testTakeBid({
-      target: BidTarget.Fvc,
+      target: BidTarget.Whitelist,
       index: leaves[0].index, //<-- first
       lookupTableAccount,
       memTree,
@@ -1174,6 +1243,7 @@ describe("tcomp bids", () => {
       seller: traderA,
       canopyDepth,
       bidId,
+      whitelist,
     });
   });
 
@@ -1182,18 +1252,27 @@ describe("tcomp bids", () => {
   it("VOC + Name: bids + edits + accepts bid", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
-      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({
-          nrCreators,
-          numMints: 2,
-          canopyDepth,
-        });
+      const {
+        merkleTree,
+        traderA,
+        leaves,
+        traderB,
+        memTree,
+        treeOwner,
+        collectionMint,
+      } = await beforeHook({
+        nrCreators,
+        numMints: 2,
+        canopyDepth,
+      });
+
+      const { whitelist } = await makeVocWhitelist(collectionMint);
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          target: BidTarget.Voc,
-          targetId: metadata.collection!.key,
+          target: BidTarget.Whitelist,
+          targetId: whitelist,
           field: BidField.Name,
           fieldId: new PublicKey(nameToBuffer(metadata.name)),
           owner: traderB,
@@ -1202,30 +1281,18 @@ describe("tcomp bids", () => {
         await expect(
           testBid({
             amount: new BN(LAMPORTS_PER_SOL),
-            target: BidTarget.Voc,
-            targetId: metadata.collection!.key,
+            target: BidTarget.Whitelist,
+            targetId: whitelist,
             field: BidField.Name,
             fieldId: new PublicKey(nameToBuffer("failooooor")), //<-- boo
             owner: traderB,
             prevBidAmount: LAMPORTS_PER_SOL,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
-        await expect(
-          testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
-            target: BidTarget.Voc,
-            targetId: metadata.collection!.key,
-            field: null, //<-- boo
-            fieldId: new PublicKey(nameToBuffer(metadata.name)),
-            owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
-            bidId: metadata.collection!.key, //make sure correctly address
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL / 2),
-          target: BidTarget.Voc,
-          targetId: metadata.collection!.key,
+          target: BidTarget.Whitelist,
+          targetId: whitelist,
           field: BidField.Name,
           fieldId: new PublicKey(nameToBuffer(metadata.name)),
           owner: traderB,
@@ -1244,27 +1311,13 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: metadata.collection!.key,
+            bidId: whitelist,
+            whitelist,
           })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
-        await expect(
-          testTakeBid({
-            target: BidTarget.Fvc, //wrong target
-            index,
-            lookupTableAccount,
-            memTree,
-            merkleTree,
-            metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
-            owner: traderB.publicKey,
-            seller: traderA,
-            canopyDepth,
-            bidId: metadata.collection!.key,
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
+        ).to.be.rejectedWith(wlSdk.getErrorCodeHex("FailedVocVerification"));
         // -------------------- final purchase
         await testTakeBid({
-          target: BidTarget.Voc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -1274,7 +1327,8 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: metadata.collection!.key,
+          bidId: whitelist,
+          whitelist,
         });
       }
     }
@@ -1283,17 +1337,26 @@ describe("tcomp bids", () => {
   it("VOC + Name: rejects an NFT with wrong name", async () => {
     const canopyDepth = 10;
     for (const nrCreators of [0, 1, 4]) {
-      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({
-          nrCreators,
-          numMints: 2,
-          canopyDepth,
-        });
+      const {
+        merkleTree,
+        traderA,
+        leaves,
+        traderB,
+        memTree,
+        treeOwner,
+        collectionMint,
+      } = await beforeHook({
+        nrCreators,
+        numMints: 2,
+        canopyDepth,
+      });
+
+      const { whitelist } = await makeVocWhitelist(collectionMint);
 
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Voc,
-        targetId: leaves.at(-1)!.metadata.collection!.key,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         field: BidField.Name,
         fieldId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
         owner: traderB,
@@ -1302,7 +1365,7 @@ describe("tcomp bids", () => {
       for (const { leaf, index, metadata, assetId } of leaves) {
         if (index === leaves.length - 1) {
           await testTakeBid({
-            target: BidTarget.Voc,
+            target: BidTarget.Whitelist,
             index,
             lookupTableAccount,
             memTree,
@@ -1312,13 +1375,14 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: metadata.collection!.key,
+            bidId: whitelist,
+            whitelist,
           });
           continue;
         }
         await expect(
           testTakeBid({
-            target: BidTarget.Voc,
+            target: BidTarget.Whitelist,
             index,
             lookupTableAccount,
             memTree,
@@ -1328,7 +1392,8 @@ describe("tcomp bids", () => {
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
-            bidId: metadata.collection!.key,
+            bidId: whitelist,
+            whitelist,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongBidFieldId"));
       }
@@ -1348,11 +1413,13 @@ describe("tcomp bids", () => {
         verifiedCreator,
       });
 
+    const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
+
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
-        target: BidTarget.Fvc,
-        targetId: verifiedCreator.publicKey,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         field: BidField.Name,
         fieldId: new PublicKey(nameToBuffer(metadata.name)),
         owner: traderB,
@@ -1361,56 +1428,28 @@ describe("tcomp bids", () => {
       await expect(
         testBid({
           amount: new BN(LAMPORTS_PER_SOL),
-          target: BidTarget.Fvc,
-          targetId: verifiedCreator.publicKey,
+          target: BidTarget.Whitelist,
+          targetId: whitelist,
           field: BidField.Name,
           fieldId: new PublicKey(nameToBuffer("failooooor")), //<-- boo
           owner: traderB,
           prevBidAmount: LAMPORTS_PER_SOL,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
-      await expect(
-        testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
-          target: BidTarget.Fvc,
-          targetId: verifiedCreator.publicKey,
-          field: null, //<-- boo
-          fieldId: new PublicKey(nameToBuffer(metadata.name)),
-          owner: traderB,
-          prevBidAmount: LAMPORTS_PER_SOL,
-          bidId: verifiedCreator.publicKey, //make sure correctly address
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL / 2),
-        target: BidTarget.Fvc,
-        targetId: verifiedCreator.publicKey,
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
         field: BidField.Name,
         fieldId: new PublicKey(nameToBuffer(metadata.name)),
         owner: traderB,
         prevBidAmount: LAMPORTS_PER_SOL,
       });
       // -------------------- failure cases
-      //try to go down the wrong branch
-      await expect(
-        testTakeBid({
-          target: BidTarget.Fvc,
-          index,
-          lookupTableAccount,
-          memTree,
-          merkleTree,
-          metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
-          owner: traderB.publicKey,
-          seller: traderA,
-          canopyDepth,
-          bidId: verifiedCreator.publicKey,
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongIxForBidTarget"));
       //can't do a bad case for assetId since/voc it's only used for picking branch js side and FVC branch will be picked correctly
       // -------------------- final purchase
       await testTakeBid({
-        target: BidTarget.Fvc,
+        target: BidTarget.Whitelist,
         field: BidField.Name,
         index,
         lookupTableAccount,
@@ -1421,7 +1460,8 @@ describe("tcomp bids", () => {
         owner: traderB.publicKey,
         seller: traderA,
         canopyDepth,
-        bidId: verifiedCreator.publicKey,
+        bidId: whitelist,
+        whitelist,
       });
     }
   });
@@ -1436,11 +1476,12 @@ describe("tcomp bids", () => {
         canopyDepth,
         verifiedCreator,
       });
+    const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
 
     await testBid({
       amount: new BN(LAMPORTS_PER_SOL),
-      target: BidTarget.Fvc,
-      targetId: verifiedCreator.publicKey,
+      target: BidTarget.Whitelist,
+      targetId: whitelist,
       field: BidField.Name,
       fieldId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
       owner: traderB,
@@ -1449,7 +1490,7 @@ describe("tcomp bids", () => {
     for (const { leaf, index, metadata, assetId } of leaves) {
       if (index === leaves.length - 1) {
         await testTakeBid({
-          target: BidTarget.Fvc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -1459,14 +1500,15 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: verifiedCreator.publicKey,
+          bidId: whitelist,
           field: BidField.Name,
+          whitelist,
         });
         continue;
       }
       await expect(
         testTakeBid({
-          target: BidTarget.Fvc,
+          target: BidTarget.Whitelist,
           index,
           lookupTableAccount,
           memTree,
@@ -1476,10 +1518,122 @@ describe("tcomp bids", () => {
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
-          bidId: verifiedCreator.publicKey,
+          bidId: whitelist,
           field: BidField.Name,
+          whitelist,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongBidFieldId"));
     }
+  });
+
+  // --------------------------------------- quantity
+
+  it("VOC: bids + accepts bid (multiple quantity)", async () => {
+    const canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const {
+        merkleTree,
+        traderA,
+        leaves,
+        traderB,
+        memTree,
+        treeOwner,
+        collectionMint,
+      } = await beforeHook({
+        nrCreators,
+        numMints: 4,
+        canopyDepth,
+      });
+      const { whitelist } = await makeVocWhitelist(collectionMint);
+
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL),
+        target: BidTarget.Whitelist,
+        targetId: whitelist,
+        owner: traderB,
+        quantity: 3,
+      });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        if (index === leaves.length - 1) {
+          await expect(
+            testTakeBid({
+              target: BidTarget.Whitelist,
+              index,
+              lookupTableAccount,
+              memTree,
+              merkleTree,
+              metadata,
+              minAmount: new BN(LAMPORTS_PER_SOL),
+              owner: traderB.publicKey,
+              seller: traderA,
+              canopyDepth,
+              bidId: whitelist,
+              whitelist,
+            })
+          ).to.be.rejectedWith(ACC_NOT_INIT_ERR);
+          continue;
+        }
+        await testTakeBid({
+          target: BidTarget.Whitelist,
+          index,
+          lookupTableAccount,
+          memTree,
+          merkleTree,
+          metadata,
+          minAmount: new BN(LAMPORTS_PER_SOL),
+          owner: traderB.publicKey,
+          seller: traderA,
+          canopyDepth,
+          bidId: whitelist,
+          whitelist,
+        });
+        //can't edit down
+        if (index === 1) {
+          await expect(
+            testBid({
+              amount: new BN(LAMPORTS_PER_SOL),
+              target: BidTarget.Whitelist,
+              targetId: whitelist,
+              owner: traderB,
+              quantity: 1,
+            })
+          ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadQuantity"));
+        }
+      }
+    }
+  });
+
+  it("VOC: bids + closes & returns money (multiple quantity)", async () => {
+    const canopyDepth = 10;
+    const {
+      merkleTree,
+      traderA,
+      leaves,
+      traderB,
+      memTree,
+      treeOwner,
+      collectionMint,
+    } = await beforeHook({
+      nrCreators: 4,
+      numMints: 3,
+      canopyDepth,
+    });
+    const { whitelist } = await makeVocWhitelist(collectionMint);
+
+    const bidId = Keypair.generate().publicKey;
+    await testBid({
+      amount: new BN(LAMPORTS_PER_SOL),
+      target: BidTarget.Whitelist,
+      targetId: whitelist,
+      owner: traderB,
+      quantity: 2,
+      bidId,
+    });
+    await testCancelCloseBid({
+      amount: new BN(LAMPORTS_PER_SOL),
+      owner: traderB,
+      bidId,
+    });
   });
 });

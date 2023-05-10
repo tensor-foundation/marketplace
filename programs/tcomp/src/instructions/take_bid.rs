@@ -26,7 +26,6 @@ pub struct TakeBid<'info> {
     #[account(mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
-        close = owner,
         has_one = owner
     )]
     pub bid_state: Box<Account<'info, BidState>>,
@@ -43,6 +42,8 @@ pub struct TakeBid<'info> {
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
+    /// CHECK: manually below, since this account is optional
+    pub whitelist: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -78,7 +79,7 @@ impl<'info> Validate<'info> for TakeBid<'info> {
 
 impl<'info> TakeBid<'info> {
     fn take_bid_shared(
-        &self,
+        &mut self,
         asset_id: Pubkey,
         creator_hash: [u8; 32],
         data_hash: [u8; 32],
@@ -92,6 +93,11 @@ impl<'info> TakeBid<'info> {
         creator_accounts: &[AccountInfo<'info>],
         proof_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
+        // Verify & increment quantity
+        let bid_state = &mut self.bid_state;
+        require!(bid_state.can_buy_more(), TcompError::BidFullyFilled);
+        bid_state.incr_filled_quantity()?;
+
         let bid_state = &self.bid_state;
         let amount = bid_state.amount;
         let currency = bid_state.currency;
@@ -128,6 +134,7 @@ impl<'info> TakeBid<'info> {
                 asset_id,
                 amount,
                 tcomp_fee,
+                quantity_left: bid_state.quantity_left()?,
                 taker_broker_fee: broker_fee,
                 //TODO: maker broker disabled
                 maker_broker_fee: 0,
@@ -207,6 +214,16 @@ impl<'info> TakeBid<'info> {
             }),
         )?;
 
+        // --------------------------------------- close
+
+        // Close account if fully filled
+        if bid_state.quantity_left() == Ok(0) {
+            close_account(
+                &mut self.bid_state.to_account_info(),
+                &mut self.owner.to_account_info(),
+            )?;
+        }
+
         Ok(())
     }
 }
@@ -251,33 +268,34 @@ pub fn handler_full_meta<'info>(
         BidTarget::AssetId => {
             throw_err!(TcompError::WrongIxForBidTarget);
         }
-        BidTarget::Voc => match meta_args.collection {
-            Some(collection) => {
-                // We know from the above data_hash + subsequent transfer_cnft call that the correct collection key has been passed
-                // No need to check if verified, for cNFTs that's a degenerate field
-                require!(
-                    collection.key == bid_state.target_id,
-                    TcompError::WrongTargetId
-                );
-            }
-            None => {
-                throw_err!(TcompError::MissingCollection);
-            }
-        },
-        BidTarget::Fvc => {
-            // We know from the above creators_hash + subsequent transfer_cnft call that the correct creators list has been passed
-            let fvc = creators.iter().find(|c| c.verified);
-            match fvc {
-                Some(fvc) => {
-                    require!(
-                        bid_state.target_id == fvc.address,
-                        TcompError::WrongTargetId
-                    );
-                }
-                None => {
-                    throw_err!(TcompError::MissingFvc);
-                }
-            }
+        BidTarget::Whitelist => {
+            // Ensure the correct whitelist is passed in
+            require!(
+                *ctx.accounts.whitelist.key == bid_state.target_id,
+                TcompError::WrongTargetId
+            );
+            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
+            let collection =
+                meta_args
+                    .collection
+                    .map(|collection| mpl_token_metadata::state::Collection {
+                        key: collection.key,
+                        verified: collection.verified,
+                    });
+            // Run the verification
+            whitelist.verify_whitelist_tcomp(
+                collection,
+                Some(
+                    creators
+                        .iter()
+                        .map(|c| mpl_token_metadata::state::Creator {
+                            address: c.address,
+                            verified: c.verified,
+                            share: c.share,
+                        })
+                        .collect::<Vec<_>>(),
+                ),
+            )?;
         }
     }
 
@@ -358,24 +376,27 @@ pub fn handler_meta_hash<'info>(
         BidTarget::AssetId => {
             require!(bid_state.target_id == asset_id, TcompError::WrongTargetId);
         }
-        BidTarget::Voc => {
-            // No way to do without having the entire metadata struct.
-            throw_err!(TcompError::WrongIxForBidTarget);
-        }
-        BidTarget::Fvc => {
-            // We know from the above verify fn call that the correct creators list has been passed
-            let fvc = creators.iter().find(|c| c.verified);
-            match fvc {
-                Some(fvc) => {
-                    require!(
-                        bid_state.target_id == fvc.address,
-                        TcompError::WrongTargetId
-                    );
-                }
-                None => {
-                    throw_err!(TcompError::MissingFvc);
-                }
-            }
+        BidTarget::Whitelist => {
+            // Ensure the correct whitelist is passed in
+            require!(
+                *ctx.accounts.whitelist.key == bid_state.target_id,
+                TcompError::WrongTargetId
+            );
+            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
+            // Run the verification (this time collection is None since it can't be used w/o full meta
+            whitelist.verify_whitelist_tcomp(
+                None,
+                Some(
+                    creators
+                        .iter()
+                        .map(|c| mpl_token_metadata::state::Creator {
+                            address: c.address,
+                            verified: c.verified,
+                            share: c.share,
+                        })
+                        .collect::<Vec<_>>(),
+                ),
+            )?;
         }
     }
 

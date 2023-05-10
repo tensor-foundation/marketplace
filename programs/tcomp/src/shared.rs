@@ -1,5 +1,3 @@
-use tensorswap::{margin_pda, MarginAccount};
-
 use crate::*;
 
 pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
@@ -517,3 +515,44 @@ pub fn assert_decode_margin_account<'info>(
 //         }
 //     }
 // }
+
+// https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/9-closing-accounts/secure/src/lib.rs
+pub fn close_account(
+    pda_to_close: &mut AccountInfo,
+    sol_destination: &mut AccountInfo,
+) -> Result<()> {
+    // Transfer tokens from the account to the sol_destination.
+    let dest_starting_lamports = sol_destination.lamports();
+    **sol_destination.lamports.borrow_mut() =
+        unwrap_int!(dest_starting_lamports.checked_add(pda_to_close.lamports()));
+    **pda_to_close.lamports.borrow_mut() = 0;
+
+    // Mark the account discriminator as closed.
+    let mut data = pda_to_close.try_borrow_mut_data()?;
+    for byte in data.deref_mut().iter_mut() {
+        *byte = 0;
+    }
+
+    let dst: &mut [u8] = &mut data;
+    let mut cursor = std::io::Cursor::new(dst);
+    cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
+
+    Ok(())
+}
+
+pub fn assert_decode_whitelist<'info>(
+    whitelist_info: &AccountInfo<'info>,
+) -> Result<Account<'info, Whitelist>> {
+    let whitelist: Account<'info, Whitelist> = Account::try_from(whitelist_info)?;
+
+    let (key, _) = Pubkey::find_program_address(&[&whitelist.uuid], &tensor_whitelist::id());
+    if key != *whitelist.to_account_info().key {
+        throw_err!(TcompError::BadWhitelist);
+    }
+    // Check account owner (redundant because of find_program_address above, but why not).
+    if *whitelist_info.owner != tensor_whitelist::id() {
+        throw_err!(TcompError::BadWhitelist);
+    }
+
+    Ok(whitelist)
+}

@@ -52,6 +52,7 @@ pub fn handler<'info>(
             maker: *ctx.accounts.owner.key,
             asset_id: list_state.asset_id,
             amount,
+            quantity: 1,
             currency,
             expiry,
             private_taker,

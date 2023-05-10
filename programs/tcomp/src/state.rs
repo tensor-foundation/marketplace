@@ -50,8 +50,7 @@ impl ListState {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum BidTarget {
     AssetId = 0,
-    Voc = 1,
-    Fvc = 2,
+    Whitelist = 1,
 }
 
 #[repr(u8)]
@@ -74,6 +73,8 @@ pub struct BidState {
     // In addition to target can bid on a subset of the collection by choosing a field in the struct
     pub field: Option<BidField>,
     pub field_id: Option<Pubkey>,
+    pub quantity: u32,
+    pub filled_quantity: u32,
     // Amount
     pub amount: u64,
     pub currency: Option<Pubkey>,
@@ -90,9 +91,24 @@ pub struct BidState {
 #[constant]
 #[allow(clippy::identity_op)]
 pub const BID_STATE_SIZE: usize =
-    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 8 + 33 + 8 + (33 * 3) + 128;
+    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128;
 
 impl BidState {
+    pub fn can_buy_more(&self) -> bool {
+        self.filled_quantity < self.quantity
+    }
+
+    // Subtract 1 assuming it's being taken
+    pub fn quantity_left(&self) -> Result<u32> {
+        let left = unwrap_int!(self.quantity.checked_sub(self.filled_quantity));
+        Ok(left)
+    }
+
+    pub fn incr_filled_quantity(&mut self) -> Result<()> {
+        self.filled_quantity = unwrap_int!(self.filled_quantity.checked_add(1));
+        Ok(())
+    }
+
     pub fn seeds(&self) -> [&[u8]; 4] {
         [
             b"bid_state".as_ref(),
