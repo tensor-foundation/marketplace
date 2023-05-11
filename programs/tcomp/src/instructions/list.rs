@@ -97,7 +97,11 @@ pub fn handler<'info>(
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
-            asset_id,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
             amount,
             quantity: 1,
             currency,

@@ -48,14 +48,14 @@ impl ListState {
 
 #[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
-pub enum BidTarget {
+pub enum Target {
     AssetId = 0,
     Whitelist = 1,
 }
 
 #[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
-pub enum BidField {
+pub enum Field {
     Name = 0,
 }
 
@@ -68,10 +68,10 @@ pub struct BidState {
     /// Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here.
     pub bid_id: Pubkey,
     // Obviously would be better to use an enum-tuple / enum-struct but anchor doesn't serialize them
-    pub target: BidTarget,
+    pub target: Target,
     pub target_id: Pubkey,
     // In addition to target can bid on a subset of the collection by choosing a field in the struct
-    pub field: Option<BidField>,
+    pub field: Option<Field>,
     pub field_id: Option<Pubkey>,
     pub quantity: u32,
     pub filled_quantity: u32,

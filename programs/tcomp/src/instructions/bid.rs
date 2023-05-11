@@ -42,9 +42,9 @@ impl<'info> Validate<'info> for Bid<'info> {
 pub fn handler<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
     bid_id: Pubkey,
-    target: BidTarget,
+    target: Target,
     target_id: Pubkey,
-    field: Option<BidField>,
+    field: Option<Field>,
     field_id: Option<Pubkey>,
     amount: u64,
     quantity: u32,
@@ -81,7 +81,7 @@ pub fn handler<'info>(
     bid_state.owner = ctx.accounts.owner.key();
     bid_state.bid_id = bid_id;
 
-    if target == BidTarget::AssetId {
+    if target == Target::AssetId {
         require!(quantity == 1, TcompError::BadQuantity);
         require!(target_id == bid_id, TcompError::TargetIdMustEqualBidId);
         require!(field.is_none(), TcompError::BadBidField);
@@ -90,9 +90,9 @@ pub fn handler<'info>(
 
     // Can only be set once.
     if bid_state.target_id == Pubkey::default() {
-        bid_state.target = target;
+        bid_state.target = target.clone();
         bid_state.target_id = target_id;
-        bid_state.field = field;
+        bid_state.field = field.clone();
         bid_state.field_id = field_id;
     } else {
         // Verify to make sure the bidder isn't expecting anything else.
@@ -128,7 +128,11 @@ pub fn handler<'info>(
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
-            asset_id: target_id,
+            bid_id: Some(bid_id),
+            target,
+            target_id,
+            field,
+            field_id,
             amount,
             quantity,
             currency,

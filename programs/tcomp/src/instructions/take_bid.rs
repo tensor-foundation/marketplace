@@ -80,7 +80,7 @@ impl<'info> Validate<'info> for TakeBid<'info> {
 impl<'info> TakeBid<'info> {
     fn take_bid_shared(
         &mut self,
-        asset_id: Pubkey,
+        _asset_id: Pubkey,
         creator_hash: [u8; 32],
         data_hash: [u8; 32],
         creators: Vec<Creator>,
@@ -131,7 +131,11 @@ impl<'info> TakeBid<'info> {
         record_event(
             &TcompEvent::Taker(TakeEvent {
                 taker: *self.seller.key,
-                asset_id,
+                bid_id: Some(bid_state.bid_id),
+                target: bid_state.target.clone(),
+                target_id: bid_state.target_id,
+                field: bid_state.field.clone(),
+                field_id: bid_state.field_id,
                 amount,
                 tcomp_fee,
                 quantity_left: bid_state.quantity_left()?,
@@ -265,10 +269,10 @@ pub fn handler_full_meta<'info>(
     })?;
 
     match bid_state.target {
-        BidTarget::AssetId => {
+        Target::AssetId => {
             throw_err!(TcompError::WrongIxForBidTarget);
         }
-        BidTarget::Whitelist => {
+        Target::Whitelist => {
             // Ensure the correct whitelist is passed in
             require!(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
@@ -302,7 +306,7 @@ pub fn handler_full_meta<'info>(
     // Check the bid field filter if it exists.
     if let Some(field) = &bid_state.field {
         match field {
-            BidField::Name => {
+            Field::Name => {
                 let mut name_arr = [0u8; 32];
                 name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
                 require!(
@@ -373,10 +377,10 @@ pub fn handler_meta_hash<'info>(
     })?;
 
     match bid_state.target {
-        BidTarget::AssetId => {
+        Target::AssetId => {
             require!(bid_state.target_id == asset_id, TcompError::WrongTargetId);
         }
-        BidTarget::Whitelist => {
+        Target::Whitelist => {
             // Ensure the correct whitelist is passed in
             require!(
                 *ctx.accounts.whitelist.key == bid_state.target_id,

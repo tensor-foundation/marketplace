@@ -104,13 +104,13 @@ export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
 
 // --------------------------------------- types (target)
 
-export const BidTargetAnchor = {
+export const TargetAnchor = {
   AssetId: { assetId: {} },
   Whitelist: { whitelist: {} },
 };
-type BidTargetAnchor = (typeof BidTargetAnchor)[keyof typeof BidTargetAnchor];
+type TargetAnchor = (typeof TargetAnchor)[keyof typeof TargetAnchor];
 
-export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 => {
+export const targetU8 = (target: TargetAnchor): 0 | 1 => {
   const t: Record<string, 0 | 1> = {
     assetId: 0,
     whitelist: 1,
@@ -118,53 +118,61 @@ export const bidTargetU8 = (target: BidTargetAnchor): 0 | 1 => {
   return t[Object.keys(target)[0]];
 };
 
-export enum BidTarget {
+export const targetFromU8 = (n: number): Target => {
+  return Object.values(Target)[n];
+};
+
+export enum Target {
   AssetId = "AssetId",
   Whitelist = "Whitelist",
 }
 
-export const castBidTargetAnchor = (target: BidTargetAnchor): BidTarget =>
+export const castTargetAnchor = (target: TargetAnchor): Target =>
   ({
-    0: BidTarget.AssetId,
-    1: BidTarget.Whitelist,
-  }[bidTargetU8(target)]);
+    0: Target.AssetId,
+    1: Target.Whitelist,
+  }[targetU8(target)]);
 
-export const castBidTarget = (target: BidTarget): BidTargetAnchor => {
+export const castTarget = (target: Target): TargetAnchor => {
   switch (target) {
-    case BidTarget.AssetId:
-      return BidTargetAnchor.AssetId;
-    case BidTarget.Whitelist:
-      return BidTargetAnchor.Whitelist;
+    case Target.AssetId:
+      return TargetAnchor.AssetId;
+    case Target.Whitelist:
+      return TargetAnchor.Whitelist;
   }
 };
 
 // --------------------------------------- types (field)
 
-export const BidFieldAnchor = {
+export const FieldAnchor = {
   Name: { name: {} },
 };
-type BidFieldAnchor = (typeof BidFieldAnchor)[keyof typeof BidFieldAnchor];
+type FieldAnchor = (typeof FieldAnchor)[keyof typeof FieldAnchor];
 
-export const bidFieldU8 = (target: BidFieldAnchor): 0 => {
+export const fieldU8 = (target: FieldAnchor): 0 => {
   const t: Record<string, 0> = {
     name: 0,
   };
   return t[Object.keys(target)[0]];
 };
 
-export enum BidField {
+export const fieldFromU8 = (n: number): Field => {
+  return Object.values(Field)[n];
+};
+
+export enum Field {
   Name = "Name",
 }
 
-export const castBidFieldAnchor = (target: BidFieldAnchor): BidField =>
+export const castFieldAnchor = (target: FieldAnchor): Field =>
   ({
-    0: BidField.Name,
-  }[bidFieldU8(target)]);
+    0: Field.Name,
+  }[fieldU8(target)]);
 
-export const castBidField = (target: BidField): BidFieldAnchor => {
+export const castField = (target: Field): FieldAnchor => {
   switch (target) {
-    case BidField.Name:
-      return BidFieldAnchor.Name;
+    case Field.Name:
+      return FieldAnchor.Name;
   }
 };
 
@@ -272,9 +280,9 @@ export type BidStateAnchor = {
   bump: number[];
   owner: PublicKey;
   bidId: PublicKey;
-  target: BidTargetAnchor;
+  target: TargetAnchor;
   targetId: PublicKey;
-  field?: BidFieldAnchor;
+  field?: FieldAnchor;
   fieldId?: PublicKey;
   quantity: number;
   filledQuantity: number;
@@ -696,10 +704,10 @@ export class TCompSDK {
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     margin = null,
   }: {
-    target: BidTarget;
+    target: Target;
     targetId: PublicKey;
     bidId?: PublicKey;
-    field?: BidField | null;
+    field?: Field | null;
     fieldId?: PublicKey | null;
     quantity?: number;
     owner: PublicKey;
@@ -717,9 +725,9 @@ export class TCompSDK {
     const builder = this.program.methods
       .bid(
         bidId,
-        castBidTarget(target),
+        castTarget(target),
         targetId,
-        field ? castBidField(field) : null,
+        field ? castField(field) : null,
         fieldId,
         amount,
         quantity,
@@ -1005,45 +1013,10 @@ export class TCompSDK {
     });
   }
 
-  getTakerMaker(ix: ParsedTCompIx): {
-    taker: PublicKey | null;
-    maker: PublicKey | null;
-  } | null {
+  getEvent(ix: ParsedTCompIx): TakeEvent | MakeEvent | null {
     if (!ix.noopIx) return null;
     const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
-    const e = deserializeTcompEvent(cpiData);
-    return {
-      taker: e.taker ?? null,
-      maker: e.maker ?? null,
-    };
-  }
-
-  getAssetId(ix: ParsedTCompIx): PublicKey | null {
-    if (!ix.noopIx) return null;
-    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
-    const e = deserializeTcompEvent(cpiData);
-    return e.assetId ?? null;
-  }
-
-  getIxAmounts(ix: ParsedTCompIx): {
-    amount: BN;
-    tcompFee: BN | null;
-    takerBrokerFee: BN | null;
-    makerBrokerFee: BN | null;
-    creatorFee: BN | null;
-    currency: PublicKey | null;
-  } | null {
-    if (!ix.noopIx) return null;
-    const cpiData = Buffer.from(bs58.decode(ix.noopIx.data));
-    const e = deserializeTcompEvent(cpiData);
-    return {
-      amount: e.amount,
-      tcompFee: e.tcompFee ?? null,
-      takerBrokerFee: e.takerBrokerFee ?? null,
-      makerBrokerFee: e.makerBrokerFee ?? null,
-      creatorFee: e.creatorFee ?? null,
-      currency: e.currency,
-    };
+    return deserializeTcompEvent(cpiData);
   }
 
   // FYI: accounts under InstructioNDisplay is the space-separated capitalized
@@ -1086,27 +1059,50 @@ export const getTotalComputeIxs = (
 
 // --------------------------------------- events
 
-export class MakeEvent {
+// Sucks but have to type this out, else cant compose types
+export type MakeEvent = {
+  type: "maker";
+  maker: PublicKey;
+  bidId: PublicKey | null;
+  target: Target;
+  targetId: PublicKey;
+  field: Field | null;
+  fieldId: PublicKey | null;
+  amount: BN;
+  quantity: number;
+  currency: PublicKey | null;
+  expiry: BN;
+  privateTaker: PublicKey | null;
+};
+class MakeEventRaw {
   maker!: PublicKey;
-  assetId!: PublicKey;
+  bidId!: PublicKey | null;
+  target!: number;
+  targetId!: PublicKey;
+  field!: number | null;
+  fieldId!: PublicKey | null;
   amount!: BN;
   quantity!: number;
   currency!: PublicKey | null;
   expiry!: BN;
   privateTaker!: PublicKey | null;
 
-  constructor(fields?: Partial<MakeEvent>) {
+  constructor(fields?: Partial<MakeEventRaw>) {
     Object.assign(this, fields);
   }
 }
 export const makeEventSchema = new Map([
   [
-    MakeEvent,
+    MakeEventRaw,
     {
       kind: "struct",
       fields: [
         ["maker", [32]],
-        ["assetId", [32]],
+        ["bidId", { kind: "option", type: [32] }],
+        ["target", "u8"],
+        ["targetId", [32]],
+        ["field", { kind: "option", type: "u8" }],
+        ["fieldId", { kind: "option", type: [32] }],
         ["amount", "u64"],
         ["quantity", "u32"],
         ["currency", { kind: "option", type: [32] }],
@@ -1117,9 +1113,29 @@ export const makeEventSchema = new Map([
   ],
 ]);
 
-export class TakeEvent {
+export type TakeEvent = {
+  type: "taker";
+  taker: PublicKey;
+  bidId: PublicKey | null;
+  target: Target;
+  targetId: PublicKey;
+  field: Field | null;
+  fieldId: PublicKey | null;
+  amount: BN;
+  quantityLeft: number;
+  tcompFee: BN;
+  takerBrokerFee: BN;
+  makerBrokerFee: BN;
+  creatorFee: BN;
+  currency: PublicKey | null;
+};
+export class TakeEventRaw {
   taker!: PublicKey;
-  assetId!: PublicKey;
+  bidId!: PublicKey | null;
+  target!: number;
+  targetId!: PublicKey;
+  field!: number | null;
+  fieldId!: PublicKey | null;
   amount!: BN;
   quantityLeft!: number;
   tcompFee!: BN;
@@ -1128,18 +1144,22 @@ export class TakeEvent {
   creatorFee!: BN;
   currency!: PublicKey | null;
 
-  constructor(fields?: Partial<TakeEvent>) {
+  constructor(fields?: Partial<TakeEventRaw>) {
     Object.assign(this, fields);
   }
 }
 export const takeEventSchema = new Map([
   [
-    TakeEvent,
+    TakeEventRaw,
     {
       kind: "struct",
       fields: [
         ["taker", [32]],
-        ["assetId", [32]],
+        ["bidId", { kind: "option", type: [32] }],
+        ["target", "u8"],
+        ["targetId", [32]],
+        ["field", { kind: "option", type: "u8" }],
+        ["fieldId", { kind: "option", type: [32] }],
         ["amount", "u64"],
         ["quantityLeft", "u32"],
         ["tcompFee", "u64"],
@@ -1211,30 +1231,39 @@ export function deserializeTcompEvent(data: Buffer) {
     // console.log("🟩 Maker event detected", data.length - 64);
     const e = borsh.deserialize(
       makeEventSchema,
-      MakeEvent,
+      MakeEventRaw,
       data.slice(1, data.length)
     );
-    return {
+    const typedEvent: MakeEvent = {
       type: "maker",
       maker: new PublicKey(e.maker),
-      assetId: new PublicKey(e.assetId),
+      bidId: e.bidId ? new PublicKey(e.bidId) : null,
+      target: targetFromU8(e.target),
+      targetId: new PublicKey(e.targetId),
+      field: !isNullLike(e.field) ? fieldFromU8(e.field) : null,
+      fieldId: e.fieldId ? new PublicKey(e.fieldId) : null,
       amount: new BN(e.amount),
       quantity: e.quantity,
       currency: e.currency ? new PublicKey(e.currency) : null,
       expiry: new BN(e.expiry),
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
     };
+    return typedEvent;
   } else if (data[0] === 1) {
     // console.log("🟥 Taker event detected", data.length - 64);
     const e = borsh.deserialize(
       takeEventSchema,
-      TakeEvent,
+      TakeEventRaw,
       data.slice(1, data.length)
     );
-    return {
+    const typedEvent: TakeEvent = {
       type: "taker",
       taker: new PublicKey(e.taker),
-      assetId: new PublicKey(e.assetId),
+      bidId: e.bidId ? new PublicKey(e.bidId) : null,
+      target: targetFromU8(e.target),
+      targetId: new PublicKey(e.targetId),
+      field: !isNullLike(e.field) ? fieldFromU8(e.field) : null,
+      fieldId: e.fieldId ? new PublicKey(e.fieldId) : null,
       amount: new BN(e.amount),
       quantityLeft: e.quantityLeft,
       tcompFee: new BN(e.tcompFee),
@@ -1243,6 +1272,7 @@ export function deserializeTcompEvent(data: Buffer) {
       makerBrokerFee: new BN(e.makerBrokerFee),
       currency: e.currency ? new PublicKey(e.currency) : null,
     };
+    return typedEvent;
   } else {
     throw new Error("unknown event");
   }

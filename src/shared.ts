@@ -166,7 +166,8 @@ export type AccountSuffix =
   | "Payer"
   | "Margin Account"
   | "Taker Broker"
-  | "Maker Broker";
+  | "Maker Broker"
+  | "Whitelist";
 
 export const parseStrFn = (str: string) => {
   return Function(`'use strict'; return (${str})`)();

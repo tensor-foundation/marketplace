@@ -538,7 +538,7 @@ export type Tcomp = {
         {
           "name": "target",
           "type": {
-            "defined": "BidTarget"
+            "defined": "Target"
           }
         },
         {
@@ -549,7 +549,7 @@ export type Tcomp = {
           "name": "field",
           "type": {
             "option": {
-              "defined": "BidField"
+              "defined": "Field"
             }
           }
         },
@@ -1045,7 +1045,7 @@ export type Tcomp = {
           {
             "name": "target",
             "type": {
-              "defined": "BidTarget"
+              "defined": "Target"
             }
           },
           {
@@ -1056,7 +1056,7 @@ export type Tcomp = {
             "name": "field",
             "type": {
               "option": {
-                "defined": "BidField"
+                "defined": "Field"
               }
             }
           },
@@ -1270,8 +1270,34 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "Target"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
+          },
+          {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "Field"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
           },
           {
             "name": "amount",
@@ -1310,8 +1336,34 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "Target"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
+          },
+          {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "Field"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
           },
           {
             "name": "amount",
@@ -1422,7 +1474,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "BidTarget",
+      "name": "Target",
       "type": {
         "kind": "enum",
         "variants": [
@@ -1436,7 +1488,7 @@ export type Tcomp = {
       }
     },
     {
-      "name": "BidField",
+      "name": "Field",
       "type": {
         "kind": "enum",
         "variants": [
@@ -2146,7 +2198,7 @@ export const IDL: Tcomp = {
         {
           "name": "target",
           "type": {
-            "defined": "BidTarget"
+            "defined": "Target"
           }
         },
         {
@@ -2157,7 +2209,7 @@ export const IDL: Tcomp = {
           "name": "field",
           "type": {
             "option": {
-              "defined": "BidField"
+              "defined": "Field"
             }
           }
         },
@@ -2653,7 +2705,7 @@ export const IDL: Tcomp = {
           {
             "name": "target",
             "type": {
-              "defined": "BidTarget"
+              "defined": "Target"
             }
           },
           {
@@ -2664,7 +2716,7 @@ export const IDL: Tcomp = {
             "name": "field",
             "type": {
               "option": {
-                "defined": "BidField"
+                "defined": "Field"
               }
             }
           },
@@ -2878,8 +2930,34 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "Target"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
+          },
+          {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "Field"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
           },
           {
             "name": "amount",
@@ -2918,8 +2996,34 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
-            "name": "assetId",
+            "name": "bidId",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": "Target"
+            }
+          },
+          {
+            "name": "targetId",
             "type": "publicKey"
+          },
+          {
+            "name": "field",
+            "type": {
+              "option": {
+                "defined": "Field"
+              }
+            }
+          },
+          {
+            "name": "fieldId",
+            "type": {
+              "option": "publicKey"
+            }
           },
           {
             "name": "amount",
@@ -3030,7 +3134,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "BidTarget",
+      "name": "Target",
       "type": {
         "kind": "enum",
         "variants": [
@@ -3044,7 +3148,7 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "BidField",
+      "name": "Field",
       "type": {
         "kind": "enum",
         "variants": [

@@ -160,9 +160,9 @@ pub mod tcomp {
     pub fn bid<'info>(
         ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
         bid_id: Pubkey,
-        target: BidTarget,
+        target: Target,
         target_id: Pubkey,
-        field: Option<BidField>,
+        field: Option<Field>,
         field_id: Option<Pubkey>,
         amount: u64,
         quantity: u32,

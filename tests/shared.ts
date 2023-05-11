@@ -68,11 +68,11 @@ import chaiAsPromised from "chai-as-promised";
 import { backOff } from "exponential-backoff";
 import { resolve } from "path";
 import {
-  BidField,
-  BidTarget,
+  Field,
+  Target,
   BUBBLEGUM_PROGRAM_ID,
-  castBidFieldAnchor,
-  castBidTargetAnchor,
+  castFieldAnchor,
+  castTargetAnchor,
   computeCompressedNFTHashPATCHED,
   computeCreatorHashPATCHED,
   computeMetadataArgsHash,
@@ -1530,7 +1530,7 @@ export const fetchAndCheckSingleIxTx = async (
 };
 
 export const testBid = async ({
-  target = BidTarget.AssetId,
+  target = Target.AssetId,
   targetId,
   bidId,
   field = null,
@@ -1544,10 +1544,10 @@ export const testBid = async ({
   privateTaker,
   margin,
 }: {
-  target?: BidTarget;
+  target?: Target;
   targetId: PublicKey;
   bidId?: PublicKey;
-  field?: BidField | null;
+  field?: Field | null;
   fieldId?: PublicKey | null;
   quantity?: number;
   owner: Keypair;
@@ -1600,10 +1600,10 @@ export const testBid = async ({
       expect(bidStateAcc.bidId.toString()).to.eq(
         bidId?.toString() ?? targetId?.toString()
       );
-      expect(castBidTargetAnchor(bidStateAcc.target)).to.eq(target);
+      expect(castTargetAnchor(bidStateAcc.target)).to.eq(target);
       expect(bidStateAcc.targetId.toString()).to.eq(targetId.toString());
       if (!isNullLike(field)) {
-        expect(castBidFieldAnchor(bidStateAcc.field!)).to.eq(field);
+        expect(castFieldAnchor(bidStateAcc.field!)).to.eq(field);
       }
       if (!isNullLike(fieldId)) {
         expect(bidStateAcc.fieldId!.toString()).to.eq(fieldId.toString());
@@ -1746,7 +1746,7 @@ export const testCancelCloseBid = async ({
 };
 
 export const testTakeBid = async ({
-  target = BidTarget.AssetId,
+  target = Target.AssetId,
   field = null,
   bidId,
   memTree,
@@ -1766,8 +1766,8 @@ export const testTakeBid = async ({
   margin,
   whitelist = null,
 }: {
-  target?: BidTarget;
-  field?: BidField | null;
+  target?: Target;
+  field?: Field | null;
   bidId: PublicKey;
   memTree: MerkleTree;
   index: number;
@@ -1795,7 +1795,7 @@ export const testTakeBid = async ({
   const [tcomp] = findTCompPda({});
 
   //unfortunately we can no longe rely on the hashed metadata ix since we dont know if it's FVC/VOC on the whitelist
-  const hashed = target === BidTarget.AssetId;
+  const hashed = target === Target.AssetId;
 
   const {
     tx: { ixs: takeIxs },

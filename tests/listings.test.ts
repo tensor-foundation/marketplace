@@ -24,9 +24,8 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { waitMS } from "@tensor-hq/tensor-common";
 import { makeNTraders } from "./account";
-import { deserializeTcompEvent, TAKER_BROKER_PCT } from "../src";
+import { MakeEvent, TakeEvent, TAKER_BROKER_PCT, Target } from "../src";
 import { cpiEdit } from "./cpi_test";
-import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -565,7 +564,7 @@ describe("tcomp listings", () => {
 
     const takerBroker = Keypair.generate().publicKey;
 
-    for (const { index, metadata } of leaves) {
+    for (const { index, metadata, assetId } of leaves) {
       let amount = LAMPORTS_PER_SOL;
 
       // --------------------------------------- List
@@ -583,14 +582,18 @@ describe("tcomp listings", () => {
 
       {
         const ix = await fetchAndCheckSingleIxTx(sig!, "list");
-        const traders = tcompSdk.getTakerMaker(ix);
-        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
-        const amounts = tcompSdk.getIxAmounts(ix);
-        expect(amounts?.amount.toNumber()).eq(amount);
-        //quantity
-        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
-        const e = deserializeTcompEvent(cpiData);
-        expect(e.quantity).eq(1);
+        const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
+        expect(event.type).eq("maker");
+        expect(event.maker.toString()).eq(traderA.publicKey.toString());
+        expect(event.bidId).to.be.null;
+        expect(event.target).to.eq(Target.AssetId);
+        expect(event.targetId.toString()).eq(assetId.toString());
+        expect(event.field).to.be.null;
+        expect(event.fieldId).to.be.null;
+        expect(event.amount.toString()).eq(amount.toString());
+        expect(event.quantity).eq(1);
+        expect(event.currency).to.be.null;
+        expect(event.privateTaker?.toString()).eq(traderB.publicKey.toString());
       }
 
       // --------------------------------------- Edit (direct)
@@ -606,14 +609,18 @@ describe("tcomp listings", () => {
           listState,
         });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
-        const traders = tcompSdk.getTakerMaker(ix);
-        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
-        const amounts = tcompSdk.getIxAmounts(ix);
-        expect(amounts?.amount.toNumber()).eq(amount);
-        //quantity
-        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
-        const e = deserializeTcompEvent(cpiData);
-        expect(e.quantity).eq(1);
+        const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
+        expect(event.type).eq("maker");
+        expect(event.maker.toString()).eq(traderA.publicKey.toString());
+        expect(event.bidId).to.be.null;
+        expect(event.target).to.eq(Target.AssetId);
+        expect(event.targetId.toString()).eq(assetId.toString());
+        expect(event.field).to.be.null;
+        expect(event.fieldId).to.be.null;
+        expect(event.amount.toString()).eq(amount.toString());
+        expect(event.quantity).eq(1);
+        expect(event.currency).to.be.null;
+        expect(event.privateTaker?.toString()).eq(traderC.publicKey.toString());
       }
 
       // --------------------------------------- Edit (via cpi)
@@ -632,14 +639,18 @@ describe("tcomp listings", () => {
         });
         const sig = await buildAndSendTx({ ixs, extraSigners: [traderA] });
         const ix = await fetchAndCheckSingleIxTx(sig, "edit");
-        const traders = tcompSdk.getTakerMaker(ix);
-        expect(traders?.maker?.toString()).eq(traderA.publicKey.toString());
-        const amounts = tcompSdk.getIxAmounts(ix);
-        expect(amounts?.amount.toNumber()).eq(amount);
-        //quantity
-        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
-        const e = deserializeTcompEvent(cpiData);
-        expect(e.quantity).eq(1);
+        const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
+        expect(event.type).eq("maker");
+        expect(event.maker.toString()).eq(traderA.publicKey.toString());
+        expect(event.bidId).to.be.null;
+        expect(event.target).to.eq(Target.AssetId);
+        expect(event.targetId.toString()).eq(assetId.toString());
+        expect(event.field).to.be.null;
+        expect(event.fieldId).to.be.null;
+        expect(event.amount.toString()).eq(amount.toString());
+        expect(event.quantity).eq(1);
+        expect(event.currency).to.be.null;
+        expect(event.privateTaker?.toString() ?? null).to.be.null;
       }
 
       // --------------------------------------- Buy
@@ -658,25 +669,28 @@ describe("tcomp listings", () => {
           takerBroker,
         });
         const ix = await fetchAndCheckSingleIxTx(sig!, "buy");
-        const traders = tcompSdk.getTakerMaker(ix);
-        expect(traders?.taker?.toString()).eq(traderC.publicKey.toString());
-        const amounts = tcompSdk.getIxAmounts(ix);
-        expect(amounts?.amount.toNumber()).eq(amount);
+        const event = tcompSdk.getEvent(ix) as unknown as TakeEvent;
+        expect(event.type).eq("taker");
+        expect(event.taker.toString()).eq(traderC.publicKey.toString());
+        expect(event.bidId).to.be.null;
+        expect(event.target).to.eq(Target.AssetId);
+        expect(event.targetId.toString()).eq(assetId.toString());
+        expect(event.field).to.be.null;
+        expect(event.fieldId).to.be.null;
+        expect(event.amount.toString()).eq(amount.toString());
         if (TAKER_BROKER_PCT > 0) {
-          expect(amounts?.takerBrokerFee?.toNumber()).eq(
+          expect(event.takerBrokerFee?.toNumber()).eq(
             Math.trunc((amount * FEE_PCT * TAKER_BROKER_PCT) / 100)
           );
         }
-        expect(amounts?.tcompFee?.toNumber()).eq(
+        expect(event.tcompFee?.toNumber()).eq(
           Math.trunc(amount * FEE_PCT * (1 - TAKER_BROKER_PCT / 100))
         );
-        expect(amounts?.creatorFee?.toNumber()).eq(
+        expect(event.creatorFee?.toNumber()).eq(
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
-        //quantity
-        const cpiData = Buffer.from(bs58.decode(ix.noopIx!.data));
-        const e = deserializeTcompEvent(cpiData);
-        expect(e.quantityLeft).eq(0);
+        expect(event.quantityLeft).eq(0);
+        expect(event.currency).to.be.null;
       }
     }
   });

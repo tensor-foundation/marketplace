@@ -11,7 +11,11 @@ pub enum TcompEvent {
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct MakeEvent {
     pub maker: Pubkey,
-    pub asset_id: Pubkey,
+    pub bid_id: Option<Pubkey>,
+    pub target: Target,
+    pub target_id: Pubkey,
+    pub field: Option<Field>,
+    pub field_id: Option<Pubkey>,
     pub amount: u64,
     pub quantity: u32,
     pub currency: Option<Pubkey>,
@@ -22,7 +26,11 @@ pub struct MakeEvent {
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct TakeEvent {
     pub taker: Pubkey,
-    pub asset_id: Pubkey,
+    pub bid_id: Option<Pubkey>,
+    pub target: Target,
+    pub target_id: Pubkey,
+    pub field: Option<Field>,
+    pub field_id: Option<Pubkey>,
     pub amount: u64,
     pub quantity_left: u32,
     pub tcomp_fee: u64,
