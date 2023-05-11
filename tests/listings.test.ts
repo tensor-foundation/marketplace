@@ -689,7 +689,7 @@ describe("tcomp listings", () => {
         expect(event.creatorFee?.toNumber()).eq(
           Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
         );
-        expect(event.quantityLeft).eq(0);
+        expect(event.quantity).eq(0);
         expect(event.currency).to.be.null;
       }
     }

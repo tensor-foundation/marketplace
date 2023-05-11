@@ -138,7 +138,7 @@ impl<'info> TakeBid<'info> {
                 field_id: bid_state.field_id,
                 amount,
                 tcomp_fee,
-                quantity_left: bid_state.quantity_left()?,
+                quantity: bid_state.quantity_left()?,
                 taker_broker_fee: broker_fee,
                 //TODO: maker broker disabled
                 maker_broker_fee: 0,

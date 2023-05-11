@@ -32,7 +32,7 @@ pub struct TakeEvent {
     pub field: Option<Field>,
     pub field_id: Option<Pubkey>,
     pub amount: u64,
-    pub quantity_left: u32,
+    pub quantity: u32,
     pub tcomp_fee: u64,
     pub taker_broker_fee: u64,
     pub maker_broker_fee: u64,

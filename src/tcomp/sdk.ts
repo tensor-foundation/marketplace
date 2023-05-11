@@ -1122,7 +1122,7 @@ export type TakeEvent = {
   field: Field | null;
   fieldId: PublicKey | null;
   amount: BN;
-  quantityLeft: number;
+  quantity: number;
   tcompFee: BN;
   takerBrokerFee: BN;
   makerBrokerFee: BN;
@@ -1137,7 +1137,7 @@ export class TakeEventRaw {
   field!: number | null;
   fieldId!: PublicKey | null;
   amount!: BN;
-  quantityLeft!: number;
+  quantity!: number;
   tcompFee!: BN;
   takerBrokerFee!: BN;
   makerBrokerFee!: BN;
@@ -1161,7 +1161,7 @@ export const takeEventSchema = new Map([
         ["field", { kind: "option", type: "u8" }],
         ["fieldId", { kind: "option", type: [32] }],
         ["amount", "u64"],
-        ["quantityLeft", "u32"],
+        ["quantity", "u32"],
         ["tcompFee", "u64"],
         ["takerBrokerFee", "u64"],
         ["makerBrokerFee", "u64"],
@@ -1265,7 +1265,7 @@ export function deserializeTcompEvent(data: Buffer) {
       field: !isNullLike(e.field) ? fieldFromU8(e.field) : null,
       fieldId: e.fieldId ? new PublicKey(e.fieldId) : null,
       amount: new BN(e.amount),
-      quantityLeft: e.quantityLeft,
+      quantity: e.quantity,
       tcompFee: new BN(e.tcompFee),
       creatorFee: new BN(e.creatorFee),
       takerBrokerFee: new BN(e.takerBrokerFee),

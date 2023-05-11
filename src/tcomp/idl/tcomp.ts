@@ -1370,7 +1370,7 @@ export type Tcomp = {
             "type": "u64"
           },
           {
-            "name": "quantityLeft",
+            "name": "quantity",
             "type": "u32"
           },
           {
@@ -3030,7 +3030,7 @@ export const IDL: Tcomp = {
             "type": "u64"
           },
           {
-            "name": "quantityLeft",
+            "name": "quantity",
             "type": "u32"
           },
           {

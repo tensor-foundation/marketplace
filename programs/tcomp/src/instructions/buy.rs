@@ -167,7 +167,7 @@ pub fn handler<'info>(
             field: None,
             field_id: None,
             amount,
-            quantity_left: 0,
+            quantity: 0,
             tcomp_fee,
             taker_broker_fee: broker_fee,
             //TODO: maker broker disabled
