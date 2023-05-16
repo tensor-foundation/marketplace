@@ -1,3 +1,5 @@
+use anchor_lang::solana_program::system_program;
+
 use crate::*;
 
 pub fn hash_creators(creators: &[Creator]) -> Result<[u8; 32]> {
@@ -516,7 +518,8 @@ pub fn assert_decode_margin_account<'info>(
 //     }
 // }
 
-// https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/9-closing-accounts/secure/src/lib.rs
+// NOT: https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/9-closing-accounts/secure/src/lib.rs
+// Instead: https://github.com/coral-xyz/anchor/blob/b7bada148cead931bc3bdae7e9a641e9be66e6a6/lang/src/common.rs#L6
 pub fn close_account(
     pda_to_close: &mut AccountInfo,
     sol_destination: &mut AccountInfo,
@@ -527,17 +530,8 @@ pub fn close_account(
         unwrap_int!(dest_starting_lamports.checked_add(pda_to_close.lamports()));
     **pda_to_close.lamports.borrow_mut() = 0;
 
-    // Mark the account discriminator as closed.
-    let mut data = pda_to_close.try_borrow_mut_data()?;
-    for byte in data.deref_mut().iter_mut() {
-        *byte = 0;
-    }
-
-    let dst: &mut [u8] = &mut data;
-    let mut cursor = std::io::Cursor::new(dst);
-    cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
-
-    Ok(())
+    pda_to_close.assign(&system_program::ID);
+    pda_to_close.realloc(0, false).map_err(Into::into)
 }
 
 pub fn assert_decode_whitelist<'info>(
