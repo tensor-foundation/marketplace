@@ -23,3 +23,14 @@ Ensure `cargo` is running on v1.69.0.
 
 > If you run into any issues with build errors eg "found possibly newer version of crate `core`"
 > clear out all your `targets/` folders (including inside every `deps/` program.
+
+## tcomp-sdk
+
+Copy JUST the following over:
+```
+tsconfig.json
+yarn.lock
+src/
+```
+
+For `package.json`, DO NOT COPY ENTIRELY b/c package names + repos are diff: just copy over the deps that changed.
