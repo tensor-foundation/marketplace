@@ -23,6 +23,7 @@ pub struct Delist<'info> {
     pub list_state: Box<Account<'info, ListState>>,
     #[account(mut)]
     pub owner: Signer<'info>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
@@ -52,5 +53,27 @@ pub fn handler<'info>(
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         proof_accounts: ctx.remaining_accounts,
         signer: Some(&TcompSigner::List(&ctx.accounts.list_state)),
-    })
+    })?;
+
+    let list_state = &ctx.accounts.list_state;
+
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: list_state.asset_id,
+            field: None,
+            field_id: None,
+            amount: list_state.amount,
+            quantity: 1,
+            currency: list_state.currency,
+            expiry: list_state.expiry,
+            private_taker: list_state.private_taker,
+        }),
+        &ctx.accounts.tcomp_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    Ok(())
 }

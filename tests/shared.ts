@@ -68,8 +68,6 @@ import chaiAsPromised from "chai-as-promised";
 import { backOff } from "exponential-backoff";
 import { resolve } from "path";
 import {
-  Field,
-  Target,
   BUBBLEGUM_PROGRAM_ID,
   castFieldAnchor,
   castTargetAnchor,
@@ -79,6 +77,7 @@ import {
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
+  Field,
   findListStatePda,
   findTCompPda,
   findTreeAuthorityPda,
@@ -86,6 +85,7 @@ import {
   getTotalComputeIxs,
   isNullLike,
   TAKER_BROKER_PCT,
+  Target,
   TCOMP_ADDR,
   TCOMP_DISC_MAP,
   TCOMP_FEE_BPS,
@@ -425,21 +425,23 @@ export const createLUT = async (
     authority: provider.publicKey,
     lookupTable: lookupTableAddress,
     addresses: [
+      //compression
       SPL_NOOP_PROGRAM_ID,
       SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      //solana
       SystemProgram.programId,
-      BUBBLEGUM_PROGRAM_ID,
-      tcomp,
-      //for spl payments
-      TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID, //for future token payments
       ASSOCIATED_TOKEN_PROGRAM_ID,
-      //margin
-      TENSORSWAP_ADDR,
-      //future proofing
       SYSVAR_RENT_PUBKEY,
+      SYSVAR_INSTRUCTIONS_PUBKEY,
+      //mplex
+      BUBBLEGUM_PROGRAM_ID,
       AUTH_PROG_ID,
       TMETA_PROG_ID,
-      SYSVAR_INSTRUCTIONS_PUBKEY,
+      //tensor
+      tcomp,
+      TCOMP_ADDR,
+      TENSORSWAP_ADDR, //margin
     ],
   });
 

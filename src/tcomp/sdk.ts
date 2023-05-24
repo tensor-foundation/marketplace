@@ -55,7 +55,6 @@ import {
 } from "../shared";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
-import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import {
   findBidStatePda,
   findListStatePda,
@@ -67,14 +66,23 @@ export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bub
 
 // --------------------------------------- idl
 
-export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 0;
+import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
+import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 
-export type TcompIDL = TComp_latest;
+//original deployment
+export const TCompIDL_v0_1_0 = IDL_v0_1_0;
+export const TCompIDL_v0_1_0_EffSlot = 0;
+
+//add noop ixs to cancel bid/listing https://solscan.io/tx/5fyrggiyFujwfyB624P9WbjVSRtnwee5wzP6CHNRSvg15xAovNAE1FdgPXVDEaZ9x6BKsVpMnEjmLkoCT8ZhSnRU
+export const TCompIDL_latest = IDL_latest;
+export const TCompIDL_latest_EffSlot = 195759029;
+
+export type TcompIDL = TComp_v0_1_0 | TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
 export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
-  if (slot < TCompIDL_latest_EffSlot) return null;
+  if (slot < TCompIDL_v0_1_0_EffSlot) return null;
+  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_1_0;
   return TCompIDL_latest;
 };
 
@@ -553,6 +561,7 @@ export class TCompSDK {
     const builder = this.program.methods
       .delist(nonce, index, root, [...dataHash], [...creatorsHash])
       .accounts({
+        tcompProgram: TCOMP_ADDR,
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -770,6 +779,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.cancelBid().accounts({
+      tcompProgram: TCOMP_ADDR,
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -801,6 +811,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.closeExpiredBid().accounts({
+      tcompProgram: TCOMP_ADDR,
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -1191,17 +1202,17 @@ export const TCOMP_DISC_MAP: Record<
   },
   buy: { disc: hash("global:buy").slice(0, 16), callsNoop: true },
   list: { disc: hash("global:list").slice(0, 16), callsNoop: true },
-  delist: { disc: hash("global:delist").slice(0, 16), callsNoop: false },
+  delist: { disc: hash("global:delist").slice(0, 16), callsNoop: true },
   edit: { disc: hash("global:edit").slice(0, 16), callsNoop: true },
   bid: { disc: hash("global:bid").slice(0, 16), callsNoop: true },
-  cancelBid: { disc: hash("global:cancel_bid").slice(0, 16), callsNoop: false },
+  cancelBid: { disc: hash("global:cancel_bid").slice(0, 16), callsNoop: true },
   closeExpiredBid: {
     disc: hash("global:close_expired_bid").slice(0, 16),
-    callsNoop: false,
+    callsNoop: true,
   },
   closeExpiredListing: {
     disc: hash("global:close_expired_listing").slice(0, 16),
-    callsNoop: false,
+    callsNoop: true,
   },
   takeBidMetaHash: {
     disc: hash("global:take_bid_meta_hash").slice(0, 16),

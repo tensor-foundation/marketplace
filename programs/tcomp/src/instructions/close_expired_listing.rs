@@ -14,6 +14,7 @@ pub struct CloseExpiredListing<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
+    pub tcomp_program: Program<'info, crate::program::Tcomp>,
 }
 
 pub fn handler(ctx: Context<CloseExpiredListing>) -> Result<()> {
@@ -22,5 +23,24 @@ pub fn handler(ctx: Context<CloseExpiredListing>) -> Result<()> {
         list_state.expiry < Clock::get()?.unix_timestamp,
         TcompError::ListingNotYetExpired
     );
+
+    record_event(
+        &TcompEvent::Maker(MakeEvent {
+            maker: *ctx.accounts.owner.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: list_state.asset_id,
+            field: None,
+            field_id: None,
+            amount: list_state.amount,
+            quantity: 1,
+            currency: list_state.currency,
+            expiry: list_state.expiry,
+            private_taker: list_state.private_taker,
+        }),
+        &ctx.accounts.tcomp_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
     Ok(())
 }

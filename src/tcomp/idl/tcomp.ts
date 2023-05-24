@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.1.0",
+  "version": "0.4.0",
   "name": "tcomp",
   "constants": [
     {
@@ -10,7 +10,7 @@ export type Tcomp = {
     {
       "name": "TCOMP_FEE_BPS",
       "type": "u16",
-      "value": "150"
+      "value": "250"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -411,6 +411,11 @@ export type Tcomp = {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -610,6 +615,11 @@ export type Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -631,6 +641,11 @@ export type Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -650,6 +665,11 @@ export type Tcomp = {
         },
         {
           "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -1659,7 +1679,7 @@ export type Tcomp = {
 };
 
 export const IDL: Tcomp = {
-  "version": "0.1.0",
+  "version": "0.4.0",
   "name": "tcomp",
   "constants": [
     {
@@ -1670,7 +1690,7 @@ export const IDL: Tcomp = {
     {
       "name": "TCOMP_FEE_BPS",
       "type": "u16",
-      "value": "150"
+      "value": "250"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -2071,6 +2091,11 @@ export const IDL: Tcomp = {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -2270,6 +2295,11 @@ export const IDL: Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -2291,6 +2321,11 @@ export const IDL: Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -2310,6 +2345,11 @@ export const IDL: Tcomp = {
         },
         {
           "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
         }
