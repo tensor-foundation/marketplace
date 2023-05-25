@@ -124,6 +124,8 @@ pub fn handler<'info>(
     };
     bid_state.expiry = expiry;
 
+    let remaining_quantity = unwrap_int!(quantity.checked_sub(bid_state.filled_quantity));
+
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
     record_event(
         &TcompEvent::Maker(MakeEvent {
@@ -134,7 +136,7 @@ pub fn handler<'info>(
             field,
             field_id,
             amount,
-            quantity,
+            quantity: remaining_quantity,
             currency,
             expiry,
             private_taker,
@@ -157,7 +159,7 @@ pub fn handler<'info>(
     let margin_account_result =
         assert_decode_margin_account(margin_account_info, &ctx.accounts.owner.to_account_info());
 
-    let deposit_amount = unwrap_int!(amount.checked_mul(quantity as u64));
+    let deposit_amount = unwrap_int!(amount.checked_mul(remaining_quantity as u64));
 
     match margin_account_result {
         //marginated
