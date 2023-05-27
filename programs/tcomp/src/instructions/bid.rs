@@ -131,7 +131,7 @@ pub fn handler<'info>(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
             bid_id: Some(bid_id),
-            target,
+            target: target.clone(),
             target_id,
             field,
             field_id,
@@ -140,7 +140,11 @@ pub fn handler<'info>(
             currency,
             expiry,
             private_taker,
-            asset_id: None,
+            asset_id: if target == Target::AssetId {
+                Some(target_id)
+            } else {
+                None
+            },
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),

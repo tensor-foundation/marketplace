@@ -31,7 +31,11 @@ pub fn handler(ctx: Context<CancelBid>) -> Result<()> {
             currency: bid_state.currency,
             expiry: bid_state.expiry,
             private_taker: bid_state.private_taker,
-            asset_id: None,
+            asset_id: if bid_state.target == Target::AssetId {
+                Some(bid_state.target_id)
+            } else {
+                None
+            },
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),
