@@ -80,7 +80,7 @@ impl<'info> Validate<'info> for TakeBid<'info> {
 impl<'info> TakeBid<'info> {
     fn take_bid_shared(
         &mut self,
-        _asset_id: Pubkey,
+        asset_id: Pubkey,
         creator_hash: [u8; 32],
         data_hash: [u8; 32],
         creators: Vec<Creator>,
@@ -144,6 +144,7 @@ impl<'info> TakeBid<'info> {
                 maker_broker_fee: 0,
                 creator_fee, // Can't record actual because we transfer lamports after we send noop tx
                 currency,
+                asset_id: Some(asset_id),
             }),
             &self.tcomp_program,
             TcompSigner::Bid(&self.bid_state),

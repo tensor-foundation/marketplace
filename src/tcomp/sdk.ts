@@ -67,6 +67,7 @@ export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bub
 // --------------------------------------- idl
 
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
+import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 
 //original deployment
@@ -74,15 +75,20 @@ export const TCompIDL_v0_1_0 = IDL_v0_1_0;
 export const TCompIDL_v0_1_0_EffSlot = 0;
 
 //add noop ixs to cancel bid/listing https://solscan.io/tx/5fyrggiyFujwfyB624P9WbjVSRtnwee5wzP6CHNRSvg15xAovNAE1FdgPXVDEaZ9x6BKsVpMnEjmLkoCT8ZhSnRU
-export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 195759029;
+export const TCompIDL_v0_4_0 = IDL_v0_4_0;
+export const TCompIDL_v0_4_0_EffSlot = 195759029;
 
-export type TcompIDL = TComp_v0_1_0 | TComp_latest;
+//add asset id to events https://solscan.io/tx/4ZrW4gn3wrjvytaycVRWf2gU2UZJVeHpDKDVbE8KVfXWpugTiKZtPsAkuxjwdvCKEnnV8Y8U5MwCCVguRszR6wcV
+export const TCompIDL_latest = IDL_latest;
+export const TCompIDL_latest_EffSlot = 196275147;
+
+export type TcompIDL = TComp_v0_1_0 | TComp_v0_4_0 | TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
 export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
   if (slot < TCompIDL_v0_1_0_EffSlot) return null;
-  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_1_0;
+  if (slot < TCompIDL_v0_4_0_EffSlot) return TCompIDL_v0_1_0;
+  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_4_0;
   return TCompIDL_latest;
 };
 
@@ -1084,6 +1090,7 @@ export type MakeEvent = {
   currency: PublicKey | null;
   expiry: BN;
   privateTaker: PublicKey | null;
+  assetId: PublicKey | null;
 };
 class MakeEventRaw {
   maker!: PublicKey;
@@ -1097,6 +1104,7 @@ class MakeEventRaw {
   currency!: PublicKey | null;
   expiry!: BN;
   privateTaker!: PublicKey | null;
+  assetId!: PublicKey | null;
 
   constructor(fields?: Partial<MakeEventRaw>) {
     Object.assign(this, fields);
@@ -1119,6 +1127,7 @@ export const makeEventSchema = new Map([
         ["currency", { kind: "option", type: [32] }],
         ["expiry", "u64"],
         ["privateTaker", { kind: "option", type: [32] }],
+        ["assetId", { kind: "option", type: [32] }],
       ],
     },
   ],
@@ -1139,6 +1148,7 @@ export type TakeEvent = {
   makerBrokerFee: BN;
   creatorFee: BN;
   currency: PublicKey | null;
+  assetId: PublicKey | null;
 };
 export class TakeEventRaw {
   taker!: PublicKey;
@@ -1154,6 +1164,7 @@ export class TakeEventRaw {
   makerBrokerFee!: BN;
   creatorFee!: BN;
   currency!: PublicKey | null;
+  assetId!: PublicKey | null;
 
   constructor(fields?: Partial<TakeEventRaw>) {
     Object.assign(this, fields);
@@ -1178,6 +1189,7 @@ export const takeEventSchema = new Map([
         ["makerBrokerFee", "u64"],
         ["creatorFee", "u64"],
         ["currency", { kind: "option", type: [32] }],
+        ["assetId", { kind: "option", type: [32] }],
       ],
     },
   ],
@@ -1258,6 +1270,7 @@ export function deserializeTcompEvent(data: Buffer) {
       currency: e.currency ? new PublicKey(e.currency) : null,
       expiry: new BN(e.expiry),
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
+      assetId: e.assetId ? new PublicKey(e.assetId) : null,
     };
     return typedEvent;
   } else if (data[0] === 1) {
@@ -1282,6 +1295,7 @@ export function deserializeTcompEvent(data: Buffer) {
       takerBrokerFee: new BN(e.takerBrokerFee),
       makerBrokerFee: new BN(e.makerBrokerFee),
       currency: e.currency ? new PublicKey(e.currency) : null,
+      assetId: e.assetId ? new PublicKey(e.assetId) : null,
     };
     return typedEvent;
   } else {

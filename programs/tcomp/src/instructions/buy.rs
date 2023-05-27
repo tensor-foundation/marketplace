@@ -174,6 +174,7 @@ pub fn handler<'info>(
             maker_broker_fee: 0,
             creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
+            asset_id: Some(asset_id),
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::List(&ctx.accounts.list_state),

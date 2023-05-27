@@ -140,6 +140,7 @@ pub fn handler<'info>(
             currency,
             expiry,
             private_taker,
+            asset_id: None,
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),

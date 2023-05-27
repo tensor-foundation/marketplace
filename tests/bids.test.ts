@@ -466,6 +466,7 @@ describe("tcomp bids", () => {
         expect(event.quantity).eq(1);
         expect(event.currency).to.be.null;
         expect(event.privateTaker?.toString()).eq(traderA.publicKey.toString());
+        expect(event.assetId).be.null;
       }
 
       // --------------------------------------- Take Bid
@@ -507,6 +508,7 @@ describe("tcomp bids", () => {
         );
         expect(event.quantity).eq(0);
         expect(event.currency).to.be.null;
+        expect(event.assetId?.toString()).to.eq(assetId.toString());
       }
     }
   });

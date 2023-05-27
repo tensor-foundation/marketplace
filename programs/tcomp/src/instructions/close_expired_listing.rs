@@ -37,6 +37,7 @@ pub fn handler(ctx: Context<CloseExpiredListing>) -> Result<()> {
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,
+            asset_id: Some(list_state.asset_id),
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::List(&ctx.accounts.list_state),

@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "name": "tcomp",
   "constants": [
     {
@@ -1342,6 +1342,12 @@ export type Tcomp = {
             "type": {
               "option": "publicKey"
             }
+          },
+          {
+            "name": "assetId",
+            "type": {
+              "option": "publicKey"
+            }
           }
         ]
       }
@@ -1411,6 +1417,12 @@ export type Tcomp = {
           },
           {
             "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "assetId",
             "type": {
               "option": "publicKey"
             }
@@ -1679,7 +1691,7 @@ export type Tcomp = {
 };
 
 export const IDL: Tcomp = {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "name": "tcomp",
   "constants": [
     {
@@ -3022,6 +3034,12 @@ export const IDL: Tcomp = {
             "type": {
               "option": "publicKey"
             }
+          },
+          {
+            "name": "assetId",
+            "type": {
+              "option": "publicKey"
+            }
           }
         ]
       }
@@ -3091,6 +3109,12 @@ export const IDL: Tcomp = {
           },
           {
             "name": "currency",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "assetId",
             "type": {
               "option": "publicKey"
             }

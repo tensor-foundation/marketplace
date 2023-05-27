@@ -60,6 +60,7 @@ pub fn handler<'info>(
             currency,
             expiry,
             private_taker,
+            asset_id: Some(list_state.asset_id),
         }),
         &ctx.accounts.tcomp_program,
         TcompSigner::List(&ctx.accounts.list_state),

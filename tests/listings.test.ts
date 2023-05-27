@@ -594,6 +594,7 @@ describe("tcomp listings", () => {
         expect(event.quantity).eq(1);
         expect(event.currency).to.be.null;
         expect(event.privateTaker?.toString()).eq(traderB.publicKey.toString());
+        expect(event.assetId?.toString()).to.eq(assetId.toString());
       }
 
       // --------------------------------------- Edit (direct)
@@ -621,6 +622,7 @@ describe("tcomp listings", () => {
         expect(event.quantity).eq(1);
         expect(event.currency).to.be.null;
         expect(event.privateTaker?.toString()).eq(traderC.publicKey.toString());
+        expect(event.assetId?.toString()).to.eq(assetId.toString());
       }
 
       // --------------------------------------- Edit (via cpi)
@@ -651,6 +653,7 @@ describe("tcomp listings", () => {
         expect(event.quantity).eq(1);
         expect(event.currency).to.be.null;
         expect(event.privateTaker?.toString() ?? null).to.be.null;
+        expect(event.assetId?.toString()).to.eq(assetId.toString());
       }
 
       // --------------------------------------- Buy
@@ -691,6 +694,7 @@ describe("tcomp listings", () => {
         );
         expect(event.quantity).eq(0);
         expect(event.currency).to.be.null;
+        expect(event.assetId?.toString()).to.eq(assetId.toString());
       }
     }
   });
