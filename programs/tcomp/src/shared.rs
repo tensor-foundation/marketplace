@@ -251,8 +251,8 @@ pub fn calc_fees(amount: u64) -> Result<(u64, u64)> {
     });
     let tcomp_fee = unwrap_checked!({ full_fee.checked_sub(broker_fee) });
 
-    // Stupidity check, broker should never be higher than main fee
-    require!(tcomp_fee > broker_fee, TcompError::ArithmeticError);
+    // Stupidity check, broker should never be higher than main fee (== when zero)
+    require!(tcomp_fee >= broker_fee, TcompError::ArithmeticError);
 
     Ok((tcomp_fee, broker_fee))
 }
