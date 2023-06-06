@@ -835,6 +835,38 @@ export class TCompSDK {
     };
   }
 
+  async closeExpiredListing({
+    assetId,
+    owner,
+    compute = null,
+    priorityMicroLamports = null,
+  }: {
+    assetId: PublicKey;
+    owner: PublicKey;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+  }) {
+    const [listState] = findListStatePda({ assetId });
+
+    const builder = this.program.methods.closeExpiredListing().accounts({
+      tcompProgram: TCOMP_ADDR,
+      owner,
+      systemProgram: SystemProgram.programId,
+      listState,
+    });
+
+    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+
+    return {
+      builder,
+      tx: {
+        ixs: [...computeIxs, await builder.instruction()],
+        extraSigners: [],
+      },
+      listState,
+    };
+  }
+
   async takeBid({
     targetData,
     bidId,
