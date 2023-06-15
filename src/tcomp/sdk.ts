@@ -399,6 +399,7 @@ export class TCompSDK {
     compute = DEFAULT_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
+    delegateSigner,
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
@@ -419,6 +420,7 @@ export class TCompSDK {
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
+    delegateSigner?: boolean;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -462,7 +464,7 @@ export class TCompSDK {
 
     //because EITHER of the two has to sign, mark one of them as signer
     const ix = await builder.instruction();
-    if (!!delegate && !delegate.equals(owner)) {
+    if (!!delegate && delegateSigner) {
       const i = ix.keys.findIndex((k) => k.pubkey.equals(delegate));
       ix["keys"][i]["isSigner"] = true;
     } else {
@@ -888,6 +890,7 @@ export class TCompSDK {
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
     whitelist = null,
+    delegateSigner,
   }: {
     targetData:
       | {
@@ -919,6 +922,7 @@ export class TCompSDK {
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
     whitelist?: PublicKey | null;
+    delegateSigner?: boolean;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -1003,7 +1007,7 @@ export class TCompSDK {
 
     //because EITHER of the two has to sign, mark one of them as signer
     const ix = await builder.instruction();
-    if (!!delegate && !delegate.equals(seller)) {
+    if (!!delegate && delegateSigner) {
       const i = ix.keys.findIndex((k) => k.pubkey.equals(delegate));
       ix["keys"][i]["isSigner"] = true;
     } else {
