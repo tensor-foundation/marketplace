@@ -14,9 +14,7 @@ const payer = Keypair.fromSecretKey(
   Uint8Array.from(require("/Users/ilmoi/.config/solana/id.json"))
 );
 
-const conn = new Connection(
-  "https://delicate-greatest-shadow.solana-mainnet.quiknode.pro/ce7ea21294126b3fa9b9878c25c47df3fe0f9fce/"
-);
+const conn = new Connection("https://api.mainnet-beta.solana.com");
 
 // --------------------------------------- replicating these coz when doing mainnnet blockhash issues come up
 
