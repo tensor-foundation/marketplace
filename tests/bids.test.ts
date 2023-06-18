@@ -320,6 +320,7 @@ describe("tcomp bids", () => {
           canopyDepth,
           delegate,
           bidId: assetId,
+          delegateSigns: true,
         });
       }
     }
@@ -466,7 +467,7 @@ describe("tcomp bids", () => {
         expect(event.quantity).eq(1);
         expect(event.currency).to.be.null;
         expect(event.privateTaker?.toString()).eq(traderA.publicKey.toString());
-        expect(event.assetId).be.null;
+        expect(event.assetId?.toString()).eq(assetId.toString());
       }
 
       // --------------------------------------- Take Bid

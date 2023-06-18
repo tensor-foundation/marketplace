@@ -1076,6 +1076,7 @@ export const testList = async ({
   canopyDepth = 0,
   lookupTableAccount,
   payer = owner,
+  delegateSigns = false,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1090,6 +1091,7 @@ export const testList = async ({
   canopyDepth?: number;
   lookupTableAccount?: AddressLookupTableAccount;
   payer?: Keypair;
+  delegateSigns?: boolean;
 }) => {
   const proof = memTree.getProof(
     index,
@@ -1120,6 +1122,7 @@ export const testList = async ({
     delegate: delegate?.publicKey,
     privateTaker,
     canopyDepth,
+    delegateSigner: delegateSigns,
   });
 
   let sig;
@@ -1133,7 +1136,7 @@ export const testList = async ({
       sig = await buildAndSendTx({
         ixs,
         //if leaf delegate passed in, then skip the owner
-        extraSigners: [delegate ?? owner, payer],
+        extraSigners: [delegateSigns && delegate ? delegate : owner, payer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -1402,7 +1405,7 @@ export const testBuy = async ({
     }) => {
       sig = await buildAndSendTx({
         ixs,
-        extraSigners: [buyer, payer],
+        extraSigners: [payer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -1767,6 +1770,7 @@ export const testTakeBid = async ({
   canopyDepth = 0,
   margin,
   whitelist = null,
+  delegateSigns = false,
 }: {
   target?: Target;
   field?: Field | null;
@@ -1787,6 +1791,7 @@ export const testTakeBid = async ({
   canopyDepth?: number;
   margin?: PublicKey;
   whitelist?: PublicKey | null;
+  delegateSigns?: boolean;
 }) => {
   let proof = memTree.getProof(
     index,
@@ -1824,6 +1829,7 @@ export const testTakeBid = async ({
     canopyDepth,
     currency,
     whitelist,
+    delegateSigner: delegateSigns,
   });
 
   let sig;
@@ -1856,7 +1862,7 @@ export const testTakeBid = async ({
 
       sig = await buildAndSendTx({
         ixs: takeIxs,
-        extraSigners: [delegate ?? seller],
+        extraSigners: [delegateSigns && delegate ? delegate : seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,

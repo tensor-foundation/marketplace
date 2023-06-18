@@ -359,9 +359,10 @@ describe("tcomp listings", () => {
           merkleTree,
           metadata,
           owner: traderA,
-          delegate: delegate, ///<-- trader C signs
+          delegate, ///<-- trader C signs
           canopyDepth,
           payer, //<-- separate payer
+          delegateSigns: true,
         });
         await testBuy({
           index,

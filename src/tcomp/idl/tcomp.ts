@@ -156,7 +156,7 @@ export type Tcomp = {
         {
           "name": "buyer",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "payer",
@@ -1848,7 +1848,7 @@ export const IDL: Tcomp = {
         {
           "name": "buyer",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "payer",

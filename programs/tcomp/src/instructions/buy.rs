@@ -25,7 +25,8 @@ pub struct Buy<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
-    pub buyer: Signer<'info>,
+    /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
+    pub buyer: UncheckedAccount<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
