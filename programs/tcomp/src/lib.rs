@@ -43,9 +43,7 @@ pub use shared::*;
 pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
 pub use tensor_whitelist::{self, Whitelist};
-pub use tensorswap::{
-    self, margin_pda, program::Tensorswap, MarginAccount, TSwap, TENSOR_SWAP_ADDR, TSWAP_ADDR,
-};
+pub use tensorswap::{self, margin_pda, program::Tensorswap, MarginAccount, TSwap};
 pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");

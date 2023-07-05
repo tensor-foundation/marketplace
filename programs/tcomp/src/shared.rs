@@ -388,7 +388,7 @@ pub fn assert_decode_margin_account<'info>(
     let margin_account: Account<'info, MarginAccount> = Account::try_from(margin_account_info)?;
 
     let program_id = tensorswap::id();
-    let tswap = &Pubkey::from_str(TSWAP_ADDR).unwrap();
+    let tswap = &get_tswap_addr();
     let (key, _) = margin_pda(tswap, &owner.key(), margin_account.nr);
     if key != *margin_account_info.key {
         throw_err!(TcompError::BadMargin);
@@ -549,4 +549,10 @@ pub fn assert_decode_whitelist<'info>(
     }
 
     Ok(whitelist)
+}
+
+// TODO: replace with import from tswap once upgrade crate
+pub fn get_tswap_addr() -> Pubkey {
+    let (pda, _) = Pubkey::find_program_address(&[], &tensorswap::id());
+    pda
 }
