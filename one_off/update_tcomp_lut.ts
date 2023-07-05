@@ -75,21 +75,31 @@ export const updateLUT = async ({
   const lookupTableAddress = new PublicKey(
     "E1TJWxyJNkRDYBYk1B92r1uUyfui7WZesv3u2YKG6ZE"
   );
+  const lookupTableAccount = (
+    await conn.getAddressLookupTable(lookupTableAddress)
+  ).value;
+  console.log("current LUT", lookupTableAccount);
+
+  return;
 
   // --------------------------------------- migos
   const merkleTree = new PublicKey(
-    "GNsnin9c2nDGp78E69tGXyMScWfysnu2PuxQxXy1jh3R"
+    "4FZcSBJkhPeNAkXecmKnnqHy93ABWzi3Q5u9eXkUfxVE"
   );
   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-  //uuid = 0b3644da-55d9-4fc0-a531-bd8bd49501ab
   const whitelist = new PublicKey(
-    "CVB1bV8dd5gEktXrP6cEvfVjuNnieQADGomWvdv8Yh1n"
+    "hpjcd2qA2T1D1dtrNjD1RuDL2Ej3iSLWq6xo5fMiiwT"
   );
+
+  const creators = [
+    new PublicKey("EevH3LPRexR2431NSF6bCpBbPdQ2ViHbM1p84zujiEUs"),
+    new PublicKey("D3pBAQAtRhWZyM9a5sakjEgpq2NUiZ8eYzHFvYmE5QL4"),
+  ];
 
   await updateLUT({
     provider,
     lookupTableAddress,
-    addresses: [merkleTree, treeAuthority, whitelist],
+    addresses: [merkleTree, treeAuthority, whitelist, ...creators],
   });
 })();
 
