@@ -416,6 +416,46 @@ describe("tcomp listings", () => {
     }
   });
 
+  it("lists + delists (expired listing)", async () => {
+    let canopyDepth = 10;
+    for (const nrCreators of [0, 1, 4]) {
+      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+        await beforeHook({ nrCreators, numMints: 2, canopyDepth });
+
+      for (const { leaf, index, metadata, assetId } of leaves) {
+        await testList({
+          amount: new BN(LAMPORTS_PER_SOL),
+          index,
+          memTree,
+          merkleTree,
+          metadata,
+          owner: traderA,
+          canopyDepth,
+          expireInSec: new BN(3),
+        });
+        await expect(
+          testDelist({
+            index,
+            memTree,
+            merkleTree,
+            metadata,
+            owner: traderA,
+            forceExpired: true,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingNotYetExpired"));
+        await waitMS(4000);
+        await testDelist({
+          index,
+          memTree,
+          merkleTree,
+          metadata,
+          owner: traderA,
+          forceExpired: true,
+        });
+      }
+    }
+  });
+
   it("lists + edits + buys (expired listing)", async () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =

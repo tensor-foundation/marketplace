@@ -197,9 +197,40 @@ pub mod tcomp {
 
     pub fn close_expired_listing<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListing<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
     ) -> Result<()> {
-        instructions::close_expired_listing::handler(ctx)
+        instructions::close_expired_listing::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            data_hash,
+            creator_hash,
+        )
     }
+
+    // TODO: delete after
+    // pub fn withdraw_expired_listing<'info>(
+    //     ctx: Context<'_, '_, '_, 'info, WithdrawExpiredListing<'info>>,
+    //     nonce: u64,
+    //     index: u32,
+    //     root: [u8; 32],
+    //     data_hash: [u8; 32],
+    //     creator_hash: [u8; 32],
+    // ) -> Result<()> {
+    //     instructions::withdraw_expired_listing::handler(
+    //         ctx,
+    //         nonce,
+    //         index,
+    //         root,
+    //         data_hash,
+    //         creator_hash,
+    //     )
+    // }
 
     pub fn take_bid_meta_hash<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,

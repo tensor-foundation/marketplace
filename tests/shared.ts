@@ -1257,6 +1257,7 @@ export const testDelist = async ({
   metadata,
   canopyDepth = 0,
   lookupTableAccount,
+  forceExpired = false,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1265,6 +1266,7 @@ export const testDelist = async ({
   metadata: MetadataArgs;
   canopyDepth?: number;
   lookupTableAccount?: AddressLookupTableAccount;
+  forceExpired?: boolean;
 }) => {
   const proof = memTree.getProof(
     index,
@@ -1276,23 +1278,42 @@ export const testDelist = async ({
   const dataHash = computeDataHash(metadata);
   const creatorsHash = computeCreatorHashPATCHED(metadata.creators);
 
-  const {
-    tx: { ixs },
-    assetId,
-  } = await tcompSdk.delist({
-    proof: proof.proof,
-    owner: owner.publicKey,
-    merkleTree,
-    dataHash,
-    creatorsHash,
-    root: [...proof.root],
-    index,
-    canopyDepth,
-  });
+  let ixs = [];
+  let assetId;
+
+  if (forceExpired) {
+    ({
+      tx: { ixs },
+      assetId,
+    } = await tcompSdk.closeExpiredListing({
+      proof: proof.proof,
+      owner: owner.publicKey,
+      merkleTree,
+      dataHash,
+      creatorsHash,
+      root: [...proof.root],
+      index,
+      canopyDepth,
+    }));
+  } else {
+    ({
+      tx: { ixs },
+      assetId,
+    } = await tcompSdk.delist({
+      proof: proof.proof,
+      owner: owner.publicKey,
+      merkleTree,
+      dataHash,
+      creatorsHash,
+      root: [...proof.root],
+      index,
+      canopyDepth,
+    }));
+  }
 
   const sig = await buildAndSendTx({
     ixs,
-    extraSigners: [owner],
+    extraSigners: forceExpired ? [] : [owner],
     lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
   });
   console.log("✅ delisted", sig);

@@ -8,6 +8,7 @@ pub mod edit;
 pub mod list;
 pub mod noop;
 pub mod take_bid;
+pub mod withdraw_expired_listing;
 pub mod withdraw_fees;
 
 pub use bid::*;
@@ -20,4 +21,5 @@ pub use edit::*;
 pub use list::*;
 pub use noop::*;
 pub use take_bid::*;
+pub use withdraw_expired_listing::*;
 pub use withdraw_fees::*;

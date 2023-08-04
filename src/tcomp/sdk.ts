@@ -39,6 +39,7 @@ import {
   isNullLike,
   parseAnchorEvents,
   TENSORSWAP_ADDR,
+  TSWAP_COSIGNER,
 } from "@tensor-hq/tensor-common";
 import * as borsh from "borsh";
 import {
@@ -838,24 +839,57 @@ export class TCompSDK {
   }
 
   async closeExpiredListing({
-    assetId,
+    merkleTree,
     owner,
-    compute = null,
-    priorityMicroLamports = null,
+    proof,
+    root,
+    dataHash,
+    creatorsHash,
+    nonce,
+    index,
+    compute = DEFAULT_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
   }: {
-    assetId: PublicKey;
+    merkleTree: PublicKey;
     owner: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    dataHash: Buffer;
+    creatorsHash: Buffer;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
     compute?: number | null;
     priorityMicroLamports?: number | null;
+    canopyDepth?: number;
   }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const assetId = await getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
-    const builder = this.program.methods.closeExpiredListing().accounts({
-      tcompProgram: TCOMP_ADDR,
-      owner,
-      systemProgram: SystemProgram.programId,
-      listState,
-    });
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const builder = this.program.methods
+      .closeExpiredListing(nonce, index, root, [...dataHash], [...creatorsHash])
+      .accounts({
+        tcompProgram: TCOMP_ADDR,
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        merkleTree,
+        treeAuthority,
+        owner,
+        listState,
+      })
+      .remainingAccounts(proofPath);
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
 
@@ -865,9 +899,88 @@ export class TCompSDK {
         ixs: [...computeIxs, await builder.instruction()],
         extraSigners: [],
       },
+      treeAuthority,
+      assetId,
       listState,
+      proofPath,
     };
   }
+
+  // TODO: delete after
+  // async withdrawExpiredListing({
+  //   merkleTree,
+  //   owner,
+  //   proof,
+  //   root,
+  //   dataHash,
+  //   creatorsHash,
+  //   nonce,
+  //   index,
+  //   compute = DEFAULT_COMPUTE_UNITS,
+  //   priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+  //   canopyDepth = 0,
+  // }: {
+  //   merkleTree: PublicKey;
+  //   owner: PublicKey;
+  //   proof: Buffer[];
+  //   root: number[];
+  //   dataHash: Buffer;
+  //   creatorsHash: Buffer;
+  //   //in most cases nonce == index and doesn't need to passed in separately
+  //   nonce?: BN;
+  //   index: number;
+  //   compute?: number | null;
+  //   priorityMicroLamports?: number | null;
+  //   canopyDepth?: number;
+  // }) {
+  //   nonce = nonce ?? new BN(index);
+  //
+  //   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+  //   const assetId = await getLeafAssetId(merkleTree, nonce);
+  //   const [listState] = findListStatePda({ assetId });
+  //
+  //   let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+  //     pubkey: new PublicKey(b),
+  //     isSigner: false,
+  //     isWritable: false,
+  //   }));
+  //
+  //   const builder = this.program.methods
+  //     .withdrawExpiredListing(
+  //       nonce,
+  //       index,
+  //       root,
+  //       [...dataHash],
+  //       [...creatorsHash]
+  //     )
+  //     .accounts({
+  //       tcompProgram: TCOMP_ADDR,
+  //       logWrapper: SPL_NOOP_PROGRAM_ID,
+  //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  //       systemProgram: SystemProgram.programId,
+  //       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+  //       merkleTree,
+  //       treeAuthority,
+  //       owner,
+  //       listState,
+  //       cosigner: TSWAP_COSIGNER,
+  //     })
+  //     .remainingAccounts(proofPath);
+  //
+  //   const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+  //
+  //   return {
+  //     builder,
+  //     tx: {
+  //       ixs: [...computeIxs, await builder.instruction()],
+  //       extraSigners: [],
+  //     },
+  //     treeAuthority,
+  //     assetId,
+  //     listState,
+  //     proofPath,
+  //   };
+  // }
 
   async takeBid({
     targetData,
