@@ -1,9 +1,15 @@
-import { BN } from "@project-serum/anchor";
+import { BN } from "@coral-xyz/anchor";
 import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { waitMS } from "@tensor-hq/tensor-common";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { MakeEvent, TakeEvent, TAKER_BROKER_PCT, Target } from "../src";
+import { makeNTraders } from "./account";
+import { cpiEdit } from "./cpi_test";
 import {
   ALREADY_IN_USE_ERR,
   beforeAllHook,
@@ -20,12 +26,6 @@ import {
   testEdit,
   testList,
 } from "./shared";
-import chai, { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { waitMS } from "@tensor-hq/tensor-common";
-import { makeNTraders } from "./account";
-import { MakeEvent, TakeEvent, TAKER_BROKER_PCT, Target } from "../src";
-import { cpiEdit } from "./cpi_test";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -254,7 +254,7 @@ describe("tcomp listings", () => {
           depthSizePair: { maxDepth: 5, maxBufferSize: 8 },
         });
 
-      const [payer] = await makeNTraders(1);
+      const [payer] = await makeNTraders({ n: 1 });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testList({
@@ -338,7 +338,7 @@ describe("tcomp listings", () => {
     for (const nrCreators of [0, 1, 4]) {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({ nrCreators, numMints: 2, canopyDepth });
-      const [delegate, payer] = await makeNTraders(2);
+      const [delegate, payer] = await makeNTraders({ n: 2 });
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         //delegate the NFT to traderC
@@ -509,7 +509,7 @@ describe("tcomp listings", () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
-    const [traderC] = await makeNTraders(1);
+    const [traderC] = await makeNTraders({ n: 1 });
 
     for (const { leaf, index, metadata, assetId } of leaves) {
       await testList({
@@ -552,7 +552,7 @@ describe("tcomp listings", () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
-    const [traderC] = await makeNTraders(1);
+    const [traderC] = await makeNTraders({ n: 1 });
 
     for (const { index, metadata } of leaves) {
       const { listState } = await testList({
@@ -601,7 +601,7 @@ describe("tcomp listings", () => {
     let canopyDepth = 10;
     const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
       await beforeHook({ nrCreators: 4, numMints: 2, canopyDepth });
-    const [traderC] = await makeNTraders(1);
+    const [traderC] = await makeNTraders({ n: 1 });
 
     const takerBroker = Keypair.generate().publicKey;
 

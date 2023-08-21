@@ -1,6 +1,6 @@
 [package]
 name = "tcomp"
-version = "0.5.0"
+version = "0.6.0"
 description = "Created with Anchor"
 edition = "2021"
 
@@ -17,13 +17,15 @@ default = []
 testing = []
 
 [dependencies]
-anchor-lang = "0.26.0"
+tensor_nft = {  git="ssh://git@github.com/tensor-hq/tensor-common-rs.git", version = "0.1.6" }
+vipers = {  version="2.0.6", git="ssh://git@github.com/tensor-hq/tensor-common-rs.git" }
 spl-account-compression = { version="0.1.10", features = ["cpi"] }
 mpl-bubblegum = {version="0.7.0", features=["cpi"]}
-mpl-token-metadata = {version="1.9.1", features = [ "no-entrypoint" ]}
-anchor-spl = { version = "0.26.0", features =  ["default"] }
-vipers = {path= '../../lib/vipers' }
+mpl-token-metadata = {version="=1.8.3", features = [ "no-entrypoint" ]}
+mpl-token-auth-rules = "1.2.0"
+anchor-lang = "=0.26.0"
+anchor-spl = { version = "=0.26.0", features =  ["default"] }
 static_assertions = "1.1.0"
 spl-noop = { version="0.1.3", features=["no-entrypoint"] }
 tensorswap = { version="1.8.0", git="ssh://git@github.com/tensor-hq/tensorswap.git", features=["cpi"] }
-tensor_whitelist = { version="0.2.0", git="ssh://git@github.com/tensor-hq/tensorswap.git", features=["cpi"] } #rev="338cc5d"
+tensor_whitelist = { version="0.2.0", git="ssh://git@github.com/tensor-hq/tensorswap.git", features=["cpi"] }

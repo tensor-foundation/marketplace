@@ -8,7 +8,7 @@ import {
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import { buildAndSendTx, TEST_PROVIDER } from "../tests/shared";
-import { AnchorProvider, Wallet } from "@project-serum/anchor";
+import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { BUBBLEGUM_PROGRAM_ID, findTCompPda, TCOMP_ADDR } from "../src";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,

@@ -19,7 +19,7 @@ import {
   getMetadata,
   TEST_PROVIDER,
 } from "../tests/shared";
-import { AnchorProvider, Wallet } from "@project-serum/anchor";
+import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { BUBBLEGUM_PROGRAM_ID, findTreeAuthorityPda } from "../src";
 import {
   getConcurrentMerkleTreeAccountSize,
@@ -309,7 +309,7 @@ const mintCNft = async ({
             bubblegumSigner: bgumSigner,
             collectionAuthority: treeOwner.publicKey,
             collectionAuthorityRecordPda: BUBBLEGUM_PROGRAM_ID,
-            collectionMetadata: await getMetadata(metadata.collection.key),
+            collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: await getMasterEdition(metadata.collection.key),
             tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,

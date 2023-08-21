@@ -8,7 +8,6 @@ pub mod event;
 pub mod instructions;
 pub mod shared;
 pub mod state;
-
 pub use std::{io::Write, ops::DerefMut, slice::Iter, str::FromStr};
 
 pub use anchor_lang::{
@@ -42,6 +41,7 @@ pub use noop::*;
 pub use shared::*;
 pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
+pub use tensor_nft::*;
 pub use tensor_whitelist::{self, Whitelist};
 pub use tensorswap::{self, margin_pda, program::Tensorswap, MarginAccount, TSwap};
 pub use vipers::{prelude::*, throw_err};
@@ -213,27 +213,8 @@ pub mod tcomp {
         )
     }
 
-    // TODO: delete after
-    // pub fn withdraw_expired_listing<'info>(
-    //     ctx: Context<'_, '_, '_, 'info, WithdrawExpiredListing<'info>>,
-    //     nonce: u64,
-    //     index: u32,
-    //     root: [u8; 32],
-    //     data_hash: [u8; 32],
-    //     creator_hash: [u8; 32],
-    // ) -> Result<()> {
-    //     instructions::withdraw_expired_listing::handler(
-    //         ctx,
-    //         nonce,
-    //         index,
-    //         root,
-    //         data_hash,
-    //         creator_hash,
-    //     )
-    // }
-
     pub fn take_bid_meta_hash<'info>(
-        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        ctx: Context<'_, '_, '_, 'info, TakeBidCompressed<'info>>,
         nonce: u64,
         index: u32,
         root: [u8; 32],
@@ -246,7 +227,7 @@ pub mod tcomp {
         _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::take_bid::handler_meta_hash(
+        instructions::take_bid_compressed::handler_meta_hash(
             ctx,
             nonce,
             index,
@@ -261,7 +242,7 @@ pub mod tcomp {
     }
 
     pub fn take_bid_full_meta<'info>(
-        ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+        ctx: Context<'_, '_, '_, 'info, TakeBidCompressed<'info>>,
         nonce: u64,
         index: u32,
         root: [u8; 32],
@@ -271,7 +252,7 @@ pub mod tcomp {
         _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::take_bid::handler_full_meta(
+        instructions::take_bid_compressed::handler_full_meta(
             ctx,
             nonce,
             index,
@@ -279,6 +260,24 @@ pub mod tcomp {
             meta_args,
             min_amount,
             optional_royalty_pct,
+        )
+    }
+
+    pub fn take_bid_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBidLegacy<'info>>,
+        min_amount: u64,
+        _currency: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>,
+        optional_royalty_pct: Option<u16>,
+        rules_acc_present: bool,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::take_bid_legacy::handler(
+            ctx,
+            min_amount,
+            optional_royalty_pct,
+            rules_acc_present,
+            authorization_data,
         )
     }
 }

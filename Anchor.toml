@@ -9,29 +9,26 @@ cpi_test = "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq"
 [registry]
 url = "https://api.apr.dev"
 
-[[test.genesis]]
+[test.validator]
+url = "https://api.mainnet-beta.solana.com"
+
+[[test.validator.clone]]
 address = "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
-program = "./deps/metaplex-mpl/bubblegum/program/target/deploy/mpl_bubblegum.so"
 
-[[test.genesis]]
+[[test.validator.clone]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "./deps/metaplex-mpl/token-metadata/target/deploy/mpl_token_metadata.so"
 
-[[test.genesis]]
+[[test.validator.clone]]
 address = "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
-program = "./deps/solana-spl/account-compression/target/deploy/spl_account_compression.so"
 
-[[test.genesis]]
+[[test.validator.clone]]
 address = "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
-program = "./deps/solana-spl/account-compression/target/deploy/spl_noop.so"
 
-[[test.genesis]]
+[[test.validator.clone]]
 address = "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
-program = "./deps/tensorswap/target/deploy/tensorswap.so"
 
-[[test.genesis]]
+[[test.validator.clone]]
 address = "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW"
-program = "./deps/tensorswap/target/deploy/tensor_whitelist.so"
 
 [provider]
 cluster = "localnet"

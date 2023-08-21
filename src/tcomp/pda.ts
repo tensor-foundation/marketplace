@@ -35,6 +35,19 @@ export const findListStatePda = ({
   );
 };
 
+export const findNftEscrowPda = ({
+  program,
+  nftMint,
+}: {
+  program?: PublicKey;
+  nftMint: PublicKey;
+}) => {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("nft_escrow"), nftMint.toBytes()],
+    program ?? TCOMP_ADDR
+  );
+};
+
 export const findTreeAuthorityPda = ({
   merkleTree,
 }: {
@@ -42,6 +55,13 @@ export const findTreeAuthorityPda = ({
 }) => {
   return PublicKey.findProgramAddressSync(
     [merkleTree.toBytes()],
+    BUBBLEGUM_PROGRAM_ID
+  );
+};
+
+export const findMintAuthorityPda = ({ mint }: { mint: PublicKey }) => {
+  return PublicKey.findProgramAddressSync(
+    [mint.toBytes()],
     BUBBLEGUM_PROGRAM_ID
   );
 };

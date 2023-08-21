@@ -6,7 +6,7 @@ import {
   PublicKey,
 } from "@solana/web3.js";
 import { buildAndSendTx, TEST_PROVIDER } from "../tests/shared";
-import { AnchorProvider, Wallet } from "@project-serum/anchor";
+import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { findTreeAuthorityPda } from "../src";
 import { waitMS } from "@tensor-hq/tensor-common";
 

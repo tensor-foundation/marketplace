@@ -55,7 +55,8 @@ pub fn handler<'info>(
         system_program: &ctx.accounts.system_program.to_account_info(),
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         proof_accounts: ctx.remaining_accounts,
-        signer: Some(&TcompSigner::List(&ctx.accounts.list_state)),
+        signer: Some(&ctx.accounts.list_state.to_account_info()),
+        signer_seeds: Some(&ctx.accounts.list_state.seeds()),
     })?;
 
     record_event(

@@ -1,9 +1,14 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { expect } from "chai";
 import { TensorWhitelistSDK } from "@tensor-oss/tensorswap-sdk";
-import { buildAndSendTx, swapSdk, TEST_PROVIDER, wlSdk } from "./shared";
-import { getLamports } from "./shared";
 import { BN } from "bn.js";
+import { expect } from "chai";
+import {
+  buildAndSendTx,
+  getLamports,
+  swapSdk,
+  TEST_PROVIDER,
+  wlSdk,
+} from "./shared";
 
 export const testMakeMargin = async ({ owner }: { owner: Keypair }) => {
   const name = "hello_world";
@@ -19,7 +24,6 @@ export const testMakeMargin = async ({ owner }: { owner: Keypair }) => {
   });
   await buildAndSendTx({
     ixs,
-    provider: TEST_PROVIDER,
     extraSigners: [owner],
   });
   //state
@@ -58,7 +62,6 @@ export const testDepositIntoMargin = async ({
   });
   await buildAndSendTx({
     ixs,
-    provider: TEST_PROVIDER,
     extraSigners: [owner],
   });
   const marginRent = await swapSdk.getMarginAccountRent();
@@ -88,7 +91,6 @@ export const testWithdrawFromMargin = async ({
   });
   await buildAndSendTx({
     ixs,
-    provider: TEST_PROVIDER,
     extraSigners: [owner],
   });
   const marginRent = await swapSdk.getMarginAccountRent();
@@ -130,7 +132,7 @@ export const makeVocWhitelist = async (voc: PublicKey) => {
     name: TensorWhitelistSDK.nameToBuffer(name),
     voc,
   });
-  await buildAndSendTx({ provider: TEST_PROVIDER, ixs });
+  await buildAndSendTx({ ixs });
 
   return { voc, whitelist: whitelistPda };
 };
@@ -147,7 +149,7 @@ export const makeFvcWhitelist = async (fvc: PublicKey) => {
     name: TensorWhitelistSDK.nameToBuffer(name),
     fvc,
   });
-  await buildAndSendTx({ provider: TEST_PROVIDER, ixs });
+  await buildAndSendTx({ ixs });
 
   return { fvc, whitelist: whitelistPda };
 };

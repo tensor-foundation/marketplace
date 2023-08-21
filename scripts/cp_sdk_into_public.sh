@@ -16,5 +16,5 @@ sed -i '' -e 's/tcomp-ts/tcomp-sdk/g' ../tcomp-sdk/package.json
 sed -i '' -e 's/@tensor-hq\/tcomp-sdk/@tensor-oss\/tcomp-sdk/g' ../tcomp-sdk/package.json
 sed -i '' -e 's/tcomp.git/tcomp-sdk.git/g' ../tcomp-sdk/package.json
 sed -i '' -e 's/https:\/\/npm.pkg.github.com/https:\/\/registry.npmjs.org/g' ../tcomp-sdk/package.json
-sed -i '' -e 's/pubpush/npmpublish/g' ../tcomp-sdk/package.json
+sed -i '' -e 's/pubpush/publish:public/g' ../tcomp-sdk/package.json
 sed -i '' -e 's/yarn npm publish && yarn push/npm publish --access public/g' ../tcomp-sdk/package.json

@@ -134,8 +134,10 @@ pub fn handler<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let (tcomp_fee, broker_fee) = calc_fees(amount)?;
-    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
+    let (tcomp_fee, broker_fee) = calc_fees(amount, TCOMP_FEE_BPS, TAKER_BROKER_PCT)?;
+    // TODO: pnfts
+    let creator_fee =
+        calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
 
     // --------------------------------------- nft transfer
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
@@ -156,7 +158,8 @@ pub fn handler<'info>(
         system_program: &ctx.accounts.system_program.to_account_info(),
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         proof_accounts,
-        signer: Some(&TcompSigner::List(&ctx.accounts.list_state)),
+        signer: Some(&ctx.accounts.list_state.to_account_info()),
+        signer_seeds: Some(&ctx.accounts.list_state.seeds()),
     })?;
 
     record_event(
@@ -197,7 +200,7 @@ pub fn handler<'info>(
             from: &ctx.accounts.payer.to_account_info(),
             sys_prog: &ctx.accounts.system_program,
         }),
-        &creators,
+        &creators.into_iter().map(Into::into).collect(),
         &mut creator_accounts.iter(),
         creator_fee,
     )?;

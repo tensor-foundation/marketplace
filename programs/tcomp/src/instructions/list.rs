@@ -71,6 +71,7 @@ pub fn handler<'info>(
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
         proof_accounts: ctx.remaining_accounts,
         signer: None,
+        signer_seeds: None,
     })?;
 
     let asset_id = get_asset_id(&ctx.accounts.merkle_tree.key(), nonce);

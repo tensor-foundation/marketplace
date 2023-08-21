@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "name": "tcomp",
   "constants": [
     {
@@ -1027,6 +1027,185 @@ export type Tcomp = {
           }
         }
       ]
+    },
+    {
+      "name": "takeBidLegacy",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "pnftShared",
+          "accounts": [
+            {
+              "name": "tokenMetadataProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "instructions",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "authorizationRulesProgram",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "nftEscrow",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Implicitly checked via transfer. Will fail if wrong account"
+          ]
+        },
+        {
+          "name": "tempEscrowTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        },
+        {
+          "name": "rulesAccPresent",
+          "type": "bool"
+        },
+        {
+          "name": "authorizationData",
+          "type": {
+            "option": {
+              "defined": "AuthorizationDataLocal"
+            }
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1492,6 +1671,79 @@ export type Tcomp = {
       }
     },
     {
+      "name": "AuthorizationDataLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "payload",
+            "type": {
+              "vec": {
+                "defined": "TaggedPayload"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TaggedPayload",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "payload",
+            "type": {
+              "defined": "PayloadTypeLocal"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeedsVecLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seeds",
+            "docs": [
+              "The vector of derivation seeds."
+            ],
+            "type": {
+              "vec": "bytes"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProofInfoLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proof",
+            "docs": [
+              "The merkle proof."
+            ],
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
@@ -1561,6 +1813,42 @@ export type Tcomp = {
               {
                 "defined": "TakeEvent"
               }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "PayloadTypeLocal",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pubkey",
+            "fields": [
+              "publicKey"
+            ]
+          },
+          {
+            "name": "Seeds",
+            "fields": [
+              {
+                "defined": "SeedsVecLocal"
+              }
+            ]
+          },
+          {
+            "name": "MerkleProof",
+            "fields": [
+              {
+                "defined": "ProofInfoLocal"
+              }
+            ]
+          },
+          {
+            "name": "Number",
+            "fields": [
+              "u64"
             ]
           }
         ]
@@ -1752,7 +2040,7 @@ export type Tcomp = {
 };
 
 export const IDL: Tcomp = {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "name": "tcomp",
   "constants": [
     {
@@ -2780,6 +3068,185 @@ export const IDL: Tcomp = {
           }
         }
       ]
+    },
+    {
+      "name": "takeBidLegacy",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "pnftShared",
+          "accounts": [
+            {
+              "name": "tokenMetadataProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "instructions",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "authorizationRulesProgram",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "nftEscrow",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Implicitly checked via transfer. Will fail if wrong account"
+          ]
+        },
+        {
+          "name": "tempEscrowTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "makerBroker",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        },
+        {
+          "name": "rulesAccPresent",
+          "type": "bool"
+        },
+        {
+          "name": "authorizationData",
+          "type": {
+            "option": {
+              "defined": "AuthorizationDataLocal"
+            }
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -3245,6 +3712,79 @@ export const IDL: Tcomp = {
       }
     },
     {
+      "name": "AuthorizationDataLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "payload",
+            "type": {
+              "vec": {
+                "defined": "TaggedPayload"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TaggedPayload",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "payload",
+            "type": {
+              "defined": "PayloadTypeLocal"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeedsVecLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seeds",
+            "docs": [
+              "The vector of derivation seeds."
+            ],
+            "type": {
+              "vec": "bytes"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProofInfoLocal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proof",
+            "docs": [
+              "The merkle proof."
+            ],
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "TTokenProgramVersion",
       "type": {
         "kind": "enum",
@@ -3314,6 +3854,42 @@ export const IDL: Tcomp = {
               {
                 "defined": "TakeEvent"
               }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "PayloadTypeLocal",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pubkey",
+            "fields": [
+              "publicKey"
+            ]
+          },
+          {
+            "name": "Seeds",
+            "fields": [
+              {
+                "defined": "SeedsVecLocal"
+              }
+            ]
+          },
+          {
+            "name": "MerkleProof",
+            "fields": [
+              {
+                "defined": "ProofInfoLocal"
+              }
+            ]
+          },
+          {
+            "name": "Number",
+            "fields": [
+              "u64"
             ]
           }
         ]

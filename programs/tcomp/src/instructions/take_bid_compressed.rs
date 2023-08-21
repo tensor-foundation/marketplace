@@ -1,7 +1,7 @@
-use crate::*;
+use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]
-pub struct TakeBid<'info> {
+pub struct TakeBidCompressed<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
     #[account(mut, seeds=[], bump)]
@@ -49,7 +49,7 @@ pub struct TakeBid<'info> {
     // 2. proof accounts (less canopy)
 }
 
-impl<'info> Validate<'info> for TakeBid<'info> {
+impl<'info> Validate<'info> for TakeBidCompressed<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
         require!(
@@ -77,7 +77,7 @@ impl<'info> Validate<'info> for TakeBid<'info> {
     }
 }
 
-impl<'info> TakeBid<'info> {
+impl<'info> TakeBidCompressed<'info> {
     fn take_bid_shared(
         &mut self,
         asset_id: Pubkey,
@@ -93,19 +93,6 @@ impl<'info> TakeBid<'info> {
         creator_accounts: &[AccountInfo<'info>],
         proof_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
-        // Verify & increment quantity
-        let bid_state = &mut self.bid_state;
-        require!(bid_state.can_buy_more(), TcompError::BidFullyFilled);
-        bid_state.incr_filled_quantity()?;
-
-        let bid_state = &self.bid_state;
-        let amount = bid_state.amount;
-        let currency = bid_state.currency;
-        require!(amount >= min_amount, TcompError::PriceMismatch);
-
-        let (tcomp_fee, broker_fee) = calc_fees(amount)?;
-        let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
-
         // --------------------------------------- nft transfer
         // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
 
@@ -126,116 +113,33 @@ impl<'info> TakeBid<'info> {
             bubblegum_program: &self.bubblegum_program.to_account_info(),
             proof_accounts,
             signer: None,
+            signer_seeds: None,
         })?;
 
-        record_event(
-            &TcompEvent::Taker(TakeEvent {
-                taker: *self.seller.key,
-                bid_id: Some(bid_state.bid_id),
-                target: bid_state.target.clone(),
-                target_id: bid_state.target_id,
-                field: bid_state.field.clone(),
-                field_id: bid_state.field_id,
-                amount,
-                tcomp_fee,
-                quantity: bid_state.quantity_left()?,
-                taker_broker_fee: broker_fee,
-                //TODO: maker broker disabled
-                maker_broker_fee: 0,
-                creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-                currency,
-                asset_id: Some(asset_id),
-            }),
-            &self.tcomp_program,
-            TcompSigner::Bid(&self.bid_state),
-        )?;
-
-        // --------------------------------------- sol transfers
-
-        // TODO: handle currency (not v1)
-
-        //if margin is used, move money into bid first
-        if let Some(margin) = bid_state.margin {
-            let margin_account_info = &self.margin_account.to_account_info();
-            let margin_account =
-                assert_decode_margin_account(margin_account_info, &self.owner.to_account_info())?;
-            //doesn't hurt to check again (even though we checked when bidding)
-            require!(
-                margin_account.owner == *self.owner.key,
-                TcompError::BadMargin
-            );
-            require!(*margin_account_info.key == margin, TcompError::BadMargin);
-            tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
-                CpiContext::new(
-                    self.tensorswap_program.to_account_info(),
-                    tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                        margin_account: margin_account_info.clone(),
-                        bid_state: self.bid_state.to_account_info(),
-                        owner: self.owner.to_account_info(),
-                        //transfer to bid state
-                        destination: self.bid_state.to_account_info(),
-                        system_program: self.system_program.to_account_info(),
-                    },
-                )
-                .with_signer(&[&self.bid_state.seeds()]),
-                //passing these in coz we're not deserializing the account tswap side
-                bid_state.bump[0],
-                bid_state.bid_id,
-                //full amount, which later will be split into fees / royalties (seller pays)
-                amount,
-            )?;
-        }
-
-        // Pay fees
-        transfer_lamports_from_pda(
-            &self.bid_state.to_account_info(),
-            &self.tcomp.to_account_info(),
-            tcomp_fee,
-        )?;
-
-        transfer_lamports_from_pda(
-            &self.bid_state.to_account_info(),
-            &self.taker_broker.to_account_info(),
-            broker_fee,
-        )?;
-
-        // Pay creators
-        let actual_creator_fee = transfer_creators_fee(
-            &FromAcc::Pda(&self.bid_state.to_account_info()),
-            &creators,
-            &mut creator_accounts.iter(),
-            creator_fee,
-        )?;
-
-        // Pay the seller
-        transfer_lamports_from_pda(
-            &self.bid_state.to_account_info(),
-            &self.seller.to_account_info(),
-            unwrap_checked!({
-                amount
-                    .checked_sub(tcomp_fee)?
-                    .checked_sub(broker_fee)?
-                    .checked_sub(actual_creator_fee)
-            }),
-        )?;
-
-        // --------------------------------------- close
-
-        // Close account if fully filled
-        if bid_state.quantity_left() == Ok(0) {
-            close_account(
-                &mut self.bid_state.to_account_info(),
-                &mut self.owner.to_account_info(),
-            )?;
-        }
-
-        Ok(())
+        take_bid_shared(TakeBidArgs {
+            bid_state: &mut self.bid_state,
+            seller: &self.seller,
+            margin_account: &self.margin_account,
+            owner: &self.owner,
+            taker_broker: &self.taker_broker,
+            tcomp: &self.tcomp.to_account_info(),
+            asset_id,
+            token_standard: None,
+            creators: creators.into_iter().map(Into::into).collect(),
+            min_amount,
+            optional_royalty_pct,
+            seller_fee_basis_points,
+            creator_accounts,
+            tcomp_prog: &self.tcomp_program,
+            tswap_prog: &self.tensorswap_program,
+            system_prog: &self.system_program,
+        })
     }
 }
 
 #[access_control(ctx.accounts.validate())]
 pub fn handler_full_meta<'info>(
-    ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+    ctx: Context<'_, '_, '_, 'info, TakeBidCompressed<'info>>,
     nonce: u64,
     index: u32,
     root: [u8; 32],
@@ -336,7 +240,7 @@ pub fn handler_full_meta<'info>(
 
 #[access_control(ctx.accounts.validate())]
 pub fn handler_meta_hash<'info>(
-    ctx: Context<'_, '_, '_, 'info, TakeBid<'info>>,
+    ctx: Context<'_, '_, '_, 'info, TakeBidCompressed<'info>>,
     nonce: u64,
     index: u32,
     root: [u8; 32],

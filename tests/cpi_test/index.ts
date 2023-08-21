@@ -1,5 +1,5 @@
 import { findListStatePda, TCOMP_ADDR } from "../../src";
-import { BN, Program } from "@project-serum/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { getLeafAssetId } from "@metaplex-foundation/mpl-bubblegum";
 import { PublicKey } from "@solana/web3.js";
 import { TEST_PROVIDER } from "../shared";
