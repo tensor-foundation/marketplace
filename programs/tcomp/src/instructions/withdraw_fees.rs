@@ -2,7 +2,11 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct WithdrawFees<'info> {
-    #[account(mut, seeds = [], bump = tswap.bump[0], has_one = cosigner, has_one = owner)]
+    #[account(mut,
+        seeds = [], bump = tswap.bump[0], 
+        seeds::program = tensorswap::id(),
+        has_one = cosigner, has_one = owner
+    )]
     pub tswap: Box<Account<'info, TSwap>>,
     /// CHECK: seeds
     #[account(mut, seeds=[], bump)]
