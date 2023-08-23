@@ -1129,7 +1129,6 @@ export class TCompSDK {
     optionalRoyaltyPct?: number | null;
     margin?: PublicKey | null;
     takerBroker?: PublicKey | null;
-    canopyDepth?: number;
     whitelist?: PublicKey | null;
   } & PnftArgs) {
     const [tcomp] = findTCompPda({});
