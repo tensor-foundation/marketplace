@@ -1,9 +1,10 @@
 use crate::*;
+use anchor_lang::solana_program::system_instruction::transfer;
 
 #[derive(Accounts)]
 pub struct WithdrawFees<'info> {
     #[account(mut,
-        seeds = [], bump = tswap.bump[0], 
+        seeds = [], bump = tswap.bump[0],
         seeds::program = tensorswap::id(),
         has_one = cosigner, has_one = owner
     )]
@@ -24,10 +25,23 @@ pub struct WithdrawFees<'info> {
 }
 
 pub fn handler(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
-    transfer_lamports_from_pda(
-        &ctx.accounts.tcomp.to_account_info(),
-        &ctx.accounts.destination.to_account_info(),
+    // NB: tcomp is a SystemProgram since we never allocated data to it.
+    let ixs = transfer(
+        &ctx.accounts.tcomp.key(),
+        &ctx.accounts.destination.key(),
         amount,
+    );
+    let (_, bump) = Pubkey::find_program_address(&[], &ID);
+
+    invoke_signed(
+        &ixs,
+        &[
+            ctx.accounts.tcomp.to_account_info(),
+            ctx.accounts.destination.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+        ],
+        &[&[&[bump]]],
     )?;
+
     Ok(())
 }

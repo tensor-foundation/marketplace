@@ -2313,8 +2313,8 @@ dependencies = [
 
 [[package]]
 name = "tensor_nft"
-version = "0.1.6"
-source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#058989d685d5c04af9d48db0dcf002390f38c32f"
+version = "0.1.9"
+source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#ae55018dd8b5933c208266d7cc8db2652732d7d7"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2517,7 +2517,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#058989d685d5c04af9d48db0dcf002390f38c32f"
+source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#ae55018dd8b5933c208266d7cc8db2652732d7d7"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

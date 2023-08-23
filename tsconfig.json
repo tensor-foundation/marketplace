@@ -13,6 +13,6 @@
     "strict": true,
     "declaration": true
   },
-  "include": ["src/*"],
+  "include": ["src/*", "tests/*"],
   "exclude": ["node_modules", "target", "tests", "migrations", "deps"]
 }
