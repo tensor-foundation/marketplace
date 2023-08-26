@@ -5,7 +5,7 @@ pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
 pub const TCOMP_FEE_BPS: u16 = 140;
 #[constant]
-pub const MAX_EXPIRY_SEC: i64 = 5184000; // Max 60 days
+pub const MAX_EXPIRY_SEC: i64 = 31_536_000; // Max 365 days (can't be too short o/w liquidity disappears too early)
 #[constant]
 pub const HUNDRED_PCT_BPS: u16 = 10000;
 
