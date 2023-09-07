@@ -38,7 +38,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
             ["@solana/spl-token", "virtual:ce0093ab8d79231cde7a8946963cc311bd300dc81fef3d74a1725701b21e6005d4f3aa761773ed6e5391d5eda88fc55d7820063a243ec7efa279c8a647988571#npm:0.3.7"],\
             ["@solana/web3.js", "npm:1.75.0"],\
-            ["@tensor-hq/tensor-common", "npm:0.18.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.0%2F6762a619736862c6f4ee077c4faca9fc9638876c"],\
+            ["@tensor-hq/tensor-common", "npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"],\
             ["@tensor-oss/tensorswap-sdk", "npm:1.14.0"],\
             ["@types/bn.js", "npm:5.1.1"],\
             ["@types/chai", "npm:4.3.4"],\
@@ -1481,7 +1481,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
             ["@solana/spl-token", "virtual:ce0093ab8d79231cde7a8946963cc311bd300dc81fef3d74a1725701b21e6005d4f3aa761773ed6e5391d5eda88fc55d7820063a243ec7efa279c8a647988571#npm:0.3.7"],\
             ["@solana/web3.js", "npm:1.75.0"],\
-            ["@tensor-hq/tensor-common", "npm:0.18.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.0%2F6762a619736862c6f4ee077c4faca9fc9638876c"],\
+            ["@tensor-hq/tensor-common", "npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"],\
             ["@tensor-oss/tensorswap-sdk", "npm:1.14.0"],\
             ["@types/bn.js", "npm:5.1.1"],\
             ["@types/chai", "npm:4.3.4"],\
@@ -1509,6 +1509,28 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@tensor-hq-tensor-common-npm-0.18.0-f1117bee96-84baf5ca07.zip/node_modules/@tensor-hq/tensor-common/",\
           "packageDependencies": [\
             ["@tensor-hq/tensor-common", "npm:0.18.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.0%2F6762a619736862c6f4ee077c4faca9fc9638876c"],\
+            ["@coral-xyz/anchor", "npm:0.26.0"],\
+            ["@metaplex-foundation/mpl-auction-house", "npm:2.5.1"],\
+            ["@metaplex-foundation/mpl-bubblegum", "npm:0.7.0"],\
+            ["@metaplex-foundation/mpl-token-auth-rules", "npm:2.0.0"],\
+            ["@metaplex-foundation/mpl-token-metadata", "npm:2.13.0"],\
+            ["@solana/spl-token", "virtual:ce0093ab8d79231cde7a8946963cc311bd300dc81fef3d74a1725701b21e6005d4f3aa761773ed6e5391d5eda88fc55d7820063a243ec7efa279c8a647988571#npm:0.3.7"],\
+            ["@solana/web3.js", "npm:1.75.0"],\
+            ["axios", "npm:0.27.2"],\
+            ["big.js", "npm:6.2.1"],\
+            ["bn.js", "npm:5.2.1"],\
+            ["bs58", "npm:5.0.0"],\
+            ["exponential-backoff", "npm:3.1.1"],\
+            ["hadeswap-sdk", "npm:0.8.28"],\
+            ["js-sha3", "npm:0.8.0"],\
+            ["semaphore", "npm:1.1.0"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68", {\
+          "packageLocation": "./.yarn/cache/@tensor-hq-tensor-common-npm-0.18.3-26c84b6ea6-91b0520a5a.zip/node_modules/@tensor-hq/tensor-common/",\
+          "packageDependencies": [\
+            ["@tensor-hq/tensor-common", "npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"],\
             ["@coral-xyz/anchor", "npm:0.26.0"],\
             ["@metaplex-foundation/mpl-auction-house", "npm:2.5.1"],\
             ["@metaplex-foundation/mpl-bubblegum", "npm:0.7.0"],\

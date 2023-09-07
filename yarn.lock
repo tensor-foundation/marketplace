@@ -1250,7 +1250,7 @@ __metadata:
     "@solana/spl-account-compression": ^0.1.7
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": ^0.18.0
+    "@tensor-hq/tensor-common": ^0.18.3
     "@tensor-oss/tensorswap-sdk": ^1.14.0
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
@@ -1292,6 +1292,29 @@ __metadata:
     js-sha3: ^0.8.0
     semaphore: ^1.1.0
   checksum: 84baf5ca07a202a30d2af675f9ae78b67557b38c3a997982dbaa26fab1b25e692c2d0955a7a6c037717e29737de3d77a3600a52fe068d9c144c8a2b4539c7bd5
+  languageName: node
+  linkType: hard
+
+"@tensor-hq/tensor-common@npm:^0.18.3":
+  version: 0.18.3
+  resolution: "@tensor-hq/tensor-common@npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"
+  dependencies:
+    "@coral-xyz/anchor": ^0.26.0
+    "@metaplex-foundation/mpl-auction-house": ^2.1.1
+    "@metaplex-foundation/mpl-bubblegum": ^0.7.0
+    "@metaplex-foundation/mpl-token-auth-rules": ^2.0.0
+    "@metaplex-foundation/mpl-token-metadata": ^2.13.0
+    "@solana/spl-token": ^0.3.6
+    "@solana/web3.js": ^1.73.0
+    axios: ^0.27.2
+    big.js: ^6.2.1
+    bn.js: ^5.2.1
+    bs58: ^5.0.0
+    exponential-backoff: ^3.1.1
+    hadeswap-sdk: ^0.8.25
+    js-sha3: ^0.8.0
+    semaphore: ^1.1.0
+  checksum: 91b0520a5a1339d4ebcf1e48db9e3374c3b0396f89ee7b7cbc3bad2a7706684e69c7d49c361292685ce0bbd467ee9a25ceb2203eff70a13b7dda1cc9f560cbf2
   languageName: node
   linkType: hard
 
