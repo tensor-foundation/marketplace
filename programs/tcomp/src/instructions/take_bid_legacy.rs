@@ -222,6 +222,17 @@ pub fn handler<'info>(
             );
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
             let collection = metadata.collection;
+
+            // Block selling into Tensorian Shards bids (shards useless: protect uninformed bidders).
+            if let Some(coll) = &collection {
+                require!(
+                    coll.key.ne(
+                        &Pubkey::from_str("4gyWUNxb7HfekUegqi3ndgBPmJLQZXo1mRZVeuk5Edsq").unwrap()
+                    ),
+                    TcompError::ForbiddenCollection
+                );
+            }
+
             // Run the verification
             whitelist.verify_whitelist_tcomp(collection, creators.clone())?;
         }

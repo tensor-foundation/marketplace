@@ -65,4 +65,6 @@ pub enum TcompError {
     BidFullyFilled = 129,
     #[msg("bad whitelist")]
     BadWhitelist = 130,
+    #[msg("forbidden collection")]
+    ForbiddenCollection = 131,
 }

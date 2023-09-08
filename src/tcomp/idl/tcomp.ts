@@ -15,7 +15,7 @@ export type Tcomp = {
     {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
-      "value": "5184000"
+      "value": "31_536_000"
     },
     {
       "name": "HUNDRED_PCT_BPS",
@@ -2035,6 +2035,11 @@ export type Tcomp = {
       "code": 6130,
       "name": "BadWhitelist",
       "msg": "bad whitelist"
+    },
+    {
+      "code": 6131,
+      "name": "ForbiddenCollection",
+      "msg": "forbidden collection"
     }
   ]
 };
@@ -2056,7 +2061,7 @@ export const IDL: Tcomp = {
     {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
-      "value": "5184000"
+      "value": "31_536_000"
     },
     {
       "name": "HUNDRED_PCT_BPS",
@@ -4076,6 +4081,11 @@ export const IDL: Tcomp = {
       "code": 6130,
       "name": "BadWhitelist",
       "msg": "bad whitelist"
+    },
+    {
+      "code": 6131,
+      "name": "ForbiddenCollection",
+      "msg": "forbidden collection"
     }
   ]
 };
