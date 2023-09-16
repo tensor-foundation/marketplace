@@ -1114,7 +1114,7 @@ export class TCompSDK {
     /** pnft args */
     metaCreators,
     authData = null,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = 800_000, // pnfts are expensive
     ruleSetAddnCompute = DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
   }: {

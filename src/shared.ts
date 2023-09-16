@@ -1,6 +1,5 @@
-// pNFTs very expensive.
-export const DEFAULT_COMPUTE_UNITS = 800_000;
-export const DEFAULT_MICRO_LAMPORTS = 200_000;
+export const DEFAULT_COMPUTE_UNITS = 200_000; // cNFT xfers are cheap
+export const DEFAULT_MICRO_LAMPORTS = 10_000;
 export const DEFAULT_RULESET_ADDN_COMPUTE_UNITS = 400_000;
 
 export type AccountSuffix =
