@@ -30,12 +30,12 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["@coral-xyz/anchor", "npm:0.26.0"],\
             ["@metaplex-foundation/js", "npm:0.18.3"],\
-            ["@metaplex-foundation/mpl-bubblegum", "npm:0.7.0"],\
+            ["@metaplex-foundation/mpl-bubblegum", "npm:0.8.0"],\
             ["@metaplex-foundation/mpl-token-auth-rules", "npm:1.2.0"],\
             ["@metaplex-foundation/mpl-token-metadata", "npm:2.13.0"],\
             ["@msgpack/msgpack", "npm:3.0.0-beta2"],\
             ["@saberhq/solana-contrib", "virtual:1409f8f789edb181adbbfd745cc09c8313259e7eee546988aa69081794e9aa7ee67a0f768f6352b890dcbe3dc0d94081745710a988ff7d76d0a12204da7ca771#npm:1.14.11"],\
-            ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
+            ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
             ["@solana/spl-token", "virtual:ce0093ab8d79231cde7a8946963cc311bd300dc81fef3d74a1725701b21e6005d4f3aa761773ed6e5391d5eda88fc55d7820063a243ec7efa279c8a647988571#npm:0.3.7"],\
             ["@solana/web3.js", "npm:1.75.0"],\
             ["@tensor-hq/tensor-common", "npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"],\
@@ -790,7 +790,22 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@metaplex-foundation/beet-solana", "npm:0.4.0"],\
             ["@metaplex-foundation/cusper", "npm:0.0.2"],\
             ["@metaplex-foundation/mpl-token-metadata", "npm:2.9.1"],\
-            ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
+            ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
+            ["@solana/spl-token", "npm:0.1.8"],\
+            ["@solana/web3.js", "npm:1.75.0"],\
+            ["js-sha3", "npm:0.8.0"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:0.8.0", {\
+          "packageLocation": "./.yarn/cache/@metaplex-foundation-mpl-bubblegum-npm-0.8.0-d2f22d56fd-dba5645140.zip/node_modules/@metaplex-foundation/mpl-bubblegum/",\
+          "packageDependencies": [\
+            ["@metaplex-foundation/mpl-bubblegum", "npm:0.8.0"],\
+            ["@metaplex-foundation/beet", "npm:0.7.1"],\
+            ["@metaplex-foundation/beet-solana", "npm:0.4.0"],\
+            ["@metaplex-foundation/cusper", "npm:0.0.2"],\
+            ["@metaplex-foundation/mpl-token-metadata", "npm:2.9.1"],\
+            ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
             ["@solana/spl-token", "npm:0.1.8"],\
             ["@solana/web3.js", "npm:1.75.0"],\
             ["js-sha3", "npm:0.8.0"]\
@@ -1320,10 +1335,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           ],\
           "linkType": "SOFT"\
         }],\
-        ["virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7", {\
-          "packageLocation": "./.yarn/__virtual__/@solana-spl-account-compression-virtual-c37e8bcb33/0/cache/@solana-spl-account-compression-npm-0.1.7-d6a2b57b3e-0503ebafac.zip/node_modules/@solana/spl-account-compression/",\
+        ["virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7", {\
+          "packageLocation": "./.yarn/__virtual__/@solana-spl-account-compression-virtual-0e1f441331/0/cache/@solana-spl-account-compression-npm-0.1.7-d6a2b57b3e-0503ebafac.zip/node_modules/@solana/spl-account-compression/",\
           "packageDependencies": [\
-            ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
+            ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
             ["@metaplex-foundation/beet", "npm:0.7.1"],\
             ["@metaplex-foundation/beet-solana", "npm:0.4.0"],\
             ["@solana/web3.js", "npm:1.75.0"],\
@@ -1473,12 +1488,12 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@tensor-hq/tcomp-ts", "workspace:."],\
             ["@coral-xyz/anchor", "npm:0.26.0"],\
             ["@metaplex-foundation/js", "npm:0.18.3"],\
-            ["@metaplex-foundation/mpl-bubblegum", "npm:0.7.0"],\
+            ["@metaplex-foundation/mpl-bubblegum", "npm:0.8.0"],\
             ["@metaplex-foundation/mpl-token-auth-rules", "npm:1.2.0"],\
             ["@metaplex-foundation/mpl-token-metadata", "npm:2.13.0"],\
             ["@msgpack/msgpack", "npm:3.0.0-beta2"],\
             ["@saberhq/solana-contrib", "virtual:1409f8f789edb181adbbfd745cc09c8313259e7eee546988aa69081794e9aa7ee67a0f768f6352b890dcbe3dc0d94081745710a988ff7d76d0a12204da7ca771#npm:1.14.11"],\
-            ["@solana/spl-account-compression", "virtual:c62f0f95a305ad921cb076c518fdeca9b0b71a92b3cfe6e626a24ee981096d77c7402d8d609c0d047e17a7e9b86e662e157cccc318299937a98421e684fbd92d#npm:0.1.7"],\
+            ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
             ["@solana/spl-token", "virtual:ce0093ab8d79231cde7a8946963cc311bd300dc81fef3d74a1725701b21e6005d4f3aa761773ed6e5391d5eda88fc55d7820063a243ec7efa279c8a647988571#npm:0.3.7"],\
             ["@solana/web3.js", "npm:1.75.0"],\
             ["@tensor-hq/tensor-common", "npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"],\

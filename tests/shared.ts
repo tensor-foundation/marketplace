@@ -11,11 +11,13 @@ import {
   createMintV1Instruction,
   createRedeemInstruction,
   createVerifyCreatorInstruction,
+  createSetDecompressableStateInstruction,
   Creator,
   getLeafAssetId,
   MetadataArgs,
   TokenProgramVersion,
   TokenStandard,
+  DecompressableState,
 } from "@metaplex-foundation/mpl-bubblegum";
 import {
   SingleConnectionBroadcaster,
@@ -944,6 +946,21 @@ export const beforeHook = async ({
     treeOwner,
     depthSizePair,
     canopyDepth,
+  });
+  const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+  // Allow decompression since we need to decompress for tests.
+  const setDecompressIx = createSetDecompressableStateInstruction(
+    {
+      treeAuthority: treeAuthority,
+      treeCreator: treeOwner.publicKey,
+    },
+    {
+      decompressableState: DecompressableState.Enabled,
+    }
+  );
+  await buildAndSendTx({
+    ixs: [setDecompressIx],
+    extraSigners: [treeOwner],
   });
 
   //has to be sequential to ensure index is correct

@@ -515,19 +515,12 @@ describe("tcomp bids", () => {
 
     it("parses VOC + name + quantity bid txs ok", async () => {
       let canopyDepth = 12;
-      const {
-        merkleTree,
-        traderA,
-        leaves,
-        traderB,
-        memTree,
-        treeOwner,
-        collectionMint,
-      } = await beforeHook({
-        nrCreators: 4,
-        numMints: 1,
-        canopyDepth,
-      });
+      const { merkleTree, traderA, leaves, traderB, memTree, collectionMint } =
+        await beforeHook({
+          nrCreators: 4,
+          numMints: 1,
+          canopyDepth,
+        });
       const takerBroker = Keypair.generate().publicKey;
       const { whitelist } = await makeVocWhitelist(collectionMint);
 

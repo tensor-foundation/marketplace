@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.26.0",
-    "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
+    "@metaplex-foundation/mpl-bubblegum": "~0.8.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
     "@msgpack/msgpack": "^3.0.0-beta2",
     "@solana/spl-account-compression": "^0.1.7",

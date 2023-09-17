@@ -672,6 +672,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metaplex-foundation/mpl-bubblegum@npm:~0.8.0":
+  version: 0.8.0
+  resolution: "@metaplex-foundation/mpl-bubblegum@npm:0.8.0"
+  dependencies:
+    "@metaplex-foundation/beet": 0.7.1
+    "@metaplex-foundation/beet-solana": 0.4.0
+    "@metaplex-foundation/cusper": ^0.0.2
+    "@metaplex-foundation/mpl-token-metadata": ^2.5.2
+    "@solana/spl-account-compression": ^0.1.4
+    "@solana/spl-token": ^0.1.8
+    "@solana/web3.js": ^1.50.1
+    js-sha3: ^0.8.0
+  checksum: dba5645140289c8eb41a275135a56a380349b303a318a84a48a35a961d828d607b34ffdc956fff67e56546cccc8d6c3378553be1c89f4a000aa870c640adac00
+  languageName: node
+  linkType: hard
+
 "@metaplex-foundation/mpl-candy-guard@npm:^0.3.0":
   version: 0.3.2
   resolution: "@metaplex-foundation/mpl-candy-guard@npm:0.3.2"
@@ -1242,7 +1258,7 @@ __metadata:
   dependencies:
     "@coral-xyz/anchor": 0.26.0
     "@metaplex-foundation/js": ^0.18.3
-    "@metaplex-foundation/mpl-bubblegum": ^0.7.0
+    "@metaplex-foundation/mpl-bubblegum": ~0.8.0
     "@metaplex-foundation/mpl-token-auth-rules": ^1.2.0
     "@metaplex-foundation/mpl-token-metadata": ^2.13.0
     "@msgpack/msgpack": ^3.0.0-beta2
