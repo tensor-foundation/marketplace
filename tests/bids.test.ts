@@ -536,6 +536,33 @@ describe("tcomp bids", () => {
 
         // --------------------------------------- Bid
 
+        // Can't place bid with field and no fieldId, or vice versa.
+        {
+          const commonArgs = {
+            amount: new BN(amount),
+            target: Target.Whitelist,
+            targetId: whitelist,
+            owner: traderB,
+            privateTaker: traderA.publicKey,
+            quantity: 2,
+          };
+          await expect(
+            testBid({
+              ...commonArgs,
+              field: Field.Name,
+              fieldId: null,
+            })
+          ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
+
+          await expect(
+            testBid({
+              ...commonArgs,
+              field: null,
+              fieldId: new PublicKey(nameToBuffer(metadata.name)),
+            })
+          ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
+        }
+
         {
           const { sig } = await testBid({
             amount: new BN(amount),

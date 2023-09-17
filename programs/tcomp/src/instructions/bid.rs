@@ -94,6 +94,12 @@ pub fn handler<'info>(
         bid_state.target_id = target_id;
         bid_state.field = field.clone();
         bid_state.field_id = field_id;
+
+        // Basically both must be present or None
+        require!(
+            !(field.is_none() ^ field_id.is_none()),
+            TcompError::BadBidField
+        );
     } else {
         // Verify to make sure the bidder isn't expecting anything else.
         require!(bid_state.target == target, TcompError::CannotModifyTarget);
