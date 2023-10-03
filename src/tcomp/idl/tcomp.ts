@@ -15,7 +15,7 @@ export type Tcomp = {
     {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
-      "value": "31_536_000"
+      "value": "31536000"
     },
     {
       "name": "HUNDRED_PCT_BPS",
@@ -1367,11 +1367,42 @@ export type Tcomp = {
             }
           },
           {
+            "name": "updatedAt",
+            "type": "i64"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                128
+                8
+              ]
+            }
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "reserved2",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reserved3",
+            "type": {
+              "array": [
+                "u8",
+                64
               ]
             }
           }
@@ -2061,7 +2092,7 @@ export const IDL: Tcomp = {
     {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
-      "value": "31_536_000"
+      "value": "31536000"
     },
     {
       "name": "HUNDRED_PCT_BPS",
@@ -3413,11 +3444,42 @@ export const IDL: Tcomp = {
             }
           },
           {
+            "name": "updatedAt",
+            "type": "i64"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                128
+                8
+              ]
+            }
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "reserved2",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reserved3",
+            "type": {
+              "array": [
+                "u8",
+                64
               ]
             }
           }

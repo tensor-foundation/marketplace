@@ -1,11 +1,12 @@
 use crate::*;
 
+// (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
 #[constant]
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
 #[constant]
 pub const TCOMP_FEE_BPS: u16 = 140;
 #[constant]
-pub const MAX_EXPIRY_SEC: i64 = 31_536_000; // Max 365 days (can't be too short o/w liquidity disappears too early)
+pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/w liquidity disappears too early)
 #[constant]
 pub const HUNDRED_PCT_BPS: u16 = 10000;
 
@@ -83,8 +84,13 @@ pub struct BidState {
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
+    pub updated_at: i64,
 
-    pub _reserved: [u8; 128],
+    //borsh not implemented for u8;56
+    pub _reserved: [u8; 8],
+    pub _reserved1: [u8; 16],
+    pub _reserved2: [u8; 32],
+    pub _reserved3: [u8; 64],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)

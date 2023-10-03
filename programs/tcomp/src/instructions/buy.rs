@@ -66,6 +66,12 @@ impl<'info> Validate<'info> for Buy<'info> {
                 maker_broker == self.maker_broker.key(),
                 TcompError::BrokerMismatch
             )
+        } else {
+            let neutral_broker = Pubkey::find_program_address(&[], &crate::id()).0;
+            require!(
+                self.maker_broker.key() == neutral_broker,
+                TcompError::BrokerMismatch
+            )
         }
         Ok(())
     }

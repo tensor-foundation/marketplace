@@ -76,6 +76,7 @@ pub fn handler<'info>(
     bid_state.private_taker = private_taker;
     bid_state.maker_broker = maker_broker;
     bid_state.margin = None; //overwritten below if margin present
+    bid_state.updated_at = Clock::get()?.unix_timestamp;
 
     // Since this is part of the seeds we're safe to always update this
     bid_state.owner = ctx.accounts.owner.key();

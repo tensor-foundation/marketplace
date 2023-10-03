@@ -1683,6 +1683,10 @@ export const testBid = async ({
           MINUTES
         );
       }
+      expect(bidStateAcc.updatedAt.toNumber()).to.approximately(
+        +new Date() / 1000,
+        MINUTES
+      );
       if (!isNullLike(privateTaker)) {
         expect(bidStateAcc.privateTaker!.toString()).to.eq(
           privateTaker.toString()

@@ -325,6 +325,7 @@ export type BidStateAnchor = {
   privateTaker: PublicKey | null;
   makerBroker: PublicKey | null;
   margin: PublicKey | null;
+  updatedAt: BN;
 };
 export type ListStateAnchor = {
   version: number;

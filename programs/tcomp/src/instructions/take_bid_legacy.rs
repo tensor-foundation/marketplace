@@ -1,10 +1,11 @@
-use crate::{take_bid_common::*, *};
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, CloseAccount, Mint, Token, TokenAccount},
 };
 use mpl_token_metadata::processor::AuthorizationData;
 use tensor_nft::*;
+
+use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
@@ -169,6 +170,12 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
         if let Some(maker_broker) = bid_state.maker_broker {
             require!(
                 maker_broker == self.maker_broker.key(),
+                TcompError::BrokerMismatch
+            )
+        } else {
+            let neutral_broker = Pubkey::find_program_address(&[], &crate::id()).0;
+            require!(
+                self.maker_broker.key() == neutral_broker,
                 TcompError::BrokerMismatch
             )
         }
