@@ -37,6 +37,7 @@ import {
   TEST_CONN_PAYER,
   verifyCNftCreator,
   wlSdk,
+  TEST_COSIGNER,
 } from "./shared";
 import {
   makeFvcWhitelist,
@@ -100,6 +101,62 @@ describe("tcomp bids", () => {
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
           await testTakeBid({
             ...common,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          });
+        }
+      }
+    });
+
+    it("bids + edits + accepts bid (with cosigner)", async () => {
+      const canopyDepth = 10;
+      for (const nrCreators of [0, 1, 4]) {
+        const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
+          await beforeHook({
+            nrCreators,
+            numMints: 2,
+            canopyDepth,
+          });
+
+        const cosigner = Keypair.generate();
+
+        for (const { leaf, index, metadata, assetId } of leaves) {
+          await testBid({
+            amount: new BN(LAMPORTS_PER_SOL),
+            targetId: assetId,
+            owner: traderB,
+            cosigner,
+          });
+          await testBid({
+            amount: new BN(LAMPORTS_PER_SOL / 2),
+            targetId: assetId,
+            owner: traderB,
+            prevBidAmount: LAMPORTS_PER_SOL,
+            cosigner,
+          });
+
+          const common = {
+            index,
+            lookupTableAccount,
+            memTree,
+            merkleTree,
+            metadata,
+            owner: traderB.publicKey,
+            seller: traderA,
+            canopyDepth,
+            bidId: assetId,
+          };
+
+          //try to take at the wrong price
+          await expect(
+            testTakeBid({
+              ...common,
+              minAmount: new BN(LAMPORTS_PER_SOL),
+            })
+          ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
+
+          await testTakeBid({
+            ...common,
+            cosigner,
             minAmount: new BN(LAMPORTS_PER_SOL / 2),
           });
         }
@@ -1831,81 +1888,100 @@ describe("tcomp bids", () => {
     });
 
     it("bids + edits + accepts bid for pNFT", async () => {
-      const [traderA, traderB] = await makeNTraders({
-        n: 2,
-      });
-      const creators = [
-        {
-          address: Keypair.generate().publicKey,
-          share: 100,
-          verified: false,
-        },
-      ];
-      const royaltyBps = 100;
-      const { mint, ata } = await makeMintTwoAta({
-        owner: traderA,
-        other: traderB,
-        programmable: true,
-        creators,
-        royaltyBps,
-      });
-      const badMint = Keypair.generate();
-      const { ata: badAta } = await test_utils.createNft({
-        ...TEST_CONN_PAYER,
-        owner: traderA,
-        mint: badMint,
-        tokenStandard: TokenStandard.ProgrammableNonFungible,
-        creators,
-        royaltyBps,
-      });
+      for (const cosigned of [false, true]) {
+        const [traderA, traderB] = await makeNTraders({
+          n: 2,
+        });
 
-      await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
-        targetId: mint,
-        owner: traderB,
-      });
-      await testBid({
-        amount: new BN(LAMPORTS_PER_SOL / 2),
-        targetId: mint,
-        owner: traderB,
-        prevBidAmount: LAMPORTS_PER_SOL,
-      });
+        const cosigner = cosigned ? Keypair.generate() : undefined;
 
-      const common = {
-        bidId: mint,
-        nftMint: mint,
-        nftSellerAcc: ata,
-        owner: traderB.publicKey,
-        seller: traderA,
-        lookupTableAccount,
-        creators,
-        royaltyBps,
-        programmable: true,
-      };
+        const creators = [
+          {
+            address: Keypair.generate().publicKey,
+            share: 100,
+            verified: false,
+          },
+        ];
+        const royaltyBps = 100;
+        const { mint, ata } = await makeMintTwoAta({
+          owner: traderA,
+          other: traderB,
+          programmable: true,
+          creators,
+          royaltyBps,
+        });
+        const badMint = Keypair.generate();
+        const { ata: badAta } = await test_utils.createNft({
+          ...TEST_CONN_PAYER,
+          owner: traderA,
+          mint: badMint,
+          tokenStandard: TokenStandard.ProgrammableNonFungible,
+          creators,
+          royaltyBps,
+        });
 
-      // Bid too low.
-      await expect(
-        testTakeBidLegacy({
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL),
+          targetId: mint,
+          owner: traderB,
+          cosigner,
+        });
+        await testBid({
+          amount: new BN(LAMPORTS_PER_SOL / 2),
+          targetId: mint,
+          owner: traderB,
+          prevBidAmount: LAMPORTS_PER_SOL,
+          cosigner,
+        });
+
+        const common = {
+          bidId: mint,
+          nftMint: mint,
+          nftSellerAcc: ata,
+          owner: traderB.publicKey,
+          seller: traderA,
+          lookupTableAccount,
+          creators,
+          royaltyBps,
+          programmable: true,
+        };
+
+        if (cosigned) {
+          await expect(
+            testTakeBidLegacy({
+              ...common,
+              minAmount: new BN(LAMPORTS_PER_SOL),
+            })
+          ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
+        }
+
+        // Bid too low.
+        await expect(
+          testTakeBidLegacy({
+            ...common,
+            minAmount: new BN(LAMPORTS_PER_SOL),
+            cosigner,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
+
+        // Mismatch NFT.
+        await expect(
+          testTakeBidLegacy({
+            ...common,
+            nftMint: badMint.publicKey,
+            nftSellerAcc: badAta,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            cosigner,
+          })
+        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+
+        // Final sale.
+        await testTakeBidLegacy({
           ...common,
-          minAmount: new BN(LAMPORTS_PER_SOL),
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-
-      // Mismatch NFT.
-      await expect(
-        testTakeBidLegacy({
-          ...common,
-          nftMint: badMint.publicKey,
-          nftSellerAcc: badAta,
           minAmount: new BN(LAMPORTS_PER_SOL / 2),
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
-
-      // Final sale.
-      await testTakeBidLegacy({
-        ...common,
-        minAmount: new BN(LAMPORTS_PER_SOL / 2),
-      });
+          cosigner,
+        });
+      }
     });
   });
 

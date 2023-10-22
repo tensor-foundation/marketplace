@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.6.0",
+  "version": "0.11.0",
   "name": "tcomp",
   "constants": [
     {
@@ -533,6 +533,11 @@ export type Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -824,6 +829,11 @@ export type Tcomp = {
           "name": "whitelist",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -978,6 +988,11 @@ export type Tcomp = {
           "name": "whitelist",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -1168,6 +1183,11 @@ export type Tcomp = {
           "name": "tensorswapProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -1371,6 +1391,10 @@ export type Tcomp = {
             "type": "i64"
           },
           {
+            "name": "cosigner",
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -1385,15 +1409,6 @@ export type Tcomp = {
               "array": [
                 "u8",
                 16
-              ]
-            }
-          },
-          {
-            "name": "reserved2",
-            "type": {
-              "array": [
-                "u8",
-                32
               ]
             }
           },
@@ -2071,12 +2086,17 @@ export type Tcomp = {
       "code": 6131,
       "name": "ForbiddenCollection",
       "msg": "forbidden collection"
+    },
+    {
+      "code": 6132,
+      "name": "BadCosigner",
+      "msg": "bad cosigner"
     }
   ]
 };
 
 export const IDL: Tcomp = {
-  "version": "0.6.0",
+  "version": "0.11.0",
   "name": "tcomp",
   "constants": [
     {
@@ -2610,6 +2630,11 @@ export const IDL: Tcomp = {
           "name": "marginAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -2901,6 +2926,11 @@ export const IDL: Tcomp = {
           "name": "whitelist",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -3055,6 +3085,11 @@ export const IDL: Tcomp = {
           "name": "whitelist",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -3245,6 +3280,11 @@ export const IDL: Tcomp = {
           "name": "tensorswapProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
         }
       ],
       "args": [
@@ -3448,6 +3488,10 @@ export const IDL: Tcomp = {
             "type": "i64"
           },
           {
+            "name": "cosigner",
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -3462,15 +3506,6 @@ export const IDL: Tcomp = {
               "array": [
                 "u8",
                 16
-              ]
-            }
-          },
-          {
-            "name": "reserved2",
-            "type": {
-              "array": [
-                "u8",
-                32
               ]
             }
           },
@@ -4148,6 +4183,11 @@ export const IDL: Tcomp = {
       "code": 6131,
       "name": "ForbiddenCollection",
       "msg": "forbidden collection"
+    },
+    {
+      "code": 6132,
+      "name": "BadCosigner",
+      "msg": "bad cosigner"
     }
   ]
 };

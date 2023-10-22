@@ -86,10 +86,12 @@ pub struct BidState {
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
 
+    // Pubkey::default() = none
+    pub cosigner: Pubkey,
+
     //borsh not implemented for u8;56
     pub _reserved: [u8; 8],
     pub _reserved1: [u8; 16],
-    pub _reserved2: [u8; 32],
     pub _reserved3: [u8; 64],
 }
 

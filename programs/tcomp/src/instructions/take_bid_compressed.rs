@@ -44,6 +44,9 @@ pub struct TakeBidCompressed<'info> {
     pub margin_account: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
+    // seller or cosigner
+    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
+    pub cosigner: Signer<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)

@@ -1606,6 +1606,7 @@ export const testBid = async ({
   expireInSec,
   privateTaker,
   margin,
+  cosigner,
 }: {
   target?: Target;
   targetId: PublicKey;
@@ -1620,6 +1621,7 @@ export const testBid = async ({
   expireInSec?: BN;
   privateTaker?: PublicKey | null;
   margin?: PublicKey;
+  cosigner?: Keypair;
 }) => {
   const {
     tx: { ixs },
@@ -1637,6 +1639,7 @@ export const testBid = async ({
     expireInSec,
     privateTaker,
     margin,
+    cosigner: cosigner?.publicKey,
   });
 
   let sig;
@@ -1654,7 +1657,7 @@ export const testBid = async ({
     }) => {
       sig = await buildAndSendTx({
         ixs,
-        extraSigners: [owner],
+        extraSigners: cosigner ? [owner, cosigner] : [owner],
       });
       console.log("✅ placed bid", sig);
 
@@ -1694,6 +1697,19 @@ export const testBid = async ({
       }
       if (!isNullLike(margin)) {
         expect(bidStateAcc.margin!.toString()).to.eq(margin.toString());
+      }
+
+      if (
+        !isNullLike(cosigner) &&
+        !cosigner.publicKey.equals(owner.publicKey)
+      ) {
+        expect(bidStateAcc.cosigner?.toString()).to.eq(
+          cosigner.publicKey.toString()
+        );
+      } else {
+        expect(bidStateAcc.cosigner?.toString()).to.eq(
+          PublicKey.default.toString()
+        );
       }
 
       const currBidderLamports = await getLamports(owner.publicKey);
@@ -1833,6 +1849,7 @@ export const testTakeBid = async ({
   margin,
   whitelist = null,
   delegateSigns = false,
+  cosigner,
 }: {
   target?: Target;
   field?: Field | null;
@@ -1854,6 +1871,7 @@ export const testTakeBid = async ({
   margin?: PublicKey;
   whitelist?: PublicKey | null;
   delegateSigns?: boolean;
+  cosigner?: Keypair;
 }) => {
   let proof = memTree.getProof(
     index,
@@ -1892,6 +1910,7 @@ export const testTakeBid = async ({
     currency,
     whitelist,
     delegateSigner: delegateSigns,
+    cosigner: cosigner?.publicKey,
   });
 
   let sig;
@@ -1922,9 +1941,10 @@ export const testTakeBid = async ({
       } catch {}
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
+      const commonSigners = [delegateSigns && delegate ? delegate : seller];
       sig = await buildAndSendTx({
         ixs: takeIxs,
-        extraSigners: [delegateSigns && delegate ? delegate : seller],
+        extraSigners: cosigner ? [cosigner, ...commonSigners] : commonSigners,
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -2053,6 +2073,7 @@ export const testTakeBidLegacy = async ({
   lookupTableAccount,
   margin,
   whitelist = null,
+  cosigner,
 }: {
   bidId: PublicKey;
   nftMint: PublicKey;
@@ -2069,6 +2090,7 @@ export const testTakeBidLegacy = async ({
   lookupTableAccount?: AddressLookupTableAccount;
   margin?: PublicKey;
   whitelist?: PublicKey | null;
+  cosigner?: Keypair;
 }) => {
   const [tcomp] = findTCompPda({});
 
@@ -2088,6 +2110,7 @@ export const testTakeBidLegacy = async ({
     takerBroker,
     currency,
     whitelist,
+    cosigner: cosigner?.publicKey,
   });
 
   let sig;
@@ -2131,7 +2154,7 @@ export const testTakeBidLegacy = async ({
 
       sig = await buildAndSendTx({
         ixs: takeIxs,
-        extraSigners: [seller],
+        extraSigners: cosigner ? [cosigner, seller] : [seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,

@@ -146,6 +146,9 @@ pub struct TakeBidLegacy<'info> {
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
     pub tensorswap_program: Program<'info, Tensorswap>,
+    // seller or cosigner
+    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
+    pub cosigner: Signer<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }

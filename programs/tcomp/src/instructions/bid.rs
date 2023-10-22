@@ -16,6 +16,12 @@ pub struct Bid<'info> {
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
+    // owner or cosigner
+    #[cfg_attr(
+        not(feature = "testing"),
+        account(constraint = cosigner.key() == owner.key() || cosigner.key() == Pubkey::from_str("2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH").unwrap()),
+    )]
+    pub cosigner: Signer<'info>,
 }
 
 impl<'info> Bid<'info> {
@@ -95,6 +101,11 @@ pub fn handler<'info>(
         bid_state.target_id = target_id;
         bid_state.field = field.clone();
         bid_state.field_id = field_id;
+
+        //only store cosigner if it's not the owner's signer key
+        if ctx.accounts.cosigner.key() != ctx.accounts.owner.key() {
+            bid_state.cosigner = ctx.accounts.cosigner.key();
+        }
 
         // Basically both must be present or None
         require!(

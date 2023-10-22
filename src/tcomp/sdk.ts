@@ -88,6 +88,7 @@ export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bub
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
 import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
+import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
 
 //original deployment
 export const TCompIDL_v0_1_0 = IDL_v0_1_0;
@@ -98,16 +99,25 @@ export const TCompIDL_v0_4_0 = IDL_v0_4_0;
 export const TCompIDL_v0_4_0_EffSlot = 195759029;
 
 //add asset id to events https://solscan.io/tx/4ZrW4gn3wrjvytaycVRWf2gU2UZJVeHpDKDVbE8KVfXWpugTiKZtPsAkuxjwdvCKEnnV8Y8U5MwCCVguRszR6wcV
-export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 196275147;
+export const TCompIDL_v0_6_0 = IDL_v0_6_0;
+export const TCompIDL_v0_6_0_EffSlot = 195759029;
 
-export type TcompIDL = TComp_v0_1_0 | TComp_v0_4_0 | TComp_latest;
+//add optional cosigner https://solscan.io/tx/2zEnwiJKJq4ckfLGdKD4p8hiMWEFY6qvd5yiW7QpZxAdcBMbCDK8cnxpnNfpU1x8HC7csEurSC4mbHzAKdfr45Yc
+export const TCompIDL_latest = IDL_latest;
+export const TCompIDL_latest_EffSlot = 225359236;
+
+export type TcompIDL =
+  | TComp_v0_1_0
+  | TComp_v0_4_0
+  | TComp_v0_6_0
+  | TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
 export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
   if (slot < TCompIDL_v0_1_0_EffSlot) return null;
   if (slot < TCompIDL_v0_4_0_EffSlot) return TCompIDL_v0_1_0;
-  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_4_0;
+  if (slot < TCompIDL_v0_6_0_EffSlot) return TCompIDL_v0_4_0;
+  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_6_0;
   return TCompIDL_latest;
 };
 
@@ -326,6 +336,7 @@ export type BidStateAnchor = {
   makerBroker: PublicKey | null;
   margin: PublicKey | null;
   updatedAt: BN;
+  cosigner: PublicKey;
 };
 export type ListStateAnchor = {
   version: number;
@@ -754,6 +765,7 @@ export class TCompSDK {
     compute = DEFAULT_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     margin = null,
+    cosigner = null,
   }: {
     target: Target;
     targetId: PublicKey;
@@ -770,6 +782,7 @@ export class TCompSDK {
     compute?: number | null;
     priorityMicroLamports?: number | null;
     margin?: PublicKey | null;
+    cosigner?: PublicKey | null;
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
 
@@ -793,6 +806,7 @@ export class TCompSDK {
         tcompProgram: TCOMP_ADDR,
         bidState,
         marginAccount: margin ?? owner,
+        cosigner: cosigner ?? owner,
       });
 
     const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
@@ -961,6 +975,7 @@ export class TCompSDK {
     canopyDepth = 0,
     whitelist = null,
     delegateSigner,
+    cosigner = null,
   }: {
     targetData:
       | {
@@ -993,6 +1008,7 @@ export class TCompSDK {
     canopyDepth?: number;
     whitelist?: PublicKey | null;
     delegateSigner?: boolean;
+    cosigner?: PublicKey | null;
   }) {
     nonce = nonce ?? new BN(index);
 
@@ -1034,6 +1050,7 @@ export class TCompSDK {
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
       whitelist: whitelist ?? TENSORSWAP_ADDR,
+      cosigner: cosigner ?? delegate ?? seller,
     };
     const remAccounts = [...creatorsPath, ...proofPath];
 
@@ -1118,6 +1135,7 @@ export class TCompSDK {
     compute = 800_000, // pnfts are expensive
     ruleSetAddnCompute = DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    cosigner = null,
   }: {
     bidId: PublicKey;
     nftMint: PublicKey;
@@ -1131,6 +1149,7 @@ export class TCompSDK {
     margin?: PublicKey | null;
     takerBroker?: PublicKey | null;
     whitelist?: PublicKey | null;
+    cosigner?: PublicKey | null;
   } & PnftArgs) {
     const [tcomp] = findTCompPda({});
     const ownerAtaAcc = getAssociatedTokenAddressSync(nftMint, owner, true);
@@ -1206,6 +1225,7 @@ export class TCompSDK {
         systemProgram: SystemProgram.programId,
         tcompProgram: TCOMP_ADDR,
         tensorswapProgram: TENSORSWAP_ADDR,
+        cosigner: cosigner ?? seller,
       })
       .remainingAccounts(
         creators.map((c) => ({

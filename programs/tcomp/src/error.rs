@@ -67,4 +67,6 @@ pub enum TcompError {
     BadWhitelist = 130,
     #[msg("forbidden collection")]
     ForbiddenCollection = 131,
+    #[msg("bad cosigner")]
+    BadCosigner = 132,
 }
