@@ -1,6 +1,5 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { updateLUT } from "@tensor-hq/tensor-common";
-import { findTreeAuthorityPda } from "../src";
 
 const payer = Keypair.fromSecretKey(
   // TODO: replace with shared KP
@@ -18,27 +17,28 @@ const conn = new Connection("https://api.mainnet-beta.solana.com");
   ).value;
   console.log("current LUT", lookupTableAccount);
 
-  return;
+  // return;
 
   // --------------------------------------- migos
   const merkleTree = new PublicKey(
-    "4FZcSBJkhPeNAkXecmKnnqHy93ABWzi3Q5u9eXkUfxVE"
+    "2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH"
   );
-  const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-  const whitelist = new PublicKey(
-    "hpjcd2qA2T1D1dtrNjD1RuDL2Ej3iSLWq6xo5fMiiwT"
-  );
+  // const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+  // const whitelist = new PublicKey(
+  //   "hpjcd2qA2T1D1dtrNjD1RuDL2Ej3iSLWq6xo5fMiiwT"
+  // );
 
-  const creators = [
-    new PublicKey("EevH3LPRexR2431NSF6bCpBbPdQ2ViHbM1p84zujiEUs"),
-    new PublicKey("D3pBAQAtRhWZyM9a5sakjEgpq2NUiZ8eYzHFvYmE5QL4"),
-  ];
+  // const creators = [
+  //   new PublicKey("EevH3LPRexR2431NSF6bCpBbPdQ2ViHbM1p84zujiEUs"),
+  //   new PublicKey("D3pBAQAtRhWZyM9a5sakjEgpq2NUiZ8eYzHFvYmE5QL4"),
+  // ];
 
   await updateLUT({
     kp: payer,
     conn,
     lookupTableAddress,
-    addresses: [merkleTree, treeAuthority, whitelist, ...creators],
+    addresses: [merkleTree],
+    keepRetryingBlockhash: true,
   });
 })();
 
