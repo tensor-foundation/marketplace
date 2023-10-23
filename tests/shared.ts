@@ -55,6 +55,7 @@ import {
 import {
   AUTH_PROG_ID,
   computeMetadataArgsHash,
+  getIxDiscHex,
   getTransactionConvertedToLegacy,
   isNullLike,
   MINUTES,
@@ -87,7 +88,6 @@ import {
   findMintAuthorityPda,
   findTCompPda,
   findTreeAuthorityPda,
-  getDisc,
   getTotalComputeIxs,
   TAKER_BROKER_PCT,
   Target,
@@ -1586,7 +1586,7 @@ export const fetchAndCheckSingleIxTx = async (
       )
   );
   if (tcompIx) {
-    expect(getDisc(tcompIx.data)).eq(TCOMP_DISC_MAP[ixName].disc);
+    expect(getIxDiscHex(tcompIx.data)).eq(TCOMP_DISC_MAP[ixName]);
   }
 
   return ix;

@@ -1266,7 +1266,7 @@ __metadata:
     "@solana/spl-account-compression": ^0.1.7
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": ^0.18.3
+    "@tensor-hq/tensor-common": ^0.19.1
     "@tensor-oss/tensorswap-sdk": ^1.14.0
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
@@ -1311,9 +1311,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensor-common@npm:^0.18.3":
-  version: 0.18.3
-  resolution: "@tensor-hq/tensor-common@npm:0.18.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.18.3%2Ff8970b49c70e1e556ef8afff184c163f5feaaa68"
+"@tensor-hq/tensor-common@npm:^0.19.1":
+  version: 0.19.1
+  resolution: "@tensor-hq/tensor-common@npm:0.19.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F0.19.1%2F13262acbd08fc8e95c76fe79e504e0b3dd9ca856"
   dependencies:
     "@coral-xyz/anchor": ^0.26.0
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
@@ -1330,7 +1330,7 @@ __metadata:
     hadeswap-sdk: ^0.8.25
     js-sha3: ^0.8.0
     semaphore: ^1.1.0
-  checksum: 91b0520a5a1339d4ebcf1e48db9e3374c3b0396f89ee7b7cbc3bad2a7706684e69c7d49c361292685ce0bbd467ee9a25ceb2203eff70a13b7dda1cc9f560cbf2
+  checksum: 0176688b155567585e0199b2cac41aa6a1d071e7cee20aac2ae5a6f4b9f0ff8def57f82825b1d70d294d40dc9c35de58f191c4307efc257158302d228514e46b
   languageName: node
   linkType: hard
 
