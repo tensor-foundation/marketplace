@@ -28,16 +28,17 @@ import {
   getLamports,
   INTEGER_OVERFLOW_ERR,
   makeCNftMeta,
+  makeProofWhitelist,
   mintCNft,
   tcompSdk,
+  TEST_CONN_PAYER,
   testBid,
   testCancelCloseBid,
+  testInitUpdateMintProof,
   testTakeBid,
   testTakeBidLegacy,
-  TEST_CONN_PAYER,
   verifyCNftCreator,
   wlSdk,
-  TEST_COSIGNER,
 } from "./shared";
 import {
   makeFvcWhitelist,
@@ -1983,6 +1984,100 @@ describe("tcomp bids", () => {
         });
       }
     });
+  });
+
+  it("bids + accepts bid for pNFT (using hashlist verification)", async () => {
+    for (const useFakeWhitelist of [true, false]) {
+      const [traderA, traderB] = await makeNTraders({
+        n: 2,
+      });
+
+      //just so we're testing extra accs
+      const cosigner = Keypair.generate();
+
+      const creators = Array(5)
+        .fill(null)
+        .map(() => ({
+          address: Keypair.generate().publicKey,
+          share: 20,
+          verified: false,
+        }));
+      const royaltyBps = 100;
+      const { mint, ata } = await makeMintTwoAta({
+        owner: traderA,
+        other: traderB,
+        programmable: true,
+        creators,
+        royaltyBps,
+      });
+
+      //real whitelist + proof
+      const {
+        proofs: [wlNft],
+        whitelist,
+      } = await makeProofWhitelist([mint]);
+      await testInitUpdateMintProof({
+        user: traderA,
+        mint,
+        whitelist,
+        proof: wlNft.proof,
+        expectedProofLen: wlNft.proof.length,
+      });
+
+      //fake whitelist
+      const {
+        proofs: [fakeProof],
+        whitelist: fakeWhitelist,
+      } = await makeProofWhitelist([PublicKey.default]);
+
+      await testBid({
+        amount: new BN(LAMPORTS_PER_SOL / 2),
+        target: Target.Whitelist,
+        targetId: useFakeWhitelist ? fakeWhitelist : whitelist,
+        owner: traderB,
+        cosigner,
+        bidId: mint,
+      });
+
+      const common = {
+        bidId: mint,
+        nftMint: mint,
+        nftSellerAcc: ata,
+        owner: traderB.publicKey,
+        seller: traderA,
+        lookupTableAccount,
+        creators,
+        royaltyBps,
+        programmable: true,
+      };
+
+      if (useFakeWhitelist) {
+        await expect(
+          testTakeBidLegacy({
+            ...common,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            cosigner,
+            whitelist: fakeWhitelist,
+          })
+        ).rejectedWith(tcompSdk.getErrorCodeHex("BadMintProof"));
+      } else {
+        await expect(
+          testTakeBidLegacy({
+            ...common,
+            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            cosigner,
+            whitelist: fakeWhitelist,
+          })
+        ).rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+        console.log("yay");
+        await testTakeBidLegacy({
+          ...common,
+          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          cosigner,
+          whitelist,
+        });
+      }
+    }
   });
 
   it("VOC: bids + accepts bid for pnft", async () => {

@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.11.0",
+  "version": "0.12.0",
   "name": "tcomp",
   "constants": [
     {
@@ -1188,6 +1188,14 @@ export type Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
         }
       ],
       "args": [
@@ -2091,12 +2099,17 @@ export type Tcomp = {
       "code": 6132,
       "name": "BadCosigner",
       "msg": "bad cosigner"
+    },
+    {
+      "code": 6133,
+      "name": "BadMintProof",
+      "msg": "bad mint proof"
     }
   ]
 };
 
 export const IDL: Tcomp = {
-  "version": "0.11.0",
+  "version": "0.12.0",
   "name": "tcomp",
   "constants": [
     {
@@ -3285,6 +3298,14 @@ export const IDL: Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
         }
       ],
       "args": [
@@ -4188,6 +4209,11 @@ export const IDL: Tcomp = {
       "code": 6132,
       "name": "BadCosigner",
       "msg": "bad cosigner"
+    },
+    {
+      "code": 6133,
+      "name": "BadMintProof",
+      "msg": "bad mint proof"
     }
   ]
 };

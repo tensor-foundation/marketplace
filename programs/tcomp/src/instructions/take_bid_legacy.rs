@@ -4,6 +4,7 @@ use anchor_spl::{
 };
 use mpl_token_metadata::processor::AuthorizationData;
 use tensor_nft::*;
+use tensor_whitelist::{FullMerkleProof, ZERO_ARRAY};
 
 use crate::{take_bid_common::*, *};
 
@@ -149,6 +150,9 @@ pub struct TakeBidLegacy<'info> {
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
     pub cosigner: Signer<'info>,
+    /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
+    /// CHECK: assert_decode_mint_proof
+    pub mint_proof: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -230,21 +234,27 @@ pub fn handler<'info>(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
                 TcompError::WrongTargetId
             );
+
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
-            let collection = metadata.collection;
+            let nft_mint = &ctx.accounts.nft_mint;
 
-            // Block selling into Tensorian Shards bids (shards useless: protect uninformed bidders).
-            if let Some(coll) = &collection {
-                require!(
-                    coll.key.ne(
-                        &Pubkey::from_str("4gyWUNxb7HfekUegqi3ndgBPmJLQZXo1mRZVeuk5Edsq").unwrap()
-                    ),
-                    TcompError::ForbiddenCollection
-                );
+            //prioritize merkle tree if proof present
+            if whitelist.root_hash != ZERO_ARRAY {
+                let mint_proof_acc = &ctx.accounts.mint_proof;
+                let mint_proof = assert_decode_mint_proof(&whitelist, &nft_mint, &mint_proof_acc)?;
+                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
+                let proof = &mut mint_proof.proof.to_vec();
+                proof.truncate(mint_proof.proof_len as usize);
+                whitelist.verify_whitelist(
+                    None,
+                    Some(FullMerkleProof {
+                        proof: proof.clone(),
+                        leaf: leaf.0,
+                    }),
+                )?;
+            } else {
+                whitelist.verify_whitelist(Some(&metadata), None)?;
             }
-
-            // Run the verification
-            whitelist.verify_whitelist_tcomp(collection, creators.clone())?;
         }
     }
 

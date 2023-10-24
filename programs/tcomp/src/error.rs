@@ -69,4 +69,6 @@ pub enum TcompError {
     ForbiddenCollection = 131,
     #[msg("bad cosigner")]
     BadCosigner = 132,
+    #[msg("bad mint proof")]
+    BadMintProof = 133,
 }

@@ -52,6 +52,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["chai-as-promised", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:7.1.1"],\
             ["exponential-backoff", "npm:3.1.1"],\
             ["js-sha3", "npm:0.8.0"],\
+            ["merkletreejs", "npm:0.3.10"],\
             ["mocha", "npm:10.2.0"],\
             ["prettier", "npm:2.8.7"],\
             ["ts-mocha", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:10.0.0"],\
@@ -1510,6 +1511,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["chai-as-promised", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:7.1.1"],\
             ["exponential-backoff", "npm:3.1.1"],\
             ["js-sha3", "npm:0.8.0"],\
+            ["merkletreejs", "npm:0.3.10"],\
             ["mocha", "npm:10.2.0"],\
             ["prettier", "npm:2.8.7"],\
             ["ts-mocha", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:10.0.0"],\

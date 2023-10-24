@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Wallet } from "@coral-xyz/anchor";
+import { MerkleTree as MerkleTreeJs } from "merkletreejs";
 import {
   computeCompressedNFTHash,
   computeCreatorHash,
@@ -104,6 +105,7 @@ import {
   transferLamports,
 } from "./account";
 import { testInitWLAuthority } from "./tswap";
+import { keccak256 } from "js-sha3";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -2261,3 +2263,91 @@ export const testTakeBidLegacy = async ({
 
   return { sig };
 };
+
+// --------------------------------------- WHITELIST ---------------------------------------
+
+const generateTreeOfSize = (size: number, targetMints: PublicKey[]) => {
+  const leaves = targetMints.map((m) => m.toBuffer());
+
+  for (let i = 0; i < size; i++) {
+    let u = anchor.web3.Keypair.generate();
+    leaves.push(u.publicKey.toBuffer());
+  }
+
+  const tree = new MerkleTreeJs(leaves, keccak256, {
+    sortPairs: true,
+    hashLeaves: true,
+  });
+
+  const proofs: { mint: PublicKey; proof: Buffer[] }[] = targetMints.map(
+    (targetMint) => {
+      const leaf = keccak256(targetMint.toBuffer());
+      const proof = tree.getProof(leaf);
+      const validProof: Buffer[] = proof.map((p) => p.data);
+      return { mint: targetMint, proof: validProof };
+    }
+  );
+
+  return { tree, root: tree.getRoot().toJSON().data, proofs };
+};
+
+export const testInitUpdateMintProof = async ({
+  user,
+  mint,
+  whitelist,
+  proof,
+  expectedProofLen = Math.floor(Math.log2(100)) + 1,
+}: {
+  user: Keypair;
+  mint: PublicKey;
+  whitelist: PublicKey;
+  proof: Buffer[];
+  expectedProofLen?: number;
+}) => {
+  const {
+    tx: { ixs },
+    mintProofPda,
+  } = await wlSdk.initUpdateMintProof({
+    user: user.publicKey,
+    mint,
+    whitelist,
+    proof,
+  });
+  await buildAndSendTx({ ixs, extraSigners: [user] });
+
+  const proofAcc = await wlSdk.fetchMintProof(mintProofPda);
+  const proofLen = proof.length;
+  expect(proofLen).eq(expectedProofLen);
+  expect(proofAcc.proof.slice(0, proofLen)).eql(
+    proof.map((b) => Array.from(b))
+  );
+  expect(proofAcc.proofLen).eq(proofLen);
+  expect(proofAcc.proof.slice(proof.length)).eql(
+    Array(28 - proofLen)
+      .fill(null)
+      .map((_) => Array(32).fill(0))
+  );
+};
+
+export const makeProofWhitelist = async (
+  mints: PublicKey[],
+  treeSize: number = 100
+) => {
+  const { root, proofs } = generateTreeOfSize(treeSize, mints);
+  const uuid = wlSdk.genWhitelistUUID();
+  const name = "hello_world";
+  const {
+    tx: { ixs },
+    whitelistPda,
+  } = await wlSdk.initUpdateWhitelist({
+    cosigner: TEST_PROVIDER.publicKey,
+    uuid: TensorWhitelistSDK.uuidToBuffer(uuid),
+    rootHash: root,
+    name: TensorWhitelistSDK.nameToBuffer(name),
+  });
+  await buildAndSendTx({ ixs });
+
+  return { proofs, whitelist: whitelistPda };
+};
+
+// --------------------------------------- WHITELIST END ---------------------------------------

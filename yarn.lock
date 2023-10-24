@@ -1280,6 +1280,7 @@ __metadata:
     chai-as-promised: ^7.1.1
     exponential-backoff: ^3.1.1
     js-sha3: ^0.8.0
+    merkletreejs: ^0.3.10
     mocha: ^10.2.0
     prettier: ^2.6.2
     ts-mocha: ^10.0.0
@@ -4157,7 +4158,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"merkletreejs@npm:^0.3.9":
+"merkletreejs@npm:^0.3.10, merkletreejs@npm:^0.3.9":
   version: 0.3.10
   resolution: "merkletreejs@npm:0.3.10"
   dependencies:

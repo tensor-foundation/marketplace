@@ -1,4 +1,6 @@
+use anchor_spl::token::Mint;
 use mpl_token_metadata::state::TokenStandard;
+use tensor_whitelist::MintProof;
 
 use crate::*;
 
@@ -156,4 +158,30 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[inline(never)]
+pub fn assert_decode_mint_proof<'info>(
+    whitelist: &Account<'info, Whitelist>,
+    nft_mint: &Account<'info, Mint>,
+    mint_proof: &UncheckedAccount<'info>,
+) -> Result<Account<'info, MintProof>> {
+    let program_id = &tensor_whitelist::id();
+    let (key, _) = Pubkey::find_program_address(
+        &[
+            b"mint_proof".as_ref(),
+            nft_mint.key().as_ref(),
+            whitelist.key().as_ref(),
+        ],
+        program_id,
+    );
+    if key != *mint_proof.to_account_info().key {
+        throw_err!(TcompError::BadMintProof);
+    }
+    // Check program owner (redundant because of find_program_address above, but why not).
+    if *mint_proof.owner != *program_id {
+        throw_err!(TcompError::BadMintProof);
+    }
+
+    Account::try_from(&mint_proof.to_account_info())
 }

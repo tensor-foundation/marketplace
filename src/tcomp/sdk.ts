@@ -3,13 +3,10 @@ import {
   BorshCoder,
   Coder,
   EventParser,
-  Idl,
   Instruction,
   Program,
   Provider,
 } from "@coral-xyz/anchor";
-import { InstructionDisplay } from "@coral-xyz/anchor/dist/cjs/coder/borsh/instruction";
-import { hash } from "@coral-xyz/anchor/dist/cjs/utils/sha256";
 import {
   getLeafAssetId,
   MetadataArgs,
@@ -35,7 +32,6 @@ import {
 import {
   AccountInfo,
   Commitment,
-  CompiledInstruction,
   ComputeBudgetProgram,
   PublicKey,
   SystemProgram,
@@ -44,8 +40,6 @@ import {
 } from "@solana/web3.js";
 import {
   AnchorDiscMap,
-  AnchorEvent,
-  AnchorIx,
   AUTH_PROG_ID,
   decodeAnchorAcct,
   findMetadataPda,
@@ -55,7 +49,6 @@ import {
   getAccountRentSync,
   hexCode,
   isNullLike,
-  parseAnchorEvents,
   parseAnchorIxs,
   ParsedAnchorIx,
   prepPnftAccounts,
@@ -64,7 +57,7 @@ import {
   TSWAP_COSIGNER,
   TSWAP_OWNER,
 } from "@tensor-hq/tensor-common";
-import { findTSwapPDA } from "@tensor-oss/tensorswap-sdk";
+import { findMintProofPDA, findTSwapPDA } from "@tensor-oss/tensorswap-sdk";
 import * as borsh from "borsh";
 import bs58 from "bs58";
 import {
@@ -83,15 +76,18 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
 } from "./pda";
-
-export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
-
-// --------------------------------------- idl
-
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
 import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
 import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
+import {
+  IDL as IDL_v0_11_0,
+  Tcomp as TComp_v0_11_0,
+} from "./idl/tcomp_v0_11_0";
+
+export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
+
+// --------------------------------------- idl
 
 //original deployment
 export const TCompIDL_v0_1_0 = IDL_v0_1_0;
@@ -106,13 +102,18 @@ export const TCompIDL_v0_6_0 = IDL_v0_6_0;
 export const TCompIDL_v0_6_0_EffSlot = 195759029;
 
 //add optional cosigner https://solscan.io/tx/2zEnwiJKJq4ckfLGdKD4p8hiMWEFY6qvd5yiW7QpZxAdcBMbCDK8cnxpnNfpU1x8HC7csEurSC4mbHzAKdfr45Yc
+export const TCompIDL_v0_11_0 = IDL_v0_11_0;
+export const TCompIDL_v0_11_0_EffSlot = 225359236;
+
+//add proof account for legacy take bid https://solscan.io/tx/2MELxB2wAWp3UVaEmktNJeA85vhVhuerfaw7M4hgCx4wjqLrsJ3xQNMgKyypy17MyV8Meem9G5WX1pmoci5XSrK
 export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 225359236;
+export const TCompIDL_latest_EffSlot = 225783471;
 
 export type TcompIDL =
   | TComp_v0_1_0
   | TComp_v0_4_0
   | TComp_v0_6_0
+  | TComp_v0_11_0
   | TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
@@ -120,7 +121,8 @@ export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
   if (slot < TCompIDL_v0_1_0_EffSlot) return null;
   if (slot < TCompIDL_v0_4_0_EffSlot) return TCompIDL_v0_1_0;
   if (slot < TCompIDL_v0_6_0_EffSlot) return TCompIDL_v0_4_0;
-  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_6_0;
+  if (slot < TCompIDL_v0_11_0_EffSlot) return TCompIDL_v0_6_0;
+  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_11_0;
   return TCompIDL_latest;
 };
 
@@ -1161,6 +1163,10 @@ export class TCompSDK {
     const nftMetadata = findMetadataPda(nftMint)[0];
     const [bidState] = findBidStatePda({ bidId, owner });
     const [escrowPda] = findNftEscrowPda({ nftMint });
+    const mintProofPda = whitelist
+      ? findMintProofPDA({ mint: nftMint, whitelist })[0]
+      : SystemProgram.programId;
+
     //prepare 2 pnft account sets
     const [
       {
@@ -1231,6 +1237,7 @@ export class TCompSDK {
         tcompProgram: TCOMP_ADDR,
         tensorswapProgram: TENSORSWAP_ADDR,
         cosigner: cosigner ?? seller,
+        mintProof: mintProofPda,
       })
       .remainingAccounts(
         creators.map((c) => ({
