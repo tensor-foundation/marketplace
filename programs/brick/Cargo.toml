@@ -6,6 +6,7 @@ edition = "2021"
 [features]
 no-entrypoint = []
 test-bpf = []
+testing = []
 
 [dependencies]
 solana-program = "=1.14.29"
