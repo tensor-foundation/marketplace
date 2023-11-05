@@ -1,12 +1,19 @@
-#![deny(missing_docs)]
-
 //! A brick.
 //! Deploy in case of emergency.
-//! anchor build --program-name brick ->
-//! write to buffer -> set authority -> deploy
 
-pub use solana_program;
+use anchor_lang::prelude::*;
 
-solana_program::declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
+// TODO: change this to appropriate program's ID
+declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 
-pub mod entrypoint;
+#[program]
+pub mod brick {
+    use super::*;
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Initialize {}

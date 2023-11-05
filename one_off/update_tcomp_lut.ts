@@ -6,7 +6,9 @@ const payer = Keypair.fromSecretKey(
   Uint8Array.from(require("/Users/ilmoi/.config/solana/id.json"))
 );
 
-const conn = new Connection("https://api.mainnet-beta.solana.com");
+const conn = new Connection(
+  "https://indulgent-yolo-butterfly.solana-mainnet.quiknode.pro/3950d155fa4c5af68e0b4a1eb5e6a3a799c9b72f/"
+);
 
 (async () => {
   const lookupTableAddress = new PublicKey(
@@ -20,9 +22,9 @@ const conn = new Connection("https://api.mainnet-beta.solana.com");
   // return;
 
   // --------------------------------------- migos
-  const merkleTree = new PublicKey(
-    "2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH"
-  );
+  // const merkleTree = new PublicKey(
+  //   "2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH"
+  // );
   // const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
   // const whitelist = new PublicKey(
   //   "hpjcd2qA2T1D1dtrNjD1RuDL2Ej3iSLWq6xo5fMiiwT"
@@ -33,11 +35,19 @@ const conn = new Connection("https://api.mainnet-beta.solana.com");
   //   new PublicKey("D3pBAQAtRhWZyM9a5sakjEgpq2NUiZ8eYzHFvYmE5QL4"),
   // ];
 
+  const addresses = [
+    "HATUHhpGy5moXuwTZKr1qZREmKANcLy3kRiMQZvUseLE", //troll treasury
+    "TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ", //troll
+    "5qGy8rknMjt1S6V2YMGVidtuHpj1BVs6chzpjCDb47sB", //troll cosigner
+    "C6v1Mb5K9gV1c7iYjEP5YWfQ2VLh1wjkmZ7bA3cJdKP8", //witdraw cosigner
+    "2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH", //tcomp cosigner for trait bids
+  ];
+
   await updateLUT({
     kp: payer,
     conn,
     lookupTableAddress,
-    addresses: [merkleTree],
+    addresses: addresses.map((a) => new PublicKey(a)),
     keepRetryingBlockhash: true,
   });
 })();

@@ -1,24 +1,19 @@
 [package]
 name = "brick"
-version = "1.0.1"
+version = "0.1.0"
+description = "Created with Anchor"
 edition = "2021"
-
-[features]
-no-entrypoint = []
-test-bpf = []
-testing = []
-
-[dependencies]
-solana-program = "=1.14.29"
 
 [lib]
 crate-type = ["cdylib", "lib"]
+name = "brick"
 
-[profile.release]
-lto = "fat"
-codegen-units = 1
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
 
-[profile.release.build-override]
-opt-level = 3
-incremental = false
-codegen-units = 1
+[dependencies]
+anchor-lang = "0.26.0"
