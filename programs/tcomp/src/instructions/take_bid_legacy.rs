@@ -213,12 +213,6 @@ pub fn handler<'info>(
     rules_acc_present: bool,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
-    // TODO: for now enforcing
-    require!(
-        optional_royalty_pct == Some(100),
-        TcompError::OptionalRoyaltiesNotYetEnabled
-    );
-
     let bid_state = &ctx.accounts.bid_state;
     let mint = ctx.accounts.nft_mint.key();
     let metadata = assert_decode_metadata(&ctx.accounts.nft_mint, &ctx.accounts.nft_metadata)?;
