@@ -102,7 +102,9 @@ pub fn handler<'info>(
         bid_state.field = field.clone();
         bid_state.field_id = field_id;
 
-        //only store cosigner if it's not the owner's signer key
+        // SECURITY RISK: do NOT store the cosigner if it's the owner's signer key
+        // otherwise on editing bids a trait bid will be made a normal bid. \
+        // our api uses a bidTx ix when editing bids.
         if ctx.accounts.cosigner.key() != ctx.accounts.owner.key() {
             bid_state.cosigner = ctx.accounts.cosigner.key();
         }
