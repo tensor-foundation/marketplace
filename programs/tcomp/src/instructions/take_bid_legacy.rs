@@ -235,7 +235,7 @@ pub fn handler<'info>(
             //prioritize merkle tree if proof present
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof = assert_decode_mint_proof(&whitelist, &nft_mint, &mint_proof_acc)?;
+                let mint_proof = assert_decode_mint_proof(&whitelist, nft_mint, mint_proof_acc)?;
                 let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);

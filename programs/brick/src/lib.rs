@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)] // Needed otherwise clippy unhappy w/ anchor errors
 //! A brick.
 //! Deploy in case of emergency.
 
@@ -10,7 +11,7 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 pub mod brick {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
         Ok(())
     }
 }

@@ -108,6 +108,7 @@ pub fn handler<'info>(
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
     // TODO: for now enforcing
+    // NB: TRoll hardcodes Some(100) to match
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled

@@ -1,7 +1,7 @@
 use crate::*;
 use mpl_token_auth_rules::payload::{Payload, PayloadType, ProofInfo, SeedsVec};
 use mpl_token_metadata::{self, processor::AuthorizationData, state::TokenStandard};
-use tensorswap::TSWAP_ADDR;
+use tensorswap::common::get_tswap_addr;
 
 // --------------------------------------- stuff related to swap/twhitelist
 
@@ -13,11 +13,7 @@ pub fn assert_decode_margin_account<'info>(
     let margin_account: Account<'info, MarginAccount> = Account::try_from(margin_account_info)?;
 
     let program_id = tensorswap::id();
-    let (key, _) = margin_pda(
-        &Pubkey::from_str(TSWAP_ADDR).unwrap(),
-        &owner.key(),
-        margin_account.nr,
-    );
+    let (key, _) = margin_pda(&get_tswap_addr(), &owner.key(), margin_account.nr);
     if key != *margin_account_info.key {
         throw_err!(TcompError::BadMargin);
     }

@@ -3,6 +3,7 @@ use crate::*;
 // (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
 #[constant]
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
+/// NB: (!!) sync with TRoll
 #[constant]
 pub const TCOMP_FEE_BPS: u16 = 140;
 #[constant]
@@ -11,6 +12,7 @@ pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/
 pub const HUNDRED_PCT_BPS: u16 = 10000;
 
 // TODO: currently disabled
+/// NB: (!!) sync with TRoll
 #[constant]
 pub const TAKER_BROKER_PCT: u16 = 0; // Out of 100
 
