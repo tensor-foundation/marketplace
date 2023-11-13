@@ -4,7 +4,7 @@ use anchor_spl::{
 };
 use mpl_token_metadata::processor::AuthorizationData;
 use tensor_nft::*;
-use tensor_whitelist::{FullMerkleProof, ZERO_ARRAY};
+use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 
 use crate::{take_bid_common::*, *};
 

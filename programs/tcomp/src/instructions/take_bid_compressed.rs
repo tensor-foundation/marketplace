@@ -1,3 +1,4 @@
+use crate::tensor_whitelist::assert_decode_whitelist;
 use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]

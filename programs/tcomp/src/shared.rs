@@ -1,50 +1,6 @@
 use crate::*;
 use mpl_token_auth_rules::payload::{Payload, PayloadType, ProofInfo, SeedsVec};
 use mpl_token_metadata::{self, processor::AuthorizationData, state::TokenStandard};
-use tensorswap::common::get_tswap_addr;
-
-// --------------------------------------- stuff related to swap/twhitelist
-
-#[inline(never)]
-pub fn assert_decode_margin_account<'info>(
-    margin_account_info: &AccountInfo<'info>,
-    owner: &AccountInfo<'info>,
-) -> Result<Account<'info, MarginAccount>> {
-    let margin_account: Account<'info, MarginAccount> = Account::try_from(margin_account_info)?;
-
-    let program_id = tensorswap::id();
-    let (key, _) = margin_pda(&get_tswap_addr(), &owner.key(), margin_account.nr);
-    if key != *margin_account_info.key {
-        throw_err!(TcompError::BadMargin);
-    }
-    // Check program owner (redundant because of find_program_address above, but why not).
-    if *margin_account_info.owner != program_id {
-        throw_err!(TcompError::BadMargin);
-    }
-    // Check normal owner (not redundant - this actually checks if the account is initialized and stores the owner correctly).
-    if margin_account.owner != owner.key() {
-        throw_err!(TcompError::BadMargin);
-    }
-
-    Ok(margin_account)
-}
-
-pub fn assert_decode_whitelist<'info>(
-    whitelist_info: &AccountInfo<'info>,
-) -> Result<Account<'info, Whitelist>> {
-    let whitelist: Account<'info, Whitelist> = Account::try_from(whitelist_info)?;
-
-    let (key, _) = Pubkey::find_program_address(&[&whitelist.uuid], &tensor_whitelist::id());
-    if key != *whitelist.to_account_info().key {
-        throw_err!(TcompError::BadWhitelist);
-    }
-    // Check account owner (redundant because of find_program_address above, but why not).
-    if *whitelist_info.owner != tensor_whitelist::id() {
-        throw_err!(TcompError::BadWhitelist);
-    }
-
-    Ok(whitelist)
-}
 
 // --------------------------------------- helper functions
 
