@@ -16,10 +16,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import {
-  test_utils,
-  TOKEN_METADATA_PROGRAM_ID,
-} from "@tensor-hq/tensor-common";
+import { test_utils, TMETA_PROG_ID } from "@tensor-hq/tensor-common";
 import {
   buildAndSendTx,
   TEST_CONN_PAYER,
@@ -158,10 +155,10 @@ export const initCollection = async ({
   const [collectionMetadataAccount, _b] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("metadata", "utf8"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      TMETA_PROG_ID.toBuffer(),
       collectionMint.toBuffer(),
     ],
-    TOKEN_METADATA_PROGRAM_ID
+    TMETA_PROG_ID
   );
   const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
     {
@@ -191,11 +188,11 @@ export const initCollection = async ({
     PublicKey.findProgramAddressSync(
       [
         Buffer.from("metadata", "utf8"),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        TMETA_PROG_ID.toBuffer(),
         collectionMint.toBuffer(),
         Buffer.from("edition", "utf8"),
       ],
-      TOKEN_METADATA_PROGRAM_ID
+      TMETA_PROG_ID
     );
   const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
     {

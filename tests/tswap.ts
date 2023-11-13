@@ -1,5 +1,5 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { TensorWhitelistSDK } from "@tensor-oss/tensorswap-sdk";
+import { TensorWhitelistSDK } from "@tensor-hq/tensorswap-ts";
 import { BN } from "bn.js";
 import { expect } from "chai";
 import {

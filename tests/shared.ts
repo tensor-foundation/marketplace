@@ -19,6 +19,7 @@ import {
   TokenProgramVersion,
   TokenStandard,
   DecompressableState,
+  metadataArgsBeet,
 } from "@metaplex-foundation/mpl-bubblegum";
 import {
   SingleConnectionBroadcaster,
@@ -55,7 +56,7 @@ import {
 } from "@solana/web3.js";
 import {
   AUTH_PROG_ID,
-  computeMetadataArgsHash,
+  BUBBLEGUM_PROGRAM_ID,
   getIxDiscHex,
   getTransactionConvertedToLegacy,
   isNullLike,
@@ -65,7 +66,6 @@ import {
   TENSORSWAP_ADDR,
   test_utils,
   TMETA_PROG_ID,
-  TOKEN_METADATA_PROGRAM_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
 import {
@@ -73,12 +73,11 @@ import {
   TensorWhitelistSDK,
   TSwapConfigAnchor,
   TSWAP_TAKER_FEE_BPS,
-} from "@tensor-oss/tensorswap-sdk";
+} from "@tensor-hq/tensorswap-ts";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { resolve } from "path";
 import {
-  BUBBLEGUM_PROGRAM_ID,
   castFieldAnchor,
   castTargetAnchor,
   CURRENT_TCOMP_VERSION,
@@ -213,6 +212,12 @@ export const cartesian = <T extends any[][]>(...arr: T): MapCartesian<T>[] =>
     (a, b) => a.flatMap((c) => b.map((d) => [...c, d])),
     [[]]
   ) as MapCartesian<T>[];
+
+/** Version from metaplex but without seller fee basis points */
+export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
+  const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
+  return Buffer.from(keccak256.digest(serializedMetadata));
+}
 
 //(!) provider used across all tests
 process.env.ANCHOR_WALLET = resolve(__dirname, "test-keypair.json");
@@ -451,12 +456,8 @@ export const makeTree = async ({
 
 export function getMetadata(mint: PublicKey) {
   return PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-      mint.toBuffer(),
-    ],
-    TOKEN_METADATA_PROGRAM_ID
+    [Buffer.from("metadata"), TMETA_PROG_ID.toBuffer(), mint.toBuffer()],
+    TMETA_PROG_ID
   )[0];
 }
 
@@ -464,11 +465,11 @@ export function getMasterEdition(mint: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [
       Buffer.from("metadata"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      TMETA_PROG_ID.toBuffer(),
       mint.toBuffer(),
       Buffer.from("edition"),
     ],
-    TOKEN_METADATA_PROGRAM_ID
+    TMETA_PROG_ID
   )[0];
 }
 
@@ -512,7 +513,7 @@ export const mintCNft = async ({
             collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            tokenMetadataProgram: TMETA_PROG_ID,
           },
           {
             metadataArgs: {
@@ -618,7 +619,7 @@ export const decompressCNft = async ({
       masterEdition: getMasterEdition(mint),
       logWrapper: SPL_NOOP_PROGRAM_ID,
       sysvarRent: SYSVAR_RENT_PUBKEY,
-      tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      tokenMetadataProgram: TMETA_PROG_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     },
     {

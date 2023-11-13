@@ -20,14 +20,18 @@ import {
   TEST_PROVIDER,
 } from "../tests/shared";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { BUBBLEGUM_PROGRAM_ID, findTreeAuthorityPda } from "../src";
+import { findTreeAuthorityPda } from "../src";
 import {
   getConcurrentMerkleTreeAccountSize,
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
   ValidDepthSizePair,
 } from "@solana/spl-account-compression";
-import { TOKEN_METADATA_PROGRAM_ID, waitMS } from "@tensor-hq/tensor-common";
+import {
+  BUBBLEGUM_PROGRAM_ID,
+  TMETA_PROG_ID,
+  waitMS,
+} from "@tensor-hq/tensor-common";
 import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
@@ -79,10 +83,10 @@ export const initCollection = async ({
   const [collectionMetadataAccount, _b] = await PublicKey.findProgramAddress(
     [
       Buffer.from("metadata", "utf8"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      TMETA_PROG_ID.toBuffer(),
       collectionMint.toBuffer(),
     ],
-    TOKEN_METADATA_PROGRAM_ID
+    TMETA_PROG_ID
   );
   const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
     {
@@ -112,11 +116,11 @@ export const initCollection = async ({
     await PublicKey.findProgramAddress(
       [
         Buffer.from("metadata", "utf8"),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        TMETA_PROG_ID.toBuffer(),
         collectionMint.toBuffer(),
         Buffer.from("edition", "utf8"),
       ],
-      TOKEN_METADATA_PROGRAM_ID
+      TMETA_PROG_ID
     );
   const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
     {
@@ -312,7 +316,7 @@ const mintCNft = async ({
             collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: await getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            tokenMetadataProgram: TMETA_PROG_ID,
           },
           {
             metadataArgs: {

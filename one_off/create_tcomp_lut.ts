@@ -15,11 +15,12 @@ import {
 } from "@solana/web3.js";
 import {
   AUTH_PROG_ID,
+  BUBBLEGUM_PROGRAM_ID,
   createLUT,
   TENSORSWAP_ADDR,
   TMETA_PROG_ID,
 } from "@tensor-hq/tensor-common";
-import { BUBBLEGUM_PROGRAM_ID, findTCompPda, TCOMP_ADDR } from "../src";
+import { findTCompPda, TCOMP_ADDR } from "../src";
 
 const payer = Keypair.fromSecretKey(
   // TODO: replace with shared KP

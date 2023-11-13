@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
+import { BUBBLEGUM_PROGRAM_ID } from "@tensor-hq/tensor-common";
 import { TCOMP_ADDR } from "./constants";
-import { BUBBLEGUM_PROGRAM_ID } from "./sdk";
 
 export const findTCompPda = ({ program }: { program?: PublicKey }) => {
   return PublicKey.findProgramAddressSync([], program ?? TCOMP_ADDR);

@@ -1,5 +1,4 @@
 # anchor
-.vscode/
 .anchor
 .DS_Store
 target
@@ -51,6 +50,7 @@ ddb_backup/
 node_modules/
 npm-debug.*
 dist/
+tsconfig.tests.tsbuildinfo
 
 # Data
 *.jsonl
@@ -65,7 +65,6 @@ __pycache__/
 
 # IDEs
 .idea/
-.vscode/
 
 # KCL jars
 **/lib/jars/

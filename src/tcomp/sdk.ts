@@ -8,9 +8,7 @@ import {
   Provider,
 } from "@coral-xyz/anchor";
 import {
-  getLeafAssetId,
   MetadataArgs,
-  PROGRAM_ID as BUBBLEGUM_PROGRAM_ID,
   TokenProgramVersion,
   TokenStandard,
   UseMethod,
@@ -36,17 +34,20 @@ import {
   PublicKey,
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
+  TransactionInstruction,
   TransactionResponse,
 } from "@solana/web3.js";
 import {
   AnchorDiscMap,
   AUTH_PROG_ID,
+  BUBBLEGUM_PROGRAM_ID,
   decodeAnchorAcct,
   findMetadataPda,
   genDiscToDecoderMap,
   genIxDiscHexMap,
-  getAccountRent,
-  getAccountRentSync,
+  getRent,
+  getRentSync,
+  getLeafAssetId,
   hexCode,
   isNullLike,
   parseAnchorIxs,
@@ -57,7 +58,7 @@ import {
   TSWAP_COSIGNER,
   TSWAP_OWNER,
 } from "@tensor-hq/tensor-common";
-import { findMintProofPDA, findTSwapPDA } from "@tensor-oss/tensorswap-sdk";
+import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
 import bs58 from "bs58";
 import {
@@ -84,8 +85,6 @@ import {
   IDL as IDL_v0_11_0,
   Tcomp as TComp_v0_11_0,
 } from "./idl/tcomp_v0_11_0";
-
-export { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bubblegum";
 
 // --------------------------------------- idl
 
@@ -149,8 +148,8 @@ export const MAX_EXPIRY_SEC: number = +IDL_latest.constants.find(
   (c) => c.name === "MAX_EXPIRY_SEC"
 )!.value;
 
-export const APPROX_BID_STATE_RENT = getAccountRentSync(BID_STATE_SIZE);
-export const APPROX_LIST_STATE_RENT = getAccountRentSync(LIST_STATE_SIZE);
+export const APPROX_BID_STATE_RENT = getRentSync(BID_STATE_SIZE);
+export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
 
 // --------------------------------------- types (target)
 
@@ -477,7 +476,7 @@ export class TCompSDK {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
@@ -1304,14 +1303,14 @@ export class TCompSDK {
   // --------------------------------------- helpers
 
   async getBidStateRent() {
-    return await getAccountRent(
+    return await getRent(
       this.program.provider.connection,
       this.program.account.bidState
     );
   }
 
   async getListStateRent() {
-    return await getAccountRent(
+    return await getRent(
       this.program.provider.connection,
       this.program.account.listState
     );
@@ -1363,7 +1362,7 @@ export const getTotalComputeIxs = (
   compute: number | null,
   priorityMicroLamports: number | null
 ) => {
-  const finalIxs = [];
+  const finalIxs: TransactionInstruction[] = [];
   //optionally include extra compute]
   if (!isNullLike(compute)) {
     finalIxs.push(

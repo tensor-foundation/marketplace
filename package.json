@@ -1,11 +1,14 @@
 {
   "name": "@tensor-hq/tcomp-ts",
-  "version": "0.12.3",
+  "version": "1.0.0-rc.2",
   "description": "Anchor/JS SDK for interacting with TCOMP.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "module": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
   "files": [
-    "/dist"
+    "/dist/esm/**/*",
+    "/dist/cjs/**/*"
   ],
   "repository": "https://github.com/tensor-hq/tcomp.git",
   "license": "MIT",
@@ -15,11 +18,13 @@
   "scripts": {
     "build": "anchor build && bash scripts/cp_idl.sh",
     "build:test": "bash scripts/test_build.sh",
-    "build:ts": "rm -rf ./dist && yarn tsc && yarn tsc --p tsconfig.tests.json",
+    "build:ts": "rm -rf ./dist && yarn tsc && yarn tsc --p tsconfig.cjs.json && yarn tsc --p tsconfig.tests.json",
     "fast-test": "anchor test --skip-build -- --features testing",
     "test": "yarn build:test && yarn fast-test",
     "push": "git push --atomic",
-    "pubpush": "yarn build:ts && yarn npm publish && yarn push"
+    "publish:private": "yarn build:ts && yarn npm publish",
+    "pubpush": "yarn build:ts && yarn npm publish && yarn push",
+    "upgrade": "yarn add @tensor-hq/tensor-common @tensor-hq/tensorswap-ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.26.0",
@@ -29,15 +34,13 @@
     "@solana/spl-account-compression": "^0.1.7",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
-    "@tensor-hq/tensor-common": "^0.19.3",
-    "@tensor-oss/tensorswap-sdk": "^1.14.0",
+    "@tensor-hq/tensor-common": "^1.0.0-rc.4",
+    "@tensor-hq/tensorswap-ts": "^2.0.0-rc.2",
     "bn.js": "^5.2.1",
     "borsh": "^0.7.0",
     "js-sha3": "^0.8.0"
   },
   "devDependencies": {
-    "@metaplex-foundation/js": "^0.18.3",
-    "@metaplex-foundation/mpl-token-auth-rules": "^1.2.0",
     "@saberhq/solana-contrib": "^1.14.11",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.4",
