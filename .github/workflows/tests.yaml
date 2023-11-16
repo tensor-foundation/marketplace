@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup/
         with:
-          tswap-deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          tswap-deploy-key: ${{ secrets.TENSORSWAP_RO_DEPLOY_KEY }}
           tcommon-deploy-key: ${{ secrets.TENSOR_COMMON_RS_RO_DEPLOY_KEY }}
 
       - run: cargo build
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup/
         with:
-          tswap-deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          tswap-deploy-key: ${{ secrets.TENSORSWAP_RO_DEPLOY_KEY }}
           tcommon-deploy-key: ${{ secrets.TENSOR_COMMON_RS_RO_DEPLOY_KEY }}
 
       - uses: ./.github/actions/cache-cargo/
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup/
         with:
-          tswap-deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          tswap-deploy-key: ${{ secrets.TENSORSWAP_RO_DEPLOY_KEY }}
           tcommon-deploy-key: ${{ secrets.TENSOR_COMMON_RS_RO_DEPLOY_KEY }}
 
       - run: yarn build:ts
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup/
         with:
-          tswap-deploy-key: ${{ secrets.TENSORSWAP_DEPLOY_KEY }}
+          tswap-deploy-key: ${{ secrets.TENSORSWAP_RO_DEPLOY_KEY }}
           tcommon-deploy-key: ${{ secrets.TENSOR_COMMON_RS_RO_DEPLOY_KEY }}
 
       - run: grep -Evqz 'it.only\(|describe.only\(' ${{ matrix.node.glob }}
