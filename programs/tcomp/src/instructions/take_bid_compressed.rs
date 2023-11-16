@@ -178,7 +178,7 @@ pub fn handler_full_meta<'info>(
         creators,
     } = make_cnft_args(MakeCnftArgs {
         nonce,
-        metadata_src: MetadataSrc::Metadata(meta_args.clone()),
+        metadata_src: MetadataSrc::Metadata(meta_args.clone().into(creator_accounts)),
         merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
         creator_accounts,
     })?;

@@ -1112,7 +1112,7 @@ dependencies = [
 [[package]]
 name = "merkle_proof"
 version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#424bb254393cb688dfb26c110de7a4ac2b35337a"
+source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#4dd9b66b57ff5a4e07613f3454aaa3ee0a3e8909"
 dependencies = [
  "anchor-lang",
 ]
@@ -2065,7 +2065,7 @@ dependencies = [
 
 [[package]]
 name = "tcomp"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2083,8 +2083,8 @@ dependencies = [
 
 [[package]]
 name = "tensor_nft"
-version = "0.1.9"
-source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#424bb254393cb688dfb26c110de7a4ac2b35337a"
+version = "0.1.10"
+source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#4dd9b66b57ff5a4e07613f3454aaa3ee0a3e8909"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2282,7 +2282,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#424bb254393cb688dfb26c110de7a4ac2b35337a"
+source = "git+ssh://git@github.com/tensor-hq/tensor-common-rs.git#4dd9b66b57ff5a4e07613f3454aaa3ee0a3e8909"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
