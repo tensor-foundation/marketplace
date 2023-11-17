@@ -57,6 +57,7 @@ import {
   TMETA_PROG_ID,
   TSWAP_COSIGNER,
   TSWAP_OWNER,
+  AnchorIxName,
 } from "@tensor-hq/tensor-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
@@ -66,7 +67,7 @@ import {
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
   DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
-  parseStrFn,
+  evalMathExpr,
 } from "../shared";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
@@ -138,10 +139,10 @@ export const TCOMP_FEE_BPS: number = +IDL_latest.constants.find(
 export const TAKER_BROKER_PCT: number = +IDL_latest.constants.find(
   (c) => c.name === "TAKER_BROKER_PCT"
 )!.value;
-export const LIST_STATE_SIZE: number = parseStrFn(
+export const LIST_STATE_SIZE: number = evalMathExpr(
   IDL_latest.constants.find((c) => c.name === "LIST_STATE_SIZE")!.value
 );
-export const BID_STATE_SIZE: number = parseStrFn(
+export const BID_STATE_SIZE: number = evalMathExpr(
   IDL_latest.constants.find((c) => c.name === "BID_STATE_SIZE")!.value
 );
 export const MAX_EXPIRY_SEC: number = +IDL_latest.constants.find(

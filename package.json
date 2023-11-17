@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tcomp-ts",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.2",
   "description": "Anchor/JS SDK for interacting with TCOMP.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
@@ -34,11 +34,13 @@
     "@solana/spl-account-compression": "^0.1.7",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
-    "@tensor-hq/tensor-common": "^1.0.0-rc.4",
-    "@tensor-hq/tensorswap-ts": "^2.0.0-rc.2",
+    "@tensor-hq/tensor-common": "^1.0.3",
+    "@tensor-hq/tensorswap-ts": "^2.0.2",
     "bn.js": "^5.2.1",
     "borsh": "^0.7.0",
-    "js-sha3": "^0.8.0"
+    "js-sha256": "^0.9.0",
+    "js-sha3": "^0.8.0",
+    "math-expression-evaluator": "^2.0.4"
   },
   "devDependencies": {
     "@saberhq/solana-contrib": "^1.14.11",
