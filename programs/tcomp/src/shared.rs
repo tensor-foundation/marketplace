@@ -1,24 +1,8 @@
 use crate::*;
 use mpl_token_auth_rules::payload::{Payload, PayloadType, ProofInfo, SeedsVec};
-use mpl_token_metadata::{self, processor::AuthorizationData, state::TokenStandard};
+use mpl_token_metadata::{self, processor::AuthorizationData};
 
 // --------------------------------------- helper functions
-
-pub fn calc_creators_fee(
-    seller_fee_basis_points: u16,
-    amount: u64,
-    token_standard: Option<TokenStandard>,
-    optional_royalty_pct: Option<u16>,
-) -> Result<u64> {
-    // Enforce royalties on pnfts.
-    let adj_optional_royalty_pct =
-        if let Some(TokenStandard::ProgrammableNonFungible) = token_standard {
-            Some(100)
-        } else {
-            optional_royalty_pct
-        };
-    tensor_nft::calc_creators_fee(seller_fee_basis_points, amount, adj_optional_royalty_pct)
-}
 
 pub(crate) enum TcompSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
