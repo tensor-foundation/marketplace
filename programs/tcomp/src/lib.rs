@@ -79,7 +79,7 @@ pub mod tcomp {
         seller_fee_basis_points: u16,
         max_amount: u64,
         _currency: Option<Pubkey>,
-        _maker_broker: Option<Pubkey>,
+        _maker_broker: Option<Pubkey>, // TODO: remove if we break this ix? Already an account.
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::buy::handler(

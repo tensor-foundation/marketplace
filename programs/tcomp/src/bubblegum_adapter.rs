@@ -15,6 +15,15 @@ impl From<TTokenProgramVersion> for TokenProgramVersion {
     }
 }
 
+impl From<TokenProgramVersion> for TTokenProgramVersion {
+    fn from(v: TokenProgramVersion) -> Self {
+        match v {
+            TokenProgramVersion::Original => TTokenProgramVersion::Original,
+            TokenProgramVersion::Token2022 => TTokenProgramVersion::Token2022,
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum TTokenStandard {
@@ -31,6 +40,17 @@ impl From<TTokenStandard> for TokenStandard {
             TTokenStandard::FungibleAsset => TokenStandard::FungibleAsset,
             TTokenStandard::Fungible => TokenStandard::Fungible,
             TTokenStandard::NonFungibleEdition => TokenStandard::NonFungibleEdition,
+        }
+    }
+}
+
+impl From<TokenStandard> for TTokenStandard {
+    fn from(s: TokenStandard) -> Self {
+        match s {
+            TokenStandard::NonFungible => TTokenStandard::NonFungible,
+            TokenStandard::FungibleAsset => TTokenStandard::FungibleAsset,
+            TokenStandard::Fungible => TTokenStandard::Fungible,
+            TokenStandard::NonFungibleEdition => TTokenStandard::NonFungibleEdition,
         }
     }
 }
@@ -52,6 +72,16 @@ impl From<TUseMethod> for UseMethod {
     }
 }
 
+impl From<UseMethod> for TUseMethod {
+    fn from(m: UseMethod) -> Self {
+        match m {
+            UseMethod::Burn => TUseMethod::Burn,
+            UseMethod::Multiple => TUseMethod::Multiple,
+            UseMethod::Single => TUseMethod::Single,
+        }
+    }
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TUses {
     // 17 bytes + Option byte
@@ -63,7 +93,17 @@ pub struct TUses {
 impl From<TUses> for Uses {
     fn from(u: TUses) -> Self {
         Self {
-            use_method: UseMethod::from(u.use_method),
+            use_method: u.use_method.into(),
+            remaining: u.remaining,
+            total: u.total,
+        }
+    }
+}
+
+impl From<Uses> for TUses {
+    fn from(u: Uses) -> Self {
+        Self {
+            use_method: u.use_method.into(),
             remaining: u.remaining,
             total: u.total,
         }
@@ -79,6 +119,15 @@ pub struct TCollection {
 
 impl From<TCollection> for Collection {
     fn from(c: TCollection) -> Self {
+        Self {
+            verified: c.verified,
+            key: c.key,
+        }
+    }
+}
+
+impl From<Collection> for TCollection {
+    fn from(c: Collection) -> Self {
         Self {
             verified: c.verified,
             key: c.key,
