@@ -6,7 +6,8 @@ pub mod bubblegum_adapter;
 pub mod error;
 pub mod event;
 pub mod instructions;
-pub mod shared;
+pub mod pnft_adapter;
+pub(crate) mod shared;
 pub mod state;
 pub use std::{io::Write, ops::DerefMut, slice::Iter, str::FromStr};
 
@@ -38,7 +39,8 @@ pub use mpl_bubblegum::{
     utils::get_asset_id,
 };
 pub use noop::*;
-pub use shared::*;
+pub use pnft_adapter::*;
+pub(crate) use shared::*;
 pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
 pub use tensor_nft::*;
