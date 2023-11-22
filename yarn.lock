@@ -402,7 +402,7 @@ __metadata:
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
     "@tensor-hq/tensor-common": ^1.0.3
-    "@tensor-hq/tensorswap-ts": ^2.0.2
+    "@tensor-hq/tensorswap-ts": ^2.0.3
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
     "@types/chai-as-promised": ^7.1.5
@@ -447,9 +447,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensorswap-ts@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "@tensor-hq/tensorswap-ts@npm:2.0.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensorswap-ts%2F2.0.2%2F801e002fadf97852e83306d8fc71a3bcdb65180d"
+"@tensor-hq/tensorswap-ts@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@tensor-hq/tensorswap-ts@npm:2.0.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensorswap-ts%2F2.0.3%2F5dd9c898ec26af34f5d90b4f1fa3988d4b55716d"
   dependencies:
     "@coral-xyz/anchor": ^0.26.0
     "@msgpack/msgpack": ^2.8.0
@@ -465,7 +465,7 @@ __metadata:
     math-expression-evaluator: ^2.0.4
     merkletreejs: ^0.2.32
     uuid: ^8.3.2
-  checksum: f69151db96264c096afde39a77d31c38f55f8e650318e1676bb82dbf1443ee34bac788f3335437770b01585120b9d72ba0addf480945ce968daf7f31db2d6646
+  checksum: 01ff8508c564460915486e85be9ccde9a80eea6f22f7e287dd100517a700d0fa7f1ef3870fbb8511e9fb1ddb210519a4798b3a068fd433e53eb12cb73eac587c
   languageName: node
   linkType: hard
 

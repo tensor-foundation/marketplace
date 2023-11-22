@@ -58,6 +58,7 @@ import {
   TSWAP_COSIGNER,
   TSWAP_OWNER,
   AnchorIxName,
+  prependComputeIxs,
 } from "@tensor-hq/tensor-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
@@ -524,12 +525,12 @@ export class TCompSDK {
       ix["keys"][i]["isSigner"] = true;
     }
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs([ix], compute, priorityMicroLamports);
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, ix],
+        ixs,
         extraSigners: [],
       },
       treeAuthority,
@@ -569,12 +570,16 @@ export class TCompSDK {
         tcompProgram: TCOMP_ADDR,
       });
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
     };
@@ -633,12 +638,16 @@ export class TCompSDK {
       })
       .remainingAccounts(proofPath);
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       treeAuthority,
@@ -740,12 +749,16 @@ export class TCompSDK {
       })
       .remainingAccounts([...creatorsPath, ...proofPath]);
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       listState,
@@ -816,12 +829,16 @@ export class TCompSDK {
         cosigner: cosigner ?? owner,
       });
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       bidState,
@@ -848,12 +865,16 @@ export class TCompSDK {
       bidState,
     });
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       bidState,
@@ -880,12 +901,16 @@ export class TCompSDK {
       bidState,
     });
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       bidState,
@@ -945,12 +970,16 @@ export class TCompSDK {
       })
       .remainingAccounts(proofPath);
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, await builder.instruction()],
+        ixs,
         extraSigners: [],
       },
       treeAuthority,
@@ -1097,8 +1126,6 @@ export class TCompSDK {
         .remainingAccounts(remAccounts);
     }
 
-    const computeIxs = getTotalComputeIxs(compute, priorityMicroLamports);
-
     //because EITHER of the two has to sign, mark one of them as signer
     const ix = await builder.instruction();
     if (!!delegate && delegateSigner) {
@@ -1109,10 +1136,12 @@ export class TCompSDK {
       ix["keys"][i]["isSigner"] = true;
     }
 
+    const ixs = prependComputeIxs([ix], compute, priorityMicroLamports);
+
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, ix],
+        ixs,
         extraSigners: [],
       },
       bidState,
@@ -1246,20 +1275,21 @@ export class TCompSDK {
           isWritable: true,
         }))
       );
+    const ix = await builder.instruction();
 
     const ruleSetCompute = ruleSet ? ruleSetAddnCompute : null;
-    const computeIxs = getTotalComputeIxs(
+    const ixs = prependComputeIxs(
+      [ix],
       isNullLike(compute) && isNullLike(ruleSetCompute)
         ? null
         : (compute ?? 0) + (ruleSetCompute ?? 0),
       priorityMicroLamports
     );
-    const ix = await builder.instruction();
 
     return {
       builder,
       tx: {
-        ixs: [...computeIxs, ix],
+        ixs,
         extraSigners: [],
       },
       bidState,
@@ -1358,30 +1388,6 @@ export class TCompSDK {
     return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(name));
   }
 }
-
-export const getTotalComputeIxs = (
-  compute: number | null,
-  priorityMicroLamports: number | null
-) => {
-  const finalIxs: TransactionInstruction[] = [];
-  //optionally include extra compute]
-  if (!isNullLike(compute)) {
-    finalIxs.push(
-      ComputeBudgetProgram.setComputeUnitLimit({
-        units: compute,
-      })
-    );
-  }
-  //optionally include priority fee
-  if (!isNullLike(priorityMicroLamports)) {
-    finalIxs.push(
-      ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: priorityMicroLamports,
-      })
-    );
-  }
-  return finalIxs;
-};
 
 // --------------------------------------- events
 

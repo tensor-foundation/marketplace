@@ -88,7 +88,6 @@ import {
   findMintAuthorityPda,
   findTCompPda,
   findTreeAuthorityPda,
-  getTotalComputeIxs,
   TAKER_BROKER_PCT,
   Target,
   TCompIxName,
@@ -743,13 +742,14 @@ export const verifyCNft = async ({
     proof,
   });
 
-  const computeIxs = getTotalComputeIxs(
+  const ixs = prependComputeIxs(
+    [verifyLeafIx],
     DEFAULT_COMPUTE_UNITS,
     DEFAULT_MICRO_LAMPORTS
   );
 
   const sig = await buildAndSendTx({
-    ixs: [...computeIxs, verifyLeafIx],
+    ixs,
     extraSigners: [TEST_KEYPAIR],
   });
   console.log("✅ CNFT verified:", sig);
