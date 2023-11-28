@@ -30,11 +30,9 @@ import {
 import {
   AccountInfo,
   Commitment,
-  ComputeBudgetProgram,
   PublicKey,
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
-  TransactionInstruction,
   TransactionResponse,
 } from "@solana/web3.js";
 import {
@@ -45,20 +43,19 @@ import {
   findMetadataPda,
   genDiscToDecoderMap,
   genIxDiscHexMap,
+  getLeafAssetId,
   getRent,
   getRentSync,
-  getLeafAssetId,
   hexCode,
   isNullLike,
   parseAnchorIxs,
   ParsedAnchorIx,
+  prependComputeIxs,
   prepPnftAccounts,
   TENSORSWAP_ADDR,
   TMETA_PROG_ID,
   TSWAP_COSIGNER,
   TSWAP_OWNER,
-  AnchorIxName,
-  prependComputeIxs,
 } from "@tensor-hq/tensor-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
@@ -68,10 +65,19 @@ import {
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
   DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
+  DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
 } from "../shared";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
+import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
+import {
+  IDL as IDL_v0_11_0,
+  Tcomp as TComp_v0_11_0,
+} from "./idl/tcomp_v0_11_0";
+import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
+import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
+import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
 import {
   findBidStatePda,
   findListStatePda,
@@ -79,14 +85,6 @@ import {
   findTCompPda,
   findTreeAuthorityPda,
 } from "./pda";
-import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
-import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
-import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
-import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
-import {
-  IDL as IDL_v0_11_0,
-  Tcomp as TComp_v0_11_0,
-} from "./idl/tcomp_v0_11_0";
 
 // --------------------------------------- idl
 
@@ -449,7 +447,7 @@ export class TCompSDK {
     makerBroker = null,
     privateTaker = null,
     payer = null,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
     delegateSigner,
@@ -594,7 +592,7 @@ export class TCompSDK {
     creatorsHash,
     nonce,
     index,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
   }: {
@@ -674,7 +672,7 @@ export class TCompSDK {
     buyer,
     payer = null,
     takerBroker = null,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
   }: {
@@ -926,7 +924,7 @@ export class TCompSDK {
     creatorsHash,
     nonce,
     index,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
   }: {
@@ -1006,7 +1004,7 @@ export class TCompSDK {
     delegate = seller,
     margin = null,
     takerBroker = null,
-    compute = DEFAULT_COMPUTE_UNITS,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
     whitelist = null,

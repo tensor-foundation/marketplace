@@ -1,7 +1,8 @@
 import Mexp from "math-expression-evaluator";
 
-export const DEFAULT_COMPUTE_UNITS = 200_000; // cNFT xfers are cheap
-export const DEFAULT_MICRO_LAMPORTS = 10_000;
+export const DEFAULT_COMPUTE_UNITS = 200_000;
+export const DEFAULT_XFER_COMPUTE_UNITS = 400_000; // cNFT xfers eg in sell now w/ margin more expensive
+export const DEFAULT_MICRO_LAMPORTS = 5_000;
 export const DEFAULT_RULESET_ADDN_COMPUTE_UNITS = 400_000;
 
 export type AccountSuffix =
