@@ -1,5 +1,6 @@
 pub mod bid;
 pub mod buy;
+pub mod buy_spl;
 pub mod cancel_bid;
 pub mod close_expired_bid;
 pub mod close_expired_listing;
@@ -14,6 +15,7 @@ pub mod withdraw_fees;
 
 pub use bid::*;
 pub use buy::*;
+pub use buy_spl::*;
 pub use cancel_bid::*;
 pub use close_expired_bid::*;
 pub use close_expired_listing::*;

@@ -29,10 +29,10 @@ pub struct TakeBidLegacy<'info> {
     pub owner: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub taker_broker: UncheckedAccount<'info>,
+    pub taker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub maker_broker: UncheckedAccount<'info>,
+    pub maker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
@@ -153,6 +153,11 @@ pub struct TakeBidLegacy<'info> {
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     /// CHECK: assert_decode_mint_proof
     pub mint_proof: UncheckedAccount<'info>,
+    /// CHECK: bid_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_payer.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_payer: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -174,18 +179,10 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
                 TcompError::TakerNotAllowed
             );
         }
-        if let Some(maker_broker) = bid_state.maker_broker {
-            require!(
-                maker_broker == self.maker_broker.key(),
-                TcompError::BrokerMismatch
-            )
-        } else {
-            let neutral_broker = Pubkey::find_program_address(&[], &crate::id()).0;
-            require!(
-                self.maker_broker.key() == neutral_broker,
-                TcompError::BrokerMismatch
-            )
-        }
+        require!(
+            bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
+            TcompError::BrokerMismatch
+        );
 
         Ok(())
     }
@@ -304,7 +301,7 @@ pub fn handler<'info>(
         },
     )?;
 
-    let (_, bump) = Pubkey::find_program_address(&[], &id());
+    let (_, bump) = find_neutral_broker();
     let seeds: &[&[&[u8]]] = &[&[&[bump]]];
 
     //STEP 2/2: SEND FROM ESCROW
@@ -341,6 +338,8 @@ pub fn handler<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
+        rent_payer: &ctx.accounts.rent_payer,
+        maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         tcomp: &ctx.accounts.tcomp.to_account_info(),
         asset_id: mint,

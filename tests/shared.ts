@@ -14,7 +14,6 @@ import {
   createVerifyCreatorInstruction,
   createSetDecompressableStateInstruction,
   Creator,
-  getLeafAssetId,
   MetadataArgs,
   TokenProgramVersion,
   TokenStandard,
@@ -37,8 +36,9 @@ import {
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
+  createMint,
   getMinimumBalanceForRentExemptAccount,
+  TokenAccountNotFoundError,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
@@ -57,7 +57,9 @@ import {
 import {
   AUTH_PROG_ID,
   BUBBLEGUM_PROGRAM_ID,
+  filterNullLike,
   getIxDiscHex,
+  getLeafAssetId,
   getTransactionConvertedToLegacy,
   isNullLike,
   MINUTES,
@@ -78,17 +80,20 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { resolve } from "path";
 import {
+  BidStateAnchor,
   castFieldAnchor,
   castTargetAnchor,
   CURRENT_TCOMP_VERSION,
   DEFAULT_COMPUTE_UNITS,
   DEFAULT_MICRO_LAMPORTS,
   Field,
+  findAta,
+  findBidStatePda,
   findListStatePda,
   findMintAuthorityPda,
   findTCompPda,
   findTreeAuthorityPda,
-  TAKER_BROKER_PCT,
+  MAKER_BROKER_PCT,
   Target,
   TCompIxName,
   TCompSDK,
@@ -98,6 +103,8 @@ import {
 } from "../src";
 import {
   getAccount,
+  getMint,
+  getTokenBalance,
   initCollection,
   makeNTraders,
   transferLamports,
@@ -243,6 +250,18 @@ export const swapSdk = new TensorSwapSDK({ provider: TEST_PROVIDER });
 export const wlSdk = new TensorWhitelistSDK({ provider: TEST_PROVIDER });
 export const tcompSdk = new TCompSDK({ provider: TEST_PROVIDER });
 
+export const TEST_USDC_AUTHORITY = Keypair.generate();
+const TEST_USDC_KP = Keypair.fromSecretKey(
+  Buffer.from(
+    JSON.parse(
+      require("fs").readFileSync(resolve(__dirname, "test-usdc.json"), {
+        encoding: "utf-8",
+      })
+    )
+  )
+);
+export const TEST_USDC = TEST_USDC_KP.publicKey;
+
 //useful for debugging
 export const simulateTxTable = async (ixs: TransactionInstruction[]) => {
   const broadcaster = new SingleConnectionBroadcaster(TEST_PROVIDER.connection);
@@ -278,7 +297,7 @@ export const DEFAULT_DEPTH_SIZE: ValidDepthSizePair = {
 export const FEE_PCT = TCOMP_FEE_BPS / 1e4;
 export const calcFees = (amount: number) => {
   const totalFee = Math.trunc(amount * FEE_PCT);
-  const brokerFee = Math.trunc((totalFee * TAKER_BROKER_PCT) / 100);
+  const brokerFee = Math.trunc((totalFee * MAKER_BROKER_PCT) / 100);
   const tcompFee = totalFee - brokerFee;
 
   return { totalFee, brokerFee, tcompFee };
@@ -349,6 +368,7 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
   console.log("LUT missing");
 
   const [tcomp] = findTCompPda({});
+  const tcompAta = findAta(TEST_USDC, tcomp);
 
   //add addresses
   const extendInstruction = AddressLookupTableProgram.extendLookupTable({
@@ -361,7 +381,7 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
       SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       //solana
       SystemProgram.programId,
-      TOKEN_PROGRAM_ID, //for future token payments
+      TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID,
       SYSVAR_RENT_PUBKEY,
       SYSVAR_INSTRUCTIONS_PUBKEY,
@@ -373,6 +393,9 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
       tcomp,
       TCOMP_ADDR,
       TENSORSWAP_ADDR, //margin
+      //tcomp spl
+      TEST_USDC,
+      tcompAta,
     ],
   });
 
@@ -570,8 +593,8 @@ export const decompressCNft = async ({
     ],
     BUBBLEGUM_PROGRAM_ID
   );
-  const mint = await getLeafAssetId(merkleTree, new BN(index));
-  const ata = getAssociatedTokenAddressSync(mint, owner.publicKey);
+  const mint = getLeafAssetId(merkleTree, new BN(index));
+  const ata = findAta(mint, owner.publicKey);
   const metadata = getMetadata(mint);
 
   const dataHash = computeDataHash(metadataArgs);
@@ -850,7 +873,7 @@ export const makeLeaf = async ({
   metadata: MetadataArgs;
 }) => {
   const nonce = new BN(index);
-  const assetId = await getLeafAssetId(merkleTree, nonce);
+  const assetId = getLeafAssetId(merkleTree, nonce);
   const leaf = computeCompressedNFTHash(
     assetId,
     owner,
@@ -916,6 +939,7 @@ export const beforeAllHook = async () => {
   const [tcomp] = findTCompPda({});
   await transferLamports(tcomp, LAMPORTS_PER_SOL);
   const lookupTableAccount = await createLUT();
+  await testInitUsdc();
 
   return lookupTableAccount;
 };
@@ -941,7 +965,8 @@ export const beforeHook = async ({
   collectionless?: boolean;
   unverifiedCollection?: boolean;
 }) => {
-  const [treeOwner, traderA, traderB] = await makeNTraders({ n: 3 });
+  const [treeOwner, traderA, traderB, rentPayer, secondaryRentPayer] =
+    await makeNTraders({ n: 5 });
 
   //setup collection and tree
   const { collectionMint } = await initCollection({ owner: treeOwner });
@@ -1096,8 +1121,26 @@ export const beforeHook = async ({
     treeOwner,
     traderA,
     traderB,
+    rentPayer,
+    secondaryRentPayer,
     collectionMint,
   };
+};
+
+export const testInitUsdc = async () => {
+  // skip early if it alreayd exists
+  try {
+    await getMint(TEST_USDC);
+  } catch (err) {
+    await createMint(
+      TEST_PROVIDER.connection,
+      TEST_CONN_PAYER.payer,
+      TEST_USDC_AUTHORITY.publicKey,
+      null,
+      6,
+      TEST_USDC_KP
+    );
+  }
 };
 
 export const testList = async ({
@@ -1113,7 +1156,7 @@ export const testList = async ({
   privateTaker,
   canopyDepth = 0,
   lookupTableAccount,
-  payer = owner,
+  rentPayer = owner,
   delegateSigns = false,
 }: {
   memTree: MerkleTree;
@@ -1123,12 +1166,12 @@ export const testList = async ({
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   amount: BN;
-  currency?: PublicKey;
+  currency: PublicKey | null;
   expireInSec?: BN;
   privateTaker?: PublicKey;
   canopyDepth?: number;
   lookupTableAccount?: AddressLookupTableAccount;
-  payer?: Keypair;
+  rentPayer?: Keypair;
   delegateSigns?: boolean;
 }) => {
   const proof = memTree.getProof(
@@ -1148,7 +1191,7 @@ export const testList = async ({
   } = await tcompSdk.list({
     proof: proof.proof,
     owner: owner.publicKey,
-    payer: payer.publicKey,
+    rentPayer: rentPayer.publicKey,
     merkleTree,
     dataHash,
     creatorsHash,
@@ -1167,14 +1210,14 @@ export const testList = async ({
 
   await withLamports(
     {
-      prevPayerLamports: payer.publicKey,
+      prevRentPayerLamports: rentPayer.publicKey,
       prevOwnerLamports: owner.publicKey,
     },
-    async ({ prevPayerLamports, prevOwnerLamports }) => {
+    async ({ prevRentPayerLamports, prevOwnerLamports }) => {
       sig = await buildAndSendTx({
         ixs,
         //if leaf delegate passed in, then skip the owner
-        extraSigners: [delegateSigns && delegate ? delegate : owner, payer],
+        extraSigners: [delegateSigns && delegate ? delegate : owner, rentPayer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -1182,11 +1225,19 @@ export const testList = async ({
       console.log("✅ listed", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
-      //if payer != buyer, make sure buyer didnt lose lamports
-      if (payer.publicKey.toString() !== owner.publicKey.toString()) {
-        const currOwnerLamports = await getLamports(owner.publicKey);
+      const [currOwnerLamports, currRentPayerLamports, listRent] =
+        await Promise.all([
+          getLamports(owner.publicKey),
+          getLamports(rentPayer.publicKey),
+          tcompSdk.getListStateRent(),
+        ]);
+
+      //if rentPayer != owner, make sure owner didnt lose lamports
+      if (rentPayer.publicKey.toString() !== owner.publicKey.toString()) {
         expect(currOwnerLamports! - prevOwnerLamports!).eq(0);
       }
+
+      expect(currRentPayerLamports! - prevRentPayerLamports!).eq(-listRent);
 
       //nft moved to escrow
       const [listState, bump] = findListStatePda({ assetId });
@@ -1203,9 +1254,7 @@ export const testList = async ({
       expect(listStateAcc.assetId.toString()).to.eq(assetId.toString());
       expect(listStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
       expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
-      if (!isNullLike(currency)) {
-        expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
-      }
+      expect(listStateAcc.currency?.toString()).to.eq(currency?.toString());
       if (!isNullLike(expireInSec)) {
         expect(listStateAcc.expiry.toNumber()).to.approximately(
           +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
@@ -1219,6 +1268,9 @@ export const testList = async ({
       }
       expect(listStateAcc.version).to.eq(CURRENT_TCOMP_VERSION);
       expect(listStateAcc.bump[0]).to.eq(bump);
+      expect(listStateAcc.rentPayer.toString()).to.eq(
+        rentPayer.publicKey.toString()
+      );
     }
   );
 
@@ -1246,7 +1298,7 @@ export const testEdit = async ({
   owner: Keypair;
   listState: PublicKey;
   amount: BN;
-  currency?: PublicKey;
+  currency?: PublicKey | null;
   expireInSec?: BN;
   privateTaker?: PublicKey | null;
 }) => {
@@ -1269,9 +1321,7 @@ export const testEdit = async ({
 
   const listStateAcc = await tcompSdk.fetchListState(listState);
   expect(listStateAcc.amount.toNumber()).to.eq(amount.toNumber());
-  if (!isNullLike(currency)) {
-    expect(listStateAcc.currency!.toString()).to.eq(currency.toString());
-  }
+  expect(listStateAcc.currency?.toString()).to.eq(currency?.toString());
   if (!isNullLike(expireInSec)) {
     expect(listStateAcc.expiry.toNumber()).to.approximately(
       +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
@@ -1291,6 +1341,7 @@ export const testDelist = async ({
   memTree,
   index,
   owner,
+  rentDest = owner,
   merkleTree,
   metadata,
   canopyDepth = 0,
@@ -1300,6 +1351,7 @@ export const testDelist = async ({
   memTree: MerkleTree;
   index: number;
   owner: Keypair;
+  rentDest?: Keypair;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   canopyDepth?: number;
@@ -1326,6 +1378,7 @@ export const testDelist = async ({
     } = await tcompSdk.closeExpiredListing({
       proof: proof.proof,
       owner: owner.publicKey,
+      rentDest: rentDest.publicKey,
       merkleTree,
       dataHash,
       creatorsHash,
@@ -1340,6 +1393,7 @@ export const testDelist = async ({
     } = await tcompSdk.delist({
       proof: proof.proof,
       owner: owner.publicKey,
+      rentDest: rentDest.publicKey,
       merkleTree,
       dataHash,
       creatorsHash,
@@ -1349,27 +1403,51 @@ export const testDelist = async ({
     }));
   }
 
-  const sig = await buildAndSendTx({
-    ixs,
-    extraSigners: forceExpired ? [] : [owner],
-    lookupTableAccounts: lookupTableAccount ? [lookupTableAccount] : undefined,
-  });
-  console.log("✅ delisted", sig);
+  await withLamports(
+    {
+      prevOwnerLamports: owner.publicKey,
+      prevRentDestLamports: rentDest.publicKey,
+    },
+    async ({ prevOwnerLamports, prevRentDestLamports }) => {
+      const sig = await buildAndSendTx({
+        ixs,
+        extraSigners: forceExpired ? [] : [owner],
+        lookupTableAccounts: lookupTableAccount
+          ? [lookupTableAccount]
+          : undefined,
+      });
+      console.log("✅ delisted", sig);
 
-  //nft moved back to wner
-  await verifyCNft({
-    index,
-    merkleTree,
-    metadata,
-    owner: owner.publicKey,
-    delegate: owner.publicKey,
-    proof: proof.proof,
-  });
+      //nft moved back to wner
+      await verifyCNft({
+        index,
+        merkleTree,
+        metadata,
+        owner: owner.publicKey,
+        delegate: owner.publicKey,
+        proof: proof.proof,
+      });
 
-  //listing closed
-  const [listState, bump] = findListStatePda({ assetId });
-  await expect(tcompSdk.fetchListState(listState)).to.be.rejectedWith(
-    ACCT_NOT_EXISTS_ERR
+      //listing closed
+      const [listState, bump] = findListStatePda({ assetId });
+      await expect(tcompSdk.fetchListState(listState)).to.be.rejectedWith(
+        ACCT_NOT_EXISTS_ERR
+      );
+
+      const [listRent, currOwnerLamorts, currRentPayerLamports] =
+        await Promise.all([
+          tcompSdk.getListStateRent(),
+          getLamports(owner.publicKey),
+          getLamports(rentDest.publicKey),
+        ]);
+
+      const rentToOwner = rentDest.publicKey.equals(owner.publicKey)
+        ? listRent
+        : 0;
+
+      expect(currOwnerLamorts! - prevOwnerLamports!).eq(rentToOwner);
+      expect(currRentPayerLamports! - prevRentDestLamports!).eq(listRent);
+    }
   );
 
   //update mem tree
@@ -1392,12 +1470,15 @@ export const testBuy = async ({
   metadata,
   maxAmount,
   currency,
-  takerBroker,
+  takerBroker = null,
+  makerBroker = null,
   optionalRoyaltyPct = 100,
   programmable = false,
   lookupTableAccount,
   canopyDepth = 0,
   payer = buyer,
+  rentPayer = payer,
+  rentDest = owner,
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1406,13 +1487,16 @@ export const testBuy = async ({
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   maxAmount: BN;
-  currency?: PublicKey;
-  takerBroker?: PublicKey;
+  currency: PublicKey | null;
+  takerBroker?: PublicKey | null;
+  makerBroker?: PublicKey | null;
   optionalRoyaltyPct?: number;
   programmable?: boolean;
   lookupTableAccount?: AddressLookupTableAccount;
   canopyDepth?: number;
   payer?: Keypair;
+  rentPayer?: Keypair;
+  rentDest?: PublicKey;
 }) => {
   let proof = memTree.getProof(
     index,
@@ -1424,10 +1508,7 @@ export const testBuy = async ({
 
   const metaHash = computeMetadataArgsHash(metadata);
 
-  const {
-    tx: { ixs },
-    listState,
-  } = await tcompSdk.buy({
+  const common = {
     proof: proof.proof,
     buyer: buyer.publicKey,
     payer: payer.publicKey,
@@ -1440,10 +1521,23 @@ export const testBuy = async ({
     owner,
     maxAmount,
     currency,
+    makerBroker,
     takerBroker,
     optionalRoyaltyPct,
     canopyDepth,
-  });
+    rentDest: rentDest,
+  };
+
+  const {
+    tx: { ixs },
+    listState,
+  } = isNullLike(currency)
+    ? await tcompSdk.buy({ ...common })
+    : await tcompSdk.buySpl({
+        ...common,
+        currency,
+        rentPayer: rentPayer.publicKey,
+      });
 
   let sig: string | undefined;
 
@@ -1453,18 +1547,37 @@ export const testBuy = async ({
       prevSellerLamports: owner,
       prevPayerLamports: payer.publicKey,
       prevBuyerLamports: buyer.publicKey,
-      ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
+      prevRentDestLamports: rentDest,
+      ...(makerBroker ? { prevMakerBroker: makerBroker } : {}),
     },
     async ({
       prevFeeAccLamports,
       prevSellerLamports,
       prevPayerLamports,
       prevBuyerLamports,
-      prevTakerBroker,
+      prevRentDestLamports,
+      prevMakerBroker,
     }) => {
+      const [
+        prevFeeAccTokens,
+        prevSellerTokens,
+        prevPayerTokens,
+        prevBuyerTokens,
+        prevMakerBrokerTokens,
+      ] = currency
+        ? await Promise.all([
+            getTokenBalance(findAta(currency, tcomp)),
+            getTokenBalance(findAta(currency, owner)),
+            getTokenBalance(
+              findAta(currency, payer.publicKey ?? buyer.publicKey)
+            ),
+            getTokenBalance(findAta(currency, buyer.publicKey)),
+            getTokenBalance(findAta(currency, makerBroker ?? tcomp)),
+          ])
+        : [0, 0, 0, 0, 0];
       sig = await buildAndSendTx({
         ixs,
-        extraSigners: [payer],
+        extraSigners: [payer, ...(currency ? [rentPayer] : [])],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined,
@@ -1483,19 +1596,32 @@ export const testBuy = async ({
       });
 
       //list state closed
-      expect(getAccount(listState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
+      await expect(getAccount(listState)).to.be.rejectedWith(
+        TokenAccountNotFoundError
+      );
 
       const amount = maxAmount.toNumber();
       const creators = metadata.creators;
       const royaltyBps = metadata.sellerFeeBasisPoints;
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
-      if (!isNullLike(takerBroker) && TAKER_BROKER_PCT > 0) {
-        const brokerLamports = await getLamports(takerBroker);
-        expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
+      if (isNullLike(currency)) {
+        const feeAccLamports = await getLamports(tcomp);
+        expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+        if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
+          const brokerLamports = await getLamports(makerBroker);
+          expect(brokerLamports! - (prevMakerBroker ?? 0)).eq(brokerFee);
+        }
+      } else {
+        const feeAccTokens = await getTokenBalance(findAta(currency, tcomp));
+        expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(tcompFee);
+        if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
+          const brokerTokens = await getTokenBalance(
+            findAta(currency, makerBroker)
+          );
+          expect(brokerTokens! - (prevMakerBrokerTokens ?? 0)).eq(brokerFee);
+        }
       }
 
       //creators paid
@@ -1519,7 +1645,9 @@ export const testBuy = async ({
             (1 - skippedCreators / 100)
         );
         for (const c of creators) {
-          const cBal = await getLamports(c.address);
+          const cBal = isNullLike(currency)
+            ? await getLamports(c.address)
+            : await getTokenBalance(findAta(currency, c.address));
           //only run the test if share > 1, else it's skipped && cBal exists (it wont if 0 royalties were paid)
           if (c.share > 1 && !isNullLike(cBal)) {
             const expected = Math.trunc((temp * c.share) / 100);
@@ -1529,26 +1657,72 @@ export const testBuy = async ({
         }
       }
 
-      //payer has paid
-      const currPayerLamports = await getLamports(payer.publicKey);
-      //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
-      if (!programmable) {
-        expect(currPayerLamports! - prevPayerLamports!).eq(
-          -1 * (amount + tcompFee + brokerFee + creatorsFee)
+      //rent paid
+      const listRent = await tcompSdk.getListStateRent();
+      const rentToSeller = rentDest.equals(owner) ? listRent : 0;
+      const rentToRentDest = !rentDest.equals(owner) ? listRent : 0;
+
+      if (isNullLike(currency)) {
+        //payer has paid
+        const currPayerLamports = await getLamports(payer.publicKey);
+        //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+        if (!programmable) {
+          expect(currPayerLamports! - prevPayerLamports!).eq(
+            -(amount + tcompFee + brokerFee + creatorsFee)
+          );
+        }
+
+        //if payer != buyer, make sure buyer didnt lose lamports
+        if (payer.publicKey.toString() !== buyer.publicKey.toString()) {
+          const currBuyerLamports = await getLamports(buyer.publicKey);
+          expect(currBuyerLamports! - prevBuyerLamports!).eq(0);
+        }
+
+        //seller gained
+        const currSellerLamports = await getLamports(owner);
+        expect(currSellerLamports! - prevSellerLamports!).eq(
+          amount + rentToSeller
         );
-      }
 
-      //if payer != buyer, make sure buyer didnt lose lamports
-      if (payer.publicKey.toString() !== buyer.publicKey.toString()) {
-        const currBuyerLamports = await getLamports(buyer.publicKey);
-        expect(currBuyerLamports! - prevBuyerLamports!).eq(0);
-      }
+        //rentDest gained rent
+        if (!rentDest.equals(owner)) {
+          const currRentDestLamports = await getLamports(rentDest);
+          expect(currRentDestLamports! - prevRentDestLamports!).eq(
+            rentToRentDest
+          );
+        }
+      } else {
+        //payer has paid
+        const currPayerTokens = await getTokenBalance(
+          findAta(currency, payer.publicKey)
+        );
+        //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+        if (!programmable) {
+          expect(currPayerTokens! - prevPayerTokens!).eq(
+            -(amount + tcompFee + brokerFee + creatorsFee)
+          );
+        }
 
-      //seller gained
-      const currSellerLamports = await getLamports(owner);
-      expect(currSellerLamports! - prevSellerLamports!).eq(
-        amount + (await tcompSdk.getListStateRent())
-      );
+        //if payer != buyer, make sure buyer didnt lose lamports
+        if (payer.publicKey.toString() !== buyer.publicKey.toString()) {
+          const currBuyerTokens = await getTokenBalance(
+            findAta(currency, buyer.publicKey)
+          );
+          expect(currBuyerTokens! - prevBuyerTokens!).eq(0);
+        }
+
+        //seller gained tokens
+        const currSellerTokens = await getTokenBalance(
+          findAta(currency, owner)
+        );
+        expect(currSellerTokens! - prevSellerTokens!).eq(amount);
+
+        //seller gained rent
+        const currSellerLamports = await getLamports(owner);
+        expect(currSellerLamports! - prevSellerLamports!).eq(rentToSeller);
+
+        // not worth checking rent dest while many tokens are also created
+      }
     }
   );
 
@@ -1610,6 +1784,7 @@ export const testBid = async ({
   privateTaker,
   margin,
   cosigner,
+  rentPayer,
 }: {
   target?: Target;
   targetId: PublicKey;
@@ -1625,7 +1800,12 @@ export const testBid = async ({
   privateTaker?: PublicKey | null;
   margin?: PublicKey;
   cosigner?: Keypair;
+  rentPayer?: Keypair;
 }) => {
+  const prevBidStateAcc = await tcompSdk.program.account.bidState.fetchNullable(
+    findBidStatePda({ bidId: bidId ?? targetId, owner: owner.publicKey })[0]
+  );
+
   const {
     tx: { ixs },
     bidState,
@@ -1643,24 +1823,27 @@ export const testBid = async ({
     privateTaker,
     margin,
     cosigner: cosigner?.publicKey,
+    rentPayer: rentPayer?.publicKey,
   });
 
-  let sig;
+  let sig: string | undefined = undefined;
 
   await withLamports(
     {
       prevBidderLamports: owner.publicKey,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
+      ...(rentPayer ? { prevRentPayerLamports: rentPayer.publicKey } : {}),
     },
     async ({
       prevBidderLamports,
       prevBidStateLamports,
       prevMarginLamports,
+      prevRentPayerLamports,
     }) => {
       sig = await buildAndSendTx({
         ixs,
-        extraSigners: cosigner ? [owner, cosigner] : [owner],
+        extraSigners: filterNullLike([owner, cosigner, rentPayer]),
       });
       console.log("✅ placed bid", sig);
 
@@ -1680,9 +1863,7 @@ export const testBid = async ({
       expect(bidStateAcc.owner.toString()).to.eq(owner.publicKey.toString());
       expect(bidStateAcc.amount.toNumber()).to.eq(amount.toNumber());
       expect(bidStateAcc.quantity).to.eq(quantity);
-      if (!isNullLike(currency)) {
-        expect(bidStateAcc.currency!.toString()).to.eq(currency.toString());
-      }
+      expect(bidStateAcc.currency?.toString()).to.eq(currency?.toString());
       if (!isNullLike(expireInSec)) {
         expect(bidStateAcc.expiry.toNumber()).to.approximately(
           +new Date() / 1000 + (expireInSec.toNumber() ?? 0),
@@ -1715,20 +1896,42 @@ export const testBid = async ({
         );
       }
 
-      const currBidderLamports = await getLamports(owner.publicKey);
-      const currBidStateLamports = await getLamports(bidState);
+      if (isNullLike(prevBidStateAcc)) {
+        expect(bidStateAcc.rentPayer.toString()).eq(
+          (rentPayer?.publicKey ?? owner.publicKey).toString()
+        );
+      } else {
+        // rentPayer does not change once initialized
+        expect(bidStateAcc.rentPayer.toString()).eq(
+          prevBidStateAcc.rentPayer.toString()
+        );
+      }
+
+      const [
+        currBidderLamports,
+        currBidStateLamports,
+        currRentPayerLamports,
+        bidRent,
+      ] = await Promise.all([
+        getLamports(owner.publicKey),
+        getLamports(bidState),
+        rentPayer ? getLamports(rentPayer.publicKey) : null,
+        tcompSdk.getBidStateRent(),
+      ]);
+
+      const rentToBidder = rentPayer ? 0 : bidRent;
+      const rentToRentPayer = rentPayer ? bidRent : 0;
 
       if (margin) {
         //check bid acc final
-        expect(currBidStateLamports).to.eq(await tcompSdk.getBidStateRent());
+        expect(currBidStateLamports).to.eq(bidRent);
         //can't check diff, since need more state to calc toUpload
       } else {
-        const bidRent = await tcompSdk.getBidStateRent();
         const bidDiff = amount.toNumber() * quantity - (prevBidAmount ?? 0);
 
         //check owner diff
         expect(currBidderLamports! - prevBidderLamports!).to.eq(
-          -(bidDiff + (!prevBidStateLamports ? bidRent : 0))
+          -(bidDiff + (!prevBidStateLamports ? rentToBidder : 0))
         );
         //check bid acc diff
         expect(currBidStateLamports! - (prevBidStateLamports ?? 0)).to.eq(
@@ -1739,21 +1942,29 @@ export const testBid = async ({
           bidRent + amount.toNumber() * quantity
         );
       }
+
+      if (rentPayer) {
+        expect(currRentPayerLamports! - prevRentPayerLamports!).to.eq(
+          !prevBidStateLamports ? -rentToRentPayer : 0
+        );
+      }
     }
   );
 
-  return { sig };
+  return { sig: sig! };
 };
 
 export const testCancelCloseBid = async ({
   owner,
   bidId,
+  rentDest = null,
   amount,
   margin,
   forceClose = false,
 }: {
   owner: Keypair;
   bidId: PublicKey;
+  rentDest?: Keypair | null;
   amount: BN;
   margin?: PublicKey | null;
   forceClose?: boolean;
@@ -1768,6 +1979,7 @@ export const testCancelCloseBid = async ({
     } = await tcompSdk.closeExpiredBid({
       owner: owner.publicKey,
       bidId,
+      rentDest: rentDest?.publicKey ?? owner.publicKey,
     }));
   } else {
     ({
@@ -1776,6 +1988,7 @@ export const testCancelCloseBid = async ({
     } = await tcompSdk.cancelBid({
       owner: owner.publicKey,
       bidId,
+      rentDest: rentDest?.publicKey ?? owner.publicKey,
     }));
   }
 
@@ -1784,11 +1997,13 @@ export const testCancelCloseBid = async ({
       prevBidderLamports: owner.publicKey,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
+      ...(rentDest ? { prevRentPayerLamports: rentDest.publicKey } : {}),
     },
     async ({
       prevBidderLamports,
       prevBidStateLamports,
       prevMarginLamports,
+      prevRentPayerLamports,
     }) => {
       const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
         bidState
@@ -1801,30 +2016,47 @@ export const testCancelCloseBid = async ({
       });
       console.log("✅ closed bid", sig);
 
-      const currBidderLamports = await getLamports(owner.publicKey);
-      const currBidStateLamports = (await getLamports(bidState)) ?? 0;
+      const [
+        currBidderLamports,
+        currBidStateLamports,
+        currRentPayerLamports,
+        bidRent,
+      ] = await Promise.all([
+        getLamports(owner.publicKey),
+        getLamports(bidState) ?? 0,
+        rentDest ? getLamports(rentDest.publicKey) : undefined,
+        tcompSdk.getBidStateRent(),
+      ]);
+
+      const rentToBidder = rentDest ? 0 : bidRent;
+      const rentToRentPayer = rentDest ? bidRent : 0;
 
       //bid state closed
-      expect(getAccount(bidState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
+      await expect(getAccount(bidState)).to.be.rejectedWith(
+        TokenAccountNotFoundError
+      );
 
       if (margin) {
         //no change in margin acc
         const currMarginLamports = await getLamports(margin);
         expect(currMarginLamports).to.eq(prevMarginLamports);
         //rent back
-        expect(currBidderLamports! - prevBidderLamports!).to.eq(
-          await tcompSdk.getBidStateRent()
-        );
+        expect(currBidderLamports! - prevBidderLamports!).to.eq(rentToBidder);
       } else {
-        const bidRent = await tcompSdk.getBidStateRent();
         const toGetBack = amount.toNumber() * left;
         //check owner diff
         expect(currBidderLamports! - prevBidderLamports!).to.eq(
-          toGetBack + bidRent
+          toGetBack + rentToBidder
         );
         //check bid acc diff
         expect((currBidStateLamports ?? 0) - prevBidStateLamports!).to.eq(
           -(toGetBack + bidRent)
+        );
+      }
+
+      if (rentDest) {
+        expect(currRentPayerLamports! - prevRentPayerLamports!).to.eq(
+          rentToRentPayer
         );
       }
     }
@@ -1838,12 +2070,14 @@ export const testTakeBid = async ({
   memTree,
   index,
   owner,
+  rentPayer = owner,
   seller,
   delegate = seller,
   merkleTree,
   metadata,
   minAmount,
   currency,
+  makerBroker = null,
   takerBroker,
   optionalRoyaltyPct = 100,
   programmable = false,
@@ -1860,12 +2094,14 @@ export const testTakeBid = async ({
   memTree: MerkleTree;
   index: number;
   owner: PublicKey;
+  rentPayer?: PublicKey;
   seller: Keypair;
   delegate?: Keypair;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   minAmount: BN;
   currency?: PublicKey;
+  makerBroker?: PublicKey | null;
   takerBroker?: PublicKey;
   optionalRoyaltyPct?: number;
   programmable?: boolean;
@@ -1902,12 +2138,14 @@ export const testTakeBid = async ({
     seller: seller.publicKey,
     delegate: delegate?.publicKey,
     owner,
+    rentPayer,
     merkleTree,
     root: [...proof.root],
     index,
     margin,
     minAmount: new BN(minAmount),
     optionalRoyaltyPct,
+    makerBroker,
     takerBroker,
     canopyDepth,
     currency,
@@ -1920,7 +2158,7 @@ export const testTakeBid = async ({
 
   await withLamports(
     {
-      prevBidderLamports: owner,
+      prevRentPayerLamports: rentPayer,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
@@ -1928,7 +2166,7 @@ export const testTakeBid = async ({
       prevSellerLamports: seller.publicKey,
     },
     async ({
-      prevBidderLamports,
+      prevRentPayerLamports,
       prevBidStateLamports,
       prevMarginLamports,
       prevTakerBroker,
@@ -1964,14 +2202,16 @@ export const testTakeBid = async ({
         proof: proof.proof,
       });
 
+      const bidRent = await tcompSdk.getBidStateRent();
+
       if (fullyFilled) {
         //bid state closed
-        expect(getAccount(bidState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
-        // owner gets back rent
-        const currBidderLamports = await getLamports(owner);
-        expect(currBidderLamports! - prevBidderLamports!).equal(
-          await tcompSdk.getBidStateRent()
+        await expect(getAccount(bidState)).to.be.rejectedWith(
+          TokenAccountNotFoundError
         );
+        // rent payer gets back rent
+        const currRentPayerLamports = await getLamports(rentPayer);
+        expect(currRentPayerLamports! - prevRentPayerLamports!).equal(bidRent);
       } else {
         const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
           bidState
@@ -1988,8 +2228,8 @@ export const testTakeBid = async ({
       const feeAccLamports = await getLamports(tcomp);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
-      if (!isNullLike(takerBroker) && TAKER_BROKER_PCT > 0) {
-        const brokerLamports = await getLamports(takerBroker);
+      if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
+        const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
       }
 
@@ -2041,7 +2281,7 @@ export const testTakeBid = async ({
       } else {
         const currBidStateLamports = await getLamports(bidState);
         expect((currBidStateLamports ?? 0) - prevBidStateLamports!).eq(
-          -1 * (amount + (fullyFilled ? await tcompSdk.getBidStateRent() : 0))
+          -1 * (amount + (fullyFilled ? bidRent : 0))
         );
       }
     }
@@ -2065,9 +2305,11 @@ export const testTakeBidLegacy = async ({
   nftMint,
   nftSellerAcc,
   owner,
+  rentPayer = owner,
   seller,
   minAmount,
   currency,
+  makerBroker = null,
   takerBroker,
   creators,
   royaltyBps,
@@ -2082,11 +2324,13 @@ export const testTakeBidLegacy = async ({
   nftMint: PublicKey;
   nftSellerAcc: PublicKey;
   owner: PublicKey;
+  rentPayer?: PublicKey;
   seller: Keypair;
   minAmount: BN;
   creators: Creator[];
   royaltyBps: number;
   currency?: PublicKey;
+  makerBroker?: PublicKey | null;
   takerBroker?: PublicKey;
   optionalRoyaltyPct?: number;
   programmable?: boolean;
@@ -2107,9 +2351,11 @@ export const testTakeBidLegacy = async ({
     nftSellerAcc,
     seller: seller.publicKey,
     owner,
+    rentPayer,
     margin,
     minAmount: new BN(minAmount),
     optionalRoyaltyPct,
+    makerBroker,
     takerBroker,
     currency,
     whitelist,
@@ -2120,7 +2366,7 @@ export const testTakeBidLegacy = async ({
 
   await withLamports(
     {
-      prevBidderLamports: owner,
+      prevRentPayerLamports: rentPayer,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
@@ -2129,7 +2375,7 @@ export const testTakeBidLegacy = async ({
       prevOwnerAtaLamports: ownerAtaAcc,
     },
     async ({
-      prevBidderLamports,
+      prevRentPayerLamports,
       prevBidStateLamports,
       prevMarginLamports,
       prevTakerBroker,
@@ -2172,14 +2418,16 @@ export const testTakeBidLegacy = async ({
         await getAccount(ownerAtaAcc).then((acc) => acc.amount.toString())
       ).eq("1");
 
+      const bidRent = await tcompSdk.getBidStateRent();
+
       if (fullyFilled) {
         //bid state closed
-        expect(getAccount(bidState)).rejectedWith(ACCT_NOT_EXISTS_ERR);
-        // owner gets back rent
-        const currBidderLamports = await getLamports(owner);
-        expect(currBidderLamports! - prevBidderLamports!).equal(
-          await tcompSdk.getBidStateRent()
+        await expect(getAccount(bidState)).to.be.rejectedWith(
+          TokenAccountNotFoundError
         );
+        // rent payer gets back rent
+        const currRentPayerLamports = await getLamports(rentPayer);
+        expect(currRentPayerLamports! - prevRentPayerLamports!).equal(bidRent);
       } else {
         const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
           bidState
@@ -2194,8 +2442,8 @@ export const testTakeBidLegacy = async ({
       const feeAccLamports = await getLamports(tcomp);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
-      if (!isNullLike(takerBroker) && TAKER_BROKER_PCT > 0) {
-        const brokerLamports = await getLamports(takerBroker);
+      if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
+        const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
       }
 
@@ -2256,7 +2504,7 @@ export const testTakeBidLegacy = async ({
       } else {
         const currBidStateLamports = await getLamports(bidState);
         expect((currBidStateLamports ?? 0) - prevBidStateLamports!).eq(
-          -1 * (amount + (fullyFilled ? await tcompSdk.getBidStateRent() : 0))
+          -1 * (amount + (fullyFilled ? bidRent : 0))
         );
       }
     }

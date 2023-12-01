@@ -1,9 +1,9 @@
 import { findListStatePda, TCOMP_ADDR } from "../../src";
 import { BN, Program } from "@coral-xyz/anchor";
-import { getLeafAssetId } from "@metaplex-foundation/mpl-bubblegum";
 import { PublicKey } from "@solana/web3.js";
 import { TEST_PROVIDER } from "../shared";
 import { CpiTest, IDL } from "./idl/cpi_test";
+import { getLeafAssetId } from "@tensor-hq/tensor-common";
 
 export const cpiEdit = async ({
   merkleTree,
@@ -30,7 +30,7 @@ export const cpiEdit = async ({
     TEST_PROVIDER
   );
 
-  const assetId = await getLeafAssetId(merkleTree, nonce);
+  const assetId = getLeafAssetId(merkleTree, nonce);
   const [listState] = findListStatePda({ assetId });
 
   const builder = program.methods

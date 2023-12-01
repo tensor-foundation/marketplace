@@ -26,11 +26,10 @@ Ensure `cargo` is running on v1.69.0.
 
 ## tcomp-sdk
 
-Copy JUST the following over:
+Run this script:
+
 ```
-tsconfig.json
-yarn.lock
-src/
+scripts/cp_sdk_into_public.sh
 ```
 
-For `package.json`, DO NOT COPY ENTIRELY b/c package names + repos are diff: just copy over the deps that changed.
+Make sure diff looks sane in the public repo, tag both repos, create a PR and publish.

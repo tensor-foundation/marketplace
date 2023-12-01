@@ -24,9 +24,14 @@ pub fn handler<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    // TODO: temp while we enable them
-    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
-    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
+    require!(
+        currency_is_whitelisted(currency),
+        TcompError::CurrencyNotYetWhitelisted
+    );
+    require!(
+        maker_broker_is_whitelisted(maker_broker),
+        TcompError::MakerBrokerNotYetWhitelisted
+    );
 
     let list_state = &mut ctx.accounts.list_state;
     list_state.amount = amount;

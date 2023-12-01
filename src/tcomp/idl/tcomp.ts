@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.13.4",
+  "version": "0.14.0",
   "name": "tcomp",
   "constants": [
     {
@@ -18,12 +18,7 @@ export type Tcomp = {
       "value": "31536000"
     },
     {
-      "name": "HUNDRED_PCT_BPS",
-      "type": "u16",
-      "value": "10000"
-    },
-    {
-      "name": "TAKER_BROKER_PCT",
+      "name": "MAKER_BROKER_PCT",
       "type": "u16",
       "value": "0"
     },
@@ -171,10 +166,17 @@ export type Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -225,16 +227,185 @@ export type Tcomp = {
           "type": "u64"
         },
         {
-          "name": "currency",
+          "name": "optionalRoyaltyPct",
           "type": {
-            "option": "publicKey"
+            "option": "u16"
           }
+        }
+      ]
+    },
+    {
+      "name": "buySpl",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcompAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "payerSource",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBrokerAta",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBrokerAta",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
           "type": {
-            "option": "publicKey"
+            "array": [
+              "u8",
+              32
+            ]
           }
+        },
+        {
+          "name": "metaHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "maxAmount",
+          "type": "u64"
         },
         {
           "name": "optionalRoyaltyPct",
@@ -298,7 +469,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "rentPayer",
           "isMut": true,
           "isSigner": true
         }
@@ -409,12 +580,17 @@ export type Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
           "name": "tcompProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -538,6 +714,11 @@ export type Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
@@ -625,6 +806,11 @@ export type Tcomp = {
           "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -651,6 +837,11 @@ export type Tcomp = {
           "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -665,7 +856,7 @@ export type Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -701,6 +892,11 @@ export type Tcomp = {
         {
           "name": "bubblegumProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -813,12 +1009,14 @@ export type Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -834,6 +1032,11 @@ export type Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -880,18 +1083,6 @@ export type Tcomp = {
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -972,12 +1163,14 @@ export type Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -993,6 +1186,11 @@ export type Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -1022,18 +1220,6 @@ export type Tcomp = {
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -1069,12 +1255,14 @@ export type Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -1196,24 +1384,17 @@ export type Tcomp = {
           "docs": [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -1290,11 +1471,27 @@ export type Tcomp = {
             }
           },
           {
+            "name": "rentPayer",
+            "docs": [
+              "owner is the rent payer when this is PublicKey::default"
+            ],
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                128
+                32
+              ]
+            }
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                64
               ]
             }
           }
@@ -1403,6 +1600,13 @@ export type Tcomp = {
             "type": "publicKey"
           },
           {
+            "name": "rentPayer",
+            "docs": [
+              "owner is the rent payer when this is PublicKey::default"
+            ],
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -1421,11 +1625,11 @@ export type Tcomp = {
             }
           },
           {
-            "name": "reserved3",
+            "name": "reserved2",
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }
@@ -2104,12 +2308,37 @@ export type Tcomp = {
       "code": 6133,
       "name": "BadMintProof",
       "msg": "bad mint proof"
+    },
+    {
+      "code": 6134,
+      "name": "CurrencyMismatch",
+      "msg": "Currency mismatch"
+    },
+    {
+      "code": 6135,
+      "name": "BidBalanceNotEmptied",
+      "msg": "The bid balance was not emptied"
+    },
+    {
+      "code": 6136,
+      "name": "BadRentDest",
+      "msg": "Bad rent dest."
+    },
+    {
+      "code": 6137,
+      "name": "CurrencyNotYetWhitelisted",
+      "msg": "currency not yet whitelisted"
+    },
+    {
+      "code": 6138,
+      "name": "MakerBrokerNotYetWhitelisted",
+      "msg": "maker broker not yet whitelisted"
     }
   ]
 };
 
 export const IDL: Tcomp = {
-  "version": "0.13.4",
+  "version": "0.14.0",
   "name": "tcomp",
   "constants": [
     {
@@ -2128,12 +2357,7 @@ export const IDL: Tcomp = {
       "value": "31536000"
     },
     {
-      "name": "HUNDRED_PCT_BPS",
-      "type": "u16",
-      "value": "10000"
-    },
-    {
-      "name": "TAKER_BROKER_PCT",
+      "name": "MAKER_BROKER_PCT",
       "type": "u16",
       "value": "0"
     },
@@ -2281,10 +2505,17 @@ export const IDL: Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -2335,16 +2566,185 @@ export const IDL: Tcomp = {
           "type": "u64"
         },
         {
-          "name": "currency",
+          "name": "optionalRoyaltyPct",
           "type": {
-            "option": "publicKey"
+            "option": "u16"
           }
+        }
+      ]
+    },
+    {
+      "name": "buySpl",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tcompAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treeAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "merkleTree",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "logWrapper",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "compressionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bubblegumProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "payerSource",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBrokerAta",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBrokerAta",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "index",
+          "type": "u32"
+        },
+        {
+          "name": "root",
           "type": {
-            "option": "publicKey"
+            "array": [
+              "u8",
+              32
+            ]
           }
+        },
+        {
+          "name": "metaHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "creatorShares",
+          "type": "bytes"
+        },
+        {
+          "name": "creatorVerified",
+          "type": {
+            "vec": "bool"
+          }
+        },
+        {
+          "name": "sellerFeeBasisPoints",
+          "type": "u16"
+        },
+        {
+          "name": "maxAmount",
+          "type": "u64"
         },
         {
           "name": "optionalRoyaltyPct",
@@ -2408,7 +2808,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "rentPayer",
           "isMut": true,
           "isSigner": true
         }
@@ -2519,12 +2919,17 @@ export const IDL: Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
           "name": "tcompProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -2648,6 +3053,11 @@ export const IDL: Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": true
         }
       ],
       "args": [
@@ -2735,6 +3145,11 @@ export const IDL: Tcomp = {
           "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -2761,6 +3176,11 @@ export const IDL: Tcomp = {
           "name": "tcompProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -2775,7 +3195,7 @@ export const IDL: Tcomp = {
         },
         {
           "name": "owner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -2811,6 +3231,11 @@ export const IDL: Tcomp = {
         {
           "name": "bubblegumProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -2923,12 +3348,14 @@ export const IDL: Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -2944,6 +3371,11 @@ export const IDL: Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -2990,18 +3422,6 @@ export const IDL: Tcomp = {
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -3082,12 +3502,14 @@ export const IDL: Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -3103,6 +3525,11 @@ export const IDL: Tcomp = {
           "name": "cosigner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -3132,18 +3559,6 @@ export const IDL: Tcomp = {
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -3179,12 +3594,14 @@ export const IDL: Tcomp = {
         {
           "name": "takerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "makerBroker",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "marginAccount",
@@ -3306,24 +3723,17 @@ export const IDL: Tcomp = {
           "docs": [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
+        },
+        {
+          "name": "rentPayer",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "minAmount",
           "type": "u64"
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
         },
         {
           "name": "optionalRoyaltyPct",
@@ -3400,11 +3810,27 @@ export const IDL: Tcomp = {
             }
           },
           {
+            "name": "rentPayer",
+            "docs": [
+              "owner is the rent payer when this is PublicKey::default"
+            ],
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                128
+                32
+              ]
+            }
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                64
               ]
             }
           }
@@ -3513,6 +3939,13 @@ export const IDL: Tcomp = {
             "type": "publicKey"
           },
           {
+            "name": "rentPayer",
+            "docs": [
+              "owner is the rent payer when this is PublicKey::default"
+            ],
+            "type": "publicKey"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
@@ -3531,11 +3964,11 @@ export const IDL: Tcomp = {
             }
           },
           {
-            "name": "reserved3",
+            "name": "reserved2",
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }
@@ -4214,6 +4647,31 @@ export const IDL: Tcomp = {
       "code": 6133,
       "name": "BadMintProof",
       "msg": "bad mint proof"
+    },
+    {
+      "code": 6134,
+      "name": "CurrencyMismatch",
+      "msg": "Currency mismatch"
+    },
+    {
+      "code": 6135,
+      "name": "BidBalanceNotEmptied",
+      "msg": "The bid balance was not emptied"
+    },
+    {
+      "code": 6136,
+      "name": "BadRentDest",
+      "msg": "Bad rent dest."
+    },
+    {
+      "code": 6137,
+      "name": "CurrencyNotYetWhitelisted",
+      "msg": "currency not yet whitelisted"
+    },
+    {
+      "code": 6138,
+      "name": "MakerBrokerNotYetWhitelisted",
+      "msg": "maker broker not yet whitelisted"
     }
   ]
 };

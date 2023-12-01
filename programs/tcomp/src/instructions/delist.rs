@@ -12,7 +12,7 @@ pub struct Delist<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(mut, close = owner,
+    #[account(mut, close = rent_dest,
         seeds=[
             b"list_state".as_ref(),
             list_state.asset_id.as_ref(),
@@ -21,9 +21,13 @@ pub struct Delist<'info> {
         has_one = owner
     )]
     pub list_state: Box<Account<'info, ListState>>,
-    #[account(mut)]
     pub owner: Signer<'info>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
+    /// CHECK: list_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_dest: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }

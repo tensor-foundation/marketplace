@@ -10,7 +10,9 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller: &'a AccountInfo<'info>,
     pub margin_account: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
-    pub taker_broker: &'a UncheckedAccount<'info>,
+    pub rent_payer: &'a UncheckedAccount<'info>,
+    pub maker_broker: &'a Option<UncheckedAccount<'info>>,
+    pub taker_broker: &'a Option<UncheckedAccount<'info>>,
     pub tcomp: &'a AccountInfo<'info>,
     pub asset_id: Pubkey,
     pub token_standard: Option<TokenStandard>,
@@ -30,6 +32,8 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         seller,
         margin_account,
         owner,
+        rent_payer,
+        maker_broker,
         taker_broker,
         tcomp,
         asset_id,
@@ -52,7 +56,13 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let currency = bid_state.currency;
     require!(amount >= min_amount, TcompError::PriceMismatch);
 
-    let (tcomp_fee, broker_fee) = calc_fees(amount, TCOMP_FEE_BPS, TAKER_BROKER_PCT)?;
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+        amount,
+        TCOMP_FEE_BPS,
+        MAKER_BROKER_PCT,
+        maker_broker.as_ref().map(|acc| acc.key()),
+        taker_broker.as_ref().map(|acc| acc.key()),
+    )?;
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
@@ -71,9 +81,8 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
             amount,
             tcomp_fee,
             quantity: bid_state.quantity_left()?,
-            taker_broker_fee: broker_fee,
-            //TODO: maker broker disabled
-            maker_broker_fee: 0,
+            taker_broker_fee,
+            maker_broker_fee,
             creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
             asset_id: Some(asset_id),
@@ -116,34 +125,39 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     }
 
     // Pay fees
-    transfer_lamports_from_pda(
-        &bid_state.to_account_info(),
-        &tcomp.to_account_info(),
-        tcomp_fee,
+    transfer_lamports_from_pda(bid_state.deref().as_ref(), tcomp, tcomp_fee)?;
+
+    transfer_lamports_from_pda_min_balance(
+        bid_state.deref().as_ref(),
+        maker_broker.as_deref().unwrap_or(tcomp),
+        maker_broker_fee,
     )?;
 
-    transfer_lamports_from_pda(
-        &bid_state.to_account_info(),
-        &taker_broker.to_account_info(),
-        broker_fee,
+    transfer_lamports_from_pda_min_balance(
+        bid_state.deref().as_ref(),
+        taker_broker.as_deref().unwrap_or(tcomp),
+        taker_broker_fee,
     )?;
 
     // Pay creators
     let actual_creator_fee = transfer_creators_fee(
-        &FromAcc::Pda(&bid_state.to_account_info()),
         &creators,
         &mut creator_accounts.iter(),
         creator_fee,
+        &CreatorFeeMode::Sol {
+            from: &FromAcc::Pda(bid_state.deref().as_ref()),
+        },
     )?;
 
     // Pay the seller
     transfer_lamports_from_pda(
-        &bid_state.to_account_info(),
-        &seller.to_account_info(),
+        bid_state.deref().as_ref(),
+        seller,
         unwrap_checked!({
             amount
                 .checked_sub(tcomp_fee)?
-                .checked_sub(broker_fee)?
+                .checked_sub(maker_broker_fee)?
+                .checked_sub(taker_broker_fee)?
                 .checked_sub(actual_creator_fee)
         }),
     )?;
@@ -152,12 +166,28 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     // Close account if fully filled
     if bid_state.quantity_left() == Ok(0) {
+        BidState::verify_empty_balance(bid_state)?;
         close_account(
             &mut bid_state.to_account_info(),
-            &mut owner.to_account_info(),
+            &mut rent_payer.to_account_info(),
         )?;
     }
 
+    Ok(())
+}
+
+/// transfers lamports, skipping the transfer if not rent exempt
+fn transfer_lamports_from_pda_min_balance<'info>(
+    from_pda: &AccountInfo<'info>,
+    to: &AccountInfo<'info>,
+    lamports: u64,
+) -> Result<()> {
+    let rent = Rent::get()?.minimum_balance(to.data_len());
+    if unwrap_int!(to.lamports().checked_add(lamports)) < rent {
+        //skip current creator, we can't pay them
+        return Ok(());
+    }
+    transfer_lamports_from_pda(from_pda, to, lamports)?;
     Ok(())
 }
 
@@ -176,7 +206,7 @@ pub fn assert_decode_mint_proof<'info>(
         ],
         program_id,
     );
-    if key != *mint_proof.to_account_info().key {
+    if key != mint_proof.key() {
         throw_err!(TcompError::BadMintProof);
     }
     // Check program owner (redundant because of find_program_address above, but why not).
@@ -184,5 +214,5 @@ pub fn assert_decode_mint_proof<'info>(
         throw_err!(TcompError::BadMintProof);
     }
 
-    Account::try_from(&mint_proof.to_account_info())
+    Account::try_from(mint_proof.deref())
 }

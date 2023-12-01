@@ -1,3 +1,5 @@
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import Mexp from "math-expression-evaluator";
 
 export const DEFAULT_COMPUTE_UNITS = 200_000;
@@ -21,4 +23,9 @@ export type AccountSuffix =
 export const evalMathExpr = (str: string) => {
   const mexp = new Mexp();
   return mexp.eval(str, [], {});
+};
+
+//todo: move to common
+export const findAta = (mint: PublicKey, owner: PublicKey): PublicKey => {
+  return getAssociatedTokenAddressSync(mint, owner, true);
 };

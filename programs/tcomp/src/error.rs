@@ -71,4 +71,14 @@ pub enum TcompError {
     BadCosigner = 132,
     #[msg("bad mint proof")]
     BadMintProof = 133,
+    #[msg("Currency mismatch")]
+    CurrencyMismatch = 134,
+    #[msg("The bid balance was not emptied")]
+    BidBalanceNotEmptied = 135,
+    #[msg("Bad rent dest.")]
+    BadRentDest = 136,
+    #[msg("currency not yet whitelisted")]
+    CurrencyNotYetWhitelisted = 137,
+    #[msg("maker broker not yet whitelisted")]
+    MakerBrokerNotYetWhitelisted = 138,
 }

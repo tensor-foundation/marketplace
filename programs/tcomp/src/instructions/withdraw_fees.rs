@@ -31,7 +31,7 @@ pub fn handler(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
         &ctx.accounts.destination.key(),
         amount,
     );
-    let (_, bump) = Pubkey::find_program_address(&[], &ID);
+    let (_, bump) = find_neutral_broker();
 
     invoke_signed(
         &ixs,

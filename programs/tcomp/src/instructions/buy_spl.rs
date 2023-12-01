@@ -1,11 +1,17 @@
 use crate::*;
 
 #[derive(Accounts)]
-pub struct Buy<'info> {
+pub struct BuySpl<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
     #[account(mut, seeds=[], bump)]
     pub tcomp: UncheckedAccount<'info>,
+    #[account(init_if_needed,
+        payer = rent_payer,
+        associated_token::mint = currency,
+        associated_token::authority = tcomp,
+    )]
+    pub tcomp_ata: Box<Account<'info, TokenAccount>>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -16,6 +22,8 @@ pub struct Buy<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(mut, close = rent_dest,
         seeds=[
             b"list_state".as_ref(),
@@ -23,34 +31,60 @@ pub struct Buy<'info> {
         ],
         bump = list_state.bump[0],
         has_one = owner,
-        constraint = list_state.currency.is_none() @ TcompError::CurrencyMismatch,
+        constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
     /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
     pub buyer: UncheckedAccount<'info>,
-    #[account(mut)]
     pub payer: Signer<'info>,
-    // Owner needs to be passed in as mutable account, so we reassign lamports back to them
+    #[account(mut,
+      token::mint = currency,
+      token::authority = payer,
+    )]
+    pub payer_source: Box<Account<'info, TokenAccount>>,
     /// CHECK: has_one = owner on list_state
-    #[account(mut)]
     pub owner: UncheckedAccount<'info>,
+    #[account(init_if_needed,
+      payer = rent_payer,
+      associated_token::mint = currency,
+      associated_token::authority = owner,
+    )]
+    pub owner_dest: Box<Account<'info, TokenAccount>>,
+    /// CHECK: list_state.currency
+    pub currency: Box<Account<'info, Mint>>,
+    // TODO: brokers are Option<T> to save bytes
     /// CHECK: none, can be anything
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
+    #[account(init_if_needed,
+        payer = rent_payer,
+        associated_token::mint = currency,
+        associated_token::authority = taker_broker,
+    )]
+    pub taker_broker_ata: Option<Box<Account<'info, TokenAccount>>>,
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
+    #[account(init_if_needed,
+        payer = rent_payer,
+        associated_token::mint = currency,
+        associated_token::authority = maker_broker,
+    )]
+    pub maker_broker_ata: Option<Box<Account<'info, TokenAccount>>>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_dest: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub rent_payer: Signer<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
+    // 2. creators atas (1-5)
     // 2. proof accounts (less canopy)
 }
 
-impl<'info> Validate<'info> for Buy<'info> {
+impl<'info> Validate<'info> for BuySpl<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
         require!(
@@ -71,38 +105,46 @@ impl<'info> Validate<'info> for Buy<'info> {
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // maker_broker accs are both None or Some
+        #[rustfmt::skip]
+        require!(
+            (self.maker_broker.is_some() && self.maker_broker_ata.is_some()) ||
+            (self.maker_broker.is_none() && self.maker_broker_ata.is_none()),
+            TcompError::BrokerMismatch
+        );
+
+        //taker_broker accs are both None or Some
+        #[rustfmt::skip]
+        require!(
+            (self.taker_broker.is_some() && self.taker_broker_ata.is_some()) ||
+            (self.taker_broker.is_none() && self.taker_broker_ata.is_none()),
+            TcompError::BrokerMismatch
+        );
         Ok(())
     }
 }
 
-impl<'info> Buy<'info> {
-    fn transfer_lamports(&self, to: &AccountInfo<'info>, lamports: u64) -> Result<()> {
-        invoke(
-            &system_instruction::transfer(self.payer.key, to.key, lamports),
-            &[
-                self.payer.to_account_info(),
-                to.clone(),
-                self.system_program.to_account_info(),
-            ],
-        )
-        .map_err(Into::into)
-    }
-
-    /// transfers lamports, skipping the transfer if not rent exempt
-    fn transfer_lamports_min_balance(&self, to: &AccountInfo<'info>, lamports: u64) -> Result<()> {
-        let rent = Rent::get()?.minimum_balance(to.data_len());
-        if unwrap_int!(to.lamports().checked_add(lamports)) < rent {
-            //skip current creator, we can't pay them
-            return Ok(());
-        }
-        self.transfer_lamports(to, lamports)?;
+impl<'info> BuySpl<'info> {
+    fn transfer_ata(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
+        anchor_spl::token::transfer(
+            CpiContext::new(
+                self.token_program.to_account_info(),
+                anchor_spl::token::Transfer {
+                    from: self.payer_source.to_account_info(),
+                    to: to.to_account_info(),
+                    authority: self.payer.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
         Ok(())
     }
 }
 
 #[access_control(ctx.accounts.validate())]
 pub fn handler<'info>(
-    ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
+    ctx: Context<'_, '_, '_, 'info, BuySpl<'info>>,
     nonce: u64,
     index: u32,
     root: [u8; 32],
@@ -123,7 +165,14 @@ pub fn handler<'info>(
         TcompError::OptionalRoyaltiesNotYetEnabled
     );
 
-    let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
+    let (creator_accounts, remaining_accounts) =
+        ctx.remaining_accounts.split_at(creator_shares.len());
+    let (creator_ata_accounts, proof_accounts) = remaining_accounts.split_at(creator_shares.len());
+    let creator_accounts_with_ata = creator_accounts
+        .iter()
+        .zip(creator_ata_accounts.iter())
+        .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
+        .collect::<Vec<_>>();
 
     // Verification occurs during transfer_cnft (ie creator_shares/verified/royalty checked via creator_hash).
     let CnftArgs {
@@ -139,7 +188,7 @@ pub fn handler<'info>(
             creator_verified,
             seller_fee_basis_points,
         }),
-        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
+        merkle_tree: ctx.accounts.merkle_tree.deref(),
         creator_accounts,
     })?;
 
@@ -147,7 +196,10 @@ pub fn handler<'info>(
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
+    require!(
+        list_state.currency == Some(ctx.accounts.currency.key()),
+        TcompError::CurrencyMismatch
+    );
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
@@ -171,17 +223,17 @@ pub fn handler<'info>(
         index,
         data_hash,
         creator_hash,
-        tree_authority: &ctx.accounts.tree_authority.to_account_info(),
-        leaf_owner: &ctx.accounts.list_state.to_account_info(),
-        leaf_delegate: &ctx.accounts.list_state.to_account_info(),
-        new_leaf_owner: &ctx.accounts.buyer.to_account_info(),
-        merkle_tree: &ctx.accounts.merkle_tree.to_account_info(),
-        log_wrapper: &ctx.accounts.log_wrapper.to_account_info(),
-        compression_program: &ctx.accounts.compression_program.to_account_info(),
-        system_program: &ctx.accounts.system_program.to_account_info(),
-        bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
+        tree_authority: ctx.accounts.tree_authority.deref(),
+        leaf_owner: ctx.accounts.list_state.deref().as_ref(),
+        leaf_delegate: ctx.accounts.list_state.deref().as_ref(),
+        new_leaf_owner: ctx.accounts.buyer.deref(),
+        merkle_tree: ctx.accounts.merkle_tree.deref(),
+        log_wrapper: ctx.accounts.log_wrapper.deref(),
+        compression_program: ctx.accounts.compression_program.deref(),
+        system_program: ctx.accounts.system_program.deref(),
+        bubblegum_program: ctx.accounts.bubblegum_program.deref(),
         proof_accounts,
-        signer: Some(&ctx.accounts.list_state.to_account_info()),
+        signer: Some(ctx.accounts.list_state.deref().as_ref()),
         signer_seeds: Some(&ctx.accounts.list_state.seeds()),
     })?;
 
@@ -206,46 +258,51 @@ pub fn handler<'info>(
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // --------------------------------------- sol transfers
+    // --------------------------------------- token transfers
 
     // Pay fees
     ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+        .transfer_ata(ctx.accounts.tcomp_ata.deref().as_ref(), tcomp_fee)?;
 
-    ctx.accounts.transfer_lamports_min_balance(
-        &ctx.accounts
-            .maker_broker
+    ctx.accounts.transfer_ata(
+        ctx.accounts
+            .maker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
-            .to_account_info(),
+            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .deref()
+            .as_ref(),
         maker_broker_fee,
     )?;
 
-    ctx.accounts.transfer_lamports_min_balance(
-        &ctx.accounts
-            .taker_broker
+    ctx.accounts.transfer_ata(
+        ctx.accounts
+            .taker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
-            .to_account_info(),
+            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .deref()
+            .as_ref(),
         taker_broker_fee,
     )?;
 
     // Pay creators
     transfer_creators_fee(
         &creators.into_iter().map(Into::into).collect(),
-        &mut creator_accounts.iter(),
+        &mut creator_accounts_with_ata.iter(),
         creator_fee,
-        &CreatorFeeMode::Sol {
-            from: &FromAcc::External(&FromExternal {
-                from: &ctx.accounts.payer.to_account_info(),
-                sys_prog: &ctx.accounts.system_program,
-            }),
+        &CreatorFeeMode::Spl {
+            associated_token_program: &ctx.accounts.associated_token_program,
+            token_program: &ctx.accounts.token_program,
+            system_program: &ctx.accounts.system_program,
+            currency: ctx.accounts.currency.deref().as_ref(),
+            from: &ctx.accounts.payer,
+            from_token_acc: ctx.accounts.payer_source.deref().as_ref(),
+            rent_payer: &ctx.accounts.rent_payer,
         },
     )?;
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
-        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+        .transfer_ata(ctx.accounts.owner_dest.deref().as_ref(), amount)?;
 
     Ok(())
 }

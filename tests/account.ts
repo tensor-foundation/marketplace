@@ -5,23 +5,34 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   createAccount,
+  createAssociatedTokenAccountIdempotent,
   createMint,
   getAccount as _getAccount,
+  getMint as _getMint,
   mintTo,
+  TokenAccountNotFoundError,
 } from "@solana/spl-token";
 import {
   Connection,
   Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import { test_utils, TMETA_PROG_ID } from "@tensor-hq/tensor-common";
+import {
+  getNftTokenAcc,
+  test_utils,
+  TMETA_PROG_ID,
+} from "@tensor-hq/tensor-common";
+import { findAta } from "../src";
 import {
   buildAndSendTx,
   TEST_CONN_PAYER,
   TEST_KEYPAIR,
   TEST_PROVIDER,
+  TEST_USDC,
+  TEST_USDC_AUTHORITY,
 } from "./shared";
 
 export const transferLamports = async (
@@ -86,6 +97,19 @@ export const createAndFundAta = (
 
 export const getAccount = (acct: PublicKey) =>
   _getAccount(TEST_PROVIDER.connection, acct, "confirmed");
+export const getMint = (acct: PublicKey) =>
+  _getMint(TEST_PROVIDER.connection, acct, "confirmed");
+
+export const getTokenBalance = async (acct: PublicKey) => {
+  try {
+    return Number((await getAccount(acct)).amount);
+  } catch (err) {
+    if (err instanceof TokenAccountNotFoundError) {
+      return undefined;
+    }
+    throw err;
+  }
+};
 
 export const getBalance = (acct: PublicKey) =>
   TEST_PROVIDER.connection.getBalance(acct, "confirmed");
@@ -124,11 +148,31 @@ export const makeMintTwoAta = async ({
 };
 
 export const makeNTraders = async ({ n, sol }: { n: number; sol?: number }) => {
-  return test_utils.makeNTraders({
-    ...TEST_CONN_PAYER,
-    n,
-    sol,
-  });
+  return await Promise.all([
+    ...(
+      await test_utils.makeNTraders({
+        ...TEST_CONN_PAYER,
+        n,
+        sol,
+      })
+    ).map(async (trader) => {
+      await createAssociatedTokenAccountIdempotent(
+        TEST_CONN_PAYER.conn,
+        TEST_CONN_PAYER.payer,
+        TEST_USDC,
+        trader.publicKey
+      );
+      await mintTo(
+        TEST_CONN_PAYER.conn,
+        TEST_CONN_PAYER.payer,
+        TEST_USDC,
+        findAta(TEST_USDC, trader.publicKey),
+        TEST_USDC_AUTHORITY,
+        LAMPORTS_PER_SOL * 1_000_000
+      );
+      return trader;
+    }),
+  ]);
 };
 
 export const initCollection = async ({

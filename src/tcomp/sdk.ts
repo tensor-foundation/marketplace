@@ -24,7 +24,6 @@ import {
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
@@ -67,17 +66,22 @@ import {
   DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
   DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
+  findAta,
 } from "../shared";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
+import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
+import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
+import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
 import {
   IDL as IDL_v0_11_0,
   Tcomp as TComp_v0_11_0,
 } from "./idl/tcomp_v0_11_0";
-import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
-import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
-import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
+import {
+  IDL as IDL_v0_13_4,
+  Tcomp as Tcomp_v0_13_4,
+} from "./idl/tcomp_v0_13_4";
 import {
   findBidStatePda,
   findListStatePda,
@@ -105,14 +109,19 @@ export const TCompIDL_v0_11_0 = IDL_v0_11_0;
 export const TCompIDL_v0_11_0_EffSlot = 225359236;
 
 //add proof account for legacy take bid https://solscan.io/tx/2MELxB2wAWp3UVaEmktNJeA85vhVhuerfaw7M4hgCx4wjqLrsJ3xQNMgKyypy17MyV8Meem9G5WX1pmoci5XSrK
+export const TCompIDL_v0_13_4 = IDL_v0_13_4;
+export const TCompIDL_v0_13_4_EffSlot = 225783471;
+
+//add rent payer, gameshift broker, USDC buy TODO: solscan link and slot
 export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 225783471;
+export const TCompIDL_latest_EffSlot = 0; // TODO: solscan link and slot
 
 export type TcompIDL =
   | TComp_v0_1_0
   | TComp_v0_4_0
   | TComp_v0_6_0
   | TComp_v0_11_0
+  | Tcomp_v0_13_4
   | TComp_latest;
 
 // Use this function to figure out which IDL to use based on the slot # of historical txs.
@@ -121,7 +130,8 @@ export const triageTCompIDL = (slot: number | bigint): TcompIDL | null => {
   if (slot < TCompIDL_v0_4_0_EffSlot) return TCompIDL_v0_1_0;
   if (slot < TCompIDL_v0_6_0_EffSlot) return TCompIDL_v0_4_0;
   if (slot < TCompIDL_v0_11_0_EffSlot) return TCompIDL_v0_6_0;
-  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_11_0;
+  if (slot < TCompIDL_v0_13_4_EffSlot) return TCompIDL_v0_11_0;
+  if (slot < TCompIDL_latest_EffSlot) return TCompIDL_v0_13_4;
   return TCompIDL_latest;
 };
 
@@ -135,8 +145,8 @@ export const CURRENT_TCOMP_VERSION: number = +IDL_latest.constants.find(
 export const TCOMP_FEE_BPS: number = +IDL_latest.constants.find(
   (c) => c.name === "TCOMP_FEE_BPS"
 )!.value;
-export const TAKER_BROKER_PCT: number = +IDL_latest.constants.find(
-  (c) => c.name === "TAKER_BROKER_PCT"
+export const MAKER_BROKER_PCT: number = +IDL_latest.constants.find(
+  (c) => c.name === "MAKER_BROKER_PCT"
 )!.value;
 export const LIST_STATE_SIZE: number = evalMathExpr(
   IDL_latest.constants.find((c) => c.name === "LIST_STATE_SIZE")!.value
@@ -343,6 +353,8 @@ export type BidStateAnchor = {
   margin: PublicKey | null;
   updatedAt: BN;
   cosigner: PublicKey;
+  /** owner is the rent payer when this is PublicKey.default */
+  rentPayer: PublicKey;
 };
 export type ListStateAnchor = {
   version: number;
@@ -354,6 +366,8 @@ export type ListStateAnchor = {
   expiry: BN;
   privateTaker: PublicKey | null;
   makerBroker: PublicKey | null;
+  /** owner is the rent payer when this is PublicKey.default */
+  rentPayer: PublicKey;
 };
 
 export type TCompPdaAnchor = BidStateAnchor | ListStateAnchor;
@@ -446,7 +460,7 @@ export class TCompSDK {
     currency = null,
     makerBroker = null,
     privateTaker = null,
-    payer = null,
+    rentPayer = null,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
@@ -467,7 +481,7 @@ export class TCompSDK {
     currency?: PublicKey | null;
     makerBroker?: PublicKey | null;
     privateTaker?: PublicKey | null;
-    payer?: PublicKey | null;
+    rentPayer?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
@@ -509,7 +523,7 @@ export class TCompSDK {
         delegate,
         owner,
         listState,
-        payer: payer ?? owner,
+        rentPayer: rentPayer ?? owner,
       })
       .remainingAccounts(proofPath);
 
@@ -586,6 +600,7 @@ export class TCompSDK {
   async delist({
     merkleTree,
     owner,
+    rentDest,
     proof,
     root,
     dataHash,
@@ -598,6 +613,7 @@ export class TCompSDK {
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
+    rentDest: PublicKey;
     proof: Buffer[];
     root: number[];
     dataHash: Buffer;
@@ -612,7 +628,7 @@ export class TCompSDK {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
@@ -632,6 +648,7 @@ export class TCompSDK {
         merkleTree,
         treeAuthority,
         owner,
+        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
         listState,
       })
       .remainingAccounts(proofPath);
@@ -665,13 +682,13 @@ export class TCompSDK {
     nonce,
     index,
     maxAmount,
-    currency = null,
-    makerBroker = null,
+    makerBroker,
+    takerBroker = null,
     optionalRoyaltyPct = 100,
     owner,
     buyer,
     payer = null,
-    takerBroker = null,
+    rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
@@ -686,13 +703,13 @@ export class TCompSDK {
     nonce?: BN;
     index: number;
     maxAmount: BN;
-    currency?: PublicKey | null;
-    makerBroker?: PublicKey | null;
+    makerBroker: PublicKey | null;
+    takerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
     buyer: PublicKey;
     payer?: PublicKey | null;
-    takerBroker?: PublicKey | null;
+    rentDest: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
@@ -701,7 +718,7 @@ export class TCompSDK {
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
     const [tcomp] = findTCompPda({});
-    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
     let creatorsPath = creators.map((c) => ({
@@ -725,8 +742,6 @@ export class TCompSDK {
         creators.map((c) => c.verified),
         sellerFeeBasisPoints,
         maxAmount,
-        currency,
-        makerBroker,
         optionalRoyaltyPct
       )
       .accounts({
@@ -740,12 +755,145 @@ export class TCompSDK {
         buyer,
         payer: payer ?? buyer,
         owner,
+        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
         listState,
         tcomp,
-        takerBroker: takerBroker ?? tcomp,
-        makerBroker: makerBroker ?? tcomp,
+        takerBroker,
+        makerBroker,
       })
       .remainingAccounts([...creatorsPath, ...proofPath]);
+
+    const ixs = prependComputeIxs(
+      [await builder.instruction()],
+      compute,
+      priorityMicroLamports
+    );
+
+    return {
+      builder,
+      tx: {
+        ixs,
+        extraSigners: [],
+      },
+      listState,
+      treeAuthority,
+      tcomp,
+      creators,
+      proofPath,
+    };
+  }
+
+  async buySpl({
+    merkleTree,
+    proof,
+    root,
+    metaHash,
+    creators,
+    sellerFeeBasisPoints,
+    nonce,
+    index,
+    maxAmount,
+    currency,
+    makerBroker,
+    takerBroker = null,
+    optionalRoyaltyPct = 100,
+    owner,
+    buyer,
+    payer = null,
+    rentPayer = null,
+    rentDest,
+    compute = DEFAULT_XFER_COMPUTE_UNITS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    canopyDepth = 0,
+  }: {
+    merkleTree: PublicKey;
+    proof: Buffer[];
+    root: number[];
+    metaHash: Buffer;
+    creators: Creator[];
+    sellerFeeBasisPoints: number;
+    //in most cases nonce == index and doesn't need to passed in separately
+    nonce?: BN;
+    index: number;
+    maxAmount: BN;
+    currency: PublicKey;
+    makerBroker: PublicKey | null;
+    takerBroker?: PublicKey | null;
+    optionalRoyaltyPct?: number | null;
+    owner: PublicKey;
+    buyer: PublicKey;
+    payer?: PublicKey | null;
+    rentPayer?: PublicKey | null;
+    rentDest: PublicKey;
+    compute?: number | null;
+    priorityMicroLamports?: number | null;
+    canopyDepth?: number;
+  }) {
+    nonce = nonce ?? new BN(index);
+
+    const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
+    const [tcomp] = findTCompPda({});
+    const assetId = getLeafAssetId(merkleTree, nonce);
+    const [listState] = findListStatePda({ assetId });
+    const takerBrokerAta = takerBroker ? findAta(currency, takerBroker) : null;
+    const makerBrokerAta = makerBroker ? findAta(currency, makerBroker) : null;
+    const tcompAta = findAta(currency, tcomp);
+    const payerSource = findAta(currency, payer ?? buyer);
+    const ownerDest = findAta(currency, owner);
+
+    let creatorsPath = creators.map((c) => ({
+      pubkey: c.address,
+      isSigner: false,
+      isWritable: true,
+    }));
+    let creatorAtasPath = creators.map((c) => ({
+      pubkey: findAta(currency, c.address),
+      isSigner: false,
+      isWritable: true,
+    }));
+    let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
+      pubkey: new PublicKey(b),
+      isSigner: false,
+      isWritable: false,
+    }));
+
+    const builder = this.program.methods
+      .buySpl(
+        nonce,
+        index,
+        root,
+        [...metaHash],
+        Buffer.from(creators.map((c) => c.share)),
+        creators.map((c) => c.verified),
+        sellerFeeBasisPoints,
+        maxAmount,
+        optionalRoyaltyPct
+      )
+      .accounts({
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+        tcompProgram: TCOMP_ADDR,
+        merkleTree,
+        treeAuthority,
+        buyer,
+        payer: payer ?? buyer,
+        payerSource,
+        owner,
+        ownerDest,
+        rentPayer: rentPayer ?? payer ?? buyer,
+        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+        listState,
+        tcomp,
+        tcompAta,
+        currency,
+        takerBroker,
+        takerBrokerAta,
+        makerBroker,
+        makerBrokerAta,
+      })
+      .remainingAccounts([...creatorsPath, ...creatorAtasPath, ...proofPath]);
 
     const ixs = prependComputeIxs(
       [await builder.instruction()],
@@ -784,6 +932,7 @@ export class TCompSDK {
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     margin = null,
     cosigner = null,
+    rentPayer = null,
   }: {
     target: Target;
     targetId: PublicKey;
@@ -801,6 +950,7 @@ export class TCompSDK {
     priorityMicroLamports?: number | null;
     margin?: PublicKey | null;
     cosigner?: PublicKey | null;
+    rentPayer?: PublicKey | null;
   }) {
     const [bidState] = findBidStatePda({ bidId, owner });
 
@@ -825,6 +975,7 @@ export class TCompSDK {
         bidState,
         marginAccount: margin ?? owner,
         cosigner: cosigner ?? owner,
+        rentPayer: rentPayer ?? owner,
       });
 
     const ixs = prependComputeIxs(
@@ -846,11 +997,13 @@ export class TCompSDK {
   async cancelBid({
     bidId,
     owner,
+    rentDest,
     compute = null,
     priorityMicroLamports = null,
   }: {
     bidId: PublicKey;
     owner: PublicKey;
+    rentDest: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
@@ -859,6 +1012,7 @@ export class TCompSDK {
     const builder = this.program.methods.cancelBid().accounts({
       tcompProgram: TCOMP_ADDR,
       owner,
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       systemProgram: SystemProgram.programId,
       bidState,
     });
@@ -882,11 +1036,13 @@ export class TCompSDK {
   async closeExpiredBid({
     bidId,
     owner,
+    rentDest,
     compute = null,
     priorityMicroLamports = null,
   }: {
     bidId: PublicKey;
     owner: PublicKey;
+    rentDest: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
@@ -897,6 +1053,7 @@ export class TCompSDK {
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
     });
 
     const ixs = prependComputeIxs(
@@ -918,6 +1075,7 @@ export class TCompSDK {
   async closeExpiredListing({
     merkleTree,
     owner,
+    rentDest,
     proof,
     root,
     dataHash,
@@ -930,6 +1088,7 @@ export class TCompSDK {
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
+    rentDest: PublicKey;
     proof: Buffer[];
     root: number[];
     dataHash: Buffer;
@@ -944,7 +1103,7 @@ export class TCompSDK {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const assetId = await getLeafAssetId(merkleTree, nonce);
+    const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
 
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
@@ -965,6 +1124,7 @@ export class TCompSDK {
         treeAuthority,
         owner,
         listState,
+        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       })
       .remainingAccounts(proofPath);
 
@@ -997,13 +1157,14 @@ export class TCompSDK {
     index,
     minAmount,
     currency = null,
-    makerBroker = null,
+    makerBroker,
+    takerBroker = null,
     optionalRoyaltyPct = 100,
     owner,
+    rentPayer = owner,
     seller,
     delegate = seller,
     margin = null,
-    takerBroker = null,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
@@ -1030,13 +1191,14 @@ export class TCompSDK {
     index: number;
     minAmount: BN;
     currency?: PublicKey | null;
-    makerBroker?: PublicKey | null;
+    makerBroker: PublicKey | null;
+    takerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
+    rentPayer?: PublicKey;
     seller: PublicKey;
     delegate?: PublicKey;
     margin?: PublicKey | null;
-    takerBroker?: PublicKey | null;
     compute?: number | null;
     priorityMicroLamports?: number | null;
     canopyDepth?: number;
@@ -1076,10 +1238,11 @@ export class TCompSDK {
       treeAuthority,
       seller,
       owner,
+      rentPayer: getTcompRentPayer({ rentPayer, owner }),
       bidState,
       tcomp,
-      takerBroker: takerBroker ?? tcomp,
-      makerBroker: makerBroker ?? tcomp,
+      takerBroker,
+      makerBroker,
       delegate: delegate,
       marginAccount: margin ?? seller,
       tensorswapProgram: TENSORSWAP_ADDR,
@@ -1101,8 +1264,6 @@ export class TCompSDK {
           creators.map((c) => c.verified),
           targetData.data.sellerFeeBasisPoints,
           minAmount,
-          currency,
-          makerBroker,
           optionalRoyaltyPct
         )
         .accounts(accounts)
@@ -1116,8 +1277,6 @@ export class TCompSDK {
           root,
           castMetadata(targetData.data.metadata),
           minAmount,
-          currency,
-          makerBroker,
           optionalRoyaltyPct
         )
         .accounts(accounts)
@@ -1155,13 +1314,14 @@ export class TCompSDK {
     nftMint,
     nftSellerAcc,
     owner,
+    rentPayer = owner,
     seller,
     minAmount,
     currency = null,
-    makerBroker = null,
+    makerBroker,
+    takerBroker = null,
     optionalRoyaltyPct = 100,
     margin = null,
-    takerBroker = null,
     whitelist = null,
     /** pnft args */
     metaCreators,
@@ -1175,18 +1335,19 @@ export class TCompSDK {
     nftMint: PublicKey;
     nftSellerAcc: PublicKey;
     owner: PublicKey;
+    rentPayer?: PublicKey;
     seller: PublicKey;
     minAmount: BN;
     currency?: PublicKey | null;
-    makerBroker?: PublicKey | null;
+    makerBroker: PublicKey | null;
+    takerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     margin?: PublicKey | null;
-    takerBroker?: PublicKey | null;
     whitelist?: PublicKey | null;
     cosigner?: PublicKey | null;
   } & PnftArgs) {
     const [tcomp] = findTCompPda({});
-    const ownerAtaAcc = getAssociatedTokenAddressSync(nftMint, owner, true);
+    const ownerAtaAcc = findAta(nftMint, owner);
     const nftMetadata = findMetadataPda(nftMint)[0];
     const [bidState] = findBidStatePda({ bidId, owner });
     const [escrowPda] = findNftEscrowPda({ nftMint });
@@ -1227,8 +1388,6 @@ export class TCompSDK {
     const builder = this.program.methods
       .takeBidLegacy(
         minAmount,
-        currency,
-        makerBroker,
         optionalRoyaltyPct,
         !!ruleSet,
         authDataSerialized
@@ -1238,8 +1397,9 @@ export class TCompSDK {
         seller,
         bidState,
         owner,
-        takerBroker: takerBroker ?? tcomp,
-        makerBroker: makerBroker ?? tcomp,
+        rentPayer: getTcompRentPayer({ rentPayer, owner }),
+        takerBroker,
+        makerBroker,
         marginAccount: margin ?? seller,
         whitelist: whitelist ?? TENSORSWAP_ADDR,
         nftSellerAcc,
@@ -1577,3 +1737,18 @@ export function deserializeTcompEvent(data: Buffer) {
     throw new Error("unknown event");
   }
 }
+
+//(!!) sync with state.rs:get_rent_payer()
+export const getTcompRentPayer = ({
+  rentPayer,
+  owner,
+}: {
+  rentPayer: PublicKey;
+  owner: PublicKey;
+}): PublicKey => {
+  if (!rentPayer.equals(PublicKey.default)) {
+    return rentPayer;
+  } else {
+    return owner;
+  }
+};

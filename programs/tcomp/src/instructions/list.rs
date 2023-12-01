@@ -17,7 +17,7 @@ pub struct List<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
-    #[account(init, payer = payer,
+    #[account(init, payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
@@ -27,7 +27,7 @@ pub struct List<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub rent_payer: Signer<'info>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
@@ -50,9 +50,14 @@ pub fn handler<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    // TODO: temp while we enable them
-    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
-    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
+    require!(
+        currency_is_whitelisted(currency),
+        TcompError::CurrencyNotYetWhitelisted
+    );
+    require!(
+        maker_broker_is_whitelisted(maker_broker),
+        TcompError::MakerBrokerNotYetWhitelisted
+    );
 
     transfer_cnft(TransferArgs {
         root,
@@ -94,6 +99,7 @@ pub fn handler<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
+    list_state.rent_payer = ctx.accounts.rent_payer.key();
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

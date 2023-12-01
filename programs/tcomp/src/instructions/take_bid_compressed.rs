@@ -36,10 +36,10 @@ pub struct TakeBidCompressed<'info> {
     pub owner: UncheckedAccount<'info>,
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub taker_broker: UncheckedAccount<'info>,
+    pub taker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub maker_broker: UncheckedAccount<'info>,
+    pub maker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
@@ -48,6 +48,11 @@ pub struct TakeBidCompressed<'info> {
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
     pub cosigner: Signer<'info>,
+    /// CHECK: bid_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_payer.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_payer: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -70,19 +75,11 @@ impl<'info> Validate<'info> for TakeBidCompressed<'info> {
                 TcompError::TakerNotAllowed
             );
         }
-        if let Some(maker_broker) = bid_state.maker_broker {
-            require!(
-                maker_broker == self.maker_broker.key(),
-                TcompError::BrokerMismatch
-            )
-        } else {
-            let neutral_broker = Pubkey::find_program_address(&[], &crate::id()).0;
-            require!(
-                self.maker_broker.key() == neutral_broker,
-                TcompError::BrokerMismatch
-            )
-        }
 
+        require!(
+            bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
+            TcompError::BrokerMismatch
+        );
         Ok(())
     }
 }
@@ -131,8 +128,10 @@ impl<'info> TakeBidCompressed<'info> {
             seller: &self.seller,
             margin_account: &self.margin_account,
             owner: &self.owner,
+            rent_payer: &self.rent_payer,
+            maker_broker: &self.maker_broker,
             taker_broker: &self.taker_broker,
-            tcomp: &self.tcomp.to_account_info(),
+            tcomp: self.tcomp.deref(),
             asset_id,
             token_standard: None,
             creators: creators.into_iter().map(Into::into).collect(),

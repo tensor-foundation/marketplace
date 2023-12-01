@@ -5,7 +5,7 @@ pub struct CancelBid<'info> {
     #[account(mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
-        close = owner,
+        close = rent_dest,
         has_one = owner,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
@@ -14,6 +14,11 @@ pub struct CancelBid<'info> {
     pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
+    /// CHECK: bid_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_dest: UncheckedAccount<'info>,
 }
 
 pub fn handler(ctx: Context<CancelBid>) -> Result<()> {
@@ -40,6 +45,15 @@ pub fn handler(ctx: Context<CancelBid>) -> Result<()> {
         &ctx.accounts.tcomp_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
+
+    // return any balance to the owner
+    transfer_lamports_from_pda(
+        ctx.accounts.bid_state.deref().as_ref(),
+        ctx.accounts.owner.as_ref(),
+        BidState::bid_balance(&ctx.accounts.bid_state)?,
+    )?;
+    BidState::verify_empty_balance(&ctx.accounts.bid_state)?;
+    // rent can be returned to the rent payer
 
     Ok(())
 }

@@ -8,13 +8,20 @@ pub const CURRENT_TCOMP_VERSION: u8 = 1;
 pub const TCOMP_FEE_BPS: u16 = 140;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/w liquidity disappears too early)
-#[constant]
-pub const HUNDRED_PCT_BPS: u16 = 10000;
 
 // TODO: currently disabled
 /// NB: (!!) sync with TRoll
 #[constant]
-pub const TAKER_BROKER_PCT: u16 = 0; // Out of 100
+pub const MAKER_BROKER_PCT: u16 = 0; // Out of 100
+
+//(!!) sync with sdk.ts:getRentPayer()
+fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
+    if rent_payer != Pubkey::default() {
+        rent_payer
+    } else {
+        owner
+    }
+}
 
 // --------------------------------------- listing
 
@@ -32,8 +39,11 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
+    /// owner is the rent payer when this is PublicKey::default
+    pub rent_payer: Pubkey,
 
-    pub _reserved: [u8; 128],
+    pub _reserved: [u8; 32],
+    pub _reserved1: [u8; 64],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
@@ -44,6 +54,9 @@ pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) 
 impl ListState {
     pub fn seeds(&self) -> [&[u8]; 3] {
         [b"list_state".as_ref(), self.asset_id.as_ref(), &self.bump]
+    }
+    pub fn get_rent_payer(&self) -> Pubkey {
+        get_rent_payer(self.rent_payer, self.owner)
     }
 }
 
@@ -90,11 +103,13 @@ pub struct BidState {
 
     // Pubkey::default() = none
     pub cosigner: Pubkey,
+    /// owner is the rent payer when this is PublicKey::default
+    pub rent_payer: Pubkey,
 
     //borsh not implemented for u8;56
     pub _reserved: [u8; 8],
     pub _reserved1: [u8; 16],
-    pub _reserved3: [u8; 64],
+    pub _reserved2: [u8; 32],
 }
 
 // (!) INCLUSIVE of discriminator (8 bytes)
@@ -126,5 +141,27 @@ impl BidState {
             self.bid_id.as_ref(),
             &self.bump,
         ]
+    }
+
+    pub fn get_rent_payer(&self) -> Pubkey {
+        get_rent_payer(self.rent_payer, self.owner)
+    }
+
+    /// Bid account balance after rent is deducted. Not associated with margin account balance
+    pub fn bid_balance(bid_state: &Account<BidState>) -> Result<u64> {
+        let info: &AccountInfo = bid_state.as_ref();
+        let bid_rent = Rent::get()?.minimum_balance(info.data_len());
+        let bid_balance = unwrap_int!(info.lamports().checked_sub(bid_rent));
+        Ok(bid_balance)
+    }
+    /// Verify the bid account balance is empty, so that exact rent can be returned to the rent payer
+    pub fn verify_empty_balance(bid_state: &Account<BidState>) -> Result<()> {
+        let info: &AccountInfo = bid_state.as_ref();
+        let bid_rent = Rent::get()?.minimum_balance(info.data_len());
+        require!(
+            info.try_lamports()? == bid_rent,
+            TcompError::BidBalanceNotEmptied
+        );
+        Ok(())
     }
 }

@@ -6,12 +6,11 @@ pub struct CloseExpiredListing<'info> {
         mut,
         seeds=[b"list_state".as_ref(), list_state.asset_id.as_ref()],
         bump = list_state.bump[0],
-        close = owner,
+        close = rent_dest,
         has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
     /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
-    #[account(mut)]
     pub owner: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
@@ -23,6 +22,11 @@ pub struct CloseExpiredListing<'info> {
     pub log_wrapper: Program<'info, Noop>,
     pub compression_program: Program<'info, SplAccountCompression>,
     pub bubblegum_program: Program<'info, Bubblegum>,
+    /// CHECK: list_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_dest: UncheckedAccount<'info>,
 }
 
 pub fn handler<'info>(

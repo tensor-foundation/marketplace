@@ -6,7 +6,7 @@ use tensorswap::assert_decode_margin_account;
 pub struct Bid<'info> {
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
-    #[account(init_if_needed, payer = owner,
+    #[account(init_if_needed, payer = rent_payer,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,
         space = BID_STATE_SIZE,
@@ -23,6 +23,8 @@ pub struct Bid<'info> {
         account(constraint = cosigner.key() == owner.key() || cosigner.key() == Pubkey::from_str("2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH").unwrap()),
     )]
     pub cosigner: Signer<'info>,
+    #[account(mut)]
+    pub rent_payer: Signer<'info>,
 }
 
 impl<'info> Bid<'info> {
@@ -75,6 +77,10 @@ pub fn handler<'info>(
     // At least 1 seems reasonable, else why bother
     require!(quantity >= 1, TcompError::BadQuantity);
 
+    // only set rent_payer when initializing
+    if bid_state.version == 0 {
+        bid_state.rent_payer = ctx.accounts.rent_payer.key();
+    }
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
     bid_state.amount = amount;
@@ -171,14 +177,7 @@ pub fn handler<'info>(
         TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
 
-    let bid_rent =
-        Rent::get()?.minimum_balance(ctx.accounts.bid_state.to_account_info().data_len());
-    let bid_balance = unwrap_int!(ctx
-        .accounts
-        .bid_state
-        .to_account_info()
-        .lamports()
-        .checked_sub(bid_rent));
+    let bid_balance = BidState::bid_balance(&ctx.accounts.bid_state)?;
 
     //transfer lamports
     let margin_account_info = &ctx.accounts.margin_account.to_account_info();

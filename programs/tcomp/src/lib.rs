@@ -9,7 +9,12 @@ pub mod instructions;
 pub mod pnft_adapter;
 pub(crate) mod shared;
 pub mod state;
-pub use std::{io::Write, ops::DerefMut, slice::Iter, str::FromStr};
+pub use std::{
+    io::Write,
+    ops::{Deref, DerefMut},
+    slice::Iter,
+    str::FromStr,
+};
 
 pub use anchor_lang::{
     __private::CLOSED_ACCOUNT_DISCRIMINATOR,
@@ -22,6 +27,10 @@ pub use anchor_lang::{
         system_instruction,
     },
     InstructionData,
+};
+pub use anchor_spl::{
+    associated_token::{create_idempotent, AssociatedToken, Create},
+    token::{Mint, Token, TokenAccount},
 };
 pub use bubblegum_adapter::*;
 pub use error::*;
@@ -40,6 +49,7 @@ pub use mpl_bubblegum::{
 };
 pub use noop::*;
 pub use pnft_adapter::*;
+pub use shared::find_neutral_broker;
 pub(crate) use shared::*;
 pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
@@ -49,6 +59,14 @@ pub use tensorswap::{self, margin_pda, program::Tensorswap, MarginAccount, TSwap
 pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
+
+mod usdc {
+    use anchor_lang::declare_id;
+    #[cfg(not(feature = "testing"))]
+    declare_id!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    #[cfg(feature = "testing")]
+    declare_id!("6mT419DJgaKXAJENHN1wkr5v1oGCK571VffeJ4gYG6Gv");
+}
 
 #[program]
 pub mod tcomp {
@@ -80,11 +98,35 @@ pub mod tcomp {
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
         max_amount: u64,
-        _currency: Option<Pubkey>,
-        _maker_broker: Option<Pubkey>, // TODO: remove if we break this ix? Already an account.
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::buy::handler(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            max_amount,
+            optional_royalty_pct,
+        )
+    }
+
+    pub fn buy_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuySpl<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::buy_spl::handler(
             ctx,
             nonce,
             index,
@@ -225,8 +267,6 @@ pub mod tcomp {
         creator_verified: Vec<bool>,
         seller_fee_basis_points: u16,
         min_amount: u64,
-        _currency: Option<Pubkey>,
-        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::take_bid_compressed::handler_meta_hash(
@@ -250,8 +290,6 @@ pub mod tcomp {
         root: [u8; 32],
         meta_args: TMetadataArgs,
         min_amount: u64,
-        _currency: Option<Pubkey>,
-        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
         instructions::take_bid_compressed::handler_full_meta(
@@ -268,8 +306,6 @@ pub mod tcomp {
     pub fn take_bid_legacy<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBidLegacy<'info>>,
         min_amount: u64,
-        _currency: Option<Pubkey>,
-        _maker_broker: Option<Pubkey>,
         optional_royalty_pct: Option<u16>,
         rules_acc_present: bool,
         authorization_data: Option<AuthorizationDataLocal>,

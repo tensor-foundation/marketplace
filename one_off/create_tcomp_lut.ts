@@ -40,7 +40,7 @@ const conn = new Connection("https://api.mainnet-beta.solana.com");
       SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       //solana
       SystemProgram.programId,
-      TOKEN_PROGRAM_ID, //for future token payments
+      TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID,
       SYSVAR_RENT_PUBKEY,
       SYSVAR_INSTRUCTIONS_PUBKEY,
