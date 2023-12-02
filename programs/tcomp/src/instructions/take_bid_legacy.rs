@@ -155,9 +155,9 @@ pub struct TakeBidLegacy<'info> {
     pub mint_proof: UncheckedAccount<'info>,
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_payer.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_payer: UncheckedAccount<'info>,
+    pub rent_dest: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -338,7 +338,7 @@ pub fn handler<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_payer: &ctx.accounts.rent_payer,
+        rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         tcomp: &ctx.accounts.tcomp.to_account_info(),

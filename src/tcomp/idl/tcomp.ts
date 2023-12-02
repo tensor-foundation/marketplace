@@ -1034,7 +1034,7 @@ export type Tcomp = {
           "isSigner": true
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -1188,7 +1188,7 @@ export type Tcomp = {
           "isSigner": true
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -1386,7 +1386,7 @@ export type Tcomp = {
           ]
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -3373,7 +3373,7 @@ export const IDL: Tcomp = {
           "isSigner": true
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -3527,7 +3527,7 @@ export const IDL: Tcomp = {
           "isSigner": true
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }
@@ -3725,7 +3725,7 @@ export const IDL: Tcomp = {
           ]
         },
         {
-          "name": "rentPayer",
+          "name": "rentDest",
           "isMut": true,
           "isSigner": false
         }

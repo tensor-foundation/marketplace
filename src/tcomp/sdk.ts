@@ -35,12 +35,12 @@ import {
   TransactionResponse,
 } from "@solana/web3.js";
 import {
-  AnchorDiscMap,
+  AcctDiscHexMap,
   AUTH_PROG_ID,
   BUBBLEGUM_PROGRAM_ID,
   decodeAnchorAcct,
   findMetadataPda,
-  genDiscToDecoderMap,
+  genAcctDiscHexMap,
   genIxDiscHexMap,
   getLeafAssetId,
   getRent,
@@ -399,7 +399,7 @@ type PnftArgs = {
 
 export class TCompSDK {
   program: Program<TcompIDL>;
-  discMap: AnchorDiscMap<TcompIDL>;
+  discMap: AcctDiscHexMap<TcompIDL>;
   coder: BorshCoder;
   eventParser: EventParser;
 
@@ -415,7 +415,7 @@ export class TCompSDK {
     coder?: Coder;
   }) {
     this.program = new Program<TcompIDL>(idl, addr, provider, coder);
-    this.discMap = genDiscToDecoderMap(this.program);
+    this.discMap = genAcctDiscHexMap(idl);
     this.coder = new BorshCoder(idl);
     this.eventParser = new EventParser(addr, this.coder);
   }
@@ -1161,7 +1161,7 @@ export class TCompSDK {
     takerBroker = null,
     optionalRoyaltyPct = 100,
     owner,
-    rentPayer = owner,
+    rentDest = owner,
     seller,
     delegate = seller,
     margin = null,
@@ -1195,7 +1195,7 @@ export class TCompSDK {
     takerBroker?: PublicKey | null;
     optionalRoyaltyPct?: number | null;
     owner: PublicKey;
-    rentPayer?: PublicKey;
+    rentDest?: PublicKey;
     seller: PublicKey;
     delegate?: PublicKey;
     margin?: PublicKey | null;
@@ -1238,7 +1238,7 @@ export class TCompSDK {
       treeAuthority,
       seller,
       owner,
-      rentPayer: getTcompRentPayer({ rentPayer, owner }),
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       bidState,
       tcomp,
       takerBroker,
@@ -1397,7 +1397,7 @@ export class TCompSDK {
         seller,
         bidState,
         owner,
-        rentPayer: getTcompRentPayer({ rentPayer, owner }),
+        rentDest: getTcompRentPayer({ rentPayer, owner }),
         takerBroker,
         makerBroker,
         marginAccount: margin ?? seller,

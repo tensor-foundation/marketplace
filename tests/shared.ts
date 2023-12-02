@@ -2070,7 +2070,7 @@ export const testTakeBid = async ({
   memTree,
   index,
   owner,
-  rentPayer = owner,
+  rentDest = owner,
   seller,
   delegate = seller,
   merkleTree,
@@ -2094,7 +2094,7 @@ export const testTakeBid = async ({
   memTree: MerkleTree;
   index: number;
   owner: PublicKey;
-  rentPayer?: PublicKey;
+  rentDest?: PublicKey;
   seller: Keypair;
   delegate?: Keypair;
   merkleTree: PublicKey;
@@ -2138,7 +2138,7 @@ export const testTakeBid = async ({
     seller: seller.publicKey,
     delegate: delegate?.publicKey,
     owner,
-    rentPayer,
+    rentDest,
     merkleTree,
     root: [...proof.root],
     index,
@@ -2158,7 +2158,7 @@ export const testTakeBid = async ({
 
   await withLamports(
     {
-      prevRentPayerLamports: rentPayer,
+      prevRentDestLamports: rentDest,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
@@ -2166,7 +2166,7 @@ export const testTakeBid = async ({
       prevSellerLamports: seller.publicKey,
     },
     async ({
-      prevRentPayerLamports,
+      prevRentDestLamports,
       prevBidStateLamports,
       prevMarginLamports,
       prevTakerBroker,
@@ -2210,8 +2210,8 @@ export const testTakeBid = async ({
           TokenAccountNotFoundError
         );
         // rent payer gets back rent
-        const currRentPayerLamports = await getLamports(rentPayer);
-        expect(currRentPayerLamports! - prevRentPayerLamports!).equal(bidRent);
+        const currRentDestLamports = await getLamports(rentDest);
+        expect(currRentDestLamports! - prevRentDestLamports!).equal(bidRent);
       } else {
         const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
           bidState

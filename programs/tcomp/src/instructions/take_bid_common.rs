@@ -10,7 +10,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller: &'a AccountInfo<'info>,
     pub margin_account: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
-    pub rent_payer: &'a UncheckedAccount<'info>,
+    pub rent_dest: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
     pub taker_broker: &'a Option<UncheckedAccount<'info>>,
     pub tcomp: &'a AccountInfo<'info>,
@@ -32,7 +32,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         seller,
         margin_account,
         owner,
-        rent_payer,
+        rent_dest,
         maker_broker,
         taker_broker,
         tcomp,
@@ -169,7 +169,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         BidState::verify_empty_balance(bid_state)?;
         close_account(
             &mut bid_state.to_account_info(),
-            &mut rent_payer.to_account_info(),
+            &mut rent_dest.to_account_info(),
         )?;
     }
 

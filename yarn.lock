@@ -401,8 +401,8 @@ __metadata:
     "@solana/spl-account-compression": ^0.1.7
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": ^1.0.3
-    "@tensor-hq/tensorswap-ts": ^2.0.3
+    "@tensor-hq/tensor-common": ^1.2.2
+    "@tensor-hq/tensorswap-ts": ^2.0.4
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
     "@types/chai-as-promised": ^7.1.5
@@ -426,9 +426,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@tensor-hq/tensor-common@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "@tensor-hq/tensor-common@npm:1.0.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F1.0.3%2Ff20c6d7696d9a78b961951b7dd284183d97dc554"
+"@tensor-hq/tensor-common@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "@tensor-hq/tensor-common@npm:1.2.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F1.2.2%2F94a32a6e2f0e615f809c2fd09025967f7aa99115"
   dependencies:
     "@coral-xyz/anchor": ^0.26.0
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
@@ -443,20 +443,20 @@ __metadata:
     exponential-backoff: ^3.1.1
     js-sha3: ^0.8.0
     semaphore: ^1.1.0
-  checksum: 13896470193b9f1d91086ba71571d56126007c8beab809b052c10c94cd3ecd3250206a926769c200a6c864efb4a94386f81d0b0379ebe579a3f95cc79ea73f1f
+  checksum: 55b3678a837717bd4bfe794039409528cf98e42f977dcc1f6f6de0ed2c01a352e522ef1758aa855814fce9dbeeaa7498de817529e949cc0c0fbd8f69c0d038ae
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensorswap-ts@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "@tensor-hq/tensorswap-ts@npm:2.0.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensorswap-ts%2F2.0.3%2F5dd9c898ec26af34f5d90b4f1fa3988d4b55716d"
+"@tensor-hq/tensorswap-ts@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "@tensor-hq/tensorswap-ts@npm:2.0.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensorswap-ts%2F2.0.4%2Fb43539a63cd3f04791e57a8a61406544259322eb"
   dependencies:
     "@coral-xyz/anchor": ^0.26.0
     "@msgpack/msgpack": ^2.8.0
     "@saberhq/solana-contrib": ^1.14.11
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.73.0
-    "@tensor-hq/tensor-common": ^1.0.3
+    "@tensor-hq/tensor-common": ^1.2.2
     "@types/bn.js": ^5.1.0
     big.js: ^6.2.1
     bn.js: ^5.2.0
@@ -465,7 +465,7 @@ __metadata:
     math-expression-evaluator: ^2.0.4
     merkletreejs: ^0.2.32
     uuid: ^8.3.2
-  checksum: 01ff8508c564460915486e85be9ccde9a80eea6f22f7e287dd100517a700d0fa7f1ef3870fbb8511e9fb1ddb210519a4798b3a068fd433e53eb12cb73eac587c
+  checksum: 0ebecc761ec6d1b6fbfde2b36fdbd1c22dab0e61c482b6d1d6b1e3c4723e5bb393a593dd6b237cd87cd43a4f1b9c41366188a62a1c8019cb8d0ac5e23707eb2d
   languageName: node
   linkType: hard
 
