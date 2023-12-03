@@ -1956,7 +1956,7 @@ describe("tcomp bids", () => {
                   testTakeBidLegacy({
                     ...common,
                     minAmount: new BN(LAMPORTS_PER_SOL),
-                    rentPayer: rentPayer?.publicKey,
+                    rentDest: rentPayer?.publicKey,
                   })
                 ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
                 //try to take with the wrong rent payer
@@ -1964,13 +1964,13 @@ describe("tcomp bids", () => {
                   testTakeBidLegacy({
                     ...common,
                     minAmount: new BN(LAMPORTS_PER_SOL / 2),
-                    rentPayer: secondaryRentPayer.publicKey,
+                    rentDest: secondaryRentPayer.publicKey,
                   })
                 ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
                 await testTakeBidLegacy({
                   ...common,
                   minAmount: new BN(LAMPORTS_PER_SOL / 2),
-                  rentPayer: rentPayer?.publicKey,
+                  rentDest: rentPayer?.publicKey,
                 });
 
                 if (rentPayer) {

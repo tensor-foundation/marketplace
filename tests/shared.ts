@@ -2305,7 +2305,7 @@ export const testTakeBidLegacy = async ({
   nftMint,
   nftSellerAcc,
   owner,
-  rentPayer = owner,
+  rentDest = owner,
   seller,
   minAmount,
   currency,
@@ -2324,7 +2324,7 @@ export const testTakeBidLegacy = async ({
   nftMint: PublicKey;
   nftSellerAcc: PublicKey;
   owner: PublicKey;
-  rentPayer?: PublicKey;
+  rentDest?: PublicKey;
   seller: Keypair;
   minAmount: BN;
   creators: Creator[];
@@ -2351,7 +2351,7 @@ export const testTakeBidLegacy = async ({
     nftSellerAcc,
     seller: seller.publicKey,
     owner,
-    rentPayer,
+    rentDest,
     margin,
     minAmount: new BN(minAmount),
     optionalRoyaltyPct,
@@ -2366,7 +2366,7 @@ export const testTakeBidLegacy = async ({
 
   await withLamports(
     {
-      prevRentPayerLamports: rentPayer,
+      prevRentDestLamports: rentDest,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
@@ -2375,7 +2375,7 @@ export const testTakeBidLegacy = async ({
       prevOwnerAtaLamports: ownerAtaAcc,
     },
     async ({
-      prevRentPayerLamports,
+      prevRentDestLamports,
       prevBidStateLamports,
       prevMarginLamports,
       prevTakerBroker,
@@ -2426,8 +2426,8 @@ export const testTakeBidLegacy = async ({
           TokenAccountNotFoundError
         );
         // rent payer gets back rent
-        const currRentPayerLamports = await getLamports(rentPayer);
-        expect(currRentPayerLamports! - prevRentPayerLamports!).equal(bidRent);
+        const currRentDestLamports = await getLamports(rentDest);
+        expect(currRentDestLamports! - prevRentDestLamports!).equal(bidRent);
       } else {
         const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
           bidState
