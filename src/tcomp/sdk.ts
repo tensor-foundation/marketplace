@@ -112,9 +112,9 @@ export const TCompIDL_v0_11_0_EffSlot = 225359236;
 export const TCompIDL_v0_13_4 = IDL_v0_13_4;
 export const TCompIDL_v0_13_4_EffSlot = 225783471;
 
-//add rent payer, gameshift broker, USDC buy TODO: solscan link and slot
+//add rent payer, gameshift broker, USDC buy https://solscan.io/tx/3t9g4DgnAoF1n2wCNfRBNzo4DSUGoNVmqthNrZw2RR9JqBeaEkondVy8ozqR98Nd6zmXE3TKUK18gF1rkDd5NQUk
 export const TCompIDL_latest = IDL_latest;
-export const TCompIDL_latest_EffSlot = 0; // TODO: solscan link and slot
+export const TCompIDL_latest_EffSlot = 233959124;
 
 export type TcompIDL =
   | TComp_v0_1_0
