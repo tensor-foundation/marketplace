@@ -2099,7 +2099,7 @@ dependencies = [
 [[package]]
 name = "tensor_whitelist"
 version = "0.2.1"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#182dfa54dc589dc4e09ec7561005e2fc68a724a9"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#378b6d7c94a57b6e53d0034a3ae45528d3242b93"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2110,8 +2110,8 @@ dependencies = [
 
 [[package]]
 name = "tensorswap"
-version = "2.0.0"
-source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#182dfa54dc589dc4e09ec7561005e2fc68a724a9"
+version = "3.0.0"
+source = "git+ssh://git@github.com/tensor-hq/tensorswap.git#378b6d7c94a57b6e53d0034a3ae45528d3242b93"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
