@@ -3,13 +3,12 @@ description: "Caches cargo + built programs"
 runs:
   using: "composite"
   steps:
-      - uses: actions/cache@v2
-        name: Cache Cargo
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ./target/
-          key: cargo-${{ runner.os }}-typescript-tests-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('Anchor.toml') }}
+    - uses: actions/cache@v2
+      name: Cache Cargo
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: cargo-${{ runner.os }}-typescript-tests-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('Anchor.toml') }}

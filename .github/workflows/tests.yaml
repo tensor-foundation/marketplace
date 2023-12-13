@@ -28,7 +28,7 @@ jobs:
 
   purge-cache:
     name: Purge cache
-    runs-on: [ self-hosted, linux, x64, solana]
+    runs-on: [self-hosted, linux, x64, solana]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
@@ -36,7 +36,7 @@ jobs:
 
   setup-target-build:
     name: Setup build
-    runs-on: [ self-hosted, linux, x64, solana]
+    runs-on: [self-hosted, linux, x64, solana]
     # runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -50,6 +50,11 @@ jobs:
       - run: yarn build:test
       # This ensures the IDL generated matches what's checked in!
       - uses: ./.github/actions/git-diff/
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: target-artifact
+          path: ./target/
 
   typescript-checks:
     name: Typescript checks
@@ -69,7 +74,7 @@ jobs:
   test-typescript:
     needs: [setup-target-build]
     name: Test ${{ matrix.node.glob }}
-    runs-on: [ self-hosted, linux, x64, solana]
+    runs-on: [self-hosted, linux, x64, solana]
     # runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -86,6 +91,11 @@ jobs:
           tswap-deploy-key: ${{ secrets.TENSORSWAP_RO_DEPLOY_KEY }}
           tcommon-deploy-key: ${{ secrets.TENSOR_COMMON_RS_RO_DEPLOY_KEY }}
 
+      - uses: actions/download-artifact@v2
+        with:
+          name: target-artifact
+          path: ./target/
+
       - run: grep -Evqz 'it.only\(|describe.only\(' ${{ matrix.node.glob }}
         name: No only tests
 
@@ -93,7 +103,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          cache: 'yarn'
+          cache: "yarn"
           cache-dependency-path: yarn.lock
 
       - run: yarn install

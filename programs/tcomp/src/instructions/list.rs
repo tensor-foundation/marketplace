@@ -51,10 +51,6 @@ pub fn handler<'info>(
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
     require!(
-        currency_is_whitelisted(currency),
-        TcompError::CurrencyNotYetWhitelisted
-    );
-    require!(
         maker_broker_is_whitelisted(maker_broker),
         TcompError::MakerBrokerNotYetWhitelisted
     );

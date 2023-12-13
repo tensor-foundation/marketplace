@@ -2,10 +2,10 @@ name: "Setup"
 description: "Setup"
 inputs:
   tswap-deploy-key:
-    description: 'The deploy key for tswap'
+    description: "The deploy key for tswap"
     required: true
   tcommon-deploy-key:
-    description: 'The deploy key for tensor-common-rs'
+    description: "The deploy key for tensor-common-rs"
     required: true
 runs:
   using: "composite"
@@ -24,5 +24,4 @@ runs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
-          ./target/
         key: cargo-${{ runner.os }}-typescript-tests-${{ hashFiles('**/Cargo.lock') }}

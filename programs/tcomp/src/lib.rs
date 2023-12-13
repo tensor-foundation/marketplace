@@ -60,14 +60,6 @@ pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 
-mod usdc {
-    use anchor_lang::declare_id;
-    #[cfg(not(feature = "testing"))]
-    declare_id!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-    #[cfg(feature = "testing")]
-    declare_id!("6mT419DJgaKXAJENHN1wkr5v1oGCK571VffeJ4gYG6Gv");
-}
-
 #[program]
 pub mod tcomp {
     use super::*;

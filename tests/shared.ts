@@ -251,15 +251,7 @@ export const wlSdk = new TensorWhitelistSDK({ provider: TEST_PROVIDER });
 export const tcompSdk = new TCompSDK({ provider: TEST_PROVIDER });
 
 export const TEST_USDC_AUTHORITY = Keypair.generate();
-const TEST_USDC_KP = Keypair.fromSecretKey(
-  Buffer.from(
-    JSON.parse(
-      require("fs").readFileSync(resolve(__dirname, "test-usdc.json"), {
-        encoding: "utf-8",
-      })
-    )
-  )
-);
+export const TEST_USDC_KP = Keypair.generate();
 export const TEST_USDC = TEST_USDC_KP.publicKey;
 
 //useful for debugging
