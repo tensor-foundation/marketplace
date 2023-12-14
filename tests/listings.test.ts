@@ -35,7 +35,8 @@ chai.use(chaiAsPromised);
 describe("tcomp listings", () => {
   let lookupTableAccount: AddressLookupTableAccount | undefined;
   before(async () => {
-    lookupTableAccount = (await beforeAllHook()) ?? undefined;
+    const res = await beforeAllHook();
+    lookupTableAccount = res.lookupTableAccount ?? undefined;
   });
 
   for (const currency of [null, new PublicKey(TEST_USDC)]) {

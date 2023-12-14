@@ -1,6 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Wallet } from "@coral-xyz/anchor";
-import { MerkleTree as MerkleTreeJs } from "merkletreejs";
 import {
   computeCompressedNFTHash,
   computeCreatorHash,
@@ -11,15 +10,22 @@ import {
   createMintToCollectionV1Instruction,
   createMintV1Instruction,
   createRedeemInstruction,
-  createVerifyCreatorInstruction,
   createSetDecompressableStateInstruction,
+  createVerifyCreatorInstruction,
   Creator,
+  DecompressableState,
   MetadataArgs,
+  metadataArgsBeet,
   TokenProgramVersion,
   TokenStandard,
-  DecompressableState,
-  metadataArgsBeet,
 } from "@metaplex-foundation/mpl-bubblegum";
+import { mplTokenAuthRules } from "@metaplex-foundation/mpl-token-auth-rules";
+import { keypairIdentity } from "@metaplex-foundation/umi";
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import {
+  fromWeb3JsKeypair,
+  toWeb3JsPublicKey,
+} from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SingleConnectionBroadcaster,
   SolanaProvider,
@@ -70,6 +76,7 @@ import {
   TMETA_PROG_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
+import { createDefaultRuleSet } from "@tensor-hq/tensor-tests-common";
 import {
   TensorSwapSDK,
   TensorWhitelistSDK,
@@ -78,9 +85,10 @@ import {
 } from "@tensor-hq/tensorswap-ts";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
+import { keccak256 } from "js-sha3";
+import { MerkleTree as MerkleTreeJs } from "merkletreejs";
 import { resolve } from "path";
 import {
-  BidStateAnchor,
   castFieldAnchor,
   castTargetAnchor,
   CURRENT_TCOMP_VERSION,
@@ -110,7 +118,6 @@ import {
   transferLamports,
 } from "./account";
 import { testInitWLAuthority } from "./tswap";
-import { keccak256 } from "js-sha3";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -241,6 +248,12 @@ export const TEST_CONN_PAYER = {
   conn: TEST_PROVIDER.connection,
   payer: TEST_KEYPAIR,
 };
+export const TEST_UMI = createUmi(TEST_PROVIDER.connection.rpcEndpoint, {
+  commitment: "confirmed",
+})
+  .use(keypairIdentity(fromWeb3JsKeypair(TEST_KEYPAIR)))
+  .use(mplTokenAuthRules());
+
 export const TEST_COSIGNER = Keypair.generate();
 export const TSWAP_CONFIG: TSwapConfigAnchor = {
   feeBps: TSWAP_TAKER_FEE_BPS,
@@ -925,15 +938,27 @@ export const makeCNftMeta = ({
 
 export const beforeAllHook = async () => {
   // WL authority
-  await testInitWLAuthority();
+  const wl = testInitWLAuthority();
 
   //tcomp has to be funded or get rent error
   const [tcomp] = findTCompPda({});
-  await transferLamports(tcomp, LAMPORTS_PER_SOL);
-  const lookupTableAccount = await createLUT();
-  await testInitUsdc();
+  const xfer = transferLamports(tcomp, LAMPORTS_PER_SOL);
+  const lut = createLUT();
+  const usdc = testInitUsdc();
+  const ruleSet = createDefaultRuleSet({
+    umi: TEST_UMI,
+  });
 
-  return lookupTableAccount;
+  const [lookupTableAccount, ruleSetAddr] = await Promise.all([
+    lut,
+    ruleSet,
+    wl,
+    xfer,
+    lut,
+    usdc,
+  ]);
+
+  return { lookupTableAccount, ruleSetAddr: toWeb3JsPublicKey(ruleSetAddr) };
 };
 
 export const beforeHook = async ({

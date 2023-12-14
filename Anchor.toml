@@ -13,6 +13,9 @@ url = "https://api.apr.dev"
 url = "https://api.mainnet-beta.solana.com"
 
 [[test.validator.clone]]
+address = "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg"
+
+[[test.validator.clone]]
 address = "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
 
 [[test.validator.clone]]

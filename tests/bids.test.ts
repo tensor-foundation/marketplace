@@ -54,8 +54,11 @@ chai.use(chaiAsPromised);
 
 describe("tcomp bids", () => {
   let lookupTableAccount: AddressLookupTableAccount | undefined;
+  let ruleSetAddr: PublicKey;
   before(async () => {
-    lookupTableAccount = (await beforeAllHook()) ?? undefined;
+    const res = await beforeAllHook();
+    lookupTableAccount = res.lookupTableAccount ?? undefined;
+    ruleSetAddr = res.ruleSetAddr;
   });
 
   describe("compressed nfts", () => {
@@ -2005,6 +2008,7 @@ describe("tcomp bids", () => {
               programmable: true,
               creators,
               royaltyBps,
+              ruleSetAddr,
             });
             const badMint = Keypair.generate();
             const { ata: badAta } = await test_utils.createNft({

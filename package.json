@@ -43,7 +43,12 @@
     "math-expression-evaluator": "^2.0.4"
   },
   "devDependencies": {
+    "@metaplex-foundation/mpl-token-auth-rules": "^3.0.1",
+    "@metaplex-foundation/umi": "^0.8.10",
+    "@metaplex-foundation/umi-bundle-defaults": "^0.8.10",
+    "@metaplex-foundation/umi-web3js-adapters": "^0.8.10",
     "@saberhq/solana-contrib": "^1.14.11",
+    "@tensor-hq/tensor-tests-common": "^0.1.32",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",

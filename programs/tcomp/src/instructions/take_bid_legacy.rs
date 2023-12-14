@@ -121,7 +121,9 @@ pub struct TakeBidLegacy<'info> {
             nft_mint.key().as_ref(),
         ],
         bump,
-        token::mint = nft_mint, token::authority = tcomp,
+        token::mint = nft_mint,
+        // NB: super important this is a PDA w/ data, o/w ProgramOwnedList rulesets break.
+        token::authority = bid_state,
     )]
     pub nft_escrow: Box<Account<'info, TokenAccount>>,
 
@@ -195,7 +197,7 @@ impl<'info> TakeBidLegacy<'info> {
             CloseAccount {
                 account: self.nft_escrow.to_account_info(),
                 destination: self.seller.to_account_info(),
-                authority: self.tcomp.to_account_info(),
+                authority: self.bid_state.to_account_info(),
             },
         )
     }
@@ -282,7 +284,7 @@ pub fn handler<'info>(
             payer: &ctx.accounts.seller.to_account_info(),
             source_ata: &ctx.accounts.nft_seller_acc,
             dest_ata: &ctx.accounts.nft_escrow, //<- send to escrow first
-            dest_owner: &ctx.accounts.tcomp.to_account_info(),
+            dest_owner: &ctx.accounts.bid_state.to_account_info(),
             nft_mint: &ctx.accounts.nft_mint,
             nft_metadata: &ctx.accounts.nft_metadata,
             nft_edition: &ctx.accounts.nft_edition,
@@ -301,14 +303,14 @@ pub fn handler<'info>(
         },
     )?;
 
-    let (_, bump) = find_neutral_broker();
-    let seeds: &[&[&[u8]]] = &[&[&[bump]]];
+    let seeds = ctx.accounts.bid_state.seeds();
+    let seeds: &[&[&[u8]]] = &[seeds.as_slice()];
 
     //STEP 2/2: SEND FROM ESCROW
     send_pnft(
         Some(seeds),
         PnftTransferArgs {
-            authority_and_owner: &ctx.accounts.tcomp.to_account_info(),
+            authority_and_owner: &ctx.accounts.bid_state.to_account_info(),
             payer: &ctx.accounts.seller.to_account_info(),
             source_ata: &ctx.accounts.nft_escrow,
             dest_ata: &ctx.accounts.owner_ata_acc,

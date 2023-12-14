@@ -26,7 +26,8 @@ chai.use(chaiAsPromised);
 describe("tcomp admin", () => {
   let lookupTableAccount: AddressLookupTableAccount | undefined;
   before(async () => {
-    lookupTableAccount = (await beforeAllHook()) ?? undefined;
+    const res = await beforeAllHook();
+    lookupTableAccount = res.lookupTableAccount ?? undefined;
   });
 
   it("withdraw fees", async () => {
