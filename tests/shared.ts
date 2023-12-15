@@ -61,7 +61,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
-  AUTH_PROG_ID,
+  AUTH_PROGRAM_ID,
   BUBBLEGUM_PROGRAM_ID,
   filterNullLike,
   getIxDiscHex,
@@ -71,9 +71,9 @@ import {
   MINUTES,
   Overwrite,
   prependComputeIxs,
-  TENSORSWAP_ADDR,
+  TSWAP_PROGRAM_ID,
   test_utils,
-  TMETA_PROG_ID,
+  TMETA_PROGRAM_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
 import { createDefaultRuleSet } from "@tensor-hq/tensor-tests-common";
@@ -392,12 +392,12 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
       SYSVAR_INSTRUCTIONS_PUBKEY,
       //mplex
       BUBBLEGUM_PROGRAM_ID,
-      AUTH_PROG_ID,
-      TMETA_PROG_ID,
+      AUTH_PROGRAM_ID,
+      TMETA_PROGRAM_ID,
       //tensor
       tcomp,
       TCOMP_ADDR,
-      TENSORSWAP_ADDR, //margin
+      TSWAP_PROGRAM_ID, //margin
       //tcomp spl
       TEST_USDC,
       tcompAta,
@@ -483,8 +483,8 @@ export const makeTree = async ({
 
 export function getMetadata(mint: PublicKey) {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("metadata"), TMETA_PROG_ID.toBuffer(), mint.toBuffer()],
-    TMETA_PROG_ID
+    [Buffer.from("metadata"), TMETA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    TMETA_PROGRAM_ID
   )[0];
 }
 
@@ -492,11 +492,11 @@ export function getMasterEdition(mint: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [
       Buffer.from("metadata"),
-      TMETA_PROG_ID.toBuffer(),
+      TMETA_PROGRAM_ID.toBuffer(),
       mint.toBuffer(),
       Buffer.from("edition"),
     ],
-    TMETA_PROG_ID
+    TMETA_PROGRAM_ID
   )[0];
 }
 
@@ -540,7 +540,7 @@ export const mintCNft = async ({
             collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TMETA_PROG_ID,
+            tokenMetadataProgram: TMETA_PROGRAM_ID,
           },
           {
             metadataArgs: {
@@ -646,7 +646,7 @@ export const decompressCNft = async ({
       masterEdition: getMasterEdition(mint),
       logWrapper: SPL_NOOP_PROGRAM_ID,
       sysvarRent: SYSVAR_RENT_PUBKEY,
-      tokenMetadataProgram: TMETA_PROG_ID,
+      tokenMetadataProgram: TMETA_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     },
     {

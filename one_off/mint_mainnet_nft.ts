@@ -29,7 +29,7 @@ import {
 } from "@solana/spl-account-compression";
 import {
   BUBBLEGUM_PROGRAM_ID,
-  TMETA_PROG_ID,
+  TMETA_PROGRAM_ID,
   waitMS,
 } from "@tensor-hq/tensor-common";
 import {
@@ -83,10 +83,10 @@ export const initCollection = async ({
   const [collectionMetadataAccount, _b] = await PublicKey.findProgramAddress(
     [
       Buffer.from("metadata", "utf8"),
-      TMETA_PROG_ID.toBuffer(),
+      TMETA_PROGRAM_ID.toBuffer(),
       collectionMint.toBuffer(),
     ],
-    TMETA_PROG_ID
+    TMETA_PROGRAM_ID
   );
   const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
     {
@@ -116,11 +116,11 @@ export const initCollection = async ({
     await PublicKey.findProgramAddress(
       [
         Buffer.from("metadata", "utf8"),
-        TMETA_PROG_ID.toBuffer(),
+        TMETA_PROGRAM_ID.toBuffer(),
         collectionMint.toBuffer(),
         Buffer.from("edition", "utf8"),
       ],
-      TMETA_PROG_ID
+      TMETA_PROGRAM_ID
     );
   const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
     {
@@ -316,7 +316,7 @@ const mintCNft = async ({
             collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: await getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TMETA_PROG_ID,
+            tokenMetadataProgram: TMETA_PROGRAM_ID,
           },
           {
             metadataArgs: {

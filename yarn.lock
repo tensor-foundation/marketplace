@@ -675,7 +675,7 @@ __metadata:
     "@solana/spl-account-compression": ^0.1.7
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
-    "@tensor-hq/tensor-common": ^1.2.2
+    "@tensor-hq/tensor-common": ^2.3.2
     "@tensor-hq/tensor-tests-common": ^0.1.32
     "@tensor-hq/tensorswap-ts": ^2.0.4
     "@types/bn.js": ^5.1.1
@@ -740,6 +740,28 @@ __metadata:
     js-sha3: ^0.8.0
     semaphore: ^1.1.0
   checksum: 55b3678a837717bd4bfe794039409528cf98e42f977dcc1f6f6de0ed2c01a352e522ef1758aa855814fce9dbeeaa7498de817529e949cc0c0fbd8f69c0d038ae
+  languageName: node
+  linkType: hard
+
+"@tensor-hq/tensor-common@npm:^2.3.2":
+  version: 2.3.2
+  resolution: "@tensor-hq/tensor-common@npm:2.3.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F2.3.2%2F75e1f063ba188ff9fe8b18a09e8244ea2bce8d01"
+  dependencies:
+    "@coral-xyz/anchor": ^0.26.0
+    "@metaplex-foundation/mpl-auction-house": ^2.1.1
+    "@metaplex-foundation/mpl-bubblegum": ^0.7.0
+    "@solana/spl-account-compression": ^0.1.4
+    "@solana/spl-token": ^0.3.7
+    "@solana/web3.js": ^1.73.0
+    axios: ^0.27.2
+    big.js: ^6.2.1
+    bn.js: ^5.2.1
+    borsh: ^0.7.0
+    bs58: ^5.0.0
+    exponential-backoff: ^3.1.1
+    js-sha3: ^0.8.0
+    semaphore: ^1.1.0
+  checksum: 264da54e5fd6b4714337dc83673e5c3e7d43d54211cdcf6e8a417d7cde03a255d3a6a01dc2618da33e433490f8f3d1e711262c9944b08e1b50201b40370c5ddf
   languageName: node
   linkType: hard
 

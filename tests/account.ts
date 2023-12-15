@@ -23,7 +23,7 @@ import {
 import {
   getNftTokenAcc,
   test_utils,
-  TMETA_PROG_ID,
+  TMETA_PROGRAM_ID,
 } from "@tensor-hq/tensor-common";
 import { findAta } from "../src";
 import {
@@ -199,10 +199,10 @@ export const initCollection = async ({
   const [collectionMetadataAccount, _b] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("metadata", "utf8"),
-      TMETA_PROG_ID.toBuffer(),
+      TMETA_PROGRAM_ID.toBuffer(),
       collectionMint.toBuffer(),
     ],
-    TMETA_PROG_ID
+    TMETA_PROGRAM_ID
   );
   const collectionMeatadataIX = createCreateMetadataAccountV3Instruction(
     {
@@ -232,11 +232,11 @@ export const initCollection = async ({
     PublicKey.findProgramAddressSync(
       [
         Buffer.from("metadata", "utf8"),
-        TMETA_PROG_ID.toBuffer(),
+        TMETA_PROGRAM_ID.toBuffer(),
         collectionMint.toBuffer(),
         Buffer.from("edition", "utf8"),
       ],
-      TMETA_PROG_ID
+      TMETA_PROGRAM_ID
     );
   const collectionMasterEditionIX = createCreateMasterEditionV3Instruction(
     {
