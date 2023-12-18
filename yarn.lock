@@ -676,7 +676,7 @@ __metadata:
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.75.0
     "@tensor-hq/tensor-common": ^2.3.2
-    "@tensor-hq/tensor-tests-common": ^0.1.32
+    "@tensor-hq/tensor-tests-common": ^0.3.0
     "@tensor-hq/tensorswap-ts": ^2.0.4
     "@types/bn.js": ^5.1.1
     "@types/chai": ^4.3.4
@@ -765,31 +765,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensor-tests-common@npm:^0.1.30":
-  version: 0.1.30
-  resolution: "@tensor-hq/tensor-tests-common@npm:0.1.30::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-tests-common%2F0.1.30%2Fcd044179db4770f299518c8fdf146ee0168042c4"
-  dependencies:
-    "@coral-xyz/anchor": ^0.29.0
-    "@metaplex-foundation/mpl-bubblegum": ^0.8.0
-    "@metaplex-foundation/mpl-token-metadata": ^2.13.0
-    "@msgpack/msgpack": ^3.0.0-beta2
-    "@saberhq/solana-contrib": ^1.14.11
-    "@solana/spl-account-compression": ^0.2.0
-    "@solana/spl-token": ^0.3.9
-    "@tensor-hq/tensor-common": ^1.0.3
-    "@tensor-hq/tensorswap-ts": ^2.0.2
-    bs58: ^5.0.0
-    chai-as-promised: ^7.1.1
-    exponential-backoff: ^3.1.1
-    js-sha3: ^0.9.2
-    merkletreejs: ^0.3.11
-  checksum: 975bbd8876d466ca5b3df2aad57da499f8fedeb6f7b82188e08fac30be2cbcbc5bc27057c5c895199ea5cb5c66f200a77f277c9aaee6d3061813efef261de9e1
-  languageName: node
-  linkType: hard
-
-"@tensor-hq/tensor-tests-common@npm:^0.1.32":
-  version: 0.1.32
-  resolution: "@tensor-hq/tensor-tests-common@npm:0.1.32::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-tests-common%2F0.1.32%2Fc6e708f560f25f9f1d745f21c05043d2c495e537"
+"@tensor-hq/tensor-tests-common@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@tensor-hq/tensor-tests-common@npm:0.3.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-tests-common%2F0.3.0%2Fff5da044dd9afe67c1afb254bcc37c85c6166985"
   dependencies:
     "@coral-xyz/anchor": ^0.29.0
     "@metaplex-foundation/mpl-bubblegum": ^0.8.0
@@ -801,18 +779,17 @@ __metadata:
     "@solana/spl-account-compression": ^0.2.0
     "@solana/spl-token": ^0.3.9
     "@tensor-hq/tensor-common": ^1.0.3
-    "@tensor-hq/tensor-tests-common": ^0.1.30
-    "@tensor-hq/tensorswap-ts": ^2.0.2
+    "@tensor-oss/tensorswap-sdk": ^2.0.6
     bs58: ^5.0.0
     chai-as-promised: ^7.1.1
     exponential-backoff: ^3.1.1
     js-sha3: ^0.9.2
     merkletreejs: ^0.3.11
-  checksum: 6861c829ea2598fb1926841fc31c7d6ab88d25ce2b93ff1dd8aa979c7d3b76307967e5d171caea5e6af56e1cdfde7a6f9fef44c5d32949209c607e2421d0cb75
+  checksum: 6d08781e67cedc97db497ccaaacfcaba881f54663483489075a56649703b1041cb9baeff7ad1dab2a7edd216dc86a6fd48dc5f0cf0ce82388507f30b0d0cee7c
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensorswap-ts@npm:^2.0.2, @tensor-hq/tensorswap-ts@npm:^2.0.4":
+"@tensor-hq/tensorswap-ts@npm:^2.0.4":
   version: 2.0.4
   resolution: "@tensor-hq/tensorswap-ts@npm:2.0.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensorswap-ts%2F2.0.4%2Fb43539a63cd3f04791e57a8a61406544259322eb"
   dependencies:
@@ -831,6 +808,28 @@ __metadata:
     merkletreejs: ^0.2.32
     uuid: ^8.3.2
   checksum: 0ebecc761ec6d1b6fbfde2b36fdbd1c22dab0e61c482b6d1d6b1e3c4723e5bb393a593dd6b237cd87cd43a4f1b9c41366188a62a1c8019cb8d0ac5e23707eb2d
+  languageName: node
+  linkType: hard
+
+"@tensor-oss/tensorswap-sdk@npm:^2.0.6":
+  version: 2.0.6
+  resolution: "@tensor-oss/tensorswap-sdk@npm:2.0.6"
+  dependencies:
+    "@coral-xyz/anchor": ^0.26.0
+    "@msgpack/msgpack": ^2.8.0
+    "@saberhq/solana-contrib": ^1.14.11
+    "@solana/spl-token": ^0.3.7
+    "@solana/web3.js": ^1.73.0
+    "@tensor-hq/tensor-common": ^2.3.2
+    "@types/bn.js": ^5.1.0
+    big.js: ^6.2.1
+    bn.js: ^5.2.0
+    js-sha256: ^0.9.0
+    keccak256: ^1.0.6
+    math-expression-evaluator: ^2.0.4
+    merkletreejs: ^0.2.32
+    uuid: ^8.3.2
+  checksum: c8e028cb2ada335dbc94278a9c8ae368d97bfe4be58cd86a5d58f82be469e3b519b0580eb3c512dfa65ba789fdfc33c9b73f5cd4dd028e880fd258b2780d177d
   languageName: node
   linkType: hard
 
@@ -2354,9 +2353,9 @@ __metadata:
   linkType: hard
 
 "js-sha3@npm:^0.9.2":
-  version: 0.9.2
-  resolution: "js-sha3@npm:0.9.2"
-  checksum: fed1bd06802bbc476ce8419b96a98a7a92c146ddb7e6b2762e41fd1dba043178975cee80d12d125c89472aeca65826240092d7b4d42d944d7804c1870b97c73a
+  version: 0.9.3
+  resolution: "js-sha3@npm:0.9.3"
+  checksum: cfab12cdb3aa9c0c8e8466761d89cb9770653880910b920682fa676dd102868a827709c857cb089bdc0d6120542137f92a7c1699ab428c0f4057c823aef24601
   languageName: node
   linkType: hard
 
