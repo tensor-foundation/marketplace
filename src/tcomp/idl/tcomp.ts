@@ -10,7 +10,7 @@ export type Tcomp = {
     {
       "name": "TCOMP_FEE_BPS",
       "type": "u16",
-      "value": "140"
+      "value": "150"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -2349,7 +2349,7 @@ export const IDL: Tcomp = {
     {
       "name": "TCOMP_FEE_BPS",
       "type": "u16",
-      "value": "140"
+      "value": "150"
     },
     {
       "name": "MAX_EXPIRY_SEC",
