@@ -1,4 +1,18 @@
+use mpl_bubblegum::types::{
+    Collection, Creator, MetadataArgs, TokenProgramVersion, TokenStandard, UseMethod, Uses,
+};
+
 use crate::*;
+
+/// Anchor wrapper for Bubblegum program.
+#[derive(Debug, Clone)]
+pub struct Bubblegum;
+
+impl anchor_lang::Id for Bubblegum {
+    fn id() -> Pubkey {
+        mpl_bubblegum::ID
+    }
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum TTokenProgramVersion {

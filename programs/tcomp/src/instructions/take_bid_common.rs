@@ -1,5 +1,5 @@
 use anchor_spl::token::Mint;
-use mpl_token_metadata::state::TokenStandard;
+use mpl_token_metadata::types::TokenStandard;
 use tensor_whitelist::MintProof;
 use tensorswap::assert_decode_margin_account;
 

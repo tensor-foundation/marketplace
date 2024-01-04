@@ -36,17 +36,6 @@ pub use bubblegum_adapter::*;
 pub use error::*;
 pub use event::*;
 pub use instructions::*;
-pub use mpl_bubblegum::{
-    self,
-    program::Bubblegum,
-    state::{
-        leaf_schema::LeafSchema,
-        metaplex_adapter::{
-            Collection, Creator, MetadataArgs, TokenProgramVersion, TokenStandard, UseMethod, Uses,
-        },
-    },
-    utils::get_asset_id,
-};
 pub use noop::*;
 pub use pnft_adapter::*;
 pub use shared::find_neutral_broker;

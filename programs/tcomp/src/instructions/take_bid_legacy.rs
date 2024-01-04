@@ -2,7 +2,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, CloseAccount, Mint, Token, TokenAccount},
 };
-use mpl_token_metadata::processor::AuthorizationData;
+use mpl_token_metadata::types::AuthorizationData;
 use tensor_nft::*;
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 
@@ -48,11 +48,11 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: assert_decode_metadata + seeds below
     #[account(mut,
         seeds=[
-            mpl_token_metadata::state::PREFIX.as_bytes(),
-            mpl_token_metadata::id().as_ref(),
+            mpl_token_metadata::accounts::Metadata::PREFIX,
+            mpl_token_metadata::ID.as_ref(),
             nft_mint.key().as_ref(),
         ],
-        seeds::program = mpl_token_metadata::id(),
+        seeds::program = mpl_token_metadata::ID,
         bump
     )]
     pub nft_metadata: UncheckedAccount<'info>,
@@ -71,12 +71,12 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: seeds below
     #[account(
         seeds=[
-            mpl_token_metadata::state::PREFIX.as_bytes(),
-            mpl_token_metadata::id().as_ref(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
             nft_mint.key().as_ref(),
-            mpl_token_metadata::state::EDITION.as_bytes(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
         ],
-        seeds::program = mpl_token_metadata::id(),
+        seeds::program = mpl_token_metadata::ID,
         bump
     )]
     pub nft_edition: UncheckedAccount<'info>,
@@ -84,13 +84,13 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: seeds below
     #[account(mut,
         seeds=[
-            mpl_token_metadata::state::PREFIX.as_bytes(),
-            mpl_token_metadata::id().as_ref(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
             nft_mint.key().as_ref(),
-            mpl_token_metadata::state::TOKEN_RECORD_SEED.as_bytes(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
             nft_seller_acc.key().as_ref()
         ],
-        seeds::program = mpl_token_metadata::id(),
+        seeds::program = mpl_token_metadata::ID,
         bump
     )]
     pub owner_token_record: UncheckedAccount<'info>,
@@ -98,13 +98,13 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: seeds below
     #[account(mut,
         seeds=[
-            mpl_token_metadata::state::PREFIX.as_bytes(),
-            mpl_token_metadata::id().as_ref(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
             nft_mint.key().as_ref(),
-            mpl_token_metadata::state::TOKEN_RECORD_SEED.as_bytes(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
             owner_ata_acc.key().as_ref()
         ],
-        seeds::program = mpl_token_metadata::id(),
+        seeds::program = mpl_token_metadata::ID,
         bump
     )]
     pub dest_token_record: UncheckedAccount<'info>,
@@ -130,13 +130,13 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: seeds below
     #[account(mut,
         seeds=[
-            mpl_token_metadata::state::PREFIX.as_bytes(),
-            mpl_token_metadata::id().as_ref(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
             nft_mint.key().as_ref(),
-            mpl_token_metadata::state::TOKEN_RECORD_SEED.as_bytes(),
+            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
             nft_escrow.key().as_ref()
         ],
-        seeds::program = mpl_token_metadata::id(),
+        seeds::program = mpl_token_metadata::ID,
         bump
     )]
     pub temp_escrow_token_record: UncheckedAccount<'info>,
@@ -215,7 +215,7 @@ pub fn handler<'info>(
     let bid_state = &ctx.accounts.bid_state;
     let mint = ctx.accounts.nft_mint.key();
     let metadata = assert_decode_metadata(&ctx.accounts.nft_mint, &ctx.accounts.nft_metadata)?;
-    let creators = &metadata.data.creators;
+    let creators = &metadata.creators;
 
     match bid_state.target {
         Target::AssetId => {
@@ -256,7 +256,7 @@ pub fn handler<'info>(
         match field {
             Field::Name => {
                 let mut name_arr = [0u8; 32];
-                name_arr[..metadata.data.name.len()].copy_from_slice(metadata.data.name.as_bytes());
+                name_arr[..metadata.name.len()].copy_from_slice(metadata.name.as_bytes());
                 require!(
                     name_arr == bid_state.field_id.unwrap().to_bytes(),
                     TcompError::WrongBidFieldId
@@ -354,7 +354,7 @@ pub fn handler<'info>(
             .collect(),
         min_amount,
         optional_royalty_pct,
-        seller_fee_basis_points: metadata.data.seller_fee_basis_points,
+        seller_fee_basis_points: metadata.seller_fee_basis_points,
         creator_accounts: ctx.remaining_accounts,
         tcomp_prog: &ctx.accounts.tcomp_program,
         tswap_prog: &ctx.accounts.tensorswap_program,

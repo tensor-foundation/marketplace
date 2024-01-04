@@ -1,8 +1,12 @@
-// replicating mplex type for anchor IDL export
-//have to do this because anchor won't include foreign structs in the IDL
+//! Adapter types.
+//!
+//! Replicating mplex type for anchor IDL export
+//! have to do this because anchor won't include foreign structs in the IDL
+
 use anchor_lang::prelude::*;
-use mpl_token_auth_rules::payload::{Payload, PayloadType, ProofInfo, SeedsVec};
-use mpl_token_metadata::processor::AuthorizationData;
+use mpl_token_metadata::types::{AuthorizationData, Payload, PayloadType, ProofInfo, SeedsVec};
+use std::collections::HashMap;
+use tensorswap::instructions::common::MPL_TOKEN_AUTH_RULES_ID;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct AuthorizationDataLocal {
@@ -11,11 +15,13 @@ pub struct AuthorizationDataLocal {
 
 impl From<AuthorizationDataLocal> for AuthorizationData {
     fn from(val: AuthorizationDataLocal) -> Self {
-        let mut p = Payload::new();
+        let mut map = HashMap::<String, PayloadType>::new();
         val.payload.into_iter().for_each(|tp| {
-            p.insert(tp.name, PayloadType::try_from(tp.payload).unwrap());
+            map.insert(tp.name, PayloadType::try_from(tp.payload).unwrap());
         });
-        AuthorizationData { payload: p }
+        AuthorizationData {
+            payload: Payload { map },
+        }
     }
 }
 
@@ -81,13 +87,13 @@ impl From<ProofInfoLocal> for ProofInfo {
 pub struct ProgNftShared<'info> {
     //can't deserialize directly coz Anchor traits not implemented
     /// CHECK: address below
-    #[account(address = mpl_token_metadata::id())]
+    #[account(address = mpl_token_metadata::ID)]
     pub token_metadata_program: UncheckedAccount<'info>,
     //sysvar ixs don't deserialize in anchor
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
     /// CHECK: address below
-    #[account(address = mpl_token_auth_rules::id())]
+    #[account(address = MPL_TOKEN_AUTH_RULES_ID)]
     pub authorization_rules_program: UncheckedAccount<'info>,
 }

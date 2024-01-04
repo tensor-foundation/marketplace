@@ -1,5 +1,5 @@
 export type Tcomp = {
-  "version": "0.14.0",
+  "version": "2.0.1",
   "name": "tcomp",
   "constants": [
     {
@@ -2338,7 +2338,7 @@ export type Tcomp = {
 };
 
 export const IDL: Tcomp = {
-  "version": "0.14.0",
+  "version": "2.0.1",
   "name": "tcomp",
   "constants": [
     {

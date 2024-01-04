@@ -1,3 +1,5 @@
+use mpl_bubblegum::types::Creator;
+
 use crate::tensor_whitelist::assert_decode_whitelist;
 use crate::{take_bid_common::*, *};
 
@@ -196,7 +198,7 @@ pub fn handler_full_meta<'info>(
             let collection =
                 meta_args
                     .collection
-                    .map(|collection| mpl_token_metadata::state::Collection {
+                    .map(|collection| mpl_token_metadata::types::Collection {
                         key: collection.key,
                         verified: collection.verified,
                     });
@@ -217,7 +219,7 @@ pub fn handler_full_meta<'info>(
                 Some(
                     creators
                         .iter()
-                        .map(|c| mpl_token_metadata::state::Creator {
+                        .map(|c| mpl_token_metadata::types::Creator {
                             address: c.address,
                             verified: c.verified,
                             share: c.share,
@@ -318,7 +320,7 @@ pub fn handler_meta_hash<'info>(
                 Some(
                     creators
                         .iter()
-                        .map(|c| mpl_token_metadata::state::Creator {
+                        .map(|c| mpl_token_metadata::types::Creator {
                             address: c.address,
                             verified: c.verified,
                             share: c.share,

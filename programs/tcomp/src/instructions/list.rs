@@ -1,3 +1,5 @@
+use mpl_bubblegum::utils::get_asset_id;
+
 use crate::*;
 
 #[derive(Accounts)]

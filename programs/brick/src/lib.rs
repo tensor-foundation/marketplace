@@ -17,4 +17,7 @@ pub mod brick {
 }
 
 #[derive(Accounts)]
-pub struct Initialize {}
+pub struct Initialize<'info> {
+    /// CHECK: not in use.
+    account: AccountInfo<'info>,
+}
