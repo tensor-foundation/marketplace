@@ -194,7 +194,7 @@ pub fn handler_full_meta<'info>(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
                 TcompError::WrongTargetId
             );
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
+            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
             let collection =
                 meta_args
                     .collection
@@ -313,7 +313,7 @@ pub fn handler_meta_hash<'info>(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
                 TcompError::WrongTargetId
             );
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
+            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
             // Run the verification (this time collection is None since it can't be used w/o full meta
             whitelist.verify_whitelist_tcomp(
                 None,

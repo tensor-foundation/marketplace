@@ -17,14 +17,14 @@ default = []
 testing = []
 
 [dependencies]
-anchor-lang = "=0.26.0"
-anchor-spl = { version = "=0.26.0", features =  ["default"] }
+anchor-lang = "0.29.0"
+anchor-spl = { version = "0.29.0", features =  ["default"] }
 mpl-bubblegum = "1.0.0"
 mpl-token-metadata = "4.0.0"
-spl-account-compression = { version="0.1.10", features = ["cpi"] }
-spl-noop = { version="0.1.3", features=["no-entrypoint"] }
+spl-account-compression = { version = "0.2.0", features = ["cpi"] }
+spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 static_assertions = "1.1.0"
-tensor_nft = { version="0.3.0", git="ssh://git@github.com/tensor-hq/tensor-common-rs.git", rev="05087bd1b8cfbf9951584a21888ae30523448c57" }
-tensor_whitelist = { version="0.2.1", git="ssh://git@github.com/tensor-hq/tensorswap.git", rev="1eddd0b260e0a4f6995b3a095d1a7fbe49d6f073", features=["cpi"] }
-tensorswap = { version = "3.0.1", git="ssh://git@github.com/tensor-hq/tensorswap.git", rev="1eddd0b260e0a4f6995b3a095d1a7fbe49d6f073", features=["cpi"] }
-vipers = {  version="2.0.6", git="ssh://git@github.com/tensor-hq/tensor-common-rs.git", rev="05087bd1b8cfbf9951584a21888ae30523448c57" }
+tensor_nft = { version="0.3.0", git="ssh://git@github.com/tensor-hq/tensor-common-rs.git", rev="154a36a8bbc485b882da6b6a8f11838b60c67c82" }
+tensor_whitelist = { version="0.2.1", git="ssh://git@github.com/tensor-hq/tensorswap.git", rev="553a52a593857f0fb59055e4b42ce3a8f12246a6", features=["cpi"] }
+tensorswap = { version = "3.0.1", git="ssh://git@github.com/tensor-hq/tensorswap.git", rev="553a52a593857f0fb59055e4b42ce3a8f12246a6", features=["cpi"] }
+vipers = {  version="2.0.6", git="ssh://git@github.com/tensor-hq/tensor-common-rs.git", rev="154a36a8bbc485b882da6b6a8f11838b60c67c82" }

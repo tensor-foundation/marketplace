@@ -17,4 +17,4 @@ default = []
 testing = []
 
 [dependencies]
-anchor-lang = "0.26.0"
+anchor-lang = "0.29.0"

@@ -26,3 +26,23 @@ pub use noop::*;
 pub use take_bid_compressed::*;
 pub use take_bid_legacy::*;
 pub use withdraw_fees::*;
+
+use anchor_lang::solana_program::pubkey::Pubkey;
+
+#[derive(Clone)]
+pub struct Noop;
+
+impl anchor_lang::Id for Noop {
+    fn id() -> Pubkey {
+        spl_noop::ID
+    }
+}
+
+#[derive(Clone)]
+pub struct SplAccountCompression;
+
+impl anchor_lang::Id for SplAccountCompression {
+    fn id() -> Pubkey {
+        spl_account_compression::ID
+    }
+}

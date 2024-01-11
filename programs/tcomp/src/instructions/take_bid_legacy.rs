@@ -2,7 +2,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, CloseAccount, Mint, Token, TokenAccount},
 };
-use mpl_token_metadata::types::AuthorizationData;
+use mpl_token_metadata::{accounts::TokenRecord, types::AuthorizationData};
 use tensor_nft::*;
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 
@@ -45,16 +45,8 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
     pub nft_mint: Box<Account<'info, Mint>>,
     //can't deserialize directly coz Anchor traits not implemented
-    /// CHECK: assert_decode_metadata + seeds below
-    #[account(mut,
-        seeds=[
-            mpl_token_metadata::accounts::Metadata::PREFIX,
-            mpl_token_metadata::ID.as_ref(),
-            nft_mint.key().as_ref(),
-        ],
-        seeds::program = mpl_token_metadata::ID,
-        bump
-    )]
+    /// CHECK: assert_decode_metadata check seeds
+    #[account(mut)]
     pub nft_metadata: UncheckedAccount<'info>,
 
     #[account(
@@ -81,32 +73,12 @@ pub struct TakeBidLegacy<'info> {
     )]
     pub nft_edition: UncheckedAccount<'info>,
 
-    /// CHECK: seeds below
-    #[account(mut,
-        seeds=[
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
-            mpl_token_metadata::ID.as_ref(),
-            nft_mint.key().as_ref(),
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
-            nft_seller_acc.key().as_ref()
-        ],
-        seeds::program = mpl_token_metadata::ID,
-        bump
-    )]
+    /// CHECK: seeds checked in validate
+    #[account(mut)]
     pub owner_token_record: UncheckedAccount<'info>,
 
-    /// CHECK: seeds below
-    #[account(mut,
-        seeds=[
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
-            mpl_token_metadata::ID.as_ref(),
-            nft_mint.key().as_ref(),
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
-            owner_ata_acc.key().as_ref()
-        ],
-        seeds::program = mpl_token_metadata::ID,
-        bump
-    )]
+    /// CHECK: seeds checked in validate
+    #[account(mut)]
     pub dest_token_record: UncheckedAccount<'info>,
 
     pub pnft_shared: ProgNftShared<'info>,
@@ -127,18 +99,8 @@ pub struct TakeBidLegacy<'info> {
     )]
     pub nft_escrow: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: seeds below
-    #[account(mut,
-        seeds=[
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.0,
-            mpl_token_metadata::ID.as_ref(),
-            nft_mint.key().as_ref(),
-            mpl_token_metadata::accounts::TokenRecord::PREFIX.1,
-            nft_escrow.key().as_ref()
-        ],
-        seeds::program = mpl_token_metadata::ID,
-        bump
-    )]
+    /// CHECK: seeds checked in validate
+    #[account(mut)]
     pub temp_escrow_token_record: UncheckedAccount<'info>,
 
     /// CHECK: validated by mplex's pnft code
@@ -186,6 +148,32 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
             TcompError::BrokerMismatch
         );
 
+        // validate token record derivations
+
+        // owner
+        let (owner_token_record, _) =
+            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.nft_seller_acc.as_key_ref());
+        require!(
+            owner_token_record.key() == self.owner_token_record.key(),
+            TcompError::WrongTokenRecordDerivation,
+        );
+
+        // destination
+        let (dest_token_record, _) =
+            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.owner_ata_acc.as_key_ref());
+        require!(
+            dest_token_record.key() == self.dest_token_record.key(),
+            TcompError::WrongTokenRecordDerivation,
+        );
+
+        // escrow
+        let (temp_escrow_token_record, _) =
+            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.nft_escrow.as_key_ref());
+        require!(
+            temp_escrow_token_record.key() == self.temp_escrow_token_record.key(),
+            TcompError::WrongTokenRecordDerivation,
+        );
+
         Ok(())
     }
 }
@@ -214,7 +202,7 @@ pub fn handler<'info>(
 ) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
     let mint = ctx.accounts.nft_mint.key();
-    let metadata = assert_decode_metadata(&ctx.accounts.nft_mint, &ctx.accounts.nft_metadata)?;
+    let metadata = assert_decode_metadata(&mint, &ctx.accounts.nft_metadata)?;
     let creators = &metadata.creators;
 
     match bid_state.target {
@@ -228,13 +216,14 @@ pub fn handler<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist.to_account_info())?;
+            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
             let nft_mint = &ctx.accounts.nft_mint;
 
             //prioritize merkle tree if proof present
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof = assert_decode_mint_proof(&whitelist, nft_mint, mint_proof_acc)?;
+                let mint_proof =
+                    assert_decode_mint_proof(ctx.accounts.whitelist.key, nft_mint, mint_proof_acc)?;
                 let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);

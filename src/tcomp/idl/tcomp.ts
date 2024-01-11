@@ -2333,6 +2333,11 @@ export type Tcomp = {
       "code": 6138,
       "name": "MakerBrokerNotYetWhitelisted",
       "msg": "maker broker not yet whitelisted"
+    },
+    {
+      "code": 6139,
+      "name": "WrongTokenRecordDerivation",
+      "msg": "token record derivation is wrong"
     }
   ]
 };
@@ -4672,6 +4677,11 @@ export const IDL: Tcomp = {
       "code": 6138,
       "name": "MakerBrokerNotYetWhitelisted",
       "msg": "maker broker not yet whitelisted"
+    },
+    {
+      "code": 6139,
+      "name": "WrongTokenRecordDerivation",
+      "msg": "token record derivation is wrong"
     }
   ]
 };

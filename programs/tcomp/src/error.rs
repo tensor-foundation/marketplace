@@ -81,4 +81,6 @@ pub enum TcompError {
     CurrencyNotYetWhitelisted = 137,
     #[msg("maker broker not yet whitelisted")]
     MakerBrokerNotYetWhitelisted = 138,
+    #[msg("token record derivation is wrong")]
+    WrongTokenRecordDerivation = 139,
 }

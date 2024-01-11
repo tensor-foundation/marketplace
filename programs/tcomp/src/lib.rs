@@ -17,7 +17,6 @@ pub use std::{
 };
 
 pub use anchor_lang::{
-    __private::CLOSED_ACCOUNT_DISCRIMINATOR,
     prelude::*,
     solana_program::{
         hash,
@@ -40,7 +39,6 @@ pub use noop::*;
 pub use pnft_adapter::*;
 pub use shared::find_neutral_broker;
 pub(crate) use shared::*;
-pub use spl_account_compression::{program::SplAccountCompression, Noop};
 pub use state::*;
 pub use tensor_nft::*;
 pub use tensor_whitelist::{self, Whitelist};

@@ -2170,7 +2170,6 @@ describe("tcomp bids", () => {
             whitelist: fakeWhitelist,
           })
         ).rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
-        console.log("yay");
         await testTakeBidLegacy({
           ...common,
           minAmount: new BN(LAMPORTS_PER_SOL / 2),

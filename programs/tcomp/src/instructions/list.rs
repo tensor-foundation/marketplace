@@ -81,7 +81,7 @@ pub fn handler<'info>(
 
     let list_state = &mut ctx.accounts.list_state;
     list_state.version = CURRENT_TCOMP_VERSION;
-    list_state.bump = [unwrap_bump!(ctx, "list_state")];
+    list_state.bump = [ctx.bumps.list_state];
     list_state.asset_id = asset_id;
     list_state.owner = ctx.accounts.owner.key();
     list_state.amount = amount;

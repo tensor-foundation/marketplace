@@ -97,17 +97,18 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     //if margin is used, move money into bid first
     if let Some(margin) = bid_state.margin {
-        let margin_account_info = &margin_account.to_account_info();
-        let margin_account =
-            assert_decode_margin_account(margin_account_info, &owner.to_account_info())?;
+        let decoded_margin_account = assert_decode_margin_account(margin_account, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
-        require!(margin_account.owner == *owner.key, TcompError::BadMargin);
-        require!(*margin_account_info.key == margin, TcompError::BadMargin);
+        require!(
+            decoded_margin_account.owner == *owner.key,
+            TcompError::BadMargin
+        );
+        require!(*margin_account.key == margin, TcompError::BadMargin);
         tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
             CpiContext::new(
                 tswap_prog.to_account_info(),
                 tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                    margin_account: margin_account_info.clone(),
+                    margin_account: margin_account.to_account_info(),
                     bid_state: bid_state.to_account_info(),
                     owner: owner.to_account_info(),
                     //transfer to bid state
@@ -193,16 +194,16 @@ fn transfer_lamports_from_pda_min_balance<'info>(
 
 #[inline(never)]
 pub fn assert_decode_mint_proof<'info>(
-    whitelist: &Account<'info, Whitelist>,
+    whitelist_pubkey: &Pubkey,
     nft_mint: &Account<'info, Mint>,
     mint_proof: &UncheckedAccount<'info>,
-) -> Result<Account<'info, MintProof>> {
+) -> Result<MintProof> {
     let program_id = &tensor_whitelist::id();
     let (key, _) = Pubkey::find_program_address(
         &[
             b"mint_proof".as_ref(),
             nft_mint.key().as_ref(),
-            whitelist.key().as_ref(),
+            whitelist_pubkey.as_ref(),
         ],
         program_id,
     );
@@ -214,5 +215,7 @@ pub fn assert_decode_mint_proof<'info>(
         throw_err!(TcompError::BadMintProof);
     }
 
-    Account::try_from(mint_proof.deref())
+    let mut data: &[u8] = &mint_proof.try_borrow_data()?;
+    let mint_proof: MintProof = AccountDeserialize::try_deserialize(&mut data)?;
+    Ok(mint_proof)
 }

@@ -82,7 +82,7 @@ pub fn handler<'info>(
         bid_state.rent_payer = ctx.accounts.rent_payer.key();
     }
     bid_state.version = CURRENT_TCOMP_VERSION;
-    bid_state.bump = [unwrap_bump!(ctx, "bid_state")];
+    bid_state.bump = [ctx.bumps.bid_state];
     bid_state.amount = amount;
     bid_state.quantity = quantity;
     bid_state.currency = currency;
@@ -180,9 +180,8 @@ pub fn handler<'info>(
     let bid_balance = BidState::bid_balance(&ctx.accounts.bid_state)?;
 
     //transfer lamports
-    let margin_account_info = &ctx.accounts.margin_account.to_account_info();
     let margin_account_result =
-        assert_decode_margin_account(margin_account_info, &ctx.accounts.owner.to_account_info());
+        assert_decode_margin_account(&ctx.accounts.margin_account, &ctx.accounts.owner);
 
     let deposit_amount = unwrap_int!(amount.checked_mul(remaining_quantity as u64));
 
@@ -195,7 +194,7 @@ pub fn handler<'info>(
                 TcompError::BadMargin
             );
             let bid_state = &mut ctx.accounts.bid_state;
-            bid_state.margin = Some(margin_account_info.key());
+            bid_state.margin = Some(ctx.accounts.margin_account.key());
             //transfer any existing balance back to user (this is in case they're editing an existing non-marginated bid)
             if bid_balance > 0 {
                 transfer_lamports_from_pda(
