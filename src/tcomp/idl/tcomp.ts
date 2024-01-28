@@ -1415,6 +1415,117 @@ export type Tcomp = {
           }
         }
       ]
+    },
+    {
+      "name": "takeBidT22",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -3757,6 +3868,117 @@ export const IDL: Tcomp = {
               "defined": "AuthorizationDataLocal"
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "takeBidT22",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
         }
       ]
     }

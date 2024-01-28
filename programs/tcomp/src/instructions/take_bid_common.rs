@@ -1,4 +1,4 @@
-use anchor_spl::token::Mint;
+use anchor_spl::token_interface::Mint;
 use mpl_token_metadata::types::TokenStandard;
 use tensor_whitelist::MintProof;
 use tensorswap::assert_decode_margin_account;
@@ -195,7 +195,7 @@ fn transfer_lamports_from_pda_min_balance<'info>(
 #[inline(never)]
 pub fn assert_decode_mint_proof<'info>(
     whitelist_pubkey: &Pubkey,
-    nft_mint: &Account<'info, Mint>,
+    nft_mint: &InterfaceAccount<'info, Mint>,
     mint_proof: &UncheckedAccount<'info>,
 ) -> Result<MintProof> {
     let program_id = &tensor_whitelist::id();

@@ -17,7 +17,7 @@ impl From<AuthorizationDataLocal> for AuthorizationData {
     fn from(val: AuthorizationDataLocal) -> Self {
         let mut map = HashMap::<String, PayloadType>::new();
         val.payload.into_iter().for_each(|tp| {
-            map.insert(tp.name, PayloadType::try_from(tp.payload).unwrap());
+            map.insert(tp.name, PayloadType::from(tp.payload));
         });
         AuthorizationData {
             payload: Payload { map },
@@ -50,11 +50,9 @@ impl From<PayloadTypeLocal> for PayloadType {
     fn from(val: PayloadTypeLocal) -> Self {
         match val {
             PayloadTypeLocal::Pubkey(pubkey) => PayloadType::Pubkey(pubkey),
-            PayloadTypeLocal::Seeds(seeds) => {
-                PayloadType::Seeds(SeedsVec::try_from(seeds).unwrap())
-            }
+            PayloadTypeLocal::Seeds(seeds) => PayloadType::Seeds(SeedsVec::from(seeds)),
             PayloadTypeLocal::MerkleProof(proof) => {
-                PayloadType::MerkleProof(ProofInfo::try_from(proof).unwrap())
+                PayloadType::MerkleProof(ProofInfo::from(proof))
             }
             PayloadTypeLocal::Number(number) => PayloadType::Number(number),
         }

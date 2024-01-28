@@ -1,12 +1,20 @@
+use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{self, CloseAccount, Mint, Token, TokenAccount},
+    token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::{accounts::TokenRecord, types::AuthorizationData};
-use tensor_nft::*;
+use tensor_nft::{assert_decode_metadata, send_pnft, PnftTransferArgs};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
+use tensorswap::program::Tensorswap;
+use vipers::Validate;
 
-use crate::{take_bid_common::*, *};
+use crate::{
+    pnft_adapter::*,
+    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
+    CURRENT_TCOMP_VERSION,
+};
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
@@ -41,9 +49,9 @@ pub struct TakeBidLegacy<'info> {
 
     // --------------------------------------- nft
     #[account(mut, token::mint = nft_mint, token::authority = seller)]
-    pub nft_seller_acc: Box<Account<'info, TokenAccount>>,
+    pub nft_seller_acc: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
-    pub nft_mint: Box<Account<'info, Mint>>,
+    pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
     //can't deserialize directly coz Anchor traits not implemented
     /// CHECK: assert_decode_metadata check seeds
     #[account(mut)]
@@ -55,7 +63,7 @@ pub struct TakeBidLegacy<'info> {
         associated_token::mint = nft_mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata_acc: Box<Account<'info, TokenAccount>>,
+    pub owner_ata_acc: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
 
@@ -97,7 +105,7 @@ pub struct TakeBidLegacy<'info> {
         // NB: super important this is a PDA w/ data, o/w ProgramOwnedList rulesets break.
         token::authority = bid_state,
     )]
-    pub nft_escrow: Box<Account<'info, TokenAccount>>,
+    pub nft_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seeds checked in validate
     #[account(mut)]
@@ -106,7 +114,7 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: validated by mplex's pnft code
     pub auth_rules: UncheckedAccount<'info>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
@@ -152,7 +160,7 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
 
         // owner
         let (owner_token_record, _) =
-            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.nft_seller_acc.as_key_ref());
+            TokenRecord::find_pda(&self.nft_mint.key(), &self.nft_seller_acc.key());
         require!(
             owner_token_record.key() == self.owner_token_record.key(),
             TcompError::WrongTokenRecordDerivation,
@@ -160,7 +168,7 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
 
         // destination
         let (dest_token_record, _) =
-            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.owner_ata_acc.as_key_ref());
+            TokenRecord::find_pda(&self.nft_mint.key(), &self.owner_ata_acc.key());
         require!(
             dest_token_record.key() == self.dest_token_record.key(),
             TcompError::WrongTokenRecordDerivation,
@@ -168,7 +176,7 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
 
         // escrow
         let (temp_escrow_token_record, _) =
-            TokenRecord::find_pda(self.nft_mint.as_key_ref(), self.nft_escrow.as_key_ref());
+            TokenRecord::find_pda(&self.nft_mint.key(), &self.nft_escrow.key());
         require!(
             temp_escrow_token_record.key() == self.temp_escrow_token_record.key(),
             TcompError::WrongTokenRecordDerivation,
@@ -243,7 +251,7 @@ pub fn handler<'info>(
     // Check the bid field filter if it exists.
     if let Some(field) = &bid_state.field {
         match field {
-            Field::Name => {
+            &Field::Name => {
                 let mut name_arr = [0u8; 32];
                 name_arr[..metadata.name.len()].copy_from_slice(metadata.name.as_bytes());
                 require!(
@@ -285,9 +293,7 @@ pub fn handler<'info>(
             dest_token_record: &ctx.accounts.temp_escrow_token_record,
             authorization_rules_program: &ctx.accounts.pnft_shared.authorization_rules_program,
             rules_acc: auth_rules,
-            authorization_data: authorization_data
-                .clone()
-                .map(|authorization_data| AuthorizationData::try_from(authorization_data).unwrap()),
+            authorization_data: authorization_data.clone().map(AuthorizationData::from),
             delegate: None,
         },
     )?;
@@ -315,14 +321,13 @@ pub fn handler<'info>(
             dest_token_record: &ctx.accounts.dest_token_record,
             authorization_rules_program: &ctx.accounts.pnft_shared.authorization_rules_program,
             rules_acc: auth_rules,
-            authorization_data: authorization_data
-                .map(|authorization_data| AuthorizationData::try_from(authorization_data).unwrap()),
+            authorization_data: authorization_data.map(AuthorizationData::from),
             delegate: None,
         },
     )?;
 
     // close temp nft escrow account, so it's not dangling
-    token::close_account(ctx.accounts.close_nft_escrow_ctx().with_signer(seeds))?;
+    token_interface::close_account(ctx.accounts.close_nft_escrow_ctx().with_signer(seeds))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,

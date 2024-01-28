@@ -1,3 +1,7 @@
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
+
 use crate::*;
 
 #[derive(Accounts)]
@@ -11,7 +15,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = tcomp,
     )]
-    pub tcomp_ata: Box<Account<'info, TokenAccount>>,
+    pub tcomp_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -22,7 +26,7 @@ pub struct BuySpl<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::Tcomp>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(mut, close = rent_dest,
         seeds=[
@@ -41,7 +45,7 @@ pub struct BuySpl<'info> {
       token::mint = currency,
       token::authority = payer,
     )]
-    pub payer_source: Box<Account<'info, TokenAccount>>,
+    pub payer_source: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: has_one = owner on list_state
     pub owner: UncheckedAccount<'info>,
     #[account(init_if_needed,
@@ -49,9 +53,9 @@ pub struct BuySpl<'info> {
       associated_token::mint = currency,
       associated_token::authority = owner,
     )]
-    pub owner_dest: Box<Account<'info, TokenAccount>>,
+    pub owner_dest: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: list_state.currency
-    pub currency: Box<Account<'info, Mint>>,
+    pub currency: Box<InterfaceAccount<'info, Mint>>,
     // TODO: brokers are Option<T> to save bytes
     /// CHECK: none, can be anything
     #[account(mut)]
@@ -61,7 +65,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
     )]
-    pub taker_broker_ata: Option<Box<Account<'info, TokenAccount>>>,
+    pub taker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
@@ -70,7 +74,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
     )]
-    pub maker_broker_ata: Option<Box<Account<'info, TokenAccount>>>,
+    pub maker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
@@ -126,17 +130,25 @@ impl<'info> Validate<'info> for BuySpl<'info> {
 }
 
 impl<'info> BuySpl<'info> {
-    fn transfer_ata(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
-        anchor_spl::token::transfer(
+    fn transfer_ata(
+        &self,
+        to: &AccountInfo<'info>,
+        mint: &AccountInfo<'info>,
+        amount: u64,
+        decimals: u8,
+    ) -> Result<()> {
+        transfer_checked(
             CpiContext::new(
                 self.token_program.to_account_info(),
-                anchor_spl::token::Transfer {
+                TransferChecked {
                     from: self.payer_source.to_account_info(),
                     to: to.to_account_info(),
                     authority: self.payer.to_account_info(),
+                    mint: mint.to_account_info(),
                 },
             ),
             amount,
+            decimals,
         )?;
         Ok(())
     }
@@ -261,8 +273,12 @@ pub fn handler<'info>(
     // --------------------------------------- token transfers
 
     // Pay fees
-    ctx.accounts
-        .transfer_ata(ctx.accounts.tcomp_ata.deref().as_ref(), tcomp_fee)?;
+    ctx.accounts.transfer_ata(
+        ctx.accounts.tcomp_ata.deref().as_ref(),
+        ctx.accounts.currency.deref().as_ref(),
+        tcomp_fee,
+        ctx.accounts.currency.decimals,
+    )?;
 
     ctx.accounts.transfer_ata(
         ctx.accounts
@@ -271,7 +287,9 @@ pub fn handler<'info>(
             .unwrap_or(&ctx.accounts.tcomp_ata)
             .deref()
             .as_ref(),
+        ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
+        ctx.accounts.currency.decimals,
     )?;
 
     ctx.accounts.transfer_ata(
@@ -281,7 +299,9 @@ pub fn handler<'info>(
             .unwrap_or(&ctx.accounts.tcomp_ata)
             .deref()
             .as_ref(),
+        ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
+        ctx.accounts.currency.decimals,
     )?;
 
     // Pay creators
@@ -301,8 +321,12 @@ pub fn handler<'info>(
     )?;
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_ata(ctx.accounts.owner_dest.deref().as_ref(), amount)?;
+    ctx.accounts.transfer_ata(
+        ctx.accounts.owner_dest.deref().as_ref(),
+        ctx.accounts.currency.deref().as_ref(),
+        amount,
+        ctx.accounts.currency.decimals,
+    )?;
 
     Ok(())
 }

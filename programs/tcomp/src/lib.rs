@@ -27,10 +27,7 @@ pub use anchor_lang::{
     },
     InstructionData,
 };
-pub use anchor_spl::{
-    associated_token::{create_idempotent, AssociatedToken, Create},
-    token::{Mint, Token, TokenAccount},
-};
+pub use anchor_spl::associated_token::{create_idempotent, AssociatedToken, Create};
 pub use bubblegum_adapter::*;
 pub use error::*;
 pub use event::*;
@@ -296,5 +293,12 @@ pub mod tcomp {
             rules_acc_present,
             authorization_data,
         )
+    }
+
+    pub fn take_bid_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
+        min_amount: u64,
+    ) -> Result<()> {
+        instructions::take_bid_t22::process_take_bid_t22(ctx, min_amount)
     }
 }
