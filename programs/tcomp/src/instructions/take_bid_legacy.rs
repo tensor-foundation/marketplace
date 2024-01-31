@@ -3,7 +3,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
-use mpl_token_metadata::{accounts::TokenRecord, types::AuthorizationData};
+use mpl_token_metadata::types::AuthorizationData;
 use tensor_nft::{assert_decode_metadata, send_pnft, PnftTransferArgs};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::Tensorswap;
@@ -68,24 +68,14 @@ pub struct TakeBidLegacy<'info> {
     // --------------------------------------- pNft
 
     //note that MASTER EDITION and EDITION share the same seeds, and so it's valid to check them here
-    /// CHECK: seeds below
-    #[account(
-        seeds=[
-            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
-            mpl_token_metadata::ID.as_ref(),
-            nft_mint.key().as_ref(),
-            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
-        ],
-        seeds::program = mpl_token_metadata::ID,
-        bump
-    )]
+    /// CHECK: seeds checked on Token Metadata CPI
     pub nft_edition: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked in validate
+    /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
     pub owner_token_record: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked in validate
+    /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
     pub dest_token_record: UncheckedAccount<'info>,
 
@@ -107,7 +97,7 @@ pub struct TakeBidLegacy<'info> {
     )]
     pub nft_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: seeds checked in validate
+    /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
     pub temp_escrow_token_record: UncheckedAccount<'info>,
 
@@ -154,32 +144,6 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
         require!(
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
-        );
-
-        // validate token record derivations
-
-        // owner
-        let (owner_token_record, _) =
-            TokenRecord::find_pda(&self.nft_mint.key(), &self.nft_seller_acc.key());
-        require!(
-            owner_token_record.key() == self.owner_token_record.key(),
-            TcompError::WrongTokenRecordDerivation,
-        );
-
-        // destination
-        let (dest_token_record, _) =
-            TokenRecord::find_pda(&self.nft_mint.key(), &self.owner_ata_acc.key());
-        require!(
-            dest_token_record.key() == self.dest_token_record.key(),
-            TcompError::WrongTokenRecordDerivation,
-        );
-
-        // escrow
-        let (temp_escrow_token_record, _) =
-            TokenRecord::find_pda(&self.nft_mint.key(), &self.nft_escrow.key());
-        require!(
-            temp_escrow_token_record.key() == self.temp_escrow_token_record.key(),
-            TcompError::WrongTokenRecordDerivation,
         );
 
         Ok(())
