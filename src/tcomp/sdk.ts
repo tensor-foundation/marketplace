@@ -20,6 +20,7 @@ import {
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
@@ -66,6 +67,7 @@ import {
   DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
   findAta,
+  findAtaWithProgramId,
 } from "../shared";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
@@ -1315,6 +1317,7 @@ export class TCompSDK {
     rentDest,
     seller,
     minAmount,
+    tokenProgram,
     currency = null,
     makerBroker,
     takerBroker = null,
@@ -1336,6 +1339,7 @@ export class TCompSDK {
     rentDest: PublicKey;
     seller: PublicKey;
     minAmount: BN;
+    tokenProgram: PublicKey;
     currency?: PublicKey | null;
     makerBroker: PublicKey | null;
     takerBroker?: PublicKey | null;
@@ -1406,7 +1410,7 @@ export class TCompSDK {
         tempEscrowTokenRecord: escrowDestTokenRecordPda,
         authRules: ruleSet ?? SystemProgram.programId,
 
-        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         tcompProgram: TCOMP_ADDR,
@@ -1474,6 +1478,91 @@ export class TCompSDK {
         ixs: [ix],
         extraSigners: [],
       },
+    };
+  }
+
+  async takeBidT22({
+    bidId,
+    nftMint,
+    nftSellerAcc,
+    owner,
+    rentDest,
+    seller,
+    minAmount,
+    currency = null,
+    makerBroker,
+    takerBroker = null,
+    margin = null,
+    whitelist = null,
+    compute = 800_000, // pnfts are expensive
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    cosigner = null,
+  }: {
+    bidId: PublicKey;
+    nftMint: PublicKey;
+    nftSellerAcc: PublicKey;
+    owner: PublicKey;
+    rentDest: PublicKey;
+    seller: PublicKey;
+    minAmount: BN;
+    currency?: PublicKey | null;
+    makerBroker: PublicKey | null;
+    takerBroker?: PublicKey | null;
+    margin?: PublicKey | null;
+    whitelist?: PublicKey | null;
+    compute?: number | null | undefined;
+    priorityMicroLamports?: number | null | undefined;
+    cosigner?: PublicKey | null;
+  }) {
+    const [tcomp] = findTCompPda({});
+    const ownerAtaAcc = findAtaWithProgramId(
+      nftMint,
+      owner,
+      TOKEN_2022_PROGRAM_ID
+    );
+    const [bidState] = findBidStatePda({ bidId, owner });
+    const mintProofPda = whitelist
+      ? findMintProofPDA({ mint: nftMint, whitelist })[0]
+      : SystemProgram.programId;
+
+    const builder = this.program.methods.takeBidT22(minAmount).accounts({
+      tcomp,
+      seller,
+      bidState,
+      owner,
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+      takerBroker,
+      makerBroker,
+      marginAccount: margin ?? seller,
+      whitelist: whitelist ?? TSWAP_PROGRAM_ID,
+      nftSellerAcc,
+      nftMint,
+      ownerAtaAcc,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      tcompProgram: TCOMP_ADDR,
+      tensorswapProgram: TSWAP_PROGRAM_ID,
+      cosigner: cosigner ?? seller,
+      mintProof: mintProofPda,
+    });
+    const ix = await builder.instruction();
+
+    const ixs = prependComputeIxs(
+      [ix],
+      isNullLike(compute) ? null : compute ?? 0,
+      priorityMicroLamports
+    );
+
+    return {
+      builder,
+      tx: {
+        ixs,
+        extraSigners: [],
+      },
+      bidState,
+      tcomp,
+      ownerAtaAcc,
     };
   }
 

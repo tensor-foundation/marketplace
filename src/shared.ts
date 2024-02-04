@@ -1,4 +1,7 @@
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import Mexp from "math-expression-evaluator";
 
@@ -27,5 +30,13 @@ export const evalMathExpr = (str: string) => {
 
 //todo: move to common
 export const findAta = (mint: PublicKey, owner: PublicKey): PublicKey => {
-  return getAssociatedTokenAddressSync(mint, owner, true);
+  return findAtaWithProgramId(mint, owner, TOKEN_PROGRAM_ID);
+};
+
+export const findAtaWithProgramId = (
+  mint: PublicKey,
+  owner: PublicKey,
+  programId: PublicKey
+): PublicKey => {
+  return getAssociatedTokenAddressSync(mint, owner, true, programId);
 };

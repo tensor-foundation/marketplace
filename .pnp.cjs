@@ -38,7 +38,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@msgpack/msgpack", "npm:3.0.0-beta2"],\
             ["@saberhq/solana-contrib", "virtual:4155ecd8e68d80b3c5cdfb00a8022dc47dba32a95c1ada1e6bcc1827e3ed894a6adb84c6f78e9071bec6474e63ed646806075d6374ace4fb3237f927ac6ed17d#npm:1.14.11"],\
             ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
-            ["@solana/spl-token", "virtual:3d0b8bcf968cec84db259b1429e32feaa3de2bdc832e277d2d5deaa007eb47d28de070dfe3a20626e8cbf4546777dca411020aa94153c8204d9b5b765b5d9c33#npm:0.3.7"],\
+            ["@solana/spl-token", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:0.4.0"],\
             ["@solana/web3.js", "npm:1.75.0"],\
             ["@tensor-hq/tensor-common", "npm:4.1.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F4.1.0%2Fae49661c2b5309c328b8285257d440af0e3a0524"],\
             ["@tensor-hq/tensor-tests-common", "npm:0.3.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-tests-common%2F0.3.0%2Fff5da044dd9afe67c1afb254bcc37c85c6166985"],\
@@ -873,6 +873,71 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["@solana/codecs-core", [\
+        ["npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/cache/@solana-codecs-core-npm-2.0.0-experimental.8618508-7622849901-3f16d037b0.zip/node_modules/@solana/codecs-core/",\
+          "packageDependencies": [\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/codecs-data-structures", [\
+        ["npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/cache/@solana-codecs-data-structures-npm-2.0.0-experimental.8618508-cfe1ddd79b-1a72f82cad.zip/node_modules/@solana/codecs-data-structures/",\
+          "packageDependencies": [\
+            ["@solana/codecs-data-structures", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-numbers", "npm:2.0.0-experimental.8618508"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/codecs-numbers", [\
+        ["npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/cache/@solana-codecs-numbers-npm-2.0.0-experimental.8618508-1c771cfbcf-7c80fc0a2d.zip/node_modules/@solana/codecs-numbers/",\
+          "packageDependencies": [\
+            ["@solana/codecs-numbers", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/codecs-strings", [\
+        ["npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/cache/@solana-codecs-strings-npm-2.0.0-experimental.8618508-b29210a019-0186dbf1c6.zip/node_modules/@solana/codecs-strings/",\
+          "packageDependencies": [\
+            ["@solana/codecs-strings", "npm:2.0.0-experimental.8618508"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:f9f1d89bef9288e08537293fe3a84a587c74d04e452010793a684eed2194374c55bebb85865f18d5cbc439890000c32b3c8971aeb11e876b9ad2af9e3d78f3b7#npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/__virtual__/@solana-codecs-strings-virtual-794c1177f9/0/cache/@solana-codecs-strings-npm-2.0.0-experimental.8618508-b29210a019-0186dbf1c6.zip/node_modules/@solana/codecs-strings/",\
+          "packageDependencies": [\
+            ["@solana/codecs-strings", "virtual:f9f1d89bef9288e08537293fe3a84a587c74d04e452010793a684eed2194374c55bebb85865f18d5cbc439890000c32b3c8971aeb11e876b9ad2af9e3d78f3b7#npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-numbers", "npm:2.0.0-experimental.8618508"],\
+            ["@types/fastestsmallesttextencoderdecoder", null],\
+            ["fastestsmallesttextencoderdecoder", null]\
+          ],\
+          "packagePeers": [\
+            "@types/fastestsmallesttextencoderdecoder",\
+            "fastestsmallesttextencoderdecoder"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/options", [\
+        ["npm:2.0.0-experimental.8618508", {\
+          "packageLocation": "./.yarn/cache/@solana-options-npm-2.0.0-experimental.8618508-50408ecd9d-d260faec7a.zip/node_modules/@solana/options/",\
+          "packageDependencies": [\
+            ["@solana/options", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-numbers", "npm:2.0.0-experimental.8618508"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["@solana/spl-account-compression", [\
         ["npm:0.1.7", {\
           "packageLocation": "./.yarn/cache/@solana-spl-account-compression-npm-0.1.7-d6a2b57b3e-0503ebafac.zip/node_modules/@solana/spl-account-compression/",\
@@ -955,6 +1020,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           ],\
           "linkType": "SOFT"\
         }],\
+        ["npm:0.4.0", {\
+          "packageLocation": "./.yarn/cache/@solana-spl-token-npm-0.4.0-542af1421d-6f578ea201.zip/node_modules/@solana/spl-token/",\
+          "packageDependencies": [\
+            ["@solana/spl-token", "npm:0.4.0"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
         ["virtual:33276308ef6cd75b5c2f243d4e1f0af50b9b30d1d21fd31e37241c55c92e81f7651fb43aee0085cd55990621d9860ee21be5558dc61f65e50c74dfe98a6af84a#npm:0.3.9", {\
           "packageLocation": "./.yarn/__virtual__/@solana-spl-token-virtual-170313c322/0/cache/@solana-spl-token-npm-0.3.9-b2d855b518-9313f92806.zip/node_modules/@solana/spl-token/",\
           "packageDependencies": [\
@@ -984,6 +1056,61 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packagePeers": [\
             "@solana/web3.js",\
             "@types/solana__web3.js"\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:0.4.0", {\
+          "packageLocation": "./.yarn/__virtual__/@solana-spl-token-virtual-d66d6d327e/0/cache/@solana-spl-token-npm-0.4.0-542af1421d-6f578ea201.zip/node_modules/@solana/spl-token/",\
+          "packageDependencies": [\
+            ["@solana/spl-token", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:0.4.0"],\
+            ["@solana/buffer-layout", "npm:4.0.1"],\
+            ["@solana/buffer-layout-utils", "npm:0.2.0"],\
+            ["@solana/spl-token-metadata", "virtual:d66d6d327e65abf026678fda7693b658bca53108863e4ac31c7434cf2fec36e3445b837d54a6aec70c11c347b248ac2808f95e3e004554c110eaf2bae7a8f23a#npm:0.1.2"],\
+            ["@solana/web3.js", "npm:1.75.0"],\
+            ["@types/solana__web3.js", null],\
+            ["buffer", "npm:6.0.3"]\
+          ],\
+          "packagePeers": [\
+            "@solana/web3.js",\
+            "@types/solana__web3.js"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/spl-token-metadata", [\
+        ["npm:0.1.2", {\
+          "packageLocation": "./.yarn/cache/@solana-spl-token-metadata-npm-0.1.2-56e90b124f-9cd90aed86.zip/node_modules/@solana/spl-token-metadata/",\
+          "packageDependencies": [\
+            ["@solana/spl-token-metadata", "npm:0.1.2"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:d66d6d327e65abf026678fda7693b658bca53108863e4ac31c7434cf2fec36e3445b837d54a6aec70c11c347b248ac2808f95e3e004554c110eaf2bae7a8f23a#npm:0.1.2", {\
+          "packageLocation": "./.yarn/__virtual__/@solana-spl-token-metadata-virtual-f9f1d89bef/0/cache/@solana-spl-token-metadata-npm-0.1.2-56e90b124f-9cd90aed86.zip/node_modules/@solana/spl-token-metadata/",\
+          "packageDependencies": [\
+            ["@solana/spl-token-metadata", "virtual:d66d6d327e65abf026678fda7693b658bca53108863e4ac31c7434cf2fec36e3445b837d54a6aec70c11c347b248ac2808f95e3e004554c110eaf2bae7a8f23a#npm:0.1.2"],\
+            ["@solana/codecs-core", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-data-structures", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-numbers", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/codecs-strings", "virtual:f9f1d89bef9288e08537293fe3a84a587c74d04e452010793a684eed2194374c55bebb85865f18d5cbc439890000c32b3c8971aeb11e876b9ad2af9e3d78f3b7#npm:2.0.0-experimental.8618508"],\
+            ["@solana/options", "npm:2.0.0-experimental.8618508"],\
+            ["@solana/spl-type-length-value", "npm:0.1.0"],\
+            ["@solana/web3.js", "npm:1.75.0"],\
+            ["@types/solana__web3.js", null]\
+          ],\
+          "packagePeers": [\
+            "@solana/web3.js",\
+            "@types/solana__web3.js"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@solana/spl-type-length-value", [\
+        ["npm:0.1.0", {\
+          "packageLocation": "./.yarn/cache/@solana-spl-type-length-value-npm-0.1.0-ca9d32fb55-9bea6d9638.zip/node_modules/@solana/spl-type-length-value/",\
+          "packageDependencies": [\
+            ["@solana/spl-type-length-value", "npm:0.1.0"],\
+            ["buffer", "npm:6.0.3"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -1028,7 +1155,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@msgpack/msgpack", "npm:3.0.0-beta2"],\
             ["@saberhq/solana-contrib", "virtual:4155ecd8e68d80b3c5cdfb00a8022dc47dba32a95c1ada1e6bcc1827e3ed894a6adb84c6f78e9071bec6474e63ed646806075d6374ace4fb3237f927ac6ed17d#npm:1.14.11"],\
             ["@solana/spl-account-compression", "virtual:d2f22d56fd5b4f69dad3db1530a7e996cb825ba6a6b8d9cb8c59197187205cad54f4c51bf91471dc0ea7942095a9d4741507b4087d2844974ff7c985943618fc#npm:0.1.7"],\
-            ["@solana/spl-token", "virtual:3d0b8bcf968cec84db259b1429e32feaa3de2bdc832e277d2d5deaa007eb47d28de070dfe3a20626e8cbf4546777dca411020aa94153c8204d9b5b765b5d9c33#npm:0.3.7"],\
+            ["@solana/spl-token", "virtual:c1f866d2448add44be4bef3dbdae674decd56f5732117e71bd6d719d04946b8cd9f7482d7d0e88a827caadb266700a995a0de4283349494f6bb49b3f6358d653#npm:0.4.0"],\
             ["@solana/web3.js", "npm:1.75.0"],\
             ["@tensor-hq/tensor-common", "npm:4.1.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-common%2F4.1.0%2Fae49661c2b5309c328b8285257d440af0e3a0524"],\
             ["@tensor-hq/tensor-tests-common", "npm:0.3.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40tensor-hq%2Ftensor-tests-common%2F0.3.0%2Fff5da044dd9afe67c1afb254bcc37c85c6166985"],\

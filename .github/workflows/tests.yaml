@@ -88,6 +88,7 @@ jobs:
         node:
           - glob: tests/listings.test.ts
           - glob: tests/bids.test.ts
+          - glob: tests/bidsT22.test.ts
           - glob: tests/admin.test.ts
     steps:
       - uses: actions/checkout@v3

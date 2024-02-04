@@ -33,6 +33,9 @@ address = "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
 [[test.validator.clone]]
 address = "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW"
 
+[[test.validator.clone]]
+address = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+
 [provider]
 cluster = "localnet"
 wallet = "tests/test-keypair.json"

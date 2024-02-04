@@ -46,6 +46,7 @@ import {
   getMinimumBalanceForRentExemptAccount,
   TokenAccountNotFoundError,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
@@ -111,6 +112,7 @@ import {
 } from "../src";
 import {
   getAccount,
+  getAccountWithProgramId,
   getMint,
   getTokenBalance,
   initCollection,
@@ -2377,6 +2379,7 @@ export const testTakeBidLegacy = async ({
     currency,
     whitelist,
     cosigner: cosigner?.publicKey,
+    tokenProgram: TOKEN_PROGRAM_ID,
   });
 
   let sig;
@@ -2513,6 +2516,184 @@ export const testTakeBidLegacy = async ({
               : 0)
         );
       }
+
+      // Sol escrow should have the NFT cost deducted
+      if (!isNullLike(margin)) {
+        const currMarginLamports = await getLamports(margin);
+        expect(currMarginLamports! - prevMarginLamports!).eq(-1 * amount);
+      } else {
+        const currBidStateLamports = await getLamports(bidState);
+        expect((currBidStateLamports ?? 0) - prevBidStateLamports!).eq(
+          -1 * (amount + (fullyFilled ? bidRent : 0))
+        );
+      }
+    }
+  );
+
+  return { sig };
+};
+
+export const testTakeBidT22 = async ({
+  bidId,
+  nftMint,
+  nftSellerAcc,
+  owner,
+  rentDest = owner,
+  seller,
+  minAmount,
+  currency,
+  makerBroker = null,
+  takerBroker,
+  lookupTableAccount,
+  margin,
+  whitelist = null,
+  cosigner,
+}: {
+  bidId: PublicKey;
+  nftMint: PublicKey;
+  nftSellerAcc: PublicKey;
+  owner: PublicKey;
+  rentDest?: PublicKey;
+  seller: Keypair;
+  minAmount: BN;
+  currency?: PublicKey;
+  makerBroker?: PublicKey | null;
+  takerBroker?: PublicKey;
+  lookupTableAccount?: AddressLookupTableAccount;
+  margin?: PublicKey;
+  whitelist?: PublicKey | null;
+  cosigner?: Keypair;
+}) => {
+  const [tcomp] = findTCompPda({});
+
+  const {
+    tx: { ixs: takeIxs },
+    bidState,
+    ownerAtaAcc,
+  } = await tcompSdk.takeBidT22({
+    bidId,
+    nftMint,
+    nftSellerAcc,
+    seller: seller.publicKey,
+    owner,
+    rentDest,
+    margin,
+    minAmount: new BN(minAmount),
+    makerBroker,
+    takerBroker,
+    currency,
+    whitelist,
+    cosigner: cosigner?.publicKey,
+  });
+
+  let sig;
+
+  await withLamports(
+    {
+      prevRentDestLamports: rentDest,
+      prevBidStateLamports: bidState,
+      ...(margin ? { prevMarginLamports: margin } : {}),
+      ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
+      prevFeeAccLamports: tcomp,
+      prevSellerLamports: seller.publicKey,
+      prevOwnerAtaLamports: ownerAtaAcc,
+    },
+    async ({
+      prevRentDestLamports,
+      prevBidStateLamports,
+      prevMarginLamports,
+      prevTakerBroker,
+      prevFeeAccLamports,
+      prevSellerLamports,
+      prevOwnerAtaLamports,
+    }) => {
+      let prevQuantity = 0;
+      let prevQuantityFilled = 0;
+      try {
+        //stuff into a try block in case doesnt exist
+        ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
+          await tcompSdk.fetchBidState(bidState));
+      } catch {}
+      const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
+
+      // Seller has nft
+      expect(
+        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
+          (acc) => acc.amount.toString()
+        )
+      ).eq("1");
+      if (prevOwnerAtaLamports !== 0)
+        expect(
+          await getAccountWithProgramId(
+            ownerAtaAcc,
+            TOKEN_2022_PROGRAM_ID
+          ).then((acc) => acc.amount.toString())
+        ).eq("0");
+
+      sig = await buildAndSendTx({
+        ixs: takeIxs,
+        extraSigners: cosigner ? [cosigner, seller] : [seller],
+        lookupTableAccounts: lookupTableAccount
+          ? [lookupTableAccount]
+          : undefined,
+      });
+      console.log("✅ bid accepted", sig);
+
+      //nft moved to bidder
+      expect(
+        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
+          (acc) => acc.amount.toString()
+        )
+      ).eq("0");
+      expect(
+        await getAccountWithProgramId(ownerAtaAcc, TOKEN_2022_PROGRAM_ID).then(
+          (acc) => acc.amount.toString()
+        )
+      ).eq("1");
+
+      const bidRent = await tcompSdk.getBidStateRent();
+
+      if (fullyFilled) {
+        //bid state closed
+        await expect(getAccount(bidState)).to.be.rejectedWith(
+          TokenAccountNotFoundError
+        );
+        // rent payer gets back rent
+        const currRentDestLamports = await getLamports(rentDest);
+        expect(currRentDestLamports! - prevRentDestLamports!).equal(bidRent);
+      } else {
+        const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
+          bidState
+        );
+        expect(prevQuantity).to.eq(quantity);
+        expect(prevQuantityFilled + 1).to.eq(filledQuantity);
+      }
+
+      const amount = minAmount.toNumber();
+
+      //fees paid
+      const feeAccLamports = await getLamports(tcomp);
+      const { tcompFee, brokerFee } = calcFees(amount);
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+      if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
+        const brokerLamports = await getLamports(makerBroker);
+        expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
+      }
+
+      // seller paid
+      const currSellerLamports = await getLamports(seller.publicKey);
+      //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      expect(currSellerLamports! - prevSellerLamports!).eq(
+        amount -
+          tcompFee -
+          brokerFee -
+          // For bidder's ATA rent.
+          (!prevOwnerAtaLamports
+            ? await getMinimumBalanceForRentExemptAccount(
+                TEST_PROVIDER.connection
+              )
+            : 0)
+      );
 
       // Sol escrow should have the NFT cost deducted
       if (!isNullLike(margin)) {
