@@ -301,4 +301,11 @@ pub mod tcomp {
     ) -> Result<()> {
         instructions::take_bid_t22::process_take_bid_t22(ctx, min_amount)
     }
+
+    pub fn take_bid_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
+        min_amount: u64,
+    ) -> Result<()> {
+        instructions::take_bid_wns::process_take_bid_wns(ctx, min_amount)
+    }
 }

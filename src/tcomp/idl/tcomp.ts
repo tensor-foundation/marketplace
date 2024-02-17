@@ -1526,6 +1526,142 @@ export type Tcomp = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "takeBidWns",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "approveAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distribution",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "wnsProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "distributionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "extraMetas",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -3972,6 +4108,142 @@ export const IDL: Tcomp = {
         {
           "name": "rentDest",
           "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "takeBidWns",
+      "accounts": [
+        {
+          "name": "tcomp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "bidState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "marginAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftSellerAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAtaAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tcompProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tensorswapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mintProof",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
+          ]
+        },
+        {
+          "name": "rentDest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "approveAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distribution",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "wnsProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "distributionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "extraMetas",
+          "isMut": false,
           "isSigner": false
         }
       ],

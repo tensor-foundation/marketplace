@@ -1,12 +1,15 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{transfer_checked, Mint, Token2022, TokenAccount, TransferChecked},
+    token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_nft::token_2022::t22_validate_mint;
+use tensor_nft::{
+    calc_creators_fee,
+    token_2022::wns::{wns_approve, wns_validate_mint, ApproveAccounts},
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::Tensorswap;
 use vipers::Validate;
@@ -17,7 +20,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct TakeBidT22<'info> {
+pub struct WnsTakeBid<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
     #[account(mut, seeds=[], bump)]
@@ -27,8 +30,9 @@ pub struct TakeBidT22<'info> {
     pub seller: Signer<'info>,
 
     /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(mut,
-        seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
+    #[account(
+        mut,
+        seeds = [b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
         has_one = owner
     )]
@@ -58,6 +62,9 @@ pub struct TakeBidT22<'info> {
     pub nft_seller_acc: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    #[account(
+        mint::token_program = anchor_spl::token_interface::spl_token_2022::id(),
+    )]
     pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
@@ -79,7 +86,9 @@ pub struct TakeBidT22<'info> {
     pub tensorswap_program: Program<'info, Tensorswap>,
 
     // seller or cosigner
-    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
+    #[account(
+        constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @ TcompError::BadCosigner
+    )]
     pub cosigner: Signer<'info>,
 
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -91,9 +100,27 @@ pub struct TakeBidT22<'info> {
         constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_dest: UncheckedAccount<'info>,
+
+    // ---- WNS royalty enforcement
+    /// CHECK: checked on approve CPI
+    #[account(mut)]
+    pub approve_account: UncheckedAccount<'info>,
+
+    /// CHECK: checked on approve CPI
+    #[account(mut)]
+    pub distribution: UncheckedAccount<'info>,
+
+    /// CHECK: checked on approve CPI
+    pub wns_program: UncheckedAccount<'info>,
+
+    /// CHECK: checked on approve CPI
+    pub distribution_program: UncheckedAccount<'info>,
+
+    /// CHECK: checked on transfer CPI
+    pub extra_metas: UncheckedAccount<'info>,
 }
 
-impl<'info> Validate<'info> for TakeBidT22<'info> {
+impl<'info> Validate<'info> for WnsTakeBid<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
         require!(
@@ -120,14 +147,19 @@ impl<'info> Validate<'info> for TakeBidT22<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
-pub fn process_take_bid_t22<'info>(
-    ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
+pub fn process_take_bid_wns<'info>(
+    ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
     // validate mint account
-
-    t22_validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    let seller_fee_basis_points = wns_validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    let creators_fee = calc_creators_fee(
+        seller_fee_basis_points,
+        min_amount,
+        Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
+        None,
+    )?;
 
     let bid_state = &ctx.accounts.bid_state;
     let mint = ctx.accounts.nft_mint.key();
@@ -190,6 +222,29 @@ pub fn process_take_bid_t22<'info>(
         }
     }
 
+    // TODO: we are currently using the seller to pay royalties directly, but this should be
+    // the bid_state PDA, otherwise the seller is required to have enough lamports to pay upfront.
+    // WNS approve instruction does not allow to pay royalties from a PDA. When we change this,
+    // we need to subtract the royalties values from the left_for_seller variable.
+
+    let approve_accounts = ApproveAccounts {
+        payer: ctx.accounts.seller.to_account_info(),
+        authority: ctx.accounts.seller.to_account_info(),
+        mint: ctx.accounts.nft_mint.to_account_info(),
+        approve_account: ctx.accounts.approve_account.to_account_info(),
+        payment_mint: None,
+        payer_address: ctx.accounts.seller.to_account_info(),
+        distribution: ctx.accounts.distribution.to_account_info(),
+        distribution_address: ctx.accounts.distribution.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
+        wns_program: ctx.accounts.wns_program.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
+        associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
+    };
+    // royalty payment
+    wns_approve(approve_accounts, min_amount, creators_fee)?;
+
     // transfer the NFT
 
     let transfer_cpi = CpiContext::new(
@@ -202,7 +257,15 @@ pub fn process_take_bid_t22<'info>(
         },
     );
 
-    transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
+    tensor_nft::token_2022::transfer::transfer_checked(
+        transfer_cpi.with_remaining_accounts(vec![
+            ctx.accounts.wns_program.to_account_info(),
+            ctx.accounts.extra_metas.to_account_info(),
+            ctx.accounts.approve_account.to_account_info(),
+        ]),
+        1, // supply = 1
+        0, // decimals = 0
+    )?;
 
     // TODO: add royalty value and creators once supported on T22; also, update token standard
     // in case there are other options in T22
@@ -216,11 +279,11 @@ pub fn process_take_bid_t22<'info>(
         taker_broker: &ctx.accounts.taker_broker,
         tcomp: &ctx.accounts.tcomp.to_account_info(),
         asset_id: mint,
-        token_standard: Some(TokenStandard::NonFungible),
-        creators: vec![],
+        token_standard: Some(TokenStandard::NonFungible), // <- royalty value was already paid on approve
+        creators: vec![], // <- royalty value was already paid on approve
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: 0, // no royalties on T22
+        seller_fee_basis_points: 0, // <- royalty value was already paid on approve
         creator_accounts: ctx.remaining_accounts,
         tcomp_prog: &ctx.accounts.tcomp_program,
         tswap_prog: &ctx.accounts.tensorswap_program,

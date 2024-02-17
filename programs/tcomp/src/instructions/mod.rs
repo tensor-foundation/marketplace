@@ -12,6 +12,7 @@ pub mod take_bid_common;
 pub mod take_bid_compressed;
 pub mod take_bid_legacy;
 pub mod take_bid_t22;
+pub mod take_bid_wns;
 pub mod withdraw_fees;
 
 pub use bid::*;
@@ -27,6 +28,7 @@ pub use noop::*;
 pub use take_bid_compressed::*;
 pub use take_bid_legacy::*;
 pub use take_bid_t22::*;
+pub use take_bid_wns::*;
 pub use withdraw_fees::*;
 
 use anchor_lang::solana_program::pubkey::Pubkey;
