@@ -1,0 +1,74 @@
+{
+  "name": "@tensor-foundation/marketplace",
+  "version": "0.0.0",
+  "description": "Your one-stop-shop for your NFT needs.",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "build:docs": "typedoc",
+    "test": "ava",
+    "lint": "eslint --ext js,ts,tsx src",
+    "lint:fix": "eslint --fix --ext js,ts,tsx src",
+    "format": "prettier --check src test",
+    "format:fix": "prettier --write src test"
+  },
+  "files": [
+    "/dist/src"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "homepage": "https://github.com/tensor-foundation",
+  "repository": "https://github.com/tensor-foundation/marketplace.git",
+  "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@solana/accounts": "2.0.0-experimental.dbe6a73",
+    "@solana/addresses": "2.0.0-experimental.dbe6a73",
+    "@solana/codecs-core": "2.0.0-experimental.dbe6a73",
+    "@solana/codecs-data-structures": "2.0.0-experimental.dbe6a73",
+    "@solana/codecs-numbers": "2.0.0-experimental.dbe6a73",
+    "@solana/codecs-strings": "2.0.0-experimental.dbe6a73",
+    "@solana/instructions": "2.0.0-experimental.dbe6a73",
+    "@solana/keys": "2.0.0-experimental.dbe6a73",
+    "@solana/options": "2.0.0-experimental.dbe6a73",
+    "@solana/programs": "2.0.0-experimental.dbe6a73",
+    "@solana/signers": "2.0.0-experimental.dbe6a73",
+    "@solana/transactions": "2.0.0-experimental.dbe6a73"
+  },
+  "devDependencies": {
+    "@ava/typescript": "^3.0.1",
+    "@solana/rpc-core": "2.0.0-experimental.dbe6a73",
+    "@solana/rpc-transport": "2.0.0-experimental.dbe6a73",
+    "@solana/web3.js": "2.0.0-experimental.dbe6a73",
+    "@solana/webcrypto-ed25519-polyfill": "2.0.0-experimental.dbe6a73",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.46.1",
+    "ava": "^5.1.0",
+    "eslint": "^8.0.1",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "typedoc": "^0.23.16",
+    "typedoc-plugin-expand-object-like-types": "^0.1.1",
+    "typedoc-plugin-missing-exports": "^1.0.0",
+    "typescript": "^4.6.2",
+    "vercel": "^28.16.0"
+  },
+  "ava": {
+    "require": ["./test/_globals.js"],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "src/": "dist/src/",
+        "test/": "dist/test/"
+      }
+    }
+  },
+  "packageManager": "pnpm@8.2.0"
+}

@@ -1,35 +1,22 @@
-# TCOMP (Tensor Compressed Marketplace)
+# Marketplace
 
-_"For my ally is Compression, and a powerful ally it is..."_
+Your one-stop-shop for your NFT needs.
 
-## Dev setup
+## Programs
 
-Add the following to `~/.cargo/config` to enable installing a github crate:
+This project contains the following programs:
 
-```toml
-[net]
-git-fetch-with-cli = true
-```
+- [Marketplace](./programs/marketplace/README.md) `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`
 
-Ensure `solana` CLI is [MUST be running v1.14.14](https://docs.solana.com/cli/install-solana-cli-tools):
+You will need a Rust version compatible with BPF to compile the program, currently we recommend using Rust 1.75.0.
 
-```sh
-sh -c "$(curl -sSfL https://release.solana.com/v1.14.14/install)"
-```
+## Clients
 
-Ensure `anchor` is [running v0.26](https://book.anchor-lang.com/getting_started/installation.html).
+This project contains the following clients:
 
-Ensure `cargo` is running on v1.69.0.
+- [JavaScript](./clients/js/README.md)
+- [Rust](./clients/rust/README.md)
 
-> If you run into any issues with build errors eg "found possibly newer version of crate `core`"
-> clear out all your `targets/` folders (including inside every `deps/` program.
+## Contributing
 
-## tcomp-sdk
-
-Run this script:
-
-```
-scripts/cp_sdk_into_public.sh
-```
-
-Make sure diff looks sane in the public repo, tag both repos, create a PR and publish.
+Check out the [Contributing Guide](./CONTRIBUTING.md) the learn more about how to contribute to this project.

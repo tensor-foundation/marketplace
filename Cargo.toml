@@ -1,20 +1,6 @@
 [workspace]
-members = [
-    "programs/*",
-]
-exclude = [
-    "deps/metaplex-mpl/bubblegum/program",
-    "deps/metaplex-mpl/token-metadata/program",
-    "deps/solana-spl/account-compression/programs",
-]
 resolver = "2"
-
-
-[profile.release]
-overflow-checks = true
-lto = "fat"
-codegen-units = 1
-[profile.release.build-override]
-opt-level = 3
-incremental = false
-codegen-units = 1
+members = [
+    "clients/rust",
+    "programs/marketplace"
+]

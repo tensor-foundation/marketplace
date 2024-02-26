@@ -1,69 +1,25 @@
 {
-  "name": "@tensor-hq/tcomp-ts",
-  "version": "4.1.0-alpha.1",
-  "description": "Anchor/JS SDK for interacting with TCOMP.",
-  "sideEffects": false,
-  "module": "./dist/esm/index.js",
-  "main": "./dist/cjs/index.js",
-  "types": "dist/cjs/index.d.ts",
-  "files": [
-    "/dist/esm/**/*",
-    "/dist/cjs/**/*"
-  ],
-  "repository": "https://github.com/tensor-hq/tcomp.git",
-  "license": "MIT",
-  "publishConfig": {
-    "@tensor-hq:registry": "https://npm.pkg.github.com"
-  },
+  "private": true,
   "scripts": {
-    "build": "anchor build && bash scripts/cp_idl.sh",
-    "build:test": "bash scripts/test_build.sh",
-    "build:ts": "rm -rf ./dist && yarn tsc && yarn tsc --p tsconfig.cjs.json && yarn tsc --p tsconfig.tests.json",
-    "fast-test": "anchor test --skip-build -- --features testing",
-    "test": "yarn build:test && yarn fast-test",
-    "push": "git push --atomic",
-    "publish:private": "yarn build:ts && yarn npm publish",
-    "pubpush": "yarn build:ts && yarn npm publish && yarn push",
-    "upgrade": "yarn add @tensor-hq/tensor-common @tensor-hq/tensorswap-ts"
-  },
-  "dependencies": {
-    "@coral-xyz/anchor": "0.26.0",
-    "@metaplex-foundation/mpl-bubblegum": "~0.8.0",
-    "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
-    "@msgpack/msgpack": "^3.0.0-beta2",
-    "@solana/spl-account-compression": "^0.1.7",
-    "@solana/spl-token": "^0.4.0",
-    "@solana/web3.js": "^1.75.0",
-    "@tensor-hq/tensor-common": "^4.1.0",
-    "@tensor-hq/tensor-tests-common": "^0.3.0",
-    "@tensor-hq/tensorswap-ts": "^2.0.4",
-    "bn.js": "^5.2.1",
-    "borsh": "^0.7.0",
-    "js-sha256": "^0.9.0",
-    "js-sha3": "^0.8.0",
-    "math-expression-evaluator": "^2.0.4"
+    "programs:build": "./configs/scripts/program/build.sh",
+    "programs:test": "RUST_LOG=error ./configs/scripts/program/test.sh",
+    "programs:debug": "./configs/scripts/program/test.sh",
+    "programs:clean": "./configs/scripts/program/clean.sh",
+    "clients:rust:test": "./configs/scripts/client/test-rust.sh",
+    "clients:js:test": "./configs/scripts/client/test-js.sh",
+    "generate": "pnpm generate:idls && pnpm generate:clients",
+    "generate:idls": "node ./configs/shank.cjs",
+    "generate:clients": "node ./configs/kinobi.cjs",
+    "validator": "CI=1 amman start --config ./configs/validator.cjs",
+    "validator:debug": "amman start --config ./configs/validator.cjs",
+    "validator:logs": "CI=1 amman logs",
+    "validator:stop": "amman stop"
   },
   "devDependencies": {
-    "@metaplex-foundation/mpl-token-auth-rules": "^3.0.1",
-    "@metaplex-foundation/umi": "^0.8.10",
-    "@metaplex-foundation/umi-bundle-defaults": "^0.8.10",
-    "@metaplex-foundation/umi-web3js-adapters": "^0.8.10",
-    "@saberhq/solana-contrib": "^1.14.11",
-    "@types/bn.js": "^5.1.1",
-    "@types/chai": "^4.3.4",
-    "@types/chai-as-promised": "^7.1.5",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^18.7.11",
-    "bs58": "^5.0.0",
-    "chai": "^4.3.7",
-    "chai-as-promised": "^7.1.1",
-    "exponential-backoff": "^3.1.1",
-    "merkletreejs": "^0.3.10",
-    "mocha": "^10.2.0",
-    "prettier": "^2.6.2",
-    "ts-mocha": "^10.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.3.5"
+    "@metaplex-foundation/kinobi": "^0.17.0",
+    "@metaplex-foundation/shank-js": "^0.1.0",
+    "@metaplex-foundation/amman": "^0.12.1",
+    "typescript": "^4.9.4"
   },
-  "packageManager": "yarn@3.3.1"
+  "packageManager": "pnpm@8.9.0"
 }
