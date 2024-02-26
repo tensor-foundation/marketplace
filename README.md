@@ -1,6 +1,12 @@
-# Marketplace
-
-Your one-stop-shop for your NFT needs.
+<h1 align="center">
+  Tensor Marketplace
+</h1>
+<p align="center">
+  <img width="400" alt="Tensor Margin" src="https://github.com/tensor-foundation/marketplace/assets/729235/984bd566-bd25-4bb7-aaea-cabaf72cc7ca" />
+</p>
+<p align="center">
+  Your one-stop-shop for your NFT needs.
+</p>
 
 ## Programs
 
