@@ -30,6 +30,7 @@ import {
   PublicKey,
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
+  TransactionInstruction,
   TransactionResponse,
 } from "@solana/web3.js";
 import {
@@ -1354,7 +1355,18 @@ export class TCompSDK {
     margin?: PublicKey | null;
     whitelist?: PublicKey | null;
     cosigner?: PublicKey | null;
-  } & PnftArgs) {
+    // Need this for npm package for whatever reason.
+  } & PnftArgs): Promise<{
+    builder: any;
+    tx: {
+      ixs: TransactionInstruction[];
+      extraSigners: PublicKey[];
+    };
+    bidState: PublicKey;
+    tcomp: PublicKey;
+    creators: Creator[];
+    ownerAtaAcc: PublicKey;
+  }> {
     const [tcomp] = findTCompPda({});
     const ownerAtaAcc = findAta(nftMint, owner);
     const nftMetadata = findMetadataPda(nftMint)[0];
