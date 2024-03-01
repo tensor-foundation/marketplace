@@ -38,24 +38,24 @@ jobs:
         if: env.CACHE == 'true'
         uses: tensor-foundation/actions/cache-crate@v1
         with:
-          folder: ./programs/${{ matrix.program }}
-          key: program-${{ matrix.program }}
+          folder: '.'
+          key: programs
 
       - name: Run cargo fmt
         uses: tensor-foundation/actions/cargo@v1
         with:
           command: fmt
-          args: --all --manifest-path ./programs/${{ matrix.program }}/Cargo.toml -- --check
+          args: --all --manifest-path ./${{ matrix.program }}/Cargo.toml -- --check
 
       - name: Run cargo clippy
         uses: tensor-foundation/actions/cargo@v1
         with:
           command: clippy
-          args: --all-targets --all-features --no-deps --manifest-path ./programs/${{ matrix.program }}/Cargo.toml
+          args: --all-targets --all-features --no-deps --manifest-path ./${{ matrix.program }}/Cargo.toml
 
       - name: Run tests
         shell: bash
-        working-directory: configs/scripts/program
+        working-directory: scripts/program
         run: RUST_LOG=error ./test.sh
         env:
           PROGRAM: ${{ matrix.program }}

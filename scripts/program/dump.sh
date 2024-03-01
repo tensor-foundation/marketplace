@@ -11,7 +11,7 @@ YLW() { echo $'\e[1;33m'$1$'\e[0m'; }
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # go to parent folder
-cd $(dirname $(dirname $(dirname $SCRIPT_DIR)))
+cd $(dirname $(dirname $SCRIPT_DIR))
 
 OUTPUT=$1
 
@@ -26,7 +26,7 @@ fi
 
 # creates the output directory if it doesn't exist
 if [ ! -d ${OUTPUT} ]; then
-    mkdir ${OUTPUT}
+    mkdir -p ${OUTPUT}
 fi
 
 # only prints this if we have external programs

@@ -3,7 +3,7 @@ const k = require("@metaplex-foundation/kinobi");
 
 // Paths.
 const clientDir = path.join(__dirname, "..", "clients");
-const idlDir = path.join(__dirname, "..", "idls");
+const idlDir = path.join(__dirname, "..", "program", "idl");
 
 // Instanciate Kinobi.
 const kinobi = k.createFromIdls([

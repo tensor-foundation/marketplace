@@ -22,7 +22,6 @@ on:
 
 env:
   CACHE: true
-  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
 
 jobs:
   build_programs:
@@ -50,12 +49,12 @@ jobs:
         if: env.CACHE == 'true'
         uses: tensor-foundation/actions/cache-crate@v1
         with:
-          folder: ./programs
+          folder: '.'
           key: programs
 
       - name: Build programs
         shell: bash
-        working-directory: configs/scripts/program
+        working-directory: scripts/program
         run: ./build.sh
         env:
           PROGRAMS: ${{ env.PROGRAMS }}
@@ -65,5 +64,5 @@ jobs:
         with:
           name: program-builds
           # First wildcard ensures exported paths are consistently under the programs folder.
-          path: ./program*/.bin/*.so
+          path: ./targe*/deploy/*.so
           if-no-files-found: error
