@@ -11,12 +11,12 @@ program_common: &program_common
   - ".github/file-filters.yml"
   - ".github/.env"
 
-marketplace_program: &marketplace_program
+program_binary: &program_binary
   - *program_common
-  - "programs/marketplace/**"
+  - "programs/**"
 
 programs: &programs
-  - *marketplace_program
+  - *program_binary
 
 # Clients.
 
@@ -28,8 +28,8 @@ client_common: &client_common
   - ".github/workflows/main.yml"
   - ".github/file-filters.yml"
   - ".github/.env"
-  - "configs/shank.cjs"
-  - "configs/kinobi.cjs"
+  - "scripts/generate-idls.cjs"
+  - "scripts/generate-clients.cjs"
 
 js_client: &js_client
   - *client_common

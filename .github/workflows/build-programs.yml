@@ -32,6 +32,14 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v4
 
+      - name: Setup SSH agent
+        uses: tensor-foundation/actions/ssh-agent@v1
+        with:
+          key: |
+            ${{ secrets.TOOLBOX_KEY }}
+            ${{ secrets.WHITELIST_KEY }}
+            ${{ secrets.MARGIN_KEY }}
+
       - name: Load environment variables
         run: cat .github/.env >> $GITHUB_ENV
 
@@ -50,12 +58,12 @@ jobs:
         if: env.CACHE == 'true'
         uses: tensor-foundation/actions/cache-crate@v1
         with:
-          folder: ./programs
+          folder: '.'
           key: programs
 
       - name: Build programs
         shell: bash
-        working-directory: configs/scripts/program
+        working-directory: scripts/program
         run: ./build.sh
         env:
           PROGRAMS: ${{ env.PROGRAMS }}
@@ -65,5 +73,5 @@ jobs:
         with:
           name: program-builds
           # First wildcard ensures exported paths are consistently under the programs folder.
-          path: ./program*/.bin/*.so
+          path: ./targe*/deploy/*.so
           if-no-files-found: error
