@@ -1,5 +1,6 @@
 use crate::*;
 use anchor_lang::solana_program::system_instruction::transfer;
+use tensorswap::state::TSwap;
 
 #[derive(Accounts)]
 pub struct WithdrawFees<'info> {

@@ -36,9 +36,7 @@ pub use pnft_adapter::*;
 pub use shared::find_neutral_broker;
 pub(crate) use shared::*;
 pub use state::*;
-pub use tensor_nft::*;
 pub use tensor_whitelist::{self, Whitelist};
-pub use tensorswap::{self, margin_pda, program::Tensorswap, MarginAccount, TSwap};
 pub use vipers::{prelude::*, throw_err};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");

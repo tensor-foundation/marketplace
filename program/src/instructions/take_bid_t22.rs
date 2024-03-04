@@ -6,9 +6,9 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_nft::token_2022::t22_validate_mint;
+use tensor_toolbox::token_2022::t22_validate_mint;
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
-use tensorswap::program::Tensorswap;
+use tensorswap::program::MarginProgram;
 use vipers::Validate;
 
 use crate::{
@@ -76,7 +76,7 @@ pub struct TakeBidT22<'info> {
 
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, Tensorswap>,
+    pub tensorswap_program: Program<'info, MarginProgram>,
 
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]

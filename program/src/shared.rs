@@ -10,5 +10,5 @@ pub fn find_neutral_broker() -> (Pubkey, u8) {
 }
 
 pub fn maker_broker_is_whitelisted(maker_broker: Option<Pubkey>) -> bool {
-    maker_broker.is_none() || maker_broker == Some(crate::gameshift::ID)
+    maker_broker.is_none() || maker_broker == Some(tensor_toolbox::gameshift::ID)
 }

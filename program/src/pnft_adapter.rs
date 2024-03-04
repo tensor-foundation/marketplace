@@ -6,7 +6,6 @@
 use anchor_lang::prelude::*;
 use mpl_token_metadata::types::{AuthorizationData, Payload, PayloadType, ProofInfo, SeedsVec};
 use std::collections::HashMap;
-use tensorswap::instructions::common::MPL_TOKEN_AUTH_RULES_ID;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct AuthorizationDataLocal {
@@ -92,6 +91,6 @@ pub struct ProgNftShared<'info> {
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
     /// CHECK: address below
-    #[account(address = MPL_TOKEN_AUTH_RULES_ID)]
+    #[account(address = tensorswap::instructions::MPL_TOKEN_AUTH_RULES_ID)]
     pub authorization_rules_program: UncheckedAccount<'info>,
 }

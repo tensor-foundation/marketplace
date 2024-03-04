@@ -6,12 +6,12 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_nft::{
+use tensor_toolbox::{
     calc_creators_fee,
     token_2022::wns::{wns_approve, wns_validate_mint, ApproveAccounts},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
-use tensorswap::program::Tensorswap;
+use tensorswap::program::MarginProgram;
 use vipers::Validate;
 
 use crate::{
@@ -83,7 +83,7 @@ pub struct WnsTakeBid<'info> {
 
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, Tensorswap>,
+    pub tensorswap_program: Program<'info, MarginProgram>,
 
     // seller or cosigner
     #[account(
@@ -257,7 +257,7 @@ pub fn process_take_bid_wns<'info>(
         },
     );
 
-    tensor_nft::token_2022::transfer::transfer_checked(
+    tensor_toolbox::token_2022::transfer::transfer_checked(
         transfer_cpi.with_remaining_accounts(vec![
             ctx.accounts.wns_program.to_account_info(),
             ctx.accounts.extra_metas.to_account_info(),

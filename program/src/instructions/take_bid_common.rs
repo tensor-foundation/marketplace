@@ -1,7 +1,11 @@
 use anchor_spl::token_interface::Mint;
 use mpl_token_metadata::types::TokenStandard;
+use tensor_toolbox::{
+    calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
+    CreatorFeeMode, FromAcc, TCreator,
+};
 use tensor_whitelist::MintProof;
-use tensorswap::assert_decode_margin_account;
+use tensorswap::{instructions::assert_decode_margin_account, program::MarginProgram};
 
 use crate::*;
 
@@ -22,7 +26,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller_fee_basis_points: u16,
     pub creator_accounts: &'a [AccountInfo<'info>],
     pub tcomp_prog: &'a Program<'info, crate::program::MarketplaceProgram>,
-    pub tswap_prog: &'a Program<'info, Tensorswap>,
+    pub tswap_prog: &'a Program<'info, MarginProgram>,
     pub system_prog: &'a Program<'info, System>,
 }
 

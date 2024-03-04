@@ -1,5 +1,6 @@
 use crate::*;
-use tensorswap::assert_decode_margin_account;
+use tensor_toolbox::transfer_lamports_from_pda;
+use tensorswap::instructions::assert_decode_margin_account;
 
 #[derive(Accounts)]
 #[instruction(bid_id: Pubkey)]

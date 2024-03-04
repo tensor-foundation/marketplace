@@ -1,6 +1,10 @@
 use mpl_bubblegum::types::Creator;
+use tensor_toolbox::{
+    make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+};
+use tensor_whitelist::assert_decode_whitelist;
+use tensorswap::program::MarginProgram;
 
-use crate::tensor_whitelist::assert_decode_whitelist;
 use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]
@@ -24,7 +28,7 @@ pub struct TakeBidCompressed<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
-    pub tensorswap_program: Program<'info, Tensorswap>,
+    pub tensorswap_program: Program<'info, MarginProgram>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],

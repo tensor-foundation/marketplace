@@ -1,3 +1,5 @@
+use tensor_toolbox::{transfer_cnft, TransferArgs};
+
 use crate::*;
 
 #[derive(Accounts)]
