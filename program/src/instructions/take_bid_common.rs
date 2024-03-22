@@ -5,7 +5,7 @@ use tensor_toolbox::{
     CreatorFeeMode, FromAcc, TCreator,
 };
 use tensor_whitelist::MintProof;
-use tensorswap::{instructions::assert_decode_margin_account, program::MarginProgram};
+use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
 
 use crate::*;
 
@@ -26,7 +26,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller_fee_basis_points: u16,
     pub creator_accounts: &'a [AccountInfo<'info>],
     pub tcomp_prog: &'a Program<'info, crate::program::MarketplaceProgram>,
-    pub tswap_prog: &'a Program<'info, MarginProgram>,
+    pub tswap_prog: &'a Program<'info, EscrowProgram>,
     pub system_prog: &'a Program<'info, System>,
 }
 

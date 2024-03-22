@@ -3,7 +3,7 @@ use tensor_toolbox::{
     make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 use tensor_whitelist::assert_decode_whitelist;
-use tensorswap::program::MarginProgram;
+use tensorswap::program::EscrowProgram;
 
 use crate::{take_bid_common::*, *};
 
@@ -28,7 +28,7 @@ pub struct TakeBidCompressed<'info> {
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
-    pub tensorswap_program: Program<'info, MarginProgram>,
+    pub tensorswap_program: Program<'info, EscrowProgram>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],

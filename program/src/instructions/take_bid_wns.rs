@@ -11,7 +11,7 @@ use tensor_toolbox::{
     token_2022::wns::{wns_approve, wns_validate_mint, ApproveAccounts},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
-use tensorswap::program::MarginProgram;
+use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
@@ -83,7 +83,7 @@ pub struct WnsTakeBid<'info> {
 
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, MarginProgram>,
+    pub tensorswap_program: Program<'info, EscrowProgram>,
 
     // seller or cosigner
     #[account(
@@ -233,9 +233,9 @@ pub fn process_take_bid_wns<'info>(
         mint: ctx.accounts.nft_mint.to_account_info(),
         approve_account: ctx.accounts.approve_account.to_account_info(),
         payment_mint: None,
-        payer_address: ctx.accounts.seller.to_account_info(),
-        distribution: ctx.accounts.distribution.to_account_info(),
-        distribution_address: ctx.accounts.distribution.to_account_info(),
+        authority_token_account: ctx.accounts.seller.to_account_info(),
+        distribution_account: ctx.accounts.distribution.to_account_info(),
+        distribution_token_account: ctx.accounts.distribution.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
         distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),

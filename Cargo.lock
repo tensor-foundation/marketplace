@@ -1678,6 +1678,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "escrow-program"
+version = "0.0.0"
+source = "git+ssh://git@github.com/tensor-foundation/escrow.git?rev=43acfbb#43acfbb4cbddba766dfb2eaedda839fd489816b2"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "mpl-token-metadata",
+ "spl-math",
+ "spl-token-metadata-interface",
+ "static_assertions",
+ "tensor-toolbox 0.0.2",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
+ "whitelist-program",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2385,28 +2401,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "margin-program"
-version = "0.0.0"
-source = "git+ssh://git@github.com/tensor-foundation/margin.git#86d541f01f78e71d8f72c8bf41020b01a2f65e55"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl",
- "mpl-token-metadata",
- "spl-math",
- "spl-token-metadata-interface",
- "static_assertions",
- "tensor-toolbox 0.0.1 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
- "whitelist-program 0.0.0 (git+ssh://git@github.com/tensor-foundation/whitelist.git)",
-]
-
-[[package]]
 name = "marketplace-program"
 version = "0.0.0"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
- "margin-program",
+ "escrow-program",
  "mpl-bubblegum",
  "mpl-token-metadata",
  "spl-account-compression 0.2.0",
@@ -2414,9 +2414,9 @@ dependencies = [
  "spl-token-metadata-interface",
  "spl-type-length-value",
  "static_assertions",
- "tensor-toolbox 0.0.1 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=47b045a)",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
- "whitelist-program 0.0.0 (git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=032cd47)",
+ "tensor-toolbox 0.0.2",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
+ "whitelist-program",
 ]
 
 [[package]]
@@ -5290,22 +5290,6 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.0.1"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=47b045a#47b045a6285649b5de6b6c1ffe14a9b1e45b7bde"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl",
- "bytemuck",
- "mpl-bubblegum",
- "mpl-token-metadata",
- "spl-account-compression 0.3.0",
- "spl-noop",
- "spl-token-metadata-interface",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=47b045a)",
-]
-
-[[package]]
-name = "tensor-toolbox"
-version = "0.0.1"
 source = "git+ssh://git@github.com/tensor-foundation/toolbox.git#47b045a6285649b5de6b6c1ffe14a9b1e45b7bde"
 dependencies = [
  "anchor-lang 0.29.0",
@@ -5317,6 +5301,22 @@ dependencies = [
  "spl-noop",
  "spl-token-metadata-interface",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
+]
+
+[[package]]
+name = "tensor-toolbox"
+version = "0.0.2"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508#1e8450835f681463130ebbfcdb7625b15a89e2ae"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "bytemuck",
+ "mpl-bubblegum",
+ "mpl-token-metadata",
+ "spl-account-compression 0.3.0",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
 ]
 
 [[package]]
@@ -5820,7 +5820,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=47b045a#47b045a6285649b5de6b6c1ffe14a9b1e45b7bde"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508#1e8450835f681463130ebbfcdb7625b15a89e2ae"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5978,26 +5978,13 @@ checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
 [[package]]
 name = "whitelist-program"
 version = "0.0.0"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=032cd47#032cd472c5b945ba7822320c286d36bb92565f10"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=f08435f#f08435f60fc9e011c8bf760dce5237eb255abc74"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
  "mpl-token-metadata",
  "solana-program",
- "tensor-toolbox 0.0.1 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
-]
-
-[[package]]
-name = "whitelist-program"
-version = "0.0.0"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git#032cd472c5b945ba7822320c286d36bb92565f10"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl",
- "mpl-token-metadata",
- "solana-program",
- "tensor-toolbox 0.0.1 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
+ "tensor-toolbox 0.0.1",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
 ]
 

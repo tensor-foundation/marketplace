@@ -6,7 +6,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::{assert_decode_metadata, send_pnft, PnftTransferArgs};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
-use tensorswap::program::MarginProgram;
+use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
@@ -108,7 +108,7 @@ pub struct TakeBidLegacy<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
-    pub tensorswap_program: Program<'info, MarginProgram>,
+    pub tensorswap_program: Program<'info, EscrowProgram>,
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
     pub cosigner: Signer<'info>,

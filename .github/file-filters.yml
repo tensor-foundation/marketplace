@@ -13,7 +13,7 @@ program_common: &program_common
 
 program_binary: &program_binary
   - *program_common
-  - "programs/**"
+  - "program/**"
 
 programs: &programs
   - *program_binary

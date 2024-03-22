@@ -8,7 +8,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::token_2022::t22_validate_mint;
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
-use tensorswap::program::MarginProgram;
+use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
@@ -76,7 +76,7 @@ pub struct TakeBidT22<'info> {
 
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, MarginProgram>,
+    pub tensorswap_program: Program<'info, EscrowProgram>,
 
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
