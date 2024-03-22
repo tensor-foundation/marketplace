@@ -2,7 +2,7 @@
   Tensor Marketplace
 </h1>
 <p align="center">
-  <img width="400" alt="Tensor Margin" src="https://github.com/tensor-foundation/marketplace/assets/729235/9e209493-0829-4688-a629-c3bb62eb24ca" />
+  <img width="400" alt="Tensor Marketplace" src="https://github.com/tensor-foundation/marketplace/assets/729235/9e209493-0829-4688-a629-c3bb62eb24ca" />
 </p>
 <p align="center">
   Your one-stop-shop for your NFT needs.
