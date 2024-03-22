@@ -25,9 +25,9 @@ jobs:
         uses: tensor-foundation/actions/ssh-agent@v1
         with:
           key: |
+            ${{ secrets.ESCROW_KEY }}
             ${{ secrets.TOOLBOX_KEY }}
             ${{ secrets.WHITELIST_KEY }}
-            ${{ secrets.MARGIN_KEY }}
 
       - name: Load environment variables
         run: cat .github/.env >> $GITHUB_ENV
