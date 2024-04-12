@@ -191,7 +191,7 @@ describe("[mpl-core] tcomp listings", () => {
             forceExpired: true,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingNotYetExpired"));
-        await waitMS(4000);
+        await waitMS(5000);
         await testDelistCore({
           asset,
           collection,

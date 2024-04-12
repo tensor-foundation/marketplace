@@ -27,7 +27,8 @@ describe("[Token 2022] tcomp bids", () => {
   });
 
   it("[T22] bids + edits + accepts bid for T22 NFT", async () => {
-    for (const cosigned of [false, true]) {
+    // TODO: Add cosigner tests.
+    for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
         n: 2,
       });

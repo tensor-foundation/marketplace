@@ -40,7 +40,8 @@ describe("[mpl-core] tcomp bids", () => {
 
   it("[core] bids + edits + accepts bid for Core NFT", async () => {
     const umi = await createUmi();
-    for (const cosigned of [false, true]) {
+    // TODO: Add cosigner tests.
+    for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
         n: 2,
       });

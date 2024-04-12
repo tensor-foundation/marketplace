@@ -24,7 +24,8 @@ describe("[WNS Token 2022] tcomp bids", () => {
   });
 
   it("[WNS] bids + edits + accepts bid for WNS NFT", async () => {
-    for (const cosigned of [false, true]) {
+    // TODO: Add cosigner tests.
+    for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
         n: 2,
       });

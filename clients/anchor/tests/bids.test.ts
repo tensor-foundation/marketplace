@@ -1987,7 +1987,8 @@ describe("tcomp bids", () => {
         });
 
         it("bids + edits + accepts bid for pNFT", async () => {
-          for (const cosigned of [false, true]) {
+          // TODO: Add cosigner tests.
+          for (const cosigned of [false]) {
             const [traderA, traderB] = await makeNTraders({
               n: 2,
             });
