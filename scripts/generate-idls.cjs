@@ -1,7 +1,7 @@
 const path = require("path");
 const { generateIdl } = require("@metaplex-foundation/shank-js");
 
-const idlDir = path.join(__dirname, "..", "program", "idl");
+const idlDir = path.join(__dirname, "..", "programs");
 const binaryInstallDir = path.join(__dirname, "..", ".crates");
 const programDir = path.join(__dirname, "..");
 
@@ -9,7 +9,16 @@ generateIdl({
   generator: "anchor",
   programName: "marketplace_program",
   programId: "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-  idlDir,
+  idlDir: path.join(idlDir, "marketplace", "idl"),
   binaryInstallDir,
-  programDir: path.join(programDir, "program"),
+  programDir: path.join(programDir, "programs", "marketplace"),
+});
+
+generateIdl({
+  generator: "anchor",
+  programName: "cpi_test",
+  programId: "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
+  idlDir: path.join(idlDir, "cpi-test", "idl"),
+  binaryInstallDir,
+  programDir: path.join(programDir, "programs", "cpi-test"),
 });

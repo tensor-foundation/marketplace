@@ -31,7 +31,7 @@ WORKING_DIR=$(pwd)
 SOLFMT="solfmt"
 
 for p in ${PROGRAMS[@]}; do
-    cd ${WORKING_DIR}/${p}
+    cd ${WORKING_DIR}/programs/${p}
 
     if [ ! "$(command -v $SOLFMT)" = "" ]; then
         CARGO_TERM_COLOR=always cargo test-sbf ${ARGS} 2>&1 | ${SOLFMT}

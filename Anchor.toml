@@ -10,5 +10,6 @@ wallet = "~/.config/solana/devnet.json"
 
 [workspace]
 members = [
-  "program",
+  "programs/cpi-test",
+  "programs/marketplace"
 ]

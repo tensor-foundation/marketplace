@@ -17,6 +17,11 @@ module.exports = {
         deployPath: getBinaryFile("marketplace_program.so"),
       },
       {
+        label: "Marketplace CPI Test",
+        programId: "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
+        deployPath: getBinaryFile("cpi_test.so"),
+      },
+      {
         label: "Metaplex Token Auth Rules",
         programId: "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
         deployPath: getBinaryFile("auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg.so"),
