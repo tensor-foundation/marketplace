@@ -159,7 +159,7 @@ impl<'info> BuySpl<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
-pub fn handler<'info>(
+pub fn process_buy_spl<'info>(
     ctx: Context<'_, '_, '_, 'info, BuySpl<'info>>,
     nonce: u64,
     index: u32,

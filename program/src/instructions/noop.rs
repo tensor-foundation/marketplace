@@ -13,7 +13,7 @@ pub struct TcompNoop<'info> {
     pub tcomp_signer: Signer<'info>,
 }
 
-pub fn handler(_ctx: Context<TcompNoop>) -> Result<()> {
+pub fn process_noop(_ctx: Context<TcompNoop>) -> Result<()> {
     Ok(())
 }
 

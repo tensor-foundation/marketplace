@@ -1,4 +1,3 @@
-use anchor_spl::token_interface::Mint;
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
@@ -197,16 +196,16 @@ fn transfer_lamports_from_pda_min_balance<'info>(
 }
 
 #[inline(never)]
-pub fn assert_decode_mint_proof<'info>(
+pub fn assert_decode_mint_proof(
     whitelist_pubkey: &Pubkey,
-    nft_mint: &InterfaceAccount<'info, Mint>,
-    mint_proof: &UncheckedAccount<'info>,
+    nft_mint: &Pubkey,
+    mint_proof: &UncheckedAccount,
 ) -> Result<MintProof> {
     let program_id = &tensor_whitelist::id();
     let (key, _) = Pubkey::find_program_address(
         &[
             b"mint_proof".as_ref(),
-            nft_mint.key().as_ref(),
+            nft_mint.as_ref(),
             whitelist_pubkey.as_ref(),
         ],
         program_id,

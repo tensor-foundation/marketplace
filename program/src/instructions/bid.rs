@@ -49,7 +49,7 @@ impl<'info> Validate<'info> for Bid<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
-pub fn handler<'info>(
+pub fn process_bid<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
     bid_id: Pubkey,
     target: Target,

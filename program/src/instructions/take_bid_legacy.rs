@@ -164,7 +164,7 @@ impl<'info> TakeBidLegacy<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
-pub fn handler<'info>(
+pub fn process_take_bid_legacy<'info>(
     ctx: Context<'_, '_, '_, 'info, TakeBidLegacy<'info>>,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
@@ -195,7 +195,7 @@ pub fn handler<'info>(
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
                 let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, nft_mint, mint_proof_acc)?;
+                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
                 let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);

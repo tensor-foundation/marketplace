@@ -25,7 +25,7 @@ pub struct WithdrawFees<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
+pub fn process_withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
     // NB: tcomp is a SystemProgram since we never allocated data to it.
     let ixs = transfer(
         &ctx.accounts.tcomp.key(),

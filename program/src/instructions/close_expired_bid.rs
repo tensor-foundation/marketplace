@@ -24,7 +24,7 @@ pub struct CloseExpiredBid<'info> {
     pub rent_dest: UncheckedAccount<'info>,
 }
 
-pub fn handler(ctx: Context<CloseExpiredBid>) -> Result<()> {
+pub fn process_close_expired_bid(ctx: Context<CloseExpiredBid>) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
     require!(
         bid_state.expiry < Clock::get()?.unix_timestamp,

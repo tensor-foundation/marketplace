@@ -35,7 +35,7 @@ pub struct List<'info> {
     // 1. proof accounts (less canopy)
 }
 
-pub fn handler<'info>(
+pub fn process_list<'info>(
     ctx: Context<'_, '_, '_, 'info, List<'info>>,
     // What is the difference between nonce and index?
     // Nonce is a higher level metaplex concept that is used to derive asset_id

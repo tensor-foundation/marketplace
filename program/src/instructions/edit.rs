@@ -16,7 +16,7 @@ pub struct Edit<'info> {
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
 }
 
-pub fn handler<'info>(
+pub fn process_edit<'info>(
     ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
     amount: u64,
     expire_in_sec: Option<u64>,

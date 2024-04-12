@@ -23,7 +23,7 @@ pub struct CancelBid<'info> {
     pub rent_dest: UncheckedAccount<'info>,
 }
 
-pub fn handler(ctx: Context<CancelBid>) -> Result<()> {
+pub fn process_cancel_bid(ctx: Context<CancelBid>) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
     record_event(
         &TcompEvent::Maker(MakeEvent {

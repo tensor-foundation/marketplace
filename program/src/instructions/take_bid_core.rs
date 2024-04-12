@@ -1,23 +1,23 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{transfer_checked, Mint, Token2022, TokenAccount, TransferChecked},
+use mpl_core::{
+    accounts::BaseAssetV1,
+    instructions::TransferV1CpiBuilder,
+    types::{Royalties, UpdateAuthority},
 };
-use mpl_token_metadata::types::TokenStandard;
-use spl_token_metadata_interface::state::TokenMetadata;
-use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_toolbox::token_2022::validate_mint;
+use mpl_token_metadata::types::{Collection, TokenStandard};
+use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
+    program::MarketplaceProgram,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
-pub struct TakeBidT22<'info> {
+pub struct TakeBidCore<'info> {
     // Acts purely as a fee account
     /// CHECK: seeds
     #[account(mut, seeds=[], bump)]
@@ -54,29 +54,20 @@ pub struct TakeBidT22<'info> {
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
 
-    #[account(mut, token::mint = nft_mint, token::authority = seller)]
-    pub nft_seller_acc: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: validated on the instruction + whitelist check
+    #[account(mut)]
+    pub asset: UncheckedAccount<'info>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
-    pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
+    /// CHECK: validated on instruction handler
+    pub collection: Option<UncheckedAccount<'info>>,
 
-    #[account(
-        init_if_needed,
-        payer = seller,
-        associated_token::mint = nft_mint,
-        associated_token::authority = owner,
-    )]
-    pub owner_ata_acc: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub token_program: Program<'info, Token2022>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub mpl_core_program: Program<'info, MetaplexCore>,
 
     pub system_program: Program<'info, System>,
 
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, EscrowProgram>,
+    pub escrow_program: Program<'info, EscrowProgram>,
 
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
@@ -91,9 +82,11 @@ pub struct TakeBidT22<'info> {
         constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_dest: UncheckedAccount<'info>,
+    // Remaining accounts:
+    // 1. creators (1-5)
 }
 
-impl<'info> Validate<'info> for TakeBidT22<'info> {
+impl<'info> Validate<'info> for TakeBidCore<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
         require!(
@@ -120,21 +113,38 @@ impl<'info> Validate<'info> for TakeBidT22<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
-pub fn process_take_bid_t22<'info>(
-    ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
+pub fn process_take_bid_core<'info>(
+    ctx: Context<'_, '_, '_, 'info, TakeBidCore<'info>>,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
-    // validate mint account
-
-    validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    // validate the asset account
+    let royalties = validate_asset(
+        &ctx.accounts.asset,
+        ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
+    )?;
 
     let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.nft_mint.key();
+    let asset_id = ctx.accounts.asset.key();
+
+    let (creators, seller_fee, token_standard) = if let Some(Royalties {
+        creators,
+        basis_points,
+        ..
+    }) = royalties
+    {
+        (
+            creators,
+            basis_points,
+            TokenStandard::ProgrammableNonFungible,
+        )
+    } else {
+        (vec![], 0, TokenStandard::NonFungible)
+    };
 
     match bid_state.target {
         Target::AssetId => {
-            require!(bid_state.target_id == mint, TcompError::WrongTargetId);
+            require!(bid_state.target_id == asset_id, TcompError::WrongTargetId);
         }
         Target::Whitelist => {
             // Ensure the correct whitelist is passed in
@@ -144,14 +154,16 @@ pub fn process_take_bid_t22<'info>(
             );
 
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let nft_mint = &ctx.accounts.nft_mint;
 
-            // must have merkle tree; otherwise fail
+            //prioritize merkle tree if proof present
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
-                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
+                let mint_proof = assert_decode_mint_proof(
+                    ctx.accounts.whitelist.key,
+                    &asset_id,
+                    mint_proof_acc,
+                )?;
+                let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);
                 whitelist.verify_whitelist(
@@ -161,27 +173,43 @@ pub fn process_take_bid_t22<'info>(
                         leaf: leaf.0,
                     }),
                 )?;
+            } else if let Some(collection) = &ctx.accounts.collection {
+                let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+
+                if let UpdateAuthority::Collection(c) = asset.update_authority {
+                    if c != *collection.key {
+                        msg!("Asset collection account does not match the provided collection account");
+                        return Err(TcompError::MissingCollection.into());
+                    }
+
+                    whitelist.verify_whitelist_tcomp(
+                        Some(Collection {
+                            key: collection.key(),
+                            // there is no verify flag on Core, but only the collection update authority
+                            // can set a collection
+                            verified: true,
+                        }),
+                        // creators have no verified flag on Core, they can't be used
+                        None,
+                    )?;
+                } else {
+                    msg!("Asset has no collection set");
+                    return Err(TcompError::MissingCollection.into());
+                }
             } else {
-                // TODO: update this logic once T22 support collection and creator verification
-                return Err(TcompError::BadWhitelist.into());
+                return Err(TcompError::MissingCollection.into());
             }
         }
     }
 
-    //check the bid field filter if it exists
+    // Check the bid field filter if it exists.
     if let Some(field) = &bid_state.field {
+        let asset = BaseAssetV1::try_from(&ctx.accounts.asset.to_account_info())?;
+
         match field {
             &Field::Name => {
-                let mint_info = &ctx.accounts.nft_mint.to_account_info();
-                let token_metadata = {
-                    let buffer = mint_info.try_borrow_data()?;
-                    let state = TlvStateBorrowed::unpack(&buffer)?;
-                    state.get_first_variable_len_value::<TokenMetadata>()?
-                };
-
                 let mut name_arr = [0u8; 32];
-                let length = std::cmp::min(token_metadata.name.len(), name_arr.len());
-                name_arr[..length].copy_from_slice(&token_metadata.name.as_bytes()[..length]);
+                name_arr[..asset.name.len()].copy_from_slice(asset.name.as_bytes());
                 require!(
                     name_arr == bid_state.field_id.unwrap().to_bytes(),
                     TcompError::WrongBidFieldId
@@ -192,20 +220,14 @@ pub fn process_take_bid_t22<'info>(
 
     // transfer the NFT
 
-    let transfer_cpi = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
-            from: ctx.accounts.nft_seller_acc.to_account_info(),
-            to: ctx.accounts.owner_ata_acc.to_account_info(),
-            authority: ctx.accounts.seller.to_account_info(),
-            mint: ctx.accounts.nft_mint.to_account_info(),
-        },
-    );
+    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.asset)
+        .authority(Some(&ctx.accounts.seller.to_account_info()))
+        .new_owner(&ctx.accounts.owner)
+        .payer(&ctx.accounts.seller) // pay for what?
+        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
+        .invoke()?;
 
-    transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
-
-    // TODO: add royalty value and creators once supported on T22; also, update token standard
-    // in case there are other options in T22
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
@@ -215,15 +237,15 @@ pub fn process_take_bid_t22<'info>(
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         tcomp: &ctx.accounts.tcomp.to_account_info(),
-        asset_id: mint,
-        token_standard: Some(TokenStandard::NonFungible),
-        creators: vec![],
+        asset_id,
+        token_standard: Some(token_standard),
+        creators: creators.into_iter().map(Into::into).collect(),
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: 0, // no royalties on T22
+        seller_fee_basis_points: seller_fee,
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.tcomp_program,
-        tswap_prog: &ctx.accounts.tensorswap_program,
+        tcomp_prog: &ctx.accounts.marketplace_program,
+        tswap_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

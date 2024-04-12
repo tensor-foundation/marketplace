@@ -34,7 +34,7 @@ pub struct Delist<'info> {
     // 1. proof accounts (less canopy)
 }
 
-pub fn handler<'info>(
+pub fn process_delist<'info>(
     ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
     nonce: u64,
     index: u32,
@@ -73,7 +73,7 @@ pub fn handler<'info>(
             field: None,
             field_id: None,
             amount: list_state.amount,
-            quantity: 1,
+            quantity: 1, // <-- represents how many NFTs got delisted
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,

@@ -8,7 +8,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     calc_creators_fee,
-    token_2022::wns::{wns_approve, wns_validate_mint, ApproveAccounts},
+    token_2022::wns::{approve, validate_mint, ApproveAccounts},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
@@ -153,7 +153,7 @@ pub fn process_take_bid_wns<'info>(
     min_amount: u64,
 ) -> Result<()> {
     // validate mint account
-    let seller_fee_basis_points = wns_validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    let seller_fee_basis_points = validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         min_amount,
@@ -182,7 +182,7 @@ pub fn process_take_bid_wns<'info>(
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
                 let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, nft_mint, mint_proof_acc)?;
+                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
                 let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);
@@ -243,7 +243,7 @@ pub fn process_take_bid_wns<'info>(
         associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
     };
     // royalty payment
-    wns_approve(approve_accounts, min_amount, creators_fee)?;
+    approve(approve_accounts, min_amount, creators_fee)?;
 
     // transfer the NFT
 
