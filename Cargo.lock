@@ -734,6 +734,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1688,7 +1694,7 @@ dependencies = [
  "spl-math",
  "spl-token-metadata-interface",
  "static_assertions",
- "tensor-toolbox",
+ "tensor-toolbox 0.0.2",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
  "whitelist-program",
 ]
@@ -2408,13 +2414,14 @@ dependencies = [
  "anchor-spl",
  "escrow-program",
  "mpl-bubblegum",
+ "mpl-core",
  "mpl-token-metadata",
  "spl-account-compression 0.2.0",
  "spl-noop",
  "spl-token-metadata-interface",
  "spl-type-length-value",
  "static_assertions",
- "tensor-toolbox",
+ "tensor-toolbox 0.0.3",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
  "whitelist-program",
 ]
@@ -2525,6 +2532,20 @@ checksum = "b3cbca5deb859e66a1a21ada94f2eaab3eb5caa4584c0c8ade0efac29a5414b8"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "mpl-core"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da32e22b4b10817c2b9adfecae23de300c3b444a728a3372cb1430bbf1926ca5"
+dependencies = [
+ "base64 0.22.0",
+ "borsh 0.10.3",
  "num-derive 0.3.3",
  "num-traits",
  "solana-program",
@@ -5304,6 +5325,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tensor-toolbox"
+version = "0.0.3"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40#e22cb40707f9825119bced3570cf231c92f21fdc"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "bytemuck",
+ "mpl-bubblegum",
+ "mpl-core",
+ "mpl-token-metadata",
+ "spl-account-compression 0.3.0",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40)",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5814,6 +5852,16 @@ dependencies = [
 [[package]]
 name = "vipers"
 version = "2.0.6"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40#e22cb40707f9825119bced3570cf231c92f21fdc"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "num-traits",
+]
+
+[[package]]
+name = "vipers"
+version = "2.0.6"
 source = "git+ssh://git@github.com/tensor-foundation/toolbox.git#47b045a6285649b5de6b6c1ffe14a9b1e45b7bde"
 dependencies = [
  "anchor-lang 0.29.0",
@@ -5968,7 +6016,7 @@ dependencies = [
  "anchor-spl",
  "mpl-token-metadata",
  "solana-program",
- "tensor-toolbox",
+ "tensor-toolbox 0.0.2",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
 ]
 
