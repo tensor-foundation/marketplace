@@ -54,13 +54,13 @@ jobs:
         uses: tensor-foundation/actions/cargo@v1
         with:
           command: fmt
-          args: --all --manifest-path ./${{ matrix.program }}/Cargo.toml -- --check
+          args: --all --manifest-path ./programs/${{ matrix.program }}/Cargo.toml -- --check
 
       - name: Run cargo clippy
         uses: tensor-foundation/actions/cargo@v1
         with:
           command: clippy
-          args: --all-targets --all-features --no-deps --manifest-path ./${{ matrix.program }}/Cargo.toml
+          args: --all-targets --all-features --no-deps --manifest-path ./programs/${{ matrix.program }}/Cargo.toml
 
       - name: Run tests
         shell: bash
