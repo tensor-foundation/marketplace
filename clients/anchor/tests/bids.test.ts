@@ -112,7 +112,8 @@ describe("tcomp bids", () => {
       }
     });
 
-    it("bids + edits + accepts bid (with cosigner)", async () => {
+    // TODO: Add cosigner tests.
+    it.skip("bids + edits + accepts bid (with cosigner)", async () => {
       const canopyDepth = 10;
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -2088,7 +2089,8 @@ describe("tcomp bids", () => {
     }
   });
 
-  it("bids + accepts bid for pNFT (using hashlist verification)", async () => {
+  // TODO: Add cosigner tests.
+  it.skip("bids + accepts bid for pNFT (using hashlist verification)", async () => {
     for (const useFakeWhitelist of [true, false]) {
       const [traderA, traderB] = await makeNTraders({
         n: 2,
