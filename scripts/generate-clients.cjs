@@ -3,11 +3,11 @@ const k = require("@metaplex-foundation/kinobi");
 
 // Paths.
 const clientDir = path.join(__dirname, "..", "clients");
-const idlDir = path.join(__dirname, "..", "programs", "marketplace", "idl");
+const idlDir = path.join(__dirname, "..", "programs", "marketplace");
 
 // Instanciate Kinobi.
 const kinobi = k.createFromIdls([
-  path.join(idlDir, "marketplace_program.json"),
+  path.join(idlDir, "idl.json"),
 ]);
 
 // Update programs.
