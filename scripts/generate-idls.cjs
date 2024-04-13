@@ -13,7 +13,7 @@ generateIdl({
   binaryInstallDir,
   programDir: path.join(programDir, "marketplace"),
 });
-
+/*
 generateIdl({
   generator: "anchor",
   programName: "cpitest",
@@ -23,3 +23,4 @@ generateIdl({
   binaryInstallDir,
   programDir: path.join(programDir, "cpitest"),
 });
+*/
