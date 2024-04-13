@@ -19,7 +19,7 @@ module.exports = {
       {
         label: "Marketplace CPI Test",
         programId: "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
-        deployPath: getBinaryFile("cpi_test.so"),
+        deployPath: getBinaryFile("cpitest.so"),
       },
       {
         label: "Metaplex Token Auth Rules",

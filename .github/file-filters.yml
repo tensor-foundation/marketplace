@@ -11,16 +11,16 @@ programs_common: &programs_common
   - ".github/file-filters.yml"
   - ".github/.env"
 
-cpi_test: &cpi_test
+cpitest: &cpitest
   - *programs_common
-  - "programs/cpi-test/**"
+  - "programs/cpitest/**"
 
 marketplace_program: &marketplace_program
   - *programs_common
   - "programs/marketplace/**"
 
 programs: &programs
-  - *cpi_test
+  - *cpitest
   - *marketplace_program
 
 # Clients.

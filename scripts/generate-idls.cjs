@@ -13,14 +13,13 @@ generateIdl({
   binaryInstallDir,
   programDir: path.join(programDir, "marketplace"),
 });
-/*
+
 generateIdl({
   generator: "anchor",
-  programName: "cpi_test",
+  programName: "cpitest",
   programId: "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
-  idlDir: path.join(programDir, "cpi-test"),
+  idlDir: path.join(programDir, "cpitest"),
   idlName: "idl",
   binaryInstallDir,
-  programDir: path.join(programDir, "cpi-test"),
+  programDir: path.join(programDir, "cpitest"),
 });
-*/

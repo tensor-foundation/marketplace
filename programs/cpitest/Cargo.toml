@@ -1,12 +1,14 @@
 [package]
-name = "cpi_test"
-version = "0.1.0"
+name = "cpitest"
+version = "0.0.0"
 description = "Created with Anchor"
 edition = "2021"
+license-file = "../LICENSE"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cpi_test"
+name = "cpitest"
 
 [features]
 no-entrypoint = []

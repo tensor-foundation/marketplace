@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "name": "cpi_test",
+  "version": "0.0.0",
+  "name": "cpitest",
   "instructions": [
     {
       "name": "cpi",

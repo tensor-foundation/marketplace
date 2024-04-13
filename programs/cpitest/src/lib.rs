@@ -6,7 +6,7 @@ use marketplace_program::program::MarketplaceProgram;
 declare_id!("5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq");
 
 #[program]
-pub mod cpi_test {
+pub mod cpitest {
     use super::*;
 
     pub fn cpi(
