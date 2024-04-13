@@ -40,7 +40,7 @@ jobs:
         with:
           matrix: ${{ env.PROGRAMS }}
           changes: ${{ steps.changes.outputs.changes }}
-          suffix: _binary
+          suffix: _program
 
   build_programs:
     name: Programs
