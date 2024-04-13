@@ -84,6 +84,11 @@ jobs:
           version: ${{ env.SOLANA_VERSION }}
           cache: ${{ env.CACHE }}
 
+      - uses: tensor-foundation/actions/install-anchor-cli@v1
+        with:
+          version: "0.29.0"
+          cache: true
+
       - name: Cache program dependencies
         if: env.CACHE == 'true'
         uses: tensor-foundation/actions/cache-crate@v1
