@@ -1,0 +1,23 @@
+[package]
+name = "cpitest"
+version = "0.0.0"
+description = "Created with Anchor"
+edition = "2021"
+license-file = "../../LICENSE"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cpitest"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+testing = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+marketplace-program = { path="../marketplace", features = [ "no-entrypoint", "cpi" ]}

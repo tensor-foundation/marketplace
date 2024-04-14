@@ -40,7 +40,7 @@ jobs:
         with:
           matrix: ${{ env.PROGRAMS }}
           changes: ${{ steps.changes.outputs.changes }}
-          suffix: _binary
+          suffix: _program
 
   build_programs:
     name: Programs
@@ -113,6 +113,13 @@ jobs:
     name: JS Client
     needs: [changes, generate_clients]
     uses: ./.github/workflows/test-js-client.yml
+    secrets: inherit
+
+  test_anchor:
+    if: needs.changes.outputs.js_client == 'true'
+    name: Anchor Client
+    needs: [changes, generate_clients]
+    uses: ./.github/workflows/test-js-anchor.yml
     secrets: inherit
 
   build_rust_client:

@@ -2,5 +2,6 @@
 resolver = "2"
 members = [
     "clients/rust",
-    "program"
+    "programs/cpitest",
+    "programs/marketplace",
 ]

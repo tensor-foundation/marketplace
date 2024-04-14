@@ -7,13 +7,18 @@
 
 pub(crate) mod r#bid;
 pub(crate) mod r#buy;
+pub(crate) mod r#buy_core;
 pub(crate) mod r#buy_spl;
 pub(crate) mod r#cancel_bid;
 pub(crate) mod r#close_expired_bid;
 pub(crate) mod r#close_expired_listing;
+pub(crate) mod r#close_expired_listing_core;
 pub(crate) mod r#delist;
+pub(crate) mod r#delist_core;
 pub(crate) mod r#edit;
 pub(crate) mod r#list;
+pub(crate) mod r#list_core;
+pub(crate) mod r#take_bid_core;
 pub(crate) mod r#take_bid_full_meta;
 pub(crate) mod r#take_bid_legacy;
 pub(crate) mod r#take_bid_meta_hash;
@@ -24,13 +29,18 @@ pub(crate) mod r#withdraw_fees;
 
 pub use self::r#bid::*;
 pub use self::r#buy::*;
+pub use self::r#buy_core::*;
 pub use self::r#buy_spl::*;
 pub use self::r#cancel_bid::*;
 pub use self::r#close_expired_bid::*;
 pub use self::r#close_expired_listing::*;
+pub use self::r#close_expired_listing_core::*;
 pub use self::r#delist::*;
+pub use self::r#delist_core::*;
 pub use self::r#edit::*;
 pub use self::r#list::*;
+pub use self::r#list_core::*;
+pub use self::r#take_bid_core::*;
 pub use self::r#take_bid_full_meta::*;
 pub use self::r#take_bid_legacy::*;
 pub use self::r#take_bid_meta_hash::*;

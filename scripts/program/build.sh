@@ -25,6 +25,6 @@ PROGRAMS=$(echo ${PROGRAMS} | jq -c '.[]' | sed 's/"//g')
 WORKING_DIR=$(pwd)
 
 for p in ${PROGRAMS[@]}; do
-    cd ${WORKING_DIR}/${p}
+    cd ${WORKING_DIR}/programs/${p}
     cargo build-sbf $ARGS
 done

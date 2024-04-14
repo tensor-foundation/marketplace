@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2022",
+    "noEmit": true,
+    "types": ["mocha"]
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "tests/**/*.json"]
+}

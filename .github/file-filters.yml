@@ -4,19 +4,24 @@
 
 # Programs.
 
-program_common: &program_common
+programs_common: &programs_common
   - ".github/workflows/build-programs.yml"
   - ".github/workflows/test-programs.yml"
   - ".github/workflows/main.yml"
   - ".github/file-filters.yml"
   - ".github/.env"
 
-program_binary: &program_binary
-  - *program_common
-  - "program/**"
+cpitest_program: &cpitest_program
+  - *programs_common
+  - "programs/cpitest/**"
+
+marketplace_program: &marketplace_program
+  - *programs_common
+  - "programs/marketplace/**"
 
 programs: &programs
-  - *program_binary
+  - *cpitest_program
+  - *marketplace_program
 
 # Clients.
 

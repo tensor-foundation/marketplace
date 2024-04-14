@@ -72,6 +72,11 @@ export enum TensorMarketplaceInstruction {
   TakeBidLegacy,
   TakeBidT22,
   TakeBidWns,
+  BuyCore,
+  CloseExpiredListingCore,
+  DelistCore,
+  ListCore,
+  TakeBidCore,
 }
 
 export function identifyTensorMarketplaceInstruction(
@@ -128,6 +133,21 @@ export function identifyTensorMarketplaceInstruction(
   }
   if (memcmp(data, new Uint8Array([88, 5, 122, 88, 250, 139, 35, 216]), 0)) {
     return TensorMarketplaceInstruction.TakeBidWns;
+  }
+  if (memcmp(data, new Uint8Array([169, 227, 87, 255, 76, 86, 255, 25]), 0)) {
+    return TensorMarketplaceInstruction.BuyCore;
+  }
+  if (memcmp(data, new Uint8Array([89, 171, 78, 80, 74, 188, 63, 58]), 0)) {
+    return TensorMarketplaceInstruction.CloseExpiredListingCore;
+  }
+  if (memcmp(data, new Uint8Array([56, 24, 231, 2, 227, 19, 14, 68]), 0)) {
+    return TensorMarketplaceInstruction.DelistCore;
+  }
+  if (memcmp(data, new Uint8Array([173, 76, 167, 125, 118, 71, 1, 153]), 0)) {
+    return TensorMarketplaceInstruction.ListCore;
+  }
+  if (memcmp(data, new Uint8Array([250, 41, 248, 20, 61, 161, 27, 141]), 0)) {
+    return TensorMarketplaceInstruction.TakeBidCore;
   }
   throw new Error(
     'The provided instruction could not be identified as a tensorMarketplace instruction.'
