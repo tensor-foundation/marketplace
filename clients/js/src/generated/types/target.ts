@@ -6,11 +6,14 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getScalarEnumDecoder,
   getScalarEnumEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export enum Target {
   AssetId,
@@ -19,12 +22,12 @@ export enum Target {
 
 export type TargetArgs = Target;
 
-export function getTargetEncoder() {
-  return getScalarEnumEncoder(Target) satisfies Encoder<TargetArgs>;
+export function getTargetEncoder(): Encoder<TargetArgs> {
+  return getScalarEnumEncoder(Target);
 }
 
-export function getTargetDecoder() {
-  return getScalarEnumDecoder(Target) satisfies Decoder<Target>;
+export function getTargetDecoder(): Decoder<Target> {
+  return getScalarEnumDecoder(Target);
 }
 
 export function getTargetCodec(): Codec<TargetArgs, Target> {

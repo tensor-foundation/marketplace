@@ -6,12 +6,16 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
+  getU64Decoder,
+  getU64Encoder,
+} from '@solana/codecs';
 import {
   TUseMethod,
   TUseMethodArgs,
@@ -27,20 +31,20 @@ export type TUsesArgs = {
   total: number | bigint;
 };
 
-export function getTUsesEncoder() {
-  return getStructEncoder<TUsesArgs>([
+export function getTUsesEncoder(): Encoder<TUsesArgs> {
+  return getStructEncoder([
     ['useMethod', getTUseMethodEncoder()],
     ['remaining', getU64Encoder()],
     ['total', getU64Encoder()],
-  ]) satisfies Encoder<TUsesArgs>;
+  ]);
 }
 
-export function getTUsesDecoder() {
-  return getStructDecoder<TUses>([
+export function getTUsesDecoder(): Decoder<TUses> {
+  return getStructDecoder([
     ['useMethod', getTUseMethodDecoder()],
     ['remaining', getU64Decoder()],
     ['total', getU64Decoder()],
-  ]) satisfies Decoder<TUses>;
+  ]);
 }
 
 export function getTUsesCodec(): Codec<TUsesArgs, TUses> {

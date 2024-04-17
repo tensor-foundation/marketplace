@@ -12,17 +12,15 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
+  getU8Decoder,
+  getU8Encoder,
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -32,74 +30,24 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type DelistCoreInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountAsset extends string | IAccountMeta<string> = string,
   TAccountCollection extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
+  TAccountMplCoreProgram extends
+    | string
+    | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountAsset extends string
-        ? WritableAccount<TAccountAsset>
-        : TAccountAsset,
-      TAccountCollection extends string
-        ? ReadonlyAccount<TAccountCollection>
-        : TAccountCollection,
-      TAccountOwner extends string
-        ? WritableSignerAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountMplCoreProgram extends string
-        ? ReadonlyAccount<TAccountMplCoreProgram>
-        : TAccountMplCoreProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountRentDest extends string
-        ? WritableSignerAccount<TAccountRentDest>
-        : TAccountRentDest,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type DelistCoreInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountAsset extends string | IAccountMeta<string> = string,
-  TAccountCollection extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -130,7 +78,7 @@ export type DelistCoreInstructionWithSigners<
         ? WritableSignerAccount<TAccountRentDest> &
             IAccountSignerMeta<TAccountRentDest>
         : TAccountRentDest,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -138,19 +86,19 @@ export type DelistCoreInstructionData = { discriminator: Array<number> };
 
 export type DelistCoreInstructionDataArgs = {};
 
-export function getDelistCoreInstructionDataEncoder() {
+export function getDelistCoreInstructionDataEncoder(): Encoder<DelistCoreInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{ discriminator: Array<number> }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ]),
     (value) => ({ ...value, discriminator: [56, 24, 231, 2, 227, 19, 14, 68] })
-  ) satisfies Encoder<DelistCoreInstructionDataArgs>;
+  );
 }
 
-export function getDelistCoreInstructionDataDecoder() {
-  return getStructDecoder<DelistCoreInstructionData>([
+export function getDelistCoreInstructionDataDecoder(): Decoder<DelistCoreInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
-  ]) satisfies Decoder<DelistCoreInstructionData>;
+  ]);
 }
 
 export function getDelistCoreInstructionDataCodec(): Codec<
@@ -164,43 +112,23 @@ export function getDelistCoreInstructionDataCodec(): Codec<
 }
 
 export type DelistCoreInput<
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountOwner extends string,
-  TAccountListState extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountRentDest extends string
-> = {
-  asset: Address<TAccountAsset>;
-  collection?: Address<TAccountCollection>;
-  owner: Address<TAccountOwner>;
-  listState: Address<TAccountListState>;
-  mplCoreProgram: Address<TAccountMplCoreProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  rentDest?: Address<TAccountRentDest>;
-};
-
-export type DelistCoreInputWithSigners<
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountOwner extends string,
-  TAccountListState extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountRentDest extends string
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountOwner extends string = string,
+  TAccountListState extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountRentDest extends string = string,
 > = {
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
   owner: TransactionSigner<TAccountOwner>;
   listState: Address<TAccountListState>;
-  mplCoreProgram: Address<TAccountMplCoreProgram>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  rentDest?: TransactionSigner<TAccountRentDest>;
+  rentDest: TransactionSigner<TAccountRentDest>;
 };
 
 export function getDelistCoreInstruction<
@@ -212,39 +140,6 @@ export function getDelistCoreInstruction<
   TAccountTcompProgram extends string,
   TAccountSystemProgram extends string,
   TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: DelistCoreInputWithSigners<
-    TAccountAsset,
-    TAccountCollection,
-    TAccountOwner,
-    TAccountListState,
-    TAccountMplCoreProgram,
-    TAccountTcompProgram,
-    TAccountSystemProgram,
-    TAccountRentDest
-  >
-): DelistCoreInstructionWithSigners<
-  TProgram,
-  TAccountAsset,
-  TAccountCollection,
-  TAccountOwner,
-  TAccountListState,
-  TAccountMplCoreProgram,
-  TAccountTcompProgram,
-  TAccountSystemProgram,
-  TAccountRentDest
->;
-export function getDelistCoreInstruction<
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountOwner extends string,
-  TAccountListState extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: DelistCoreInput<
     TAccountAsset,
@@ -257,7 +152,7 @@ export function getDelistCoreInstruction<
     TAccountRentDest
   >
 ): DelistCoreInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountAsset,
   TAccountCollection,
   TAccountOwner,
@@ -266,48 +161,12 @@ export function getDelistCoreInstruction<
   TAccountTcompProgram,
   TAccountSystemProgram,
   TAccountRentDest
->;
-export function getDelistCoreInstruction<
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountOwner extends string,
-  TAccountListState extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: DelistCoreInput<
-    TAccountAsset,
-    TAccountCollection,
-    TAccountOwner,
-    TAccountListState,
-    TAccountMplCoreProgram,
-    TAccountTcompProgram,
-    TAccountSystemProgram,
-    TAccountRentDest
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getDelistCoreInstructionRaw<
-      TProgram,
-      TAccountAsset,
-      TAccountCollection,
-      TAccountOwner,
-      TAccountListState,
-      TAccountMplCoreProgram,
-      TAccountTcompProgram,
-      TAccountSystemProgram,
-      TAccountRentDest
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     asset: { value: input.asset ?? null, isWritable: true },
     collection: { value: input.collection ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -317,108 +176,37 @@ export function getDelistCoreInstruction<
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Resolve default values.
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getDelistCoreInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getDelistCoreInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountAsset extends string | IAccountMeta<string> = string,
-  TAccountCollection extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    asset: TAccountAsset extends string
-      ? Address<TAccountAsset>
-      : TAccountAsset;
-    collection?: TAccountCollection extends string
-      ? Address<TAccountCollection>
-      : TAccountCollection;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    listState: TAccountListState extends string
-      ? Address<TAccountListState>
-      : TAccountListState;
-    mplCoreProgram: TAccountMplCoreProgram extends string
-      ? Address<TAccountMplCoreProgram>
-      : TAccountMplCoreProgram;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    rentDest?: TAccountRentDest extends string
-      ? Address<TAccountRentDest>
-      : TAccountRentDest;
-  },
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.asset, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.collection ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.owner, AccountRole.WRITABLE_SIGNER),
-      accountMetaWithDefault(accounts.listState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.mplCoreProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(
-        accounts.rentDest ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE_SIGNER
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.rentDest),
     ],
-    data: getDelistCoreInstructionDataEncoder().encode({}),
     programAddress,
+    data: getDelistCoreInstructionDataEncoder().encode({}),
   } as DelistCoreInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountAsset,
     TAccountCollection,
     TAccountOwner,
@@ -426,14 +214,15 @@ export function getDelistCoreInstructionRaw<
     TAccountMplCoreProgram,
     TAccountTcompProgram,
     TAccountSystemProgram,
-    TAccountRentDest,
-    TRemainingAccounts
+    TAccountRentDest
   >;
+
+  return instruction;
 }
 
 export type ParsedDelistCoreInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -451,7 +240,7 @@ export type ParsedDelistCoreInstruction<
 
 export function parseDelistCoreInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
@@ -469,7 +258,7 @@ export function parseDelistCoreInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

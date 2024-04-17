@@ -6,16 +6,20 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getU32Decoder, getU32Encoder } from '@solana/codecs-numbers';
+  getU32Decoder,
+  getU32Encoder,
+} from '@solana/codecs';
 
 export type SeedsVecLocal = {
   /** The vector of derivation seeds. */
@@ -24,16 +28,16 @@ export type SeedsVecLocal = {
 
 export type SeedsVecLocalArgs = SeedsVecLocal;
 
-export function getSeedsVecLocalEncoder() {
-  return getStructEncoder<SeedsVecLocalArgs>([
+export function getSeedsVecLocalEncoder(): Encoder<SeedsVecLocalArgs> {
+  return getStructEncoder([
     ['seeds', getArrayEncoder(getBytesEncoder({ size: getU32Encoder() }))],
-  ]) satisfies Encoder<SeedsVecLocalArgs>;
+  ]);
 }
 
-export function getSeedsVecLocalDecoder() {
-  return getStructDecoder<SeedsVecLocal>([
+export function getSeedsVecLocalDecoder(): Decoder<SeedsVecLocal> {
+  return getStructDecoder([
     ['seeds', getArrayDecoder(getBytesDecoder({ size: getU32Decoder() }))],
-  ]) satisfies Decoder<SeedsVecLocal>;
+  ]);
 }
 
 export function getSeedsVecLocalCodec(): Codec<

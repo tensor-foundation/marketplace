@@ -190,13 +190,13 @@ pub struct TakeBidCoreInstructionArgs {
 ///   7. `[]` whitelist
 ///   8. `[writable]` asset
 ///   9. `[optional]` collection
-///   10. `[]` mpl_core_program
+///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   12. `[]` marketplace_program
 ///   13. `[]` escrow_program
 ///   14. `[signer]` cosigner
 ///   15. `[]` mint_proof
-///   16. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   16. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidCoreBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -283,6 +283,7 @@ impl TakeBidCoreBuilder {
         self.collection = collection;
         self
     }
+    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
         &mut self,
@@ -321,7 +322,6 @@ impl TakeBidCoreBuilder {
         self.mint_proof = Some(mint_proof);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -363,7 +363,9 @@ impl TakeBidCoreBuilder {
             whitelist: self.whitelist.expect("whitelist is not set"),
             asset: self.asset.expect("asset is not set"),
             collection: self.collection,
-            mpl_core_program: self.mpl_core_program.expect("mpl_core_program is not set"),
+            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
+                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -373,9 +375,7 @@ impl TakeBidCoreBuilder {
             escrow_program: self.escrow_program.expect("escrow_program is not set"),
             cosigner: self.cosigner.expect("cosigner is not set"),
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = TakeBidCoreInstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),

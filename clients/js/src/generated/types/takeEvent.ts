@@ -11,23 +11,22 @@ import {
   getAddressDecoder,
   getAddressEncoder,
 } from '@solana/addresses';
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  Option,
+  OptionOrNullable,
+  combineCodec,
+  getOptionDecoder,
+  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
-} from '@solana/codecs-numbers';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
+} from '@solana/codecs';
 import {
   Field,
   FieldArgs,
@@ -73,8 +72,8 @@ export type TakeEventArgs = {
   assetId: OptionOrNullable<Address>;
 };
 
-export function getTakeEventEncoder() {
-  return getStructEncoder<TakeEventArgs>([
+export function getTakeEventEncoder(): Encoder<TakeEventArgs> {
+  return getStructEncoder([
     ['taker', getAddressEncoder()],
     ['bidId', getOptionEncoder(getAddressEncoder())],
     ['target', getTargetEncoder()],
@@ -89,11 +88,11 @@ export function getTakeEventEncoder() {
     ['creatorFee', getU64Encoder()],
     ['currency', getOptionEncoder(getAddressEncoder())],
     ['assetId', getOptionEncoder(getAddressEncoder())],
-  ]) satisfies Encoder<TakeEventArgs>;
+  ]);
 }
 
-export function getTakeEventDecoder() {
-  return getStructDecoder<TakeEvent>([
+export function getTakeEventDecoder(): Decoder<TakeEvent> {
+  return getStructDecoder([
     ['taker', getAddressDecoder()],
     ['bidId', getOptionDecoder(getAddressDecoder())],
     ['target', getTargetDecoder()],
@@ -108,7 +107,7 @@ export function getTakeEventDecoder() {
     ['creatorFee', getU64Decoder()],
     ['currency', getOptionDecoder(getAddressDecoder())],
     ['assetId', getOptionDecoder(getAddressDecoder())],
-  ]) satisfies Decoder<TakeEvent>;
+  ]);
 }
 
 export function getTakeEventCodec(): Codec<TakeEventArgs, TakeEvent> {

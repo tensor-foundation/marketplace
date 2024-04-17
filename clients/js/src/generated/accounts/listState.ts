@@ -28,31 +28,25 @@ import {
   Codec,
   Decoder,
   Encoder,
+  Option,
+  OptionOrNullable,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getStructDecoder,
-  getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getI64Decoder,
   getI64Encoder,
+  getOptionDecoder,
+  getOptionEncoder,
+  getStructDecoder,
+  getStructEncoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
+  mapEncoder,
+} from '@solana/codecs';
 
 export type ListState<TAddress extends string = string> = Account<
   ListStateAccountData,
@@ -97,24 +91,9 @@ export type ListStateAccountDataArgs = {
   reserved1: Uint8Array;
 };
 
-export function getListStateAccountDataEncoder() {
+export function getListStateAccountDataEncoder(): Encoder<ListStateAccountDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      version: number;
-      bump: Array<number>;
-      owner: Address;
-      assetId: Address;
-      amount: number | bigint;
-      currency: OptionOrNullable<Address>;
-      expiry: number | bigint;
-      privateTaker: OptionOrNullable<Address>;
-      makerBroker: OptionOrNullable<Address>;
-      /** owner is the rent payer when this is PublicKey::default */
-      rentPayer: Address;
-      reserved: Uint8Array;
-      reserved1: Uint8Array;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['version', getU8Encoder()],
       ['bump', getArrayEncoder(getU8Encoder(), { size: 1 })],
@@ -133,11 +112,11 @@ export function getListStateAccountDataEncoder() {
       ...value,
       discriminator: [78, 242, 89, 138, 161, 221, 176, 75],
     })
-  ) satisfies Encoder<ListStateAccountDataArgs>;
+  );
 }
 
-export function getListStateAccountDataDecoder() {
-  return getStructDecoder<ListStateAccountData>([
+export function getListStateAccountDataDecoder(): Decoder<ListStateAccountData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['version', getU8Decoder()],
     ['bump', getArrayDecoder(getU8Decoder(), { size: 1 })],
@@ -151,7 +130,7 @@ export function getListStateAccountDataDecoder() {
     ['rentPayer', getAddressDecoder()],
     ['reserved', getBytesDecoder({ size: 32 })],
     ['reserved1', getBytesDecoder({ size: 64 })],
-  ]) satisfies Decoder<ListStateAccountData>;
+  ]);
 }
 
 export function getListStateAccountDataCodec(): Codec<

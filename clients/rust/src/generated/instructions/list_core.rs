@@ -121,7 +121,7 @@ pub struct ListCoreInstructionArgs {
 ///   1. `[optional]` collection
 ///   2. `[writable]` list_state
 ///   3. `[signer]` owner
-///   4. `[]` mpl_core_program
+///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[]` tcomp_program
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   7. `[writable, signer]` payer
@@ -168,6 +168,7 @@ impl ListCoreBuilder {
         self.owner = Some(owner);
         self
     }
+    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
         &mut self,
@@ -246,7 +247,9 @@ impl ListCoreBuilder {
             collection: self.collection,
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
-            mpl_core_program: self.mpl_core_program.expect("mpl_core_program is not set"),
+            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
+                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+            )),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             system_program: self
                 .system_program

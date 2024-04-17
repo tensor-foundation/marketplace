@@ -133,7 +133,7 @@ pub struct DelistInstructionArgs {
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
 ///   8. `[]` tcomp_program
-///   9. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   9. `[writable]` rent_dest
 #[derive(Default)]
 pub struct DelistBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -210,7 +210,6 @@ impl DelistBuilder {
         self.tcomp_program = Some(tcomp_program);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -277,9 +276,7 @@ impl DelistBuilder {
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = DelistInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),

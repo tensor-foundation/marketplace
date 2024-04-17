@@ -11,30 +11,33 @@ import {
   getAddressDecoder,
   getAddressEncoder,
 } from '@solana/addresses';
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getBooleanDecoder,
   getBooleanEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export type TCollection = { verified: boolean; key: Address };
 
 export type TCollectionArgs = TCollection;
 
-export function getTCollectionEncoder() {
-  return getStructEncoder<TCollectionArgs>([
+export function getTCollectionEncoder(): Encoder<TCollectionArgs> {
+  return getStructEncoder([
     ['verified', getBooleanEncoder()],
     ['key', getAddressEncoder()],
-  ]) satisfies Encoder<TCollectionArgs>;
+  ]);
 }
 
-export function getTCollectionDecoder() {
-  return getStructDecoder<TCollection>([
+export function getTCollectionDecoder(): Decoder<TCollection> {
+  return getStructDecoder([
     ['verified', getBooleanDecoder()],
     ['key', getAddressDecoder()],
-  ]) satisfies Decoder<TCollection>;
+  ]);
 }
 
 export function getTCollectionCodec(): Codec<TCollectionArgs, TCollection> {

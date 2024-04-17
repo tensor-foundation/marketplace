@@ -135,7 +135,7 @@ pub struct CloseExpiredListingInstructionArgs {
 ///   6. `[]` log_wrapper
 ///   7. `[]` compression_program
 ///   8. `[]` bubblegum_program
-///   9. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   9. `[writable]` rent_dest
 #[derive(Default)]
 pub struct CloseExpiredListingBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
@@ -212,7 +212,6 @@ impl CloseExpiredListingBuilder {
         self.bubblegum_program = Some(bubblegum_program);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -279,9 +278,7 @@ impl CloseExpiredListingBuilder {
             bubblegum_program: self
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = CloseExpiredListingInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),

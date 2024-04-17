@@ -11,25 +11,24 @@ import {
   getAddressDecoder,
   getAddressEncoder,
 } from '@solana/addresses';
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
-  getStructDecoder,
-  getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
+  Codec,
+  Decoder,
+  Encoder,
+  Option,
+  OptionOrNullable,
+  combineCodec,
   getI64Decoder,
   getI64Encoder,
+  getOptionDecoder,
+  getOptionEncoder,
+  getStructDecoder,
+  getStructEncoder,
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
-} from '@solana/codecs-numbers';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
+} from '@solana/codecs';
 import {
   Field,
   FieldArgs,
@@ -71,8 +70,8 @@ export type MakeEventArgs = {
   assetId: OptionOrNullable<Address>;
 };
 
-export function getMakeEventEncoder() {
-  return getStructEncoder<MakeEventArgs>([
+export function getMakeEventEncoder(): Encoder<MakeEventArgs> {
+  return getStructEncoder([
     ['maker', getAddressEncoder()],
     ['bidId', getOptionEncoder(getAddressEncoder())],
     ['target', getTargetEncoder()],
@@ -85,11 +84,11 @@ export function getMakeEventEncoder() {
     ['expiry', getI64Encoder()],
     ['privateTaker', getOptionEncoder(getAddressEncoder())],
     ['assetId', getOptionEncoder(getAddressEncoder())],
-  ]) satisfies Encoder<MakeEventArgs>;
+  ]);
 }
 
-export function getMakeEventDecoder() {
-  return getStructDecoder<MakeEvent>([
+export function getMakeEventDecoder(): Decoder<MakeEvent> {
+  return getStructDecoder([
     ['maker', getAddressDecoder()],
     ['bidId', getOptionDecoder(getAddressDecoder())],
     ['target', getTargetDecoder()],
@@ -102,7 +101,7 @@ export function getMakeEventDecoder() {
     ['expiry', getI64Decoder()],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['assetId', getOptionDecoder(getAddressDecoder())],
-  ]) satisfies Decoder<MakeEvent>;
+  ]);
 }
 
 export function getMakeEventCodec(): Codec<MakeEventArgs, MakeEvent> {
