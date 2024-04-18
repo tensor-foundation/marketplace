@@ -6,11 +6,14 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getScalarEnumDecoder,
   getScalarEnumEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export enum TTokenStandard {
   NonFungible,
@@ -21,14 +24,12 @@ export enum TTokenStandard {
 
 export type TTokenStandardArgs = TTokenStandard;
 
-export function getTTokenStandardEncoder() {
-  return getScalarEnumEncoder(
-    TTokenStandard
-  ) satisfies Encoder<TTokenStandardArgs>;
+export function getTTokenStandardEncoder(): Encoder<TTokenStandardArgs> {
+  return getScalarEnumEncoder(TTokenStandard);
 }
 
-export function getTTokenStandardDecoder() {
-  return getScalarEnumDecoder(TTokenStandard) satisfies Decoder<TTokenStandard>;
+export function getTTokenStandardDecoder(): Decoder<TTokenStandard> {
+  return getScalarEnumDecoder(TTokenStandard);
 }
 
 export function getTTokenStandardCodec(): Codec<

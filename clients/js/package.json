@@ -25,47 +25,36 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@solana/accounts": "2.0.0-experimental.dbe6a73",
-    "@solana/addresses": "2.0.0-experimental.dbe6a73",
-    "@solana/codecs-core": "2.0.0-experimental.dbe6a73",
-    "@solana/codecs-data-structures": "2.0.0-experimental.dbe6a73",
-    "@solana/codecs-numbers": "2.0.0-experimental.dbe6a73",
-    "@solana/codecs-strings": "2.0.0-experimental.dbe6a73",
-    "@solana/instructions": "2.0.0-experimental.dbe6a73",
-    "@solana/keys": "2.0.0-experimental.dbe6a73",
-    "@solana/options": "2.0.0-experimental.dbe6a73",
-    "@solana/programs": "2.0.0-experimental.dbe6a73",
-    "@solana/signers": "2.0.0-experimental.dbe6a73",
-    "@solana/transactions": "2.0.0-experimental.dbe6a73"
+    "@solana/accounts": "2.0.0-preview.2",
+    "@solana/addresses": "2.0.0-preview.2",
+    "@solana/codecs": "2.0.0-preview.2",
+    "@solana/instructions": "2.0.0-preview.2",
+    "@solana/programs": "2.0.0-preview.2",
+    "@solana/signers": "2.0.0-preview.2"
   },
   "devDependencies": {
-    "@ava/typescript": "^3.0.1",
-    "@solana/rpc-core": "2.0.0-experimental.dbe6a73",
-    "@solana/rpc-transport": "2.0.0-experimental.dbe6a73",
-    "@solana/web3.js": "2.0.0-experimental.dbe6a73",
-    "@solana/webcrypto-ed25519-polyfill": "2.0.0-experimental.dbe6a73",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.46.1",
-    "ava": "^5.1.0",
-    "eslint": "^8.0.1",
-    "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.5.1",
-    "rimraf": "^3.0.2",
-    "typedoc": "^0.23.16",
-    "typedoc-plugin-expand-object-like-types": "^0.1.1",
-    "typedoc-plugin-missing-exports": "^1.0.0",
-    "typescript": "^4.6.2",
-    "vercel": "^28.16.0"
+    "@ava/typescript": "^4.1.0",
+    "@solana/eslint-config-solana": "^3.0.3",
+    "@solana/web3.js": "2.0.0-preview.2",
+    "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.2",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "ava": "^6.1.2",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.2",
+    "typedoc": "^0.25.12",
+    "typedoc-plugin-missing-exports": "^2.2.0",
+    "typescript": "^5.4.2"
   },
   "ava": {
-    "require": ["./test/_globals.js"],
+    "require": [
+      "@solana/webcrypto-ed25519-polyfill"
+    ],
     "typescript": {
       "compile": false,
       "rewritePaths": {
-        "src/": "dist/src/",
         "test/": "dist/test/"
       }
     }

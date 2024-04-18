@@ -12,17 +12,15 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
+  getU8Decoder,
+  getU8Encoder,
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -30,11 +28,8 @@ import {
   ReadonlySignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 import {
   TcompEvent,
   TcompEventArgs,
@@ -43,24 +38,9 @@ import {
 } from '../types';
 
 export type TcompNoopInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcompSigner extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountTcompSigner extends string
-        ? ReadonlySignerAccount<TAccountTcompSigner>
-        : TAccountTcompSigner,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type TcompNoopInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcompSigner extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -69,7 +49,7 @@ export type TcompNoopInstructionWithSigners<
         ? ReadonlySignerAccount<TAccountTcompSigner> &
             IAccountSignerMeta<TAccountTcompSigner>
         : TAccountTcompSigner,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -80,9 +60,9 @@ export type TcompNoopInstructionData = {
 
 export type TcompNoopInstructionDataArgs = { event: TcompEventArgs };
 
-export function getTcompNoopInstructionDataEncoder() {
+export function getTcompNoopInstructionDataEncoder(): Encoder<TcompNoopInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{ discriminator: Array<number>; event: TcompEventArgs }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['event', getTcompEventEncoder()],
     ]),
@@ -90,14 +70,14 @@ export function getTcompNoopInstructionDataEncoder() {
       ...value,
       discriminator: [106, 162, 10, 226, 132, 68, 223, 21],
     })
-  ) satisfies Encoder<TcompNoopInstructionDataArgs>;
+  );
 }
 
-export function getTcompNoopInstructionDataDecoder() {
-  return getStructDecoder<TcompNoopInstructionData>([
+export function getTcompNoopInstructionDataDecoder(): Decoder<TcompNoopInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['event', getTcompEventDecoder()],
-  ]) satisfies Decoder<TcompNoopInstructionData>;
+  ]);
 }
 
 export function getTcompNoopInstructionDataCodec(): Codec<
@@ -110,90 +90,50 @@ export function getTcompNoopInstructionDataCodec(): Codec<
   );
 }
 
-export type TcompNoopInput<TAccountTcompSigner extends string> = {
-  tcompSigner: Address<TAccountTcompSigner>;
-  event: TcompNoopInstructionDataArgs['event'];
-};
-
-export type TcompNoopInputWithSigners<TAccountTcompSigner extends string> = {
+export type TcompNoopInput<TAccountTcompSigner extends string = string> = {
   tcompSigner: TransactionSigner<TAccountTcompSigner>;
   event: TcompNoopInstructionDataArgs['event'];
 };
 
-export function getTcompNoopInstruction<
-  TAccountTcompSigner extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: TcompNoopInputWithSigners<TAccountTcompSigner>
-): TcompNoopInstructionWithSigners<TProgram, TAccountTcompSigner>;
-export function getTcompNoopInstruction<
-  TAccountTcompSigner extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
+export function getTcompNoopInstruction<TAccountTcompSigner extends string>(
   input: TcompNoopInput<TAccountTcompSigner>
-): TcompNoopInstruction<TProgram, TAccountTcompSigner>;
-export function getTcompNoopInstruction<
-  TAccountTcompSigner extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(input: TcompNoopInput<TAccountTcompSigner>): IInstruction {
+): TcompNoopInstruction<
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountTcompSigner
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getTcompNoopInstructionRaw<TProgram, TAccountTcompSigner>
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     tcompSigner: { value: input.tcompSigner ?? null, isWritable: false },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getTcompNoopInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as TcompNoopInstructionDataArgs,
-    programAddress
-  );
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [getAccountMeta(accounts.tcompSigner)],
+    programAddress,
+    data: getTcompNoopInstructionDataEncoder().encode(
+      args as TcompNoopInstructionDataArgs
+    ),
+  } as TcompNoopInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountTcompSigner
+  >;
 
   return instruction;
 }
 
-export function getTcompNoopInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcompSigner extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    tcompSigner: TAccountTcompSigner extends string
-      ? Address<TAccountTcompSigner>
-      : TAccountTcompSigner;
-  },
-  args: TcompNoopInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
-    accounts: [
-      accountMetaWithDefault(accounts.tcompSigner, AccountRole.READONLY_SIGNER),
-      ...(remainingAccounts ?? []),
-    ],
-    data: getTcompNoopInstructionDataEncoder().encode(args),
-    programAddress,
-  } as TcompNoopInstruction<TProgram, TAccountTcompSigner, TRemainingAccounts>;
-}
-
 export type ParsedTcompNoopInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -204,7 +144,7 @@ export type ParsedTcompNoopInstruction<
 
 export function parseTcompNoopInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

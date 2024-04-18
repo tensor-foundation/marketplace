@@ -13,6 +13,29 @@ import {
   TensorMarketplaceProgramErrorCode,
   getTensorMarketplaceProgramErrorFromCode,
 } from '../errors';
+import {
+  ParsedBidInstruction,
+  ParsedBuyCoreInstruction,
+  ParsedBuyInstruction,
+  ParsedBuySplInstruction,
+  ParsedCancelBidInstruction,
+  ParsedCloseExpiredBidInstruction,
+  ParsedCloseExpiredListingCoreInstruction,
+  ParsedCloseExpiredListingInstruction,
+  ParsedDelistCoreInstruction,
+  ParsedDelistInstruction,
+  ParsedEditInstruction,
+  ParsedListCoreInstruction,
+  ParsedListInstruction,
+  ParsedTakeBidCoreInstruction,
+  ParsedTakeBidFullMetaInstruction,
+  ParsedTakeBidLegacyInstruction,
+  ParsedTakeBidMetaHashInstruction,
+  ParsedTakeBidT22Instruction,
+  ParsedTakeBidWnsInstruction,
+  ParsedTcompNoopInstruction,
+  ParsedWithdrawFeesInstruction,
+} from '../instructions';
 import { memcmp } from '../shared';
 
 export const TENSOR_MARKETPLACE_PROGRAM_ADDRESS =
@@ -153,3 +176,70 @@ export function identifyTensorMarketplaceInstruction(
     'The provided instruction could not be identified as a tensorMarketplace instruction.'
   );
 }
+
+export type ParsedTensorMarketplaceInstruction<
+  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+> =
+  | ({
+      instructionType: TensorMarketplaceInstruction.TcompNoop;
+    } & ParsedTcompNoopInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.WithdrawFees;
+    } & ParsedWithdrawFeesInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.Buy;
+    } & ParsedBuyInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuySpl;
+    } & ParsedBuySplInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.List;
+    } & ParsedListInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.Delist;
+    } & ParsedDelistInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.Edit;
+    } & ParsedEditInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.Bid;
+    } & ParsedBidInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CancelBid;
+    } & ParsedCancelBidInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredBid;
+    } & ParsedCloseExpiredBidInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListing;
+    } & ParsedCloseExpiredListingInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidMetaHash;
+    } & ParsedTakeBidMetaHashInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidFullMeta;
+    } & ParsedTakeBidFullMetaInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidLegacy;
+    } & ParsedTakeBidLegacyInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidT22;
+    } & ParsedTakeBidT22Instruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidWns;
+    } & ParsedTakeBidWnsInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuyCore;
+    } & ParsedBuyCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListingCore;
+    } & ParsedCloseExpiredListingCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.DelistCore;
+    } & ParsedDelistCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.ListCore;
+    } & ParsedListCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.TakeBidCore;
+    } & ParsedTakeBidCoreInstruction<TProgram>);

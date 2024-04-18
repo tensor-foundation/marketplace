@@ -15,25 +15,24 @@ import {
   Codec,
   Decoder,
   Encoder,
+  Option,
+  OptionOrNullable,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
+  getOptionDecoder,
+  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -43,18 +42,9 @@ import {
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 import {
   Field,
   FieldArgs,
@@ -67,7 +57,7 @@ import {
 } from '../types';
 
 export type BidInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -76,53 +66,8 @@ export type BidInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountBidState extends string
-        ? WritableAccount<TAccountBidState>
-        : TAccountBidState,
-      TAccountOwner extends string
-        ? WritableSignerAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
-      TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner>
-        : TAccountCosigner,
-      TAccountRentPayer extends string
-        ? WritableSignerAccount<TAccountRentPayer>
-        : TAccountRentPayer,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type BidInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TAccountRentPayer extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -151,7 +96,7 @@ export type BidInstructionWithSigners<
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -184,22 +129,9 @@ export type BidInstructionDataArgs = {
   makerBroker: OptionOrNullable<Address>;
 };
 
-export function getBidInstructionDataEncoder() {
+export function getBidInstructionDataEncoder(): Encoder<BidInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      bidId: Address;
-      target: TargetArgs;
-      targetId: Address;
-      field: OptionOrNullable<FieldArgs>;
-      fieldId: OptionOrNullable<Address>;
-      amount: number | bigint;
-      quantity: number;
-      expireInSec: OptionOrNullable<number | bigint>;
-      currency: OptionOrNullable<Address>;
-      privateTaker: OptionOrNullable<Address>;
-      makerBroker: OptionOrNullable<Address>;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['bidId', getAddressEncoder()],
       ['target', getTargetEncoder()],
@@ -217,11 +149,11 @@ export function getBidInstructionDataEncoder() {
       ...value,
       discriminator: [199, 56, 85, 38, 146, 243, 37, 158],
     })
-  ) satisfies Encoder<BidInstructionDataArgs>;
+  );
 }
 
-export function getBidInstructionDataDecoder() {
-  return getStructDecoder<BidInstructionData>([
+export function getBidInstructionDataDecoder(): Decoder<BidInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['bidId', getAddressDecoder()],
     ['target', getTargetDecoder()],
@@ -234,7 +166,7 @@ export function getBidInstructionDataDecoder() {
     ['currency', getOptionDecoder(getAddressDecoder())],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['makerBroker', getOptionDecoder(getAddressDecoder())],
-  ]) satisfies Decoder<BidInstructionData>;
+  ]);
 }
 
 export function getBidInstructionDataCodec(): Codec<
@@ -248,42 +180,13 @@ export function getBidInstructionDataCodec(): Codec<
 }
 
 export type BidInput<
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountMarginAccount extends string,
-  TAccountCosigner extends string,
-  TAccountRentPayer extends string
-> = {
-  systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  bidState: Address<TAccountBidState>;
-  owner: Address<TAccountOwner>;
-  marginAccount: Address<TAccountMarginAccount>;
-  cosigner: Address<TAccountCosigner>;
-  rentPayer?: Address<TAccountRentPayer>;
-  bidId: BidInstructionDataArgs['bidId'];
-  target: BidInstructionDataArgs['target'];
-  targetId: BidInstructionDataArgs['targetId'];
-  field: BidInstructionDataArgs['field'];
-  fieldId: BidInstructionDataArgs['fieldId'];
-  amount: BidInstructionDataArgs['amount'];
-  quantity: BidInstructionDataArgs['quantity'];
-  expireInSec: BidInstructionDataArgs['expireInSec'];
-  currency: BidInstructionDataArgs['currency'];
-  privateTaker: BidInstructionDataArgs['privateTaker'];
-  makerBroker: BidInstructionDataArgs['makerBroker'];
-};
-
-export type BidInputWithSigners<
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountMarginAccount extends string,
-  TAccountCosigner extends string,
-  TAccountRentPayer extends string
+  TAccountSystemProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountMarginAccount extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountRentPayer extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
@@ -291,7 +194,7 @@ export type BidInputWithSigners<
   owner: TransactionSigner<TAccountOwner>;
   marginAccount: Address<TAccountMarginAccount>;
   cosigner: TransactionSigner<TAccountCosigner>;
-  rentPayer?: TransactionSigner<TAccountRentPayer>;
+  rentPayer: TransactionSigner<TAccountRentPayer>;
   bidId: BidInstructionDataArgs['bidId'];
   target: BidInstructionDataArgs['target'];
   targetId: BidInstructionDataArgs['targetId'];
@@ -313,36 +216,6 @@ export function getBidInstruction<
   TAccountMarginAccount extends string,
   TAccountCosigner extends string,
   TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: BidInputWithSigners<
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountBidState,
-    TAccountOwner,
-    TAccountMarginAccount,
-    TAccountCosigner,
-    TAccountRentPayer
-  >
-): BidInstructionWithSigners<
-  TProgram,
-  TAccountSystemProgram,
-  TAccountTcompProgram,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountMarginAccount,
-  TAccountCosigner,
-  TAccountRentPayer
->;
-export function getBidInstruction<
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountMarginAccount extends string,
-  TAccountCosigner extends string,
-  TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: BidInput<
     TAccountSystemProgram,
@@ -354,7 +227,7 @@ export function getBidInstruction<
     TAccountRentPayer
   >
 ): BidInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountSystemProgram,
   TAccountTcompProgram,
   TAccountBidState,
@@ -362,45 +235,12 @@ export function getBidInstruction<
   TAccountMarginAccount,
   TAccountCosigner,
   TAccountRentPayer
->;
-export function getBidInstruction<
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountMarginAccount extends string,
-  TAccountCosigner extends string,
-  TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: BidInput<
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountBidState,
-    TAccountOwner,
-    TAccountMarginAccount,
-    TAccountCosigner,
-    TAccountRentPayer
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getBidInstructionRaw<
-      TProgram,
-      TAccountSystemProgram,
-      TAccountTcompProgram,
-      TAccountBidState,
-      TAccountOwner,
-      TAccountMarginAccount,
-      TAccountCosigner,
-      TAccountRentPayer
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
     bidState: { value: input.bidState ?? null, isWritable: true },
@@ -409,6 +249,10 @@ export function getBidInstruction<
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
@@ -418,106 +262,37 @@ export function getBidInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentPayer.value) {
-    accounts.rentPayer.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getBidInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as BidInstructionDataArgs,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getBidInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    bidState: TAccountBidState extends string
-      ? Address<TAccountBidState>
-      : TAccountBidState;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    marginAccount: TAccountMarginAccount extends string
-      ? Address<TAccountMarginAccount>
-      : TAccountMarginAccount;
-    cosigner: TAccountCosigner extends string
-      ? Address<TAccountCosigner>
-      : TAccountCosigner;
-    rentPayer?: TAccountRentPayer extends string
-      ? Address<TAccountRentPayer>
-      : TAccountRentPayer;
-  },
-  args: BidInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.bidState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.owner, AccountRole.WRITABLE_SIGNER),
-      accountMetaWithDefault(accounts.marginAccount, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.cosigner, AccountRole.READONLY_SIGNER),
-      accountMetaWithDefault(
-        accounts.rentPayer ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE_SIGNER
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.rentPayer),
     ],
-    data: getBidInstructionDataEncoder().encode(args),
     programAddress,
+    data: getBidInstructionDataEncoder().encode(args as BidInstructionDataArgs),
   } as BidInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountSystemProgram,
     TAccountTcompProgram,
     TAccountBidState,
     TAccountOwner,
     TAccountMarginAccount,
     TAccountCosigner,
-    TAccountRentPayer,
-    TRemainingAccounts
+    TAccountRentPayer
   >;
+
+  return instruction;
 }
 
 export type ParsedBidInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -534,7 +309,7 @@ export type ParsedBidInstruction<
 
 export function parseBidInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

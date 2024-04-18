@@ -15,27 +15,26 @@ import {
   Codec,
   Decoder,
   Encoder,
+  Option,
+  OptionOrNullable,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getOptionDecoder,
+  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -44,21 +43,12 @@ import {
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type ListInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
@@ -71,69 +61,8 @@ export type ListInstruction<
   TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountTreeAuthority extends string
-        ? ReadonlyAccount<TAccountTreeAuthority>
-        : TAccountTreeAuthority,
-      TAccountOwner extends string
-        ? ReadonlyAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountDelegate extends string
-        ? ReadonlyAccount<TAccountDelegate>
-        : TAccountDelegate,
-      TAccountMerkleTree extends string
-        ? WritableAccount<TAccountMerkleTree>
-        : TAccountMerkleTree,
-      TAccountLogWrapper extends string
-        ? ReadonlyAccount<TAccountLogWrapper>
-        : TAccountLogWrapper,
-      TAccountCompressionProgram extends string
-        ? ReadonlyAccount<TAccountCompressionProgram>
-        : TAccountCompressionProgram,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountBubblegumProgram extends string
-        ? ReadonlyAccount<TAccountBubblegumProgram>
-        : TAccountBubblegumProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountRentPayer extends string
-        ? WritableSignerAccount<TAccountRentPayer>
-        : TAccountRentPayer,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type ListInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTreeAuthority extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountDelegate extends string | IAccountMeta<string> = string,
-  TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TAccountRentPayer extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -172,7 +101,7 @@ export type ListInstructionWithSigners<
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -203,21 +132,9 @@ export type ListInstructionDataArgs = {
   makerBroker: OptionOrNullable<Address>;
 };
 
-export function getListInstructionDataEncoder() {
+export function getListInstructionDataEncoder(): Encoder<ListInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      nonce: number | bigint;
-      index: number;
-      root: Uint8Array;
-      dataHash: Uint8Array;
-      creatorHash: Uint8Array;
-      amount: number | bigint;
-      expireInSec: OptionOrNullable<number | bigint>;
-      currency: OptionOrNullable<Address>;
-      privateTaker: OptionOrNullable<Address>;
-      makerBroker: OptionOrNullable<Address>;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['nonce', getU64Encoder()],
       ['index', getU32Encoder()],
@@ -234,11 +151,11 @@ export function getListInstructionDataEncoder() {
       ...value,
       discriminator: [54, 174, 193, 67, 17, 41, 132, 38],
     })
-  ) satisfies Encoder<ListInstructionDataArgs>;
+  );
 }
 
-export function getListInstructionDataDecoder() {
-  return getStructDecoder<ListInstructionData>([
+export function getListInstructionDataDecoder(): Decoder<ListInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['nonce', getU64Decoder()],
     ['index', getU32Decoder()],
@@ -250,7 +167,7 @@ export function getListInstructionDataDecoder() {
     ['currency', getOptionDecoder(getAddressDecoder())],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['makerBroker', getOptionDecoder(getAddressDecoder())],
-  ]) satisfies Decoder<ListInstructionData>;
+  ]);
 }
 
 export function getListInstructionDataCodec(): Codec<
@@ -264,17 +181,17 @@ export function getListInstructionDataCodec(): Codec<
 }
 
 export type ListInput<
-  TAccountTreeAuthority extends string,
-  TAccountOwner extends string,
-  TAccountDelegate extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountListState extends string,
-  TAccountRentPayer extends string
+  TAccountTreeAuthority extends string = string,
+  TAccountOwner extends string = string,
+  TAccountDelegate extends string = string,
+  TAccountMerkleTree extends string = string,
+  TAccountLogWrapper extends string = string,
+  TAccountCompressionProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountBubblegumProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountListState extends string = string,
+  TAccountRentPayer extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
   owner: Address<TAccountOwner>;
@@ -286,43 +203,7 @@ export type ListInput<
   bubblegumProgram: Address<TAccountBubblegumProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
   listState: Address<TAccountListState>;
-  rentPayer?: Address<TAccountRentPayer>;
-  nonce: ListInstructionDataArgs['nonce'];
-  index: ListInstructionDataArgs['index'];
-  root: ListInstructionDataArgs['root'];
-  dataHash: ListInstructionDataArgs['dataHash'];
-  creatorHash: ListInstructionDataArgs['creatorHash'];
-  amount: ListInstructionDataArgs['amount'];
-  expireInSec: ListInstructionDataArgs['expireInSec'];
-  currency: ListInstructionDataArgs['currency'];
-  privateTaker: ListInstructionDataArgs['privateTaker'];
-  makerBroker: ListInstructionDataArgs['makerBroker'];
-};
-
-export type ListInputWithSigners<
-  TAccountTreeAuthority extends string,
-  TAccountOwner extends string,
-  TAccountDelegate extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountListState extends string,
-  TAccountRentPayer extends string
-> = {
-  treeAuthority: Address<TAccountTreeAuthority>;
-  owner: Address<TAccountOwner>;
-  delegate: Address<TAccountDelegate>;
-  merkleTree: Address<TAccountMerkleTree>;
-  logWrapper: Address<TAccountLogWrapper>;
-  compressionProgram: Address<TAccountCompressionProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  listState: Address<TAccountListState>;
-  rentPayer?: TransactionSigner<TAccountRentPayer>;
+  rentPayer: TransactionSigner<TAccountRentPayer>;
   nonce: ListInstructionDataArgs['nonce'];
   index: ListInstructionDataArgs['index'];
   root: ListInstructionDataArgs['root'];
@@ -347,48 +228,6 @@ export function getListInstruction<
   TAccountTcompProgram extends string,
   TAccountListState extends string,
   TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: ListInputWithSigners<
-    TAccountTreeAuthority,
-    TAccountOwner,
-    TAccountDelegate,
-    TAccountMerkleTree,
-    TAccountLogWrapper,
-    TAccountCompressionProgram,
-    TAccountSystemProgram,
-    TAccountBubblegumProgram,
-    TAccountTcompProgram,
-    TAccountListState,
-    TAccountRentPayer
-  >
-): ListInstructionWithSigners<
-  TProgram,
-  TAccountTreeAuthority,
-  TAccountOwner,
-  TAccountDelegate,
-  TAccountMerkleTree,
-  TAccountLogWrapper,
-  TAccountCompressionProgram,
-  TAccountSystemProgram,
-  TAccountBubblegumProgram,
-  TAccountTcompProgram,
-  TAccountListState,
-  TAccountRentPayer
->;
-export function getListInstruction<
-  TAccountTreeAuthority extends string,
-  TAccountOwner extends string,
-  TAccountDelegate extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountListState extends string,
-  TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: ListInput<
     TAccountTreeAuthority,
@@ -404,7 +243,7 @@ export function getListInstruction<
     TAccountRentPayer
   >
 ): ListInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority,
   TAccountOwner,
   TAccountDelegate,
@@ -416,57 +255,12 @@ export function getListInstruction<
   TAccountTcompProgram,
   TAccountListState,
   TAccountRentPayer
->;
-export function getListInstruction<
-  TAccountTreeAuthority extends string,
-  TAccountOwner extends string,
-  TAccountDelegate extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountListState extends string,
-  TAccountRentPayer extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: ListInput<
-    TAccountTreeAuthority,
-    TAccountOwner,
-    TAccountDelegate,
-    TAccountMerkleTree,
-    TAccountLogWrapper,
-    TAccountCompressionProgram,
-    TAccountSystemProgram,
-    TAccountBubblegumProgram,
-    TAccountTcompProgram,
-    TAccountListState,
-    TAccountRentPayer
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getListInstructionRaw<
-      TProgram,
-      TAccountTreeAuthority,
-      TAccountOwner,
-      TAccountDelegate,
-      TAccountMerkleTree,
-      TAccountLogWrapper,
-      TAccountCompressionProgram,
-      TAccountSystemProgram,
-      TAccountBubblegumProgram,
-      TAccountTcompProgram,
-      TAccountListState,
-      TAccountRentPayer
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
@@ -485,6 +279,10 @@ export function getListInstruction<
     listState: { value: input.listState ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
@@ -494,112 +292,28 @@ export function getListInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentPayer.value) {
-    accounts.rentPayer.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getListInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as ListInstructionDataArgs,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getListInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTreeAuthority extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountDelegate extends string | IAccountMeta<string> = string,
-  TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountRentPayer extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    treeAuthority: TAccountTreeAuthority extends string
-      ? Address<TAccountTreeAuthority>
-      : TAccountTreeAuthority;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    delegate: TAccountDelegate extends string
-      ? Address<TAccountDelegate>
-      : TAccountDelegate;
-    merkleTree: TAccountMerkleTree extends string
-      ? Address<TAccountMerkleTree>
-      : TAccountMerkleTree;
-    logWrapper: TAccountLogWrapper extends string
-      ? Address<TAccountLogWrapper>
-      : TAccountLogWrapper;
-    compressionProgram: TAccountCompressionProgram extends string
-      ? Address<TAccountCompressionProgram>
-      : TAccountCompressionProgram;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    bubblegumProgram: TAccountBubblegumProgram extends string
-      ? Address<TAccountBubblegumProgram>
-      : TAccountBubblegumProgram;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    listState: TAccountListState extends string
-      ? Address<TAccountListState>
-      : TAccountListState;
-    rentPayer?: TAccountRentPayer extends string
-      ? Address<TAccountRentPayer>
-      : TAccountRentPayer;
-  },
-  args: ListInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.treeAuthority, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.owner, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.delegate, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.merkleTree, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.logWrapper, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.compressionProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.bubblegumProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.listState, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.rentPayer ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE_SIGNER
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.treeAuthority),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.delegate),
+      getAccountMeta(accounts.merkleTree),
+      getAccountMeta(accounts.logWrapper),
+      getAccountMeta(accounts.compressionProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.bubblegumProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.rentPayer),
     ],
-    data: getListInstructionDataEncoder().encode(args),
     programAddress,
+    data: getListInstructionDataEncoder().encode(
+      args as ListInstructionDataArgs
+    ),
   } as ListInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
     TAccountOwner,
     TAccountDelegate,
@@ -610,14 +324,15 @@ export function getListInstructionRaw<
     TAccountBubblegumProgram,
     TAccountTcompProgram,
     TAccountListState,
-    TAccountRentPayer,
-    TRemainingAccounts
+    TAccountRentPayer
   >;
+
+  return instruction;
 }
 
 export type ParsedListInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -638,7 +353,7 @@ export type ParsedListInstruction<
 
 export function parseListInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

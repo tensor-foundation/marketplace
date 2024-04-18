@@ -12,26 +12,21 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -41,14 +36,11 @@ import {
   WritableAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type DelistInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends string | IAccountMeta<string> = string,
@@ -60,65 +52,8 @@ export type DelistInstruction<
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountTreeAuthority extends string
-        ? ReadonlyAccount<TAccountTreeAuthority>
-        : TAccountTreeAuthority,
-      TAccountMerkleTree extends string
-        ? WritableAccount<TAccountMerkleTree>
-        : TAccountMerkleTree,
-      TAccountLogWrapper extends string
-        ? ReadonlyAccount<TAccountLogWrapper>
-        : TAccountLogWrapper,
-      TAccountCompressionProgram extends string
-        ? ReadonlyAccount<TAccountCompressionProgram>
-        : TAccountCompressionProgram,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountBubblegumProgram extends string
-        ? ReadonlyAccount<TAccountBubblegumProgram>
-        : TAccountBubblegumProgram,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type DelistInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTreeAuthority extends string | IAccountMeta<string> = string,
-  TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -154,7 +89,7 @@ export type DelistInstructionWithSigners<
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -175,16 +110,9 @@ export type DelistInstructionDataArgs = {
   creatorHash: Uint8Array;
 };
 
-export function getDelistInstructionDataEncoder() {
+export function getDelistInstructionDataEncoder(): Encoder<DelistInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      nonce: number | bigint;
-      index: number;
-      root: Uint8Array;
-      dataHash: Uint8Array;
-      creatorHash: Uint8Array;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['nonce', getU64Encoder()],
       ['index', getU32Encoder()],
@@ -196,18 +124,18 @@ export function getDelistInstructionDataEncoder() {
       ...value,
       discriminator: [55, 136, 205, 107, 107, 173, 4, 31],
     })
-  ) satisfies Encoder<DelistInstructionDataArgs>;
+  );
 }
 
-export function getDelistInstructionDataDecoder() {
-  return getStructDecoder<DelistInstructionData>([
+export function getDelistInstructionDataDecoder(): Decoder<DelistInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['nonce', getU64Decoder()],
     ['index', getU32Decoder()],
     ['root', getBytesDecoder({ size: 32 })],
     ['dataHash', getBytesDecoder({ size: 32 })],
     ['creatorHash', getBytesDecoder({ size: 32 })],
-  ]) satisfies Decoder<DelistInstructionData>;
+  ]);
 }
 
 export function getDelistInstructionDataCodec(): Codec<
@@ -221,45 +149,16 @@ export function getDelistInstructionDataCodec(): Codec<
 }
 
 export type DelistInput<
-  TAccountTreeAuthority extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string
-> = {
-  treeAuthority: Address<TAccountTreeAuthority>;
-  merkleTree: Address<TAccountMerkleTree>;
-  logWrapper: Address<TAccountLogWrapper>;
-  compressionProgram: Address<TAccountCompressionProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  bubblegumProgram: Address<TAccountBubblegumProgram>;
-  listState: Address<TAccountListState>;
-  owner: Address<TAccountOwner>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  rentDest?: Address<TAccountRentDest>;
-  nonce: DelistInstructionDataArgs['nonce'];
-  index: DelistInstructionDataArgs['index'];
-  root: DelistInstructionDataArgs['root'];
-  dataHash: DelistInstructionDataArgs['dataHash'];
-  creatorHash: DelistInstructionDataArgs['creatorHash'];
-};
-
-export type DelistInputWithSigners<
-  TAccountTreeAuthority extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string
+  TAccountTreeAuthority extends string = string,
+  TAccountMerkleTree extends string = string,
+  TAccountLogWrapper extends string = string,
+  TAccountCompressionProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountBubblegumProgram extends string = string,
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountRentDest extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
@@ -270,7 +169,7 @@ export type DelistInputWithSigners<
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
   tcompProgram: Address<TAccountTcompProgram>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDest: Address<TAccountRentDest>;
   nonce: DelistInstructionDataArgs['nonce'];
   index: DelistInstructionDataArgs['index'];
   root: DelistInstructionDataArgs['root'];
@@ -289,45 +188,6 @@ export function getDelistInstruction<
   TAccountOwner extends string,
   TAccountTcompProgram extends string,
   TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: DelistInputWithSigners<
-    TAccountTreeAuthority,
-    TAccountMerkleTree,
-    TAccountLogWrapper,
-    TAccountCompressionProgram,
-    TAccountSystemProgram,
-    TAccountBubblegumProgram,
-    TAccountListState,
-    TAccountOwner,
-    TAccountTcompProgram,
-    TAccountRentDest
-  >
-): DelistInstructionWithSigners<
-  TProgram,
-  TAccountTreeAuthority,
-  TAccountMerkleTree,
-  TAccountLogWrapper,
-  TAccountCompressionProgram,
-  TAccountSystemProgram,
-  TAccountBubblegumProgram,
-  TAccountListState,
-  TAccountOwner,
-  TAccountTcompProgram,
-  TAccountRentDest
->;
-export function getDelistInstruction<
-  TAccountTreeAuthority extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: DelistInput<
     TAccountTreeAuthority,
@@ -342,7 +202,7 @@ export function getDelistInstruction<
     TAccountRentDest
   >
 ): DelistInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -353,54 +213,12 @@ export function getDelistInstruction<
   TAccountOwner,
   TAccountTcompProgram,
   TAccountRentDest
->;
-export function getDelistInstruction<
-  TAccountTreeAuthority extends string,
-  TAccountMerkleTree extends string,
-  TAccountLogWrapper extends string,
-  TAccountCompressionProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountBubblegumProgram extends string,
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: DelistInput<
-    TAccountTreeAuthority,
-    TAccountMerkleTree,
-    TAccountLogWrapper,
-    TAccountCompressionProgram,
-    TAccountSystemProgram,
-    TAccountBubblegumProgram,
-    TAccountListState,
-    TAccountOwner,
-    TAccountTcompProgram,
-    TAccountRentDest
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getDelistInstructionRaw<
-      TProgram,
-      TAccountTreeAuthority,
-      TAccountMerkleTree,
-      TAccountLogWrapper,
-      TAccountCompressionProgram,
-      TAccountSystemProgram,
-      TAccountBubblegumProgram,
-      TAccountListState,
-      TAccountOwner,
-      TAccountTcompProgram,
-      TAccountRentDest
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -418,6 +236,10 @@ export function getDelistInstruction<
     tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
@@ -427,107 +249,27 @@ export function getDelistInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getDelistInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as DelistInstructionDataArgs,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getDelistInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTreeAuthority extends string | IAccountMeta<string> = string,
-  TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    treeAuthority: TAccountTreeAuthority extends string
-      ? Address<TAccountTreeAuthority>
-      : TAccountTreeAuthority;
-    merkleTree: TAccountMerkleTree extends string
-      ? Address<TAccountMerkleTree>
-      : TAccountMerkleTree;
-    logWrapper: TAccountLogWrapper extends string
-      ? Address<TAccountLogWrapper>
-      : TAccountLogWrapper;
-    compressionProgram: TAccountCompressionProgram extends string
-      ? Address<TAccountCompressionProgram>
-      : TAccountCompressionProgram;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    bubblegumProgram: TAccountBubblegumProgram extends string
-      ? Address<TAccountBubblegumProgram>
-      : TAccountBubblegumProgram;
-    listState: TAccountListState extends string
-      ? Address<TAccountListState>
-      : TAccountListState;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    rentDest?: TAccountRentDest extends string
-      ? Address<TAccountRentDest>
-      : TAccountRentDest;
-  },
-  args: DelistInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.treeAuthority, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.merkleTree, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.logWrapper, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.compressionProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.bubblegumProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.listState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.owner, AccountRole.READONLY_SIGNER),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.rentDest ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.treeAuthority),
+      getAccountMeta(accounts.merkleTree),
+      getAccountMeta(accounts.logWrapper),
+      getAccountMeta(accounts.compressionProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.bubblegumProgram),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.rentDest),
     ],
-    data: getDelistInstructionDataEncoder().encode(args),
     programAddress,
+    data: getDelistInstructionDataEncoder().encode(
+      args as DelistInstructionDataArgs
+    ),
   } as DelistInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -537,14 +279,15 @@ export function getDelistInstructionRaw<
     TAccountListState,
     TAccountOwner,
     TAccountTcompProgram,
-    TAccountRentDest,
-    TRemainingAccounts
+    TAccountRentDest
   >;
+
+  return instruction;
 }
 
 export type ParsedDelistInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -564,7 +307,7 @@ export type ParsedDelistInstruction<
 
 export function parseDelistInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

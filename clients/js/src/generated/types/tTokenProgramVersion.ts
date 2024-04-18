@@ -6,11 +6,14 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getScalarEnumDecoder,
   getScalarEnumEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export enum TTokenProgramVersion {
   Original,
@@ -19,16 +22,12 @@ export enum TTokenProgramVersion {
 
 export type TTokenProgramVersionArgs = TTokenProgramVersion;
 
-export function getTTokenProgramVersionEncoder() {
-  return getScalarEnumEncoder(
-    TTokenProgramVersion
-  ) satisfies Encoder<TTokenProgramVersionArgs>;
+export function getTTokenProgramVersionEncoder(): Encoder<TTokenProgramVersionArgs> {
+  return getScalarEnumEncoder(TTokenProgramVersion);
 }
 
-export function getTTokenProgramVersionDecoder() {
-  return getScalarEnumDecoder(
-    TTokenProgramVersion
-  ) satisfies Decoder<TTokenProgramVersion>;
+export function getTTokenProgramVersionDecoder(): Decoder<TTokenProgramVersion> {
+  return getScalarEnumDecoder(TTokenProgramVersion);
 }
 
 export function getTTokenProgramVersionCodec(): Codec<

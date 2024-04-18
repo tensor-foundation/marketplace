@@ -6,12 +6,16 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
+  getStringDecoder,
+  getStringEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getStringDecoder, getStringEncoder } from '@solana/codecs-strings';
+} from '@solana/codecs';
 import {
   PayloadTypeLocal,
   PayloadTypeLocalArgs,
@@ -23,18 +27,18 @@ export type TaggedPayload = { name: string; payload: PayloadTypeLocal };
 
 export type TaggedPayloadArgs = { name: string; payload: PayloadTypeLocalArgs };
 
-export function getTaggedPayloadEncoder() {
-  return getStructEncoder<TaggedPayloadArgs>([
+export function getTaggedPayloadEncoder(): Encoder<TaggedPayloadArgs> {
+  return getStructEncoder([
     ['name', getStringEncoder()],
     ['payload', getPayloadTypeLocalEncoder()],
-  ]) satisfies Encoder<TaggedPayloadArgs>;
+  ]);
 }
 
-export function getTaggedPayloadDecoder() {
-  return getStructDecoder<TaggedPayload>([
+export function getTaggedPayloadDecoder(): Decoder<TaggedPayload> {
+  return getStructDecoder([
     ['name', getStringDecoder()],
     ['payload', getPayloadTypeLocalDecoder()],
-  ]) satisfies Decoder<TaggedPayload>;
+  ]);
 }
 
 export function getTaggedPayloadCodec(): Codec<

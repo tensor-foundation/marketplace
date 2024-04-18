@@ -12,22 +12,17 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -37,14 +32,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BuyCoreInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountAsset extends string | IAccountMeta<string> = string,
@@ -54,82 +46,15 @@ export type BuyCoreInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
+  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountMplCoreProgram extends
     | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
+    | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
   TAccountMarketplaceProgram extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountAsset extends string
-        ? WritableAccount<TAccountAsset>
-        : TAccountAsset,
-      TAccountCollection extends string
-        ? ReadonlyAccount<TAccountCollection>
-        : TAccountCollection,
-      TAccountBuyer extends string
-        ? ReadonlyAccount<TAccountBuyer>
-        : TAccountBuyer,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer>
-        : TAccountPayer,
-      TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountTakerBroker extends string
-        ? WritableAccount<TAccountTakerBroker>
-        : TAccountTakerBroker,
-      TAccountMakerBroker extends string
-        ? WritableAccount<TAccountMakerBroker>
-        : TAccountMakerBroker,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
-      TAccountMplCoreProgram extends string
-        ? ReadonlyAccount<TAccountMplCoreProgram>
-        : TAccountMplCoreProgram,
-      TAccountMarketplaceProgram extends string
-        ? ReadonlyAccount<TAccountMarketplaceProgram>
-        : TAccountMarketplaceProgram,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type BuyCoreInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcomp extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountAsset extends string | IAccountMeta<string> = string,
-  TAccountCollection extends string | IAccountMeta<string> = string,
-  TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
-  TAccountMarketplaceProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -174,7 +99,7 @@ export type BuyCoreInstructionWithSigners<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -185,12 +110,9 @@ export type BuyCoreInstructionData = {
 
 export type BuyCoreInstructionDataArgs = { maxAmount: number | bigint };
 
-export function getBuyCoreInstructionDataEncoder() {
+export function getBuyCoreInstructionDataEncoder(): Encoder<BuyCoreInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      maxAmount: number | bigint;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['maxAmount', getU64Encoder()],
     ]),
@@ -198,14 +120,14 @@ export function getBuyCoreInstructionDataEncoder() {
       ...value,
       discriminator: [169, 227, 87, 255, 76, 86, 255, 25],
     })
-  ) satisfies Encoder<BuyCoreInstructionDataArgs>;
+  );
 }
 
-export function getBuyCoreInstructionDataDecoder() {
-  return getStructDecoder<BuyCoreInstructionData>([
+export function getBuyCoreInstructionDataDecoder(): Decoder<BuyCoreInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['maxAmount', getU64Decoder()],
-  ]) satisfies Decoder<BuyCoreInstructionData>;
+  ]);
 }
 
 export function getBuyCoreInstructionDataCodec(): Codec<
@@ -219,50 +141,19 @@ export function getBuyCoreInstructionDataCodec(): Codec<
 }
 
 export type BuyCoreInput<
-  TAccountTcomp extends string,
-  TAccountListState extends string,
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountBuyer extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountMarketplaceProgram extends string,
-  TAccountSystemProgram extends string
-> = {
-  tcomp: Address<TAccountTcomp>;
-  listState: Address<TAccountListState>;
-  asset: Address<TAccountAsset>;
-  collection?: Address<TAccountCollection>;
-  buyer: Address<TAccountBuyer>;
-  payer: Address<TAccountPayer>;
-  owner: Address<TAccountOwner>;
-  takerBroker?: Address<TAccountTakerBroker>;
-  makerBroker?: Address<TAccountMakerBroker>;
-  rentDest?: Address<TAccountRentDest>;
-  mplCoreProgram: Address<TAccountMplCoreProgram>;
-  marketplaceProgram: Address<TAccountMarketplaceProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
-};
-
-export type BuyCoreInputWithSigners<
-  TAccountTcomp extends string,
-  TAccountListState extends string,
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountBuyer extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountMarketplaceProgram extends string,
-  TAccountSystemProgram extends string
+  TAccountTcomp extends string = string,
+  TAccountListState extends string = string,
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountBuyer extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountRentDest extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
 > = {
   tcomp: Address<TAccountTcomp>;
   listState: Address<TAccountListState>;
@@ -273,8 +164,8 @@ export type BuyCoreInputWithSigners<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDest?: Address<TAccountRentDest>;
-  mplCoreProgram: Address<TAccountMplCoreProgram>;
+  rentDest: Address<TAccountRentDest>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
@@ -294,54 +185,6 @@ export function getBuyCoreInstruction<
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: BuyCoreInputWithSigners<
-    TAccountTcomp,
-    TAccountListState,
-    TAccountAsset,
-    TAccountCollection,
-    TAccountBuyer,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDest,
-    TAccountMplCoreProgram,
-    TAccountMarketplaceProgram,
-    TAccountSystemProgram
-  >
-): BuyCoreInstructionWithSigners<
-  TProgram,
-  TAccountTcomp,
-  TAccountListState,
-  TAccountAsset,
-  TAccountCollection,
-  TAccountBuyer,
-  TAccountPayer,
-  TAccountOwner,
-  TAccountTakerBroker,
-  TAccountMakerBroker,
-  TAccountRentDest,
-  TAccountMplCoreProgram,
-  TAccountMarketplaceProgram,
-  TAccountSystemProgram
->;
-export function getBuyCoreInstruction<
-  TAccountTcomp extends string,
-  TAccountListState extends string,
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountBuyer extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountMarketplaceProgram extends string,
-  TAccountSystemProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: BuyCoreInput<
     TAccountTcomp,
@@ -359,7 +202,7 @@ export function getBuyCoreInstruction<
     TAccountSystemProgram
   >
 ): BuyCoreInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp,
   TAccountListState,
   TAccountAsset,
@@ -373,63 +216,12 @@ export function getBuyCoreInstruction<
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram
->;
-export function getBuyCoreInstruction<
-  TAccountTcomp extends string,
-  TAccountListState extends string,
-  TAccountAsset extends string,
-  TAccountCollection extends string,
-  TAccountBuyer extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
-  TAccountMplCoreProgram extends string,
-  TAccountMarketplaceProgram extends string,
-  TAccountSystemProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: BuyCoreInput<
-    TAccountTcomp,
-    TAccountListState,
-    TAccountAsset,
-    TAccountCollection,
-    TAccountBuyer,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDest,
-    TAccountMplCoreProgram,
-    TAccountMarketplaceProgram,
-    TAccountSystemProgram
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getBuyCoreInstructionRaw<
-      TProgram,
-      TAccountTcomp,
-      TAccountListState,
-      TAccountAsset,
-      TAccountCollection,
-      TAccountBuyer,
-      TAccountPayer,
-      TAccountOwner,
-      TAccountTakerBroker,
-      TAccountMakerBroker,
-      TAccountRentDest,
-      TAccountMplCoreProgram,
-      TAccountMarketplaceProgram,
-      TAccountSystemProgram
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     tcomp: { value: input.tcomp ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     asset: { value: input.asset ?? null, isWritable: true },
@@ -447,152 +239,47 @@ export function getBuyCoreInstruction<
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getBuyCoreInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as BuyCoreInstructionDataArgs,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getBuyCoreInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcomp extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountAsset extends string | IAccountMeta<string> = string,
-  TAccountCollection extends string | IAccountMeta<string> = string,
-  TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TAccountMplCoreProgram extends string | IAccountMeta<string> = string,
-  TAccountMarketplaceProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    tcomp: TAccountTcomp extends string
-      ? Address<TAccountTcomp>
-      : TAccountTcomp;
-    listState: TAccountListState extends string
-      ? Address<TAccountListState>
-      : TAccountListState;
-    asset: TAccountAsset extends string
-      ? Address<TAccountAsset>
-      : TAccountAsset;
-    collection?: TAccountCollection extends string
-      ? Address<TAccountCollection>
-      : TAccountCollection;
-    buyer: TAccountBuyer extends string
-      ? Address<TAccountBuyer>
-      : TAccountBuyer;
-    payer: TAccountPayer extends string
-      ? Address<TAccountPayer>
-      : TAccountPayer;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    takerBroker?: TAccountTakerBroker extends string
-      ? Address<TAccountTakerBroker>
-      : TAccountTakerBroker;
-    makerBroker?: TAccountMakerBroker extends string
-      ? Address<TAccountMakerBroker>
-      : TAccountMakerBroker;
-    rentDest?: TAccountRentDest extends string
-      ? Address<TAccountRentDest>
-      : TAccountRentDest;
-    mplCoreProgram: TAccountMplCoreProgram extends string
-      ? Address<TAccountMplCoreProgram>
-      : TAccountMplCoreProgram;
-    marketplaceProgram: TAccountMarketplaceProgram extends string
-      ? Address<TAccountMarketplaceProgram>
-      : TAccountMarketplaceProgram;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-  },
-  args: BuyCoreInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.tcomp, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.listState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.asset, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.collection ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.buyer, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.payer, AccountRole.WRITABLE_SIGNER),
-      accountMetaWithDefault(accounts.owner, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.takerBroker ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(
-        accounts.makerBroker ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(
-        accounts.rentDest ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(accounts.mplCoreProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.marketplaceProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.buyer),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
     ],
-    data: getBuyCoreInstructionDataEncoder().encode(args),
     programAddress,
+    data: getBuyCoreInstructionDataEncoder().encode(
+      args as BuyCoreInstructionDataArgs
+    ),
   } as BuyCoreInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTcomp,
     TAccountListState,
     TAccountAsset,
@@ -605,14 +292,15 @@ export function getBuyCoreInstructionRaw<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram,
-    TRemainingAccounts
+    TAccountSystemProgram
   >;
+
+  return instruction;
 }
 
 export type ParsedBuyCoreInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -635,7 +323,7 @@ export type ParsedBuyCoreInstruction<
 
 export function parseBuyCoreInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
@@ -653,7 +341,7 @@ export function parseBuyCoreInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

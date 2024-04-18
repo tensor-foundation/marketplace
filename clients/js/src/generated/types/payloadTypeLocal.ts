@@ -11,18 +11,22 @@ import {
   getAddressDecoder,
   getAddressEncoder,
 } from '@solana/addresses';
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
   GetDataEnumKind,
   GetDataEnumKindContent,
+  combineCodec,
   getDataEnumDecoder,
   getDataEnumEncoder,
   getStructDecoder,
   getStructEncoder,
   getTupleDecoder,
   getTupleEncoder,
-} from '@solana/codecs-data-structures';
-import { getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
+  getU64Decoder,
+  getU64Encoder,
+} from '@solana/codecs';
 import {
   ProofInfoLocal,
   ProofInfoLocalArgs,
@@ -46,62 +50,54 @@ export type PayloadTypeLocalArgs =
   | { __kind: 'MerkleProof'; fields: [ProofInfoLocalArgs] }
   | { __kind: 'Number'; fields: [number | bigint] };
 
-export function getPayloadTypeLocalEncoder() {
-  return getDataEnumEncoder<PayloadTypeLocalArgs>([
+export function getPayloadTypeLocalEncoder(): Encoder<PayloadTypeLocalArgs> {
+  return getDataEnumEncoder([
     [
       'Pubkey',
-      getStructEncoder<GetDataEnumKindContent<PayloadTypeLocalArgs, 'Pubkey'>>([
-        ['fields', getTupleEncoder([getAddressEncoder()])],
-      ]),
+      getStructEncoder([['fields', getTupleEncoder([getAddressEncoder()])]]),
     ],
     [
       'Seeds',
-      getStructEncoder<GetDataEnumKindContent<PayloadTypeLocalArgs, 'Seeds'>>([
+      getStructEncoder([
         ['fields', getTupleEncoder([getSeedsVecLocalEncoder()])],
       ]),
     ],
     [
       'MerkleProof',
-      getStructEncoder<
-        GetDataEnumKindContent<PayloadTypeLocalArgs, 'MerkleProof'>
-      >([['fields', getTupleEncoder([getProofInfoLocalEncoder()])]]),
+      getStructEncoder([
+        ['fields', getTupleEncoder([getProofInfoLocalEncoder()])],
+      ]),
     ],
     [
       'Number',
-      getStructEncoder<GetDataEnumKindContent<PayloadTypeLocalArgs, 'Number'>>([
-        ['fields', getTupleEncoder([getU64Encoder()])],
-      ]),
+      getStructEncoder([['fields', getTupleEncoder([getU64Encoder()])]]),
     ],
-  ]) satisfies Encoder<PayloadTypeLocalArgs>;
+  ]);
 }
 
-export function getPayloadTypeLocalDecoder() {
-  return getDataEnumDecoder<PayloadTypeLocal>([
+export function getPayloadTypeLocalDecoder(): Decoder<PayloadTypeLocal> {
+  return getDataEnumDecoder([
     [
       'Pubkey',
-      getStructDecoder<GetDataEnumKindContent<PayloadTypeLocal, 'Pubkey'>>([
-        ['fields', getTupleDecoder([getAddressDecoder()])],
-      ]),
+      getStructDecoder([['fields', getTupleDecoder([getAddressDecoder()])]]),
     ],
     [
       'Seeds',
-      getStructDecoder<GetDataEnumKindContent<PayloadTypeLocal, 'Seeds'>>([
+      getStructDecoder([
         ['fields', getTupleDecoder([getSeedsVecLocalDecoder()])],
       ]),
     ],
     [
       'MerkleProof',
-      getStructDecoder<GetDataEnumKindContent<PayloadTypeLocal, 'MerkleProof'>>(
-        [['fields', getTupleDecoder([getProofInfoLocalDecoder()])]]
-      ),
+      getStructDecoder([
+        ['fields', getTupleDecoder([getProofInfoLocalDecoder()])],
+      ]),
     ],
     [
       'Number',
-      getStructDecoder<GetDataEnumKindContent<PayloadTypeLocal, 'Number'>>([
-        ['fields', getTupleDecoder([getU64Decoder()])],
-      ]),
+      getStructDecoder([['fields', getTupleDecoder([getU64Decoder()])]]),
     ],
-  ]) satisfies Decoder<PayloadTypeLocal>;
+  ]);
 }
 
 export function getPayloadTypeLocalCodec(): Codec<
@@ -131,10 +127,10 @@ export function payloadTypeLocal(
   kind: 'Number',
   data: GetDataEnumKindContent<PayloadTypeLocalArgs, 'Number'>['fields']
 ): GetDataEnumKind<PayloadTypeLocalArgs, 'Number'>;
-export function payloadTypeLocal<K extends PayloadTypeLocalArgs['__kind']>(
-  kind: K,
-  data?: any
-): Extract<PayloadTypeLocalArgs, { __kind: K }> {
+export function payloadTypeLocal<
+  K extends PayloadTypeLocalArgs['__kind'],
+  Data,
+>(kind: K, data?: Data) {
   return Array.isArray(data)
     ? { __kind: kind, fields: data }
     : { __kind: kind, ...(data ?? {}) };

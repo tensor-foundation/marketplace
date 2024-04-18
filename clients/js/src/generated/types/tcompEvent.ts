@@ -6,17 +6,20 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
   GetDataEnumKind,
   GetDataEnumKindContent,
+  combineCodec,
   getDataEnumDecoder,
   getDataEnumEncoder,
   getStructDecoder,
   getStructEncoder,
   getTupleDecoder,
   getTupleEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 import {
   MakeEvent,
   MakeEventArgs,
@@ -36,38 +39,30 @@ export type TcompEventArgs =
   | { __kind: 'Maker'; fields: [MakeEventArgs] }
   | { __kind: 'Taker'; fields: [TakeEventArgs] };
 
-export function getTcompEventEncoder() {
-  return getDataEnumEncoder<TcompEventArgs>([
+export function getTcompEventEncoder(): Encoder<TcompEventArgs> {
+  return getDataEnumEncoder([
     [
       'Maker',
-      getStructEncoder<GetDataEnumKindContent<TcompEventArgs, 'Maker'>>([
-        ['fields', getTupleEncoder([getMakeEventEncoder()])],
-      ]),
+      getStructEncoder([['fields', getTupleEncoder([getMakeEventEncoder()])]]),
     ],
     [
       'Taker',
-      getStructEncoder<GetDataEnumKindContent<TcompEventArgs, 'Taker'>>([
-        ['fields', getTupleEncoder([getTakeEventEncoder()])],
-      ]),
+      getStructEncoder([['fields', getTupleEncoder([getTakeEventEncoder()])]]),
     ],
-  ]) satisfies Encoder<TcompEventArgs>;
+  ]);
 }
 
-export function getTcompEventDecoder() {
-  return getDataEnumDecoder<TcompEvent>([
+export function getTcompEventDecoder(): Decoder<TcompEvent> {
+  return getDataEnumDecoder([
     [
       'Maker',
-      getStructDecoder<GetDataEnumKindContent<TcompEvent, 'Maker'>>([
-        ['fields', getTupleDecoder([getMakeEventDecoder()])],
-      ]),
+      getStructDecoder([['fields', getTupleDecoder([getMakeEventDecoder()])]]),
     ],
     [
       'Taker',
-      getStructDecoder<GetDataEnumKindContent<TcompEvent, 'Taker'>>([
-        ['fields', getTupleDecoder([getTakeEventDecoder()])],
-      ]),
+      getStructDecoder([['fields', getTupleDecoder([getTakeEventDecoder()])]]),
     ],
-  ]) satisfies Decoder<TcompEvent>;
+  ]);
 }
 
 export function getTcompEventCodec(): Codec<TcompEventArgs, TcompEvent> {
@@ -83,10 +78,10 @@ export function tcompEvent(
   kind: 'Taker',
   data: GetDataEnumKindContent<TcompEventArgs, 'Taker'>['fields']
 ): GetDataEnumKind<TcompEventArgs, 'Taker'>;
-export function tcompEvent<K extends TcompEventArgs['__kind']>(
+export function tcompEvent<K extends TcompEventArgs['__kind'], Data>(
   kind: K,
-  data?: any
-): Extract<TcompEventArgs, { __kind: K }> {
+  data?: Data
+) {
   return Array.isArray(data)
     ? { __kind: kind, fields: data }
     : { __kind: kind, ...(data ?? {}) };

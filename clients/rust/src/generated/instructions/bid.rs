@@ -121,7 +121,7 @@ pub struct BidInstructionArgs {
 ///   3. `[writable, signer]` owner
 ///   4. `[writable]` margin_account
 ///   5. `[signer]` cosigner
-///   6. `[writable, signer, optional]` rent_payer (default to `SysvarRent111111111111111111111111111111111`)
+///   6. `[writable, signer]` rent_payer
 #[derive(Default)]
 pub struct BidBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -180,7 +180,6 @@ impl BidBuilder {
         self.cosigner = Some(cosigner);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_payer(&mut self, rent_payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_payer = Some(rent_payer);
@@ -276,9 +275,7 @@ impl BidBuilder {
             owner: self.owner.expect("owner is not set"),
             margin_account: self.margin_account.expect("margin_account is not set"),
             cosigner: self.cosigner.expect("cosigner is not set"),
-            rent_payer: self.rent_payer.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_payer: self.rent_payer.expect("rent_payer is not set"),
         };
         let args = BidInstructionArgs {
             bid_id: self.bid_id.clone().expect("bid_id is not set"),

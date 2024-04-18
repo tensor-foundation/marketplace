@@ -105,10 +105,10 @@ impl DelistCoreInstructionData {
 ///   1. `[optional]` collection
 ///   2. `[writable, signer]` owner
 ///   3. `[writable]` list_state
-///   4. `[]` mpl_core_program
+///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[]` tcomp_program
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[writable, signer, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   7. `[writable, signer]` rent_dest
 #[derive(Default)]
 pub struct DelistCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
@@ -147,6 +147,7 @@ impl DelistCoreBuilder {
         self.list_state = Some(list_state);
         self
     }
+    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
         &mut self,
@@ -166,7 +167,6 @@ impl DelistCoreBuilder {
         self.system_program = Some(system_program);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -197,14 +197,14 @@ impl DelistCoreBuilder {
             collection: self.collection,
             owner: self.owner.expect("owner is not set"),
             list_state: self.list_state.expect("list_state is not set"),
-            mpl_core_program: self.mpl_core_program.expect("mpl_core_program is not set"),
+            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
+                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+            )),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)

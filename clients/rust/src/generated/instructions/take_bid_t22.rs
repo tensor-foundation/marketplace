@@ -205,7 +205,7 @@ pub struct TakeBidT22InstructionArgs {
 ///   15. `[]` tensorswap_program
 ///   16. `[signer]` cosigner
 ///   17. `[]` mint_proof
-///   18. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidT22Builder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -342,7 +342,6 @@ impl TakeBidT22Builder {
         self.mint_proof = Some(mint_proof);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -400,9 +399,7 @@ impl TakeBidT22Builder {
                 .expect("tensorswap_program is not set"),
             cosigner: self.cosigner.expect("cosigner is not set"),
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = TakeBidT22InstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),

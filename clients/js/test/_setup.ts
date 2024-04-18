@@ -1,52 +1,44 @@
-/* eslint-disable import/no-extraneous-dependencies */
-import '@solana/webcrypto-ed25519-polyfill';
-
 import {
-  generateKeyPairSigner,
-  signTransactionWithSigners,
   KeyPairSigner,
+  TransactionSigner,
   createSignerFromKeyPair,
+  generateKeyPairSigner,
+  setTransactionFeePayerSigner,
+  signTransactionWithSigners,
 } from '@solana/signers';
 import {
   Address,
   Commitment,
   CompilableTransaction,
-  createDefaultAirdropRequester,
-  createDefaultRpcSubscriptionsTransport,
-  createDefaultRpcTransport,
-  createDefaultTransactionSender,
+  ITransactionWithBlockhashLifetime,
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  airdropFactory,
   createPrivateKeyFromBytes,
   createSolanaRpc,
   createSolanaRpcSubscriptions,
   createTransaction,
   getSignatureFromTransaction,
-  ITransactionWithBlockhashLifetime,
   lamports,
   pipe,
-  setTransactionFeePayer,
+  sendAndConfirmTransactionFactory,
   setTransactionLifetimeUsingBlockhash,
 } from '@solana/web3.js';
 
 type Client = {
-  rpc: ReturnType<typeof createSolanaRpc>;
-  rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 };
 
 export const createDefaultSolanaClient = (): Client => {
-  const rpc = createSolanaRpc({
-    transport: createDefaultRpcTransport({ url: 'http://127.0.0.1:8899' }),
-  });
-  const rpcSubscriptions = createSolanaRpcSubscriptions({
-    transport: createDefaultRpcSubscriptionsTransport({
-      url: 'ws://127.0.0.1:8900',
-    }),
-  });
-
+  const rpc = createSolanaRpc('http://127.0.0.1:8899');
+  const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
   return { rpc, rpcSubscriptions };
 };
 
 export const createKeyPairSigner = async (
-  client: Client,
   bytes: Uint8Array
 ): Promise<KeyPairSigner<string>> => {
   const publicKeyBytes = bytes.slice(32);
@@ -63,9 +55,8 @@ export const generateKeyPairSignerWithSol = async (
   client: Client,
   putativeLamports: bigint = 1_000_000_000n
 ) => {
-  const airdropRequester = createDefaultAirdropRequester(client);
   const signer = await generateKeyPairSigner();
-  await airdropRequester({
+  await airdropFactory(client)({
     recipientAddress: signer.address,
     lamports: lamports(putativeLamports),
     commitment: 'confirmed',
@@ -78,8 +69,7 @@ export const fundWalletWithSol = async (
   address: Address,
   putativeLamports: bigint = 1_000_000_000n
 ) => {
-  const airdropRequester = createDefaultAirdropRequester(client);
-  await airdropRequester({
+  await airdropFactory(client)({
     recipientAddress: address,
     lamports: lamports(putativeLamports),
     commitment: 'confirmed',
@@ -88,14 +78,14 @@ export const fundWalletWithSol = async (
 
 export const createDefaultTransaction = async (
   client: Client,
-  feePayer: Address
+  feePayer: TransactionSigner
 ) => {
   const { value: latestBlockhash } = await client.rpc
     .getLatestBlockhash()
     .send();
   return pipe(
     createTransaction({ version: 0 }),
-    (tx) => setTransactionFeePayer(feePayer, tx),
+    (tx) => setTransactionFeePayerSigner(feePayer, tx),
     (tx) => setTransactionLifetimeUsingBlockhash(latestBlockhash, tx)
   );
 };
@@ -107,7 +97,7 @@ export const signAndSendTransaction = async (
 ) => {
   const signedTransaction = await signTransactionWithSigners(transaction);
   const signature = getSignatureFromTransaction(signedTransaction);
-  await createDefaultTransactionSender(client)(signedTransaction, {
+  await sendAndConfirmTransactionFactory(client)(signedTransaction, {
     commitment,
   });
   return signature;

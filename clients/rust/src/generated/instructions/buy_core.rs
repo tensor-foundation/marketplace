@@ -163,8 +163,8 @@ pub struct BuyCoreInstructionArgs {
 ///   6. `[writable]` owner
 ///   7. `[writable, optional]` taker_broker
 ///   8. `[writable, optional]` maker_broker
-///   9. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
-///   10. `[]` mpl_core_program
+///   9. `[writable]` rent_dest
+///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[]` marketplace_program
 ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
@@ -244,12 +244,12 @@ impl BuyCoreBuilder {
         self.maker_broker = maker_broker;
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
         self
     }
+    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
         &mut self,
@@ -307,10 +307,10 @@ impl BuyCoreBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
+                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
             )),
-            mpl_core_program: self.mpl_core_program.expect("mpl_core_program is not set"),
             marketplace_program: self
                 .marketplace_program
                 .expect("marketplace_program is not set"),

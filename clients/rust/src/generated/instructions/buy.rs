@@ -183,7 +183,7 @@ pub struct BuyInstructionArgs {
 ///   11. `[writable]` owner
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
-///   14. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   14. `[writable]` rent_dest
 #[derive(Default)]
 pub struct BuyBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -302,7 +302,6 @@ impl BuyBuilder {
         self.maker_broker = maker_broker;
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -395,9 +394,7 @@ impl BuyBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = BuyInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),

@@ -259,8 +259,8 @@ pub struct BuySplInstructionArgs {
 ///   19. `[writable, optional]` taker_broker_ata
 ///   20. `[writable, optional]` maker_broker
 ///   21. `[writable, optional]` maker_broker_ata
-///   22. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
-///   23. `[writable, signer, optional]` rent_payer (default to `SysvarRent111111111111111111111111111111111`)
+///   22. `[writable]` rent_dest
+///   23. `[writable, signer]` rent_payer
 #[derive(Default)]
 pub struct BuySplBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -440,13 +440,11 @@ impl BuySplBuilder {
         self.maker_broker_ata = maker_broker_ata;
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_payer(&mut self, rent_payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_payer = Some(rent_payer);
@@ -551,12 +549,8 @@ impl BuySplBuilder {
             taker_broker_ata: self.taker_broker_ata,
             maker_broker: self.maker_broker,
             maker_broker_ata: self.maker_broker_ata,
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
-            rent_payer: self.rent_payer.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_payer: self.rent_payer.expect("rent_payer is not set"),
         };
         let args = BuySplInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
