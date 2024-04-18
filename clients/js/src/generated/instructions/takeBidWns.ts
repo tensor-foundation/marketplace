@@ -12,22 +12,17 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -38,14 +33,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TakeBidWnsInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountBidState extends string | IAccountMeta<string> = string,
@@ -68,128 +60,13 @@ export type TakeBidWnsInstruction<
   TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountMintProof extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
+  TAccountRentDest extends string | IAccountMeta<string> = string,
   TAccountApproveAccount extends string | IAccountMeta<string> = string,
   TAccountDistribution extends string | IAccountMeta<string> = string,
   TAccountWnsProgram extends string | IAccountMeta<string> = string,
   TAccountDistributionProgram extends string | IAccountMeta<string> = string,
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
-      TAccountSeller extends string
-        ? WritableSignerAccount<TAccountSeller>
-        : TAccountSeller,
-      TAccountBidState extends string
-        ? WritableAccount<TAccountBidState>
-        : TAccountBidState,
-      TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountTakerBroker extends string
-        ? WritableAccount<TAccountTakerBroker>
-        : TAccountTakerBroker,
-      TAccountMakerBroker extends string
-        ? WritableAccount<TAccountMakerBroker>
-        : TAccountMakerBroker,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
-      TAccountWhitelist extends string
-        ? ReadonlyAccount<TAccountWhitelist>
-        : TAccountWhitelist,
-      TAccountNftSellerAcc extends string
-        ? WritableAccount<TAccountNftSellerAcc>
-        : TAccountNftSellerAcc,
-      TAccountNftMint extends string
-        ? ReadonlyAccount<TAccountNftMint>
-        : TAccountNftMint,
-      TAccountOwnerAtaAcc extends string
-        ? WritableAccount<TAccountOwnerAtaAcc>
-        : TAccountOwnerAtaAcc,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
-      TAccountAssociatedTokenProgram extends string
-        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
-        : TAccountAssociatedTokenProgram,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountTensorswapProgram extends string
-        ? ReadonlyAccount<TAccountTensorswapProgram>
-        : TAccountTensorswapProgram,
-      TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner>
-        : TAccountCosigner,
-      TAccountMintProof extends string
-        ? ReadonlyAccount<TAccountMintProof>
-        : TAccountMintProof,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
-      TAccountApproveAccount extends string
-        ? WritableAccount<TAccountApproveAccount>
-        : TAccountApproveAccount,
-      TAccountDistribution extends string
-        ? WritableAccount<TAccountDistribution>
-        : TAccountDistribution,
-      TAccountWnsProgram extends string
-        ? ReadonlyAccount<TAccountWnsProgram>
-        : TAccountWnsProgram,
-      TAccountDistributionProgram extends string
-        ? ReadonlyAccount<TAccountDistributionProgram>
-        : TAccountDistributionProgram,
-      TAccountExtraMetas extends string
-        ? ReadonlyAccount<TAccountExtraMetas>
-        : TAccountExtraMetas,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type TakeBidWnsInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcomp extends string | IAccountMeta<string> = string,
-  TAccountSeller extends string | IAccountMeta<string> = string,
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountNftSellerAcc extends string | IAccountMeta<string> = string,
-  TAccountNftMint extends string | IAccountMeta<string> = string,
-  TAccountOwnerAtaAcc extends string | IAccountMeta<string> = string,
-  TAccountTokenProgram extends
-    | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountMintProof extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TAccountApproveAccount extends string | IAccountMeta<string> = string,
-  TAccountDistribution extends string | IAccountMeta<string> = string,
-  TAccountWnsProgram extends string | IAccountMeta<string> = string,
-  TAccountDistributionProgram extends string | IAccountMeta<string> = string,
-  TAccountExtraMetas extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -268,7 +145,7 @@ export type TakeBidWnsInstructionWithSigners<
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -279,12 +156,9 @@ export type TakeBidWnsInstructionData = {
 
 export type TakeBidWnsInstructionDataArgs = { minAmount: number | bigint };
 
-export function getTakeBidWnsInstructionDataEncoder() {
+export function getTakeBidWnsInstructionDataEncoder(): Encoder<TakeBidWnsInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      minAmount: number | bigint;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['minAmount', getU64Encoder()],
     ]),
@@ -292,14 +166,14 @@ export function getTakeBidWnsInstructionDataEncoder() {
       ...value,
       discriminator: [88, 5, 122, 88, 250, 139, 35, 216],
     })
-  ) satisfies Encoder<TakeBidWnsInstructionDataArgs>;
+  );
 }
 
-export function getTakeBidWnsInstructionDataDecoder() {
-  return getStructDecoder<TakeBidWnsInstructionData>([
+export function getTakeBidWnsInstructionDataDecoder(): Decoder<TakeBidWnsInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['minAmount', getU64Decoder()],
-  ]) satisfies Decoder<TakeBidWnsInstructionData>;
+  ]);
 }
 
 export function getTakeBidWnsInstructionDataCodec(): Codec<
@@ -313,84 +187,30 @@ export function getTakeBidWnsInstructionDataCodec(): Codec<
 }
 
 export type TakeBidWnsInput<
-  TAccountTcomp extends string,
-  TAccountSeller extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
-  TAccountWhitelist extends string,
-  TAccountNftSellerAcc extends string,
-  TAccountNftMint extends string,
-  TAccountOwnerAtaAcc extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountTensorswapProgram extends string,
-  TAccountCosigner extends string,
-  TAccountMintProof extends string,
-  TAccountRentDest extends string,
-  TAccountApproveAccount extends string,
-  TAccountDistribution extends string,
-  TAccountWnsProgram extends string,
-  TAccountDistributionProgram extends string,
-  TAccountExtraMetas extends string
-> = {
-  tcomp: Address<TAccountTcomp>;
-  seller: Address<TAccountSeller>;
-  bidState: Address<TAccountBidState>;
-  owner: Address<TAccountOwner>;
-  takerBroker?: Address<TAccountTakerBroker>;
-  makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount: Address<TAccountMarginAccount>;
-  whitelist: Address<TAccountWhitelist>;
-  nftSellerAcc: Address<TAccountNftSellerAcc>;
-  nftMint: Address<TAccountNftMint>;
-  ownerAtaAcc: Address<TAccountOwnerAtaAcc>;
-  tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  tensorswapProgram: Address<TAccountTensorswapProgram>;
-  cosigner: Address<TAccountCosigner>;
-  /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-  mintProof: Address<TAccountMintProof>;
-  rentDest?: Address<TAccountRentDest>;
-  approveAccount: Address<TAccountApproveAccount>;
-  distribution: Address<TAccountDistribution>;
-  wnsProgram: Address<TAccountWnsProgram>;
-  distributionProgram: Address<TAccountDistributionProgram>;
-  extraMetas: Address<TAccountExtraMetas>;
-  minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
-};
-
-export type TakeBidWnsInputWithSigners<
-  TAccountTcomp extends string,
-  TAccountSeller extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
-  TAccountWhitelist extends string,
-  TAccountNftSellerAcc extends string,
-  TAccountNftMint extends string,
-  TAccountOwnerAtaAcc extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountTensorswapProgram extends string,
-  TAccountCosigner extends string,
-  TAccountMintProof extends string,
-  TAccountRentDest extends string,
-  TAccountApproveAccount extends string,
-  TAccountDistribution extends string,
-  TAccountWnsProgram extends string,
-  TAccountDistributionProgram extends string,
-  TAccountExtraMetas extends string
+  TAccountTcomp extends string = string,
+  TAccountSeller extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMarginAccount extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountNftSellerAcc extends string = string,
+  TAccountNftMint extends string = string,
+  TAccountOwnerAtaAcc extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountTensorswapProgram extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountMintProof extends string = string,
+  TAccountRentDest extends string = string,
+  TAccountApproveAccount extends string = string,
+  TAccountDistribution extends string = string,
+  TAccountWnsProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
+  TAccountExtraMetas extends string = string,
 > = {
   tcomp: Address<TAccountTcomp>;
   seller: TransactionSigner<TAccountSeller>;
@@ -411,7 +231,7 @@ export type TakeBidWnsInputWithSigners<
   cosigner: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDest: Address<TAccountRentDest>;
   approveAccount: Address<TAccountApproveAccount>;
   distribution: Address<TAccountDistribution>;
   wnsProgram: Address<TAccountWnsProgram>;
@@ -445,87 +265,6 @@ export function getTakeBidWnsInstruction<
   TAccountWnsProgram extends string,
   TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: TakeBidWnsInputWithSigners<
-    TAccountTcomp,
-    TAccountSeller,
-    TAccountBidState,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountMarginAccount,
-    TAccountWhitelist,
-    TAccountNftSellerAcc,
-    TAccountNftMint,
-    TAccountOwnerAtaAcc,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountTensorswapProgram,
-    TAccountCosigner,
-    TAccountMintProof,
-    TAccountRentDest,
-    TAccountApproveAccount,
-    TAccountDistribution,
-    TAccountWnsProgram,
-    TAccountDistributionProgram,
-    TAccountExtraMetas
-  >
-): TakeBidWnsInstructionWithSigners<
-  TProgram,
-  TAccountTcomp,
-  TAccountSeller,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountTakerBroker,
-  TAccountMakerBroker,
-  TAccountMarginAccount,
-  TAccountWhitelist,
-  TAccountNftSellerAcc,
-  TAccountNftMint,
-  TAccountOwnerAtaAcc,
-  TAccountTokenProgram,
-  TAccountAssociatedTokenProgram,
-  TAccountSystemProgram,
-  TAccountTcompProgram,
-  TAccountTensorswapProgram,
-  TAccountCosigner,
-  TAccountMintProof,
-  TAccountRentDest,
-  TAccountApproveAccount,
-  TAccountDistribution,
-  TAccountWnsProgram,
-  TAccountDistributionProgram,
-  TAccountExtraMetas
->;
-export function getTakeBidWnsInstruction<
-  TAccountTcomp extends string,
-  TAccountSeller extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
-  TAccountWhitelist extends string,
-  TAccountNftSellerAcc extends string,
-  TAccountNftMint extends string,
-  TAccountOwnerAtaAcc extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountTensorswapProgram extends string,
-  TAccountCosigner extends string,
-  TAccountMintProof extends string,
-  TAccountRentDest extends string,
-  TAccountApproveAccount extends string,
-  TAccountDistribution extends string,
-  TAccountWnsProgram extends string,
-  TAccountDistributionProgram extends string,
-  TAccountExtraMetas extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: TakeBidWnsInput<
     TAccountTcomp,
@@ -554,7 +293,7 @@ export function getTakeBidWnsInstruction<
     TAccountExtraMetas
   >
 ): TakeBidWnsInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp,
   TAccountSeller,
   TAccountBidState,
@@ -579,96 +318,12 @@ export function getTakeBidWnsInstruction<
   TAccountWnsProgram,
   TAccountDistributionProgram,
   TAccountExtraMetas
->;
-export function getTakeBidWnsInstruction<
-  TAccountTcomp extends string,
-  TAccountSeller extends string,
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
-  TAccountWhitelist extends string,
-  TAccountNftSellerAcc extends string,
-  TAccountNftMint extends string,
-  TAccountOwnerAtaAcc extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountTensorswapProgram extends string,
-  TAccountCosigner extends string,
-  TAccountMintProof extends string,
-  TAccountRentDest extends string,
-  TAccountApproveAccount extends string,
-  TAccountDistribution extends string,
-  TAccountWnsProgram extends string,
-  TAccountDistributionProgram extends string,
-  TAccountExtraMetas extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: TakeBidWnsInput<
-    TAccountTcomp,
-    TAccountSeller,
-    TAccountBidState,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountMarginAccount,
-    TAccountWhitelist,
-    TAccountNftSellerAcc,
-    TAccountNftMint,
-    TAccountOwnerAtaAcc,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountTensorswapProgram,
-    TAccountCosigner,
-    TAccountMintProof,
-    TAccountRentDest,
-    TAccountApproveAccount,
-    TAccountDistribution,
-    TAccountWnsProgram,
-    TAccountDistributionProgram,
-    TAccountExtraMetas
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getTakeBidWnsInstructionRaw<
-      TProgram,
-      TAccountTcomp,
-      TAccountSeller,
-      TAccountBidState,
-      TAccountOwner,
-      TAccountTakerBroker,
-      TAccountMakerBroker,
-      TAccountMarginAccount,
-      TAccountWhitelist,
-      TAccountNftSellerAcc,
-      TAccountNftMint,
-      TAccountOwnerAtaAcc,
-      TAccountTokenProgram,
-      TAccountAssociatedTokenProgram,
-      TAccountSystemProgram,
-      TAccountTcompProgram,
-      TAccountTensorswapProgram,
-      TAccountCosigner,
-      TAccountMintProof,
-      TAccountRentDest,
-      TAccountApproveAccount,
-      TAccountDistribution,
-      TAccountWnsProgram,
-      TAccountDistributionProgram,
-      TAccountExtraMetas
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     tcomp: { value: input.tcomp ?? null, isWritable: true },
     seller: { value: input.seller ?? null, isWritable: true },
     bidState: { value: input.bidState ?? null, isWritable: true },
@@ -703,6 +358,10 @@ export function getTakeBidWnsInstruction<
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
@@ -716,203 +375,41 @@ export function getTakeBidWnsInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getTakeBidWnsInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as TakeBidWnsInstructionDataArgs,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getTakeBidWnsInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTcomp extends string | IAccountMeta<string> = string,
-  TAccountSeller extends string | IAccountMeta<string> = string,
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountNftSellerAcc extends string | IAccountMeta<string> = string,
-  TAccountNftMint extends string | IAccountMeta<string> = string,
-  TAccountOwnerAtaAcc extends string | IAccountMeta<string> = string,
-  TAccountTokenProgram extends
-    | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountMintProof extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TAccountApproveAccount extends string | IAccountMeta<string> = string,
-  TAccountDistribution extends string | IAccountMeta<string> = string,
-  TAccountWnsProgram extends string | IAccountMeta<string> = string,
-  TAccountDistributionProgram extends string | IAccountMeta<string> = string,
-  TAccountExtraMetas extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    tcomp: TAccountTcomp extends string
-      ? Address<TAccountTcomp>
-      : TAccountTcomp;
-    seller: TAccountSeller extends string
-      ? Address<TAccountSeller>
-      : TAccountSeller;
-    bidState: TAccountBidState extends string
-      ? Address<TAccountBidState>
-      : TAccountBidState;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    takerBroker?: TAccountTakerBroker extends string
-      ? Address<TAccountTakerBroker>
-      : TAccountTakerBroker;
-    makerBroker?: TAccountMakerBroker extends string
-      ? Address<TAccountMakerBroker>
-      : TAccountMakerBroker;
-    marginAccount: TAccountMarginAccount extends string
-      ? Address<TAccountMarginAccount>
-      : TAccountMarginAccount;
-    whitelist: TAccountWhitelist extends string
-      ? Address<TAccountWhitelist>
-      : TAccountWhitelist;
-    nftSellerAcc: TAccountNftSellerAcc extends string
-      ? Address<TAccountNftSellerAcc>
-      : TAccountNftSellerAcc;
-    nftMint: TAccountNftMint extends string
-      ? Address<TAccountNftMint>
-      : TAccountNftMint;
-    ownerAtaAcc: TAccountOwnerAtaAcc extends string
-      ? Address<TAccountOwnerAtaAcc>
-      : TAccountOwnerAtaAcc;
-    tokenProgram?: TAccountTokenProgram extends string
-      ? Address<TAccountTokenProgram>
-      : TAccountTokenProgram;
-    associatedTokenProgram: TAccountAssociatedTokenProgram extends string
-      ? Address<TAccountAssociatedTokenProgram>
-      : TAccountAssociatedTokenProgram;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    tensorswapProgram: TAccountTensorswapProgram extends string
-      ? Address<TAccountTensorswapProgram>
-      : TAccountTensorswapProgram;
-    cosigner: TAccountCosigner extends string
-      ? Address<TAccountCosigner>
-      : TAccountCosigner;
-    mintProof: TAccountMintProof extends string
-      ? Address<TAccountMintProof>
-      : TAccountMintProof;
-    rentDest?: TAccountRentDest extends string
-      ? Address<TAccountRentDest>
-      : TAccountRentDest;
-    approveAccount: TAccountApproveAccount extends string
-      ? Address<TAccountApproveAccount>
-      : TAccountApproveAccount;
-    distribution: TAccountDistribution extends string
-      ? Address<TAccountDistribution>
-      : TAccountDistribution;
-    wnsProgram: TAccountWnsProgram extends string
-      ? Address<TAccountWnsProgram>
-      : TAccountWnsProgram;
-    distributionProgram: TAccountDistributionProgram extends string
-      ? Address<TAccountDistributionProgram>
-      : TAccountDistributionProgram;
-    extraMetas: TAccountExtraMetas extends string
-      ? Address<TAccountExtraMetas>
-      : TAccountExtraMetas;
-  },
-  args: TakeBidWnsInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.tcomp, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.seller, AccountRole.WRITABLE_SIGNER),
-      accountMetaWithDefault(accounts.bidState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.owner, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.takerBroker ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(
-        accounts.makerBroker ?? {
-          address:
-            'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>,
-          role: AccountRole.READONLY,
-        },
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(accounts.marginAccount, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.whitelist, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.nftSellerAcc, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.nftMint, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.ownerAtaAcc, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.tokenProgram ??
-          ('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(
-        accounts.associatedTokenProgram,
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.tensorswapProgram, AccountRole.READONLY),
-      accountMetaWithDefault(accounts.cosigner, AccountRole.READONLY_SIGNER),
-      accountMetaWithDefault(accounts.mintProof, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.rentDest ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE
-      ),
-      accountMetaWithDefault(accounts.approveAccount, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.distribution, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.wnsProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.distributionProgram,
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.extraMetas, AccountRole.READONLY),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.nftSellerAcc),
+      getAccountMeta(accounts.nftMint),
+      getAccountMeta(accounts.ownerAtaAcc),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.tensorswapProgram),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.mintProof),
+      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.approveAccount),
+      getAccountMeta(accounts.distribution),
+      getAccountMeta(accounts.wnsProgram),
+      getAccountMeta(accounts.distributionProgram),
+      getAccountMeta(accounts.extraMetas),
     ],
-    data: getTakeBidWnsInstructionDataEncoder().encode(args),
     programAddress,
+    data: getTakeBidWnsInstructionDataEncoder().encode(
+      args as TakeBidWnsInstructionDataArgs
+    ),
   } as TakeBidWnsInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTcomp,
     TAccountSeller,
     TAccountBidState,
@@ -936,14 +433,15 @@ export function getTakeBidWnsInstructionRaw<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountDistributionProgram,
-    TAccountExtraMetas,
-    TRemainingAccounts
+    TAccountExtraMetas
   >;
+
+  return instruction;
 }
 
 export type ParsedTakeBidWnsInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -978,7 +476,7 @@ export type ParsedTakeBidWnsInstruction<
 
 export function parseTakeBidWnsInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
@@ -996,7 +494,7 @@ export function parseTakeBidWnsInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

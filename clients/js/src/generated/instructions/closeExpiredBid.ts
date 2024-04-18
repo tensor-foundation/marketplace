@@ -12,17 +12,15 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import { getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
+  getU8Decoder,
+  getU8Encoder,
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -30,24 +28,19 @@ import {
   ReadonlyAccount,
   WritableAccount,
 } from '@solana/instructions';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type CloseExpiredBidInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -67,42 +60,7 @@ export type CloseExpiredBidInstruction<
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type CloseExpiredBidInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountBidState extends string
-        ? WritableAccount<TAccountBidState>
-        : TAccountBidState,
-      TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -110,22 +68,22 @@ export type CloseExpiredBidInstructionData = { discriminator: Array<number> };
 
 export type CloseExpiredBidInstructionDataArgs = {};
 
-export function getCloseExpiredBidInstructionDataEncoder() {
+export function getCloseExpiredBidInstructionDataEncoder(): Encoder<CloseExpiredBidInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{ discriminator: Array<number> }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ]),
     (value) => ({
       ...value,
       discriminator: [83, 20, 105, 67, 248, 68, 104, 190],
     })
-  ) satisfies Encoder<CloseExpiredBidInstructionDataArgs>;
+  );
 }
 
-export function getCloseExpiredBidInstructionDataDecoder() {
-  return getStructDecoder<CloseExpiredBidInstructionData>([
+export function getCloseExpiredBidInstructionDataDecoder(): Decoder<CloseExpiredBidInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
-  ]) satisfies Decoder<CloseExpiredBidInstructionData>;
+  ]);
 }
 
 export function getCloseExpiredBidInstructionDataCodec(): Codec<
@@ -139,31 +97,17 @@ export function getCloseExpiredBidInstructionDataCodec(): Codec<
 }
 
 export type CloseExpiredBidInput<
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountRentDest extends string = string,
 > = {
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   systemProgram?: Address<TAccountSystemProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
-  rentDest?: Address<TAccountRentDest>;
-};
-
-export type CloseExpiredBidInputWithSigners<
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string
-> = {
-  bidState: Address<TAccountBidState>;
-  owner: Address<TAccountOwner>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDest: Address<TAccountRentDest>;
 };
 
 export function getCloseExpiredBidInstruction<
@@ -172,30 +116,6 @@ export function getCloseExpiredBidInstruction<
   TAccountSystemProgram extends string,
   TAccountTcompProgram extends string,
   TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: CloseExpiredBidInputWithSigners<
-    TAccountBidState,
-    TAccountOwner,
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountRentDest
-  >
-): CloseExpiredBidInstructionWithSigners<
-  TProgram,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountSystemProgram,
-  TAccountTcompProgram,
-  TAccountRentDest
->;
-export function getCloseExpiredBidInstruction<
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: CloseExpiredBidInput<
     TAccountBidState,
@@ -205,143 +125,61 @@ export function getCloseExpiredBidInstruction<
     TAccountRentDest
   >
 ): CloseExpiredBidInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountBidState,
   TAccountOwner,
   TAccountSystemProgram,
   TAccountTcompProgram,
   TAccountRentDest
->;
-export function getCloseExpiredBidInstruction<
-  TAccountBidState extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
-  TAccountRentDest extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: CloseExpiredBidInput<
-    TAccountBidState,
-    TAccountOwner,
-    TAccountSystemProgram,
-    TAccountTcompProgram,
-    TAccountRentDest
-  >
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getCloseExpiredBidInstructionRaw<
-      TProgram,
-      TAccountBidState,
-      TAccountOwner,
-      TAccountSystemProgram,
-      TAccountTcompProgram,
-      TAccountRentDest
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Resolve default values.
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value =
-      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
-  }
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getCloseExpiredBidInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    programAddress
-  );
-
-  return instruction;
-}
-
-export function getCloseExpiredBidInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountBidState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends
-    | string
-    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    bidState: TAccountBidState extends string
-      ? Address<TAccountBidState>
-      : TAccountBidState;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    systemProgram?: TAccountSystemProgram extends string
-      ? Address<TAccountSystemProgram>
-      : TAccountSystemProgram;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-    rentDest?: TAccountRentDest extends string
-      ? Address<TAccountRentDest>
-      : TAccountRentDest;
-  },
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
     accounts: [
-      accountMetaWithDefault(accounts.bidState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.owner, AccountRole.WRITABLE),
-      accountMetaWithDefault(
-        accounts.systemProgram ??
-          ('11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>),
-        AccountRole.READONLY
-      ),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      accountMetaWithDefault(
-        accounts.rentDest ??
-          ('SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>),
-        AccountRole.WRITABLE
-      ),
-      ...(remainingAccounts ?? []),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.rentDest),
     ],
-    data: getCloseExpiredBidInstructionDataEncoder().encode({}),
     programAddress,
+    data: getCloseExpiredBidInstructionDataEncoder().encode({}),
   } as CloseExpiredBidInstruction<
-    TProgram,
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountBidState,
     TAccountOwner,
     TAccountSystemProgram,
     TAccountTcompProgram,
-    TAccountRentDest,
-    TRemainingAccounts
+    TAccountRentDest
   >;
+
+  return instruction;
 }
 
 export type ParsedCloseExpiredBidInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -356,7 +194,7 @@ export type ParsedCloseExpiredBidInstruction<
 
 export function parseCloseExpiredBidInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

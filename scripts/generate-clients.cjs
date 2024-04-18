@@ -6,9 +6,7 @@ const clientDir = path.join(__dirname, "..", "clients");
 const idlDir = path.join(__dirname, "..", "programs", "marketplace");
 
 // Instanciate Kinobi.
-const kinobi = k.createFromIdls([
-  path.join(idlDir, "idl.json"),
-]);
+const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
 
 // Update programs.
 kinobi.update(

@@ -6,15 +6,18 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export type ProofInfoLocal = {
   /** The merkle proof. */
@@ -23,16 +26,16 @@ export type ProofInfoLocal = {
 
 export type ProofInfoLocalArgs = ProofInfoLocal;
 
-export function getProofInfoLocalEncoder() {
-  return getStructEncoder<ProofInfoLocalArgs>([
+export function getProofInfoLocalEncoder(): Encoder<ProofInfoLocalArgs> {
+  return getStructEncoder([
     ['proof', getArrayEncoder(getBytesEncoder({ size: 32 }))],
-  ]) satisfies Encoder<ProofInfoLocalArgs>;
+  ]);
 }
 
-export function getProofInfoLocalDecoder() {
-  return getStructDecoder<ProofInfoLocal>([
+export function getProofInfoLocalDecoder(): Decoder<ProofInfoLocal> {
+  return getStructDecoder([
     ['proof', getArrayDecoder(getBytesDecoder({ size: 32 }))],
-  ]) satisfies Decoder<ProofInfoLocal>;
+  ]);
 }
 
 export function getProofInfoLocalCodec(): Codec<

@@ -6,11 +6,14 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { Codec, Decoder, Encoder, combineCodec } from '@solana/codecs-core';
 import {
+  Codec,
+  Decoder,
+  Encoder,
+  combineCodec,
   getScalarEnumDecoder,
   getScalarEnumEncoder,
-} from '@solana/codecs-data-structures';
+} from '@solana/codecs';
 
 export enum Field {
   Name,
@@ -18,12 +21,12 @@ export enum Field {
 
 export type FieldArgs = Field;
 
-export function getFieldEncoder() {
-  return getScalarEnumEncoder(Field) satisfies Encoder<FieldArgs>;
+export function getFieldEncoder(): Encoder<FieldArgs> {
+  return getScalarEnumEncoder(Field);
 }
 
-export function getFieldDecoder() {
-  return getScalarEnumDecoder(Field) satisfies Decoder<Field>;
+export function getFieldDecoder(): Decoder<Field> {
+  return getScalarEnumDecoder(Field);
 }
 
 export function getFieldCodec(): Codec<FieldArgs, Field> {

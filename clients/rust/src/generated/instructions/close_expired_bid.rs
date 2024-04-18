@@ -82,7 +82,7 @@ impl CloseExpiredBidInstructionData {
 ///   1. `[writable]` owner
 ///   2. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   3. `[]` tcomp_program
-///   4. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   4. `[writable]` rent_dest
 #[derive(Default)]
 pub struct CloseExpiredBidBuilder {
     bid_state: Option<solana_program::pubkey::Pubkey>,
@@ -118,7 +118,6 @@ impl CloseExpiredBidBuilder {
         self.tcomp_program = Some(tcomp_program);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -151,9 +150,7 @@ impl CloseExpiredBidBuilder {
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)

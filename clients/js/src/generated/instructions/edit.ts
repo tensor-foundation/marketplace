@@ -15,23 +15,22 @@ import {
   Codec,
   Decoder,
   Encoder,
+  Option,
+  OptionOrNullable,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
+  getOptionDecoder,
+  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
+  mapEncoder,
+} from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -40,48 +39,16 @@ import {
   ReadonlySignerAccount,
   WritableAccount,
 } from '@solana/instructions';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import {
-  ResolvedAccount,
-  accountMetaWithDefault,
-  getAccountMetasWithSigners,
-} from '../shared';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type EditInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
-    [
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
-      ...TRemainingAccounts
-    ]
-  >;
-
-export type EditInstructionWithSigners<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
@@ -96,7 +63,7 @@ export type EditInstructionWithSigners<
       TAccountTcompProgram extends string
         ? ReadonlyAccount<TAccountTcompProgram>
         : TAccountTcompProgram,
-      ...TRemainingAccounts
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -117,16 +84,9 @@ export type EditInstructionDataArgs = {
   makerBroker: OptionOrNullable<Address>;
 };
 
-export function getEditInstructionDataEncoder() {
+export function getEditInstructionDataEncoder(): Encoder<EditInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      amount: number | bigint;
-      expireInSec: OptionOrNullable<number | bigint>;
-      currency: OptionOrNullable<Address>;
-      privateTaker: OptionOrNullable<Address>;
-      makerBroker: OptionOrNullable<Address>;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['amount', getU64Encoder()],
       ['expireInSec', getOptionEncoder(getU64Encoder())],
@@ -138,18 +98,18 @@ export function getEditInstructionDataEncoder() {
       ...value,
       discriminator: [15, 183, 33, 86, 87, 28, 151, 145],
     })
-  ) satisfies Encoder<EditInstructionDataArgs>;
+  );
 }
 
-export function getEditInstructionDataDecoder() {
-  return getStructDecoder<EditInstructionData>([
+export function getEditInstructionDataDecoder(): Decoder<EditInstructionData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['amount', getU64Decoder()],
     ['expireInSec', getOptionDecoder(getU64Decoder())],
     ['currency', getOptionDecoder(getAddressDecoder())],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['makerBroker', getOptionDecoder(getAddressDecoder())],
-  ]) satisfies Decoder<EditInstructionData>;
+  ]);
 }
 
 export function getEditInstructionDataCodec(): Codec<
@@ -163,24 +123,9 @@ export function getEditInstructionDataCodec(): Codec<
 }
 
 export type EditInput<
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string
-> = {
-  listState: Address<TAccountListState>;
-  owner: Address<TAccountOwner>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  amount: EditInstructionDataArgs['amount'];
-  expireInSec: EditInstructionDataArgs['expireInSec'];
-  currency: EditInstructionDataArgs['currency'];
-  privateTaker: EditInstructionDataArgs['privateTaker'];
-  makerBroker: EditInstructionDataArgs['makerBroker'];
-};
-
-export type EditInputWithSigners<
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTcompProgram extends string = string,
 > = {
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
@@ -196,121 +141,55 @@ export function getEditInstruction<
   TAccountListState extends string,
   TAccountOwner extends string,
   TAccountTcompProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: EditInputWithSigners<
-    TAccountListState,
-    TAccountOwner,
-    TAccountTcompProgram
-  >
-): EditInstructionWithSigners<
-  TProgram,
-  TAccountListState,
-  TAccountOwner,
-  TAccountTcompProgram
->;
-export function getEditInstruction<
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
 >(
   input: EditInput<TAccountListState, TAccountOwner, TAccountTcompProgram>
 ): EditInstruction<
-  TProgram,
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountListState,
   TAccountOwner,
   TAccountTcompProgram
->;
-export function getEditInstruction<
-  TAccountListState extends string,
-  TAccountOwner extends string,
-  TAccountTcompProgram extends string,
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'
->(
-  input: EditInput<TAccountListState, TAccountOwner, TAccountTcompProgram>
-): IInstruction {
+> {
   // Program address.
-  const programAddress =
-    'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
-  type AccountMetas = Parameters<
-    typeof getEditInstructionRaw<
-      TProgram,
-      TAccountListState,
-      TAccountOwner,
-      TAccountTcompProgram
-    >
-  >[0];
-  const accounts: Record<keyof AccountMetas, ResolvedAccount> = {
+  const originalAccounts = {
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
   };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
 
   // Original args.
   const args = { ...input };
 
-  // Get account metas and signers.
-  const accountMetas = getAccountMetasWithSigners(
-    accounts,
-    'programId',
-    programAddress
-  );
-
-  const instruction = getEditInstructionRaw(
-    accountMetas as Record<keyof AccountMetas, IAccountMeta>,
-    args as EditInstructionDataArgs,
-    programAddress
-  );
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.tcompProgram),
+    ],
+    programAddress,
+    data: getEditInstructionDataEncoder().encode(
+      args as EditInstructionDataArgs
+    ),
+  } as EditInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountListState,
+    TAccountOwner,
+    TAccountTcompProgram
+  >;
 
   return instruction;
 }
 
-export function getEditInstructionRaw<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TRemainingAccounts extends Array<IAccountMeta<string>> = []
->(
-  accounts: {
-    listState: TAccountListState extends string
-      ? Address<TAccountListState>
-      : TAccountListState;
-    owner: TAccountOwner extends string
-      ? Address<TAccountOwner>
-      : TAccountOwner;
-    tcompProgram: TAccountTcompProgram extends string
-      ? Address<TAccountTcompProgram>
-      : TAccountTcompProgram;
-  },
-  args: EditInstructionDataArgs,
-  programAddress: Address<TProgram> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<TProgram>,
-  remainingAccounts?: TRemainingAccounts
-) {
-  return {
-    accounts: [
-      accountMetaWithDefault(accounts.listState, AccountRole.WRITABLE),
-      accountMetaWithDefault(accounts.owner, AccountRole.READONLY_SIGNER),
-      accountMetaWithDefault(accounts.tcompProgram, AccountRole.READONLY),
-      ...(remainingAccounts ?? []),
-    ],
-    data: getEditInstructionDataEncoder().encode(args),
-    programAddress,
-  } as EditInstruction<
-    TProgram,
-    TAccountListState,
-    TAccountOwner,
-    TAccountTcompProgram,
-    TRemainingAccounts
-  >;
-}
-
 export type ParsedEditInstruction<
-  TProgram extends string = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -323,7 +202,7 @@ export type ParsedEditInstruction<
 
 export function parseEditInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &

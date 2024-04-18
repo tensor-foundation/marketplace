@@ -28,33 +28,27 @@ import {
   Codec,
   Decoder,
   Encoder,
+  Option,
+  OptionOrNullable,
   combineCodec,
-  mapEncoder,
-} from '@solana/codecs-core';
-import {
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getStructDecoder,
-  getStructEncoder,
-} from '@solana/codecs-data-structures';
-import {
   getI64Decoder,
   getI64Encoder,
+  getOptionDecoder,
+  getOptionEncoder,
+  getStructDecoder,
+  getStructEncoder,
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-} from '@solana/codecs-numbers';
-import {
-  Option,
-  OptionOrNullable,
-  getOptionDecoder,
-  getOptionEncoder,
-} from '@solana/options';
+  mapEncoder,
+} from '@solana/codecs';
 import {
   Field,
   FieldArgs,
@@ -131,35 +125,9 @@ export type BidStateAccountDataArgs = {
   reserved2: Uint8Array;
 };
 
-export function getBidStateAccountDataEncoder() {
+export function getBidStateAccountDataEncoder(): Encoder<BidStateAccountDataArgs> {
   return mapEncoder(
-    getStructEncoder<{
-      discriminator: Array<number>;
-      version: number;
-      bump: Array<number>;
-      owner: Address;
-      /** Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here. */
-      bidId: Address;
-      target: TargetArgs;
-      targetId: Address;
-      field: OptionOrNullable<FieldArgs>;
-      fieldId: OptionOrNullable<Address>;
-      quantity: number;
-      filledQuantity: number;
-      amount: number | bigint;
-      currency: OptionOrNullable<Address>;
-      expiry: number | bigint;
-      privateTaker: OptionOrNullable<Address>;
-      makerBroker: OptionOrNullable<Address>;
-      margin: OptionOrNullable<Address>;
-      updatedAt: number | bigint;
-      cosigner: Address;
-      /** owner is the rent payer when this is PublicKey::default */
-      rentPayer: Address;
-      reserved: Array<number>;
-      reserved1: Array<number>;
-      reserved2: Uint8Array;
-    }>([
+    getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
       ['version', getU8Encoder()],
       ['bump', getArrayEncoder(getU8Encoder(), { size: 1 })],
@@ -185,11 +153,11 @@ export function getBidStateAccountDataEncoder() {
       ['reserved2', getBytesEncoder({ size: 32 })],
     ]),
     (value) => ({ ...value, discriminator: [155, 197, 5, 97, 189, 60, 8, 183] })
-  ) satisfies Encoder<BidStateAccountDataArgs>;
+  );
 }
 
-export function getBidStateAccountDataDecoder() {
-  return getStructDecoder<BidStateAccountData>([
+export function getBidStateAccountDataDecoder(): Decoder<BidStateAccountData> {
+  return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['version', getU8Decoder()],
     ['bump', getArrayDecoder(getU8Decoder(), { size: 1 })],
@@ -213,7 +181,7 @@ export function getBidStateAccountDataDecoder() {
     ['reserved', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['reserved1', getArrayDecoder(getU8Decoder(), { size: 16 })],
     ['reserved2', getBytesDecoder({ size: 32 })],
-  ]) satisfies Decoder<BidStateAccountData>;
+  ]);
 }
 
 export function getBidStateAccountDataCodec(): Codec<

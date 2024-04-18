@@ -107,10 +107,10 @@ impl CloseExpiredListingCoreInstructionData {
 ///   1. `[writable]` asset
 ///   2. `[optional]` collection
 ///   3. `[]` owner
-///   4. `[]` mpl_core_program
+///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   6. `[]` marketplace_program
-///   7. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   7. `[writable]` rent_dest
 #[derive(Default)]
 pub struct CloseExpiredListingCoreBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
@@ -149,6 +149,7 @@ impl CloseExpiredListingCoreBuilder {
         self.owner = Some(owner);
         self
     }
+    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
         &mut self,
@@ -171,7 +172,6 @@ impl CloseExpiredListingCoreBuilder {
         self.marketplace_program = Some(marketplace_program);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -202,16 +202,16 @@ impl CloseExpiredListingCoreBuilder {
             asset: self.asset.expect("asset is not set"),
             collection: self.collection,
             owner: self.owner.expect("owner is not set"),
-            mpl_core_program: self.mpl_core_program.expect("mpl_core_program is not set"),
+            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
+                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             marketplace_program: self
                 .marketplace_program
                 .expect("marketplace_program is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)

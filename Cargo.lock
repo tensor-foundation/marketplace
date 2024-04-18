@@ -2429,7 +2429,7 @@ dependencies = [
  "spl-token-metadata-interface",
  "spl-type-length-value",
  "static_assertions",
- "tensor-toolbox 0.0.3",
+ "tensor-toolbox 0.0.4",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508)",
  "whitelist-program",
 ]
@@ -5334,8 +5334,7 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.0.3"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40#e22cb40707f9825119bced3570cf231c92f21fdc"
+version = "0.0.4"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5346,7 +5345,7 @@ dependencies = [
  "spl-account-compression 0.3.0",
  "spl-noop",
  "spl-token-metadata-interface",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40)",
+ "vipers 2.0.6",
 ]
 
 [[package]]
@@ -5850,7 +5849,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508#1e8450835f681463130ebbfcdb7625b15a89e2ae"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5860,7 +5858,7 @@ dependencies = [
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=e22cb40#e22cb40707f9825119bced3570cf231c92f21fdc"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508#1e8450835f681463130ebbfcdb7625b15a89e2ae"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",

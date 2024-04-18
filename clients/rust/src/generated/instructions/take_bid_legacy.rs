@@ -41,7 +41,11 @@ pub struct TakeBidLegacy {
 
     pub dest_token_record: solana_program::pubkey::Pubkey,
 
-    pub pnft_shared: solana_program::pubkey::Pubkey,
+    pub token_metadata_program: solana_program::pubkey::Pubkey,
+
+    pub instructions: solana_program::pubkey::Pubkey,
+
+    pub authorization_rules_program: solana_program::pubkey::Pubkey,
     /// Implicitly checked via transfer. Will fail if wrong account
     pub nft_escrow: solana_program::pubkey::Pubkey,
 
@@ -79,7 +83,7 @@ impl TakeBidLegacy {
         args: TakeBidLegacyInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.tcomp, false,
         ));
@@ -153,7 +157,15 @@ impl TakeBidLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.pnft_shared,
+            self.token_metadata_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.instructions,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.authorization_rules_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -254,18 +266,20 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   12. `[]` nft_edition
 ///   13. `[writable]` owner_token_record
 ///   14. `[writable]` dest_token_record
-///   15. `[]` pnft_shared
-///   16. `[writable]` nft_escrow
-///   17. `[writable]` temp_escrow_token_record
-///   18. `[]` auth_rules
-///   19. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   20. `[]` associated_token_program
-///   21. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   22. `[]` tcomp_program
-///   23. `[]` tensorswap_program
-///   24. `[signer]` cosigner
-///   25. `[]` mint_proof
-///   26. `[writable, optional]` rent_dest (default to `SysvarRent111111111111111111111111111111111`)
+///   15. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
+///   16. `[]` instructions
+///   17. `[optional]` authorization_rules_program (default to `auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg`)
+///   18. `[writable]` nft_escrow
+///   19. `[writable]` temp_escrow_token_record
+///   20. `[]` auth_rules
+///   21. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   22. `[]` associated_token_program
+///   23. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   24. `[]` tcomp_program
+///   25. `[]` tensorswap_program
+///   26. `[signer]` cosigner
+///   27. `[]` mint_proof
+///   28. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidLegacyBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -283,7 +297,9 @@ pub struct TakeBidLegacyBuilder {
     nft_edition: Option<solana_program::pubkey::Pubkey>,
     owner_token_record: Option<solana_program::pubkey::Pubkey>,
     dest_token_record: Option<solana_program::pubkey::Pubkey>,
-    pnft_shared: Option<solana_program::pubkey::Pubkey>,
+    token_metadata_program: Option<solana_program::pubkey::Pubkey>,
+    instructions: Option<solana_program::pubkey::Pubkey>,
+    authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
     nft_escrow: Option<solana_program::pubkey::Pubkey>,
     temp_escrow_token_record: Option<solana_program::pubkey::Pubkey>,
     auth_rules: Option<solana_program::pubkey::Pubkey>,
@@ -395,9 +411,27 @@ impl TakeBidLegacyBuilder {
         self.dest_token_record = Some(dest_token_record);
         self
     }
+    /// `[optional account, default to 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s']`
     #[inline(always)]
-    pub fn pnft_shared(&mut self, pnft_shared: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.pnft_shared = Some(pnft_shared);
+    pub fn token_metadata_program(
+        &mut self,
+        token_metadata_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.token_metadata_program = Some(token_metadata_program);
+        self
+    }
+    #[inline(always)]
+    pub fn instructions(&mut self, instructions: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.instructions = Some(instructions);
+        self
+    }
+    /// `[optional account, default to 'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg']`
+    #[inline(always)]
+    pub fn authorization_rules_program(
+        &mut self,
+        authorization_rules_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.authorization_rules_program = Some(authorization_rules_program);
         self
     }
     /// Implicitly checked via transfer. Will fail if wrong account
@@ -463,7 +497,6 @@ impl TakeBidLegacyBuilder {
         self.mint_proof = Some(mint_proof);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
@@ -511,51 +544,56 @@ impl TakeBidLegacyBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = TakeBidLegacy {
-            tcomp: self.tcomp.expect("tcomp is not set"),
-            seller: self.seller.expect("seller is not set"),
-            bid_state: self.bid_state.expect("bid_state is not set"),
-            owner: self.owner.expect("owner is not set"),
-            taker_broker: self.taker_broker,
-            maker_broker: self.maker_broker,
-            margin_account: self.margin_account.expect("margin_account is not set"),
-            whitelist: self.whitelist.expect("whitelist is not set"),
-            nft_seller_acc: self.nft_seller_acc.expect("nft_seller_acc is not set"),
-            nft_mint: self.nft_mint.expect("nft_mint is not set"),
-            nft_metadata: self.nft_metadata.expect("nft_metadata is not set"),
-            owner_ata_acc: self.owner_ata_acc.expect("owner_ata_acc is not set"),
-            nft_edition: self.nft_edition.expect("nft_edition is not set"),
-            owner_token_record: self
-                .owner_token_record
-                .expect("owner_token_record is not set"),
-            dest_token_record: self
-                .dest_token_record
-                .expect("dest_token_record is not set"),
-            pnft_shared: self.pnft_shared.expect("pnft_shared is not set"),
-            nft_escrow: self.nft_escrow.expect("nft_escrow is not set"),
-            temp_escrow_token_record: self
-                .temp_escrow_token_record
-                .expect("temp_escrow_token_record is not set"),
-            auth_rules: self.auth_rules.expect("auth_rules is not set"),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            )),
-            associated_token_program: self
-                .associated_token_program
-                .expect("associated_token_program is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-            tensorswap_program: self
-                .tensorswap_program
-                .expect("tensorswap_program is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
-            mint_proof: self.mint_proof.expect("mint_proof is not set"),
-            rent_dest: self.rent_dest.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
-        };
+        let accounts =
+            TakeBidLegacy {
+                tcomp: self.tcomp.expect("tcomp is not set"),
+                seller: self.seller.expect("seller is not set"),
+                bid_state: self.bid_state.expect("bid_state is not set"),
+                owner: self.owner.expect("owner is not set"),
+                taker_broker: self.taker_broker,
+                maker_broker: self.maker_broker,
+                margin_account: self.margin_account.expect("margin_account is not set"),
+                whitelist: self.whitelist.expect("whitelist is not set"),
+                nft_seller_acc: self.nft_seller_acc.expect("nft_seller_acc is not set"),
+                nft_mint: self.nft_mint.expect("nft_mint is not set"),
+                nft_metadata: self.nft_metadata.expect("nft_metadata is not set"),
+                owner_ata_acc: self.owner_ata_acc.expect("owner_ata_acc is not set"),
+                nft_edition: self.nft_edition.expect("nft_edition is not set"),
+                owner_token_record: self
+                    .owner_token_record
+                    .expect("owner_token_record is not set"),
+                dest_token_record: self
+                    .dest_token_record
+                    .expect("dest_token_record is not set"),
+                token_metadata_program: self.token_metadata_program.unwrap_or(
+                    solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+                ),
+                instructions: self.instructions.expect("instructions is not set"),
+                authorization_rules_program: self.authorization_rules_program.unwrap_or(
+                    solana_program::pubkey!("auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg"),
+                ),
+                nft_escrow: self.nft_escrow.expect("nft_escrow is not set"),
+                temp_escrow_token_record: self
+                    .temp_escrow_token_record
+                    .expect("temp_escrow_token_record is not set"),
+                auth_rules: self.auth_rules.expect("auth_rules is not set"),
+                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                )),
+                associated_token_program: self
+                    .associated_token_program
+                    .expect("associated_token_program is not set"),
+                system_program: self
+                    .system_program
+                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+                tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+                tensorswap_program: self
+                    .tensorswap_program
+                    .expect("tensorswap_program is not set"),
+                cosigner: self.cosigner.expect("cosigner is not set"),
+                mint_proof: self.mint_proof.expect("mint_proof is not set"),
+                rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            };
         let args = TakeBidLegacyInstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),
             optional_royalty_pct: self.optional_royalty_pct.clone(),
@@ -602,7 +640,11 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub dest_token_record: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub pnft_shared: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub instructions: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub authorization_rules_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Implicitly checked via transfer. Will fail if wrong account
     pub nft_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -662,7 +704,11 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub dest_token_record: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub pnft_shared: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub instructions: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub authorization_rules_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Implicitly checked via transfer. Will fail if wrong account
     pub nft_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -712,7 +758,9 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             nft_edition: accounts.nft_edition,
             owner_token_record: accounts.owner_token_record,
             dest_token_record: accounts.dest_token_record,
-            pnft_shared: accounts.pnft_shared,
+            token_metadata_program: accounts.token_metadata_program,
+            instructions: accounts.instructions,
+            authorization_rules_program: accounts.authorization_rules_program,
             nft_escrow: accounts.nft_escrow,
             temp_escrow_token_record: accounts.temp_escrow_token_record,
             auth_rules: accounts.auth_rules,
@@ -760,7 +808,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.tcomp.key,
             false,
@@ -836,7 +884,15 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.pnft_shared.key,
+            *self.token_metadata_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.instructions.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.authorization_rules_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -899,7 +955,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(27 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(29 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tcomp.clone());
         account_infos.push(self.seller.clone());
@@ -920,7 +976,9 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         account_infos.push(self.nft_edition.clone());
         account_infos.push(self.owner_token_record.clone());
         account_infos.push(self.dest_token_record.clone());
-        account_infos.push(self.pnft_shared.clone());
+        account_infos.push(self.token_metadata_program.clone());
+        account_infos.push(self.instructions.clone());
+        account_infos.push(self.authorization_rules_program.clone());
         account_infos.push(self.nft_escrow.clone());
         account_infos.push(self.temp_escrow_token_record.clone());
         account_infos.push(self.auth_rules.clone());
@@ -963,18 +1021,20 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   12. `[]` nft_edition
 ///   13. `[writable]` owner_token_record
 ///   14. `[writable]` dest_token_record
-///   15. `[]` pnft_shared
-///   16. `[writable]` nft_escrow
-///   17. `[writable]` temp_escrow_token_record
-///   18. `[]` auth_rules
-///   19. `[]` token_program
-///   20. `[]` associated_token_program
-///   21. `[]` system_program
-///   22. `[]` tcomp_program
-///   23. `[]` tensorswap_program
-///   24. `[signer]` cosigner
-///   25. `[]` mint_proof
-///   26. `[writable]` rent_dest
+///   15. `[]` token_metadata_program
+///   16. `[]` instructions
+///   17. `[]` authorization_rules_program
+///   18. `[writable]` nft_escrow
+///   19. `[writable]` temp_escrow_token_record
+///   20. `[]` auth_rules
+///   21. `[]` token_program
+///   22. `[]` associated_token_program
+///   23. `[]` system_program
+///   24. `[]` tcomp_program
+///   25. `[]` tensorswap_program
+///   26. `[signer]` cosigner
+///   27. `[]` mint_proof
+///   28. `[writable]` rent_dest
 pub struct TakeBidLegacyCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidLegacyCpiBuilderInstruction<'a, 'b>>,
 }
@@ -998,7 +1058,9 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             nft_edition: None,
             owner_token_record: None,
             dest_token_record: None,
-            pnft_shared: None,
+            token_metadata_program: None,
+            instructions: None,
+            authorization_rules_program: None,
             nft_escrow: None,
             temp_escrow_token_record: None,
             auth_rules: None,
@@ -1135,11 +1197,27 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn pnft_shared(
+    pub fn token_metadata_program(
         &mut self,
-        pnft_shared: &'b solana_program::account_info::AccountInfo<'a>,
+        token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.pnft_shared = Some(pnft_shared);
+        self.instruction.token_metadata_program = Some(token_metadata_program);
+        self
+    }
+    #[inline(always)]
+    pub fn instructions(
+        &mut self,
+        instructions: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.instructions = Some(instructions);
+        self
+    }
+    #[inline(always)]
+    pub fn authorization_rules_program(
+        &mut self,
+        authorization_rules_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.authorization_rules_program = Some(authorization_rules_program);
         self
     }
     /// Implicitly checked via transfer. Will fail if wrong account
@@ -1363,10 +1441,20 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
                 .dest_token_record
                 .expect("dest_token_record is not set"),
 
-            pnft_shared: self
+            token_metadata_program: self
                 .instruction
-                .pnft_shared
-                .expect("pnft_shared is not set"),
+                .token_metadata_program
+                .expect("token_metadata_program is not set"),
+
+            instructions: self
+                .instruction
+                .instructions
+                .expect("instructions is not set"),
+
+            authorization_rules_program: self
+                .instruction
+                .authorization_rules_program
+                .expect("authorization_rules_program is not set"),
 
             nft_escrow: self.instruction.nft_escrow.expect("nft_escrow is not set"),
 
@@ -1433,7 +1521,9 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     nft_edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     dest_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    pnft_shared: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nft_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     temp_escrow_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     auth_rules: Option<&'b solana_program::account_info::AccountInfo<'a>>,

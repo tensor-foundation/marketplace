@@ -146,7 +146,7 @@ pub struct ListInstructionArgs {
 ///   7. `[]` bubblegum_program
 ///   8. `[]` tcomp_program
 ///   9. `[writable]` list_state
-///   10. `[writable, signer, optional]` rent_payer (default to `SysvarRent111111111111111111111111111111111`)
+///   10. `[writable, signer]` rent_payer
 #[derive(Default)]
 pub struct ListBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -234,7 +234,6 @@ impl ListBuilder {
         self.list_state = Some(list_state);
         self
     }
-    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
     #[inline(always)]
     pub fn rent_payer(&mut self, rent_payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_payer = Some(rent_payer);
@@ -331,9 +330,7 @@ impl ListBuilder {
                 .expect("bubblegum_program is not set"),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             list_state: self.list_state.expect("list_state is not set"),
-            rent_payer: self.rent_payer.unwrap_or(solana_program::pubkey!(
-                "SysvarRent111111111111111111111111111111111"
-            )),
+            rent_payer: self.rent_payer.expect("rent_payer is not set"),
         };
         let args = ListInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
