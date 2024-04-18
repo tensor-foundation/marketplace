@@ -276,6 +276,49 @@ pub mod marketplace_program {
         )
     }
 
+    //------------------- Legacy (Token Metadata NFT/pNFT)
+
+    pub fn buy_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyLegacy<'info>>,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_buy_legacy(
+            ctx,
+            max_amount,
+            optional_royalty_pct,
+            authorization_data,
+        )
+    }
+
+    pub fn delist_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, DelistLegacy<'info>>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_delist_legacy(ctx, authorization_data)
+    }
+
+    pub fn list_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListLegacy<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_list_legacy(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+            authorization_data,
+        )
+    }
+
     pub fn take_bid_legacy<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBidLegacy<'info>>,
         min_amount: u64,
@@ -283,7 +326,7 @@ pub mod marketplace_program {
         rules_acc_present: bool,
         authorization_data: Option<AuthorizationDataLocal>,
     ) -> Result<()> {
-        instructions::take_bid_legacy::process_take_bid_legacy(
+        instructions::legacy::take_bid::process_take_bid_legacy(
             ctx,
             min_amount,
             optional_royalty_pct,
