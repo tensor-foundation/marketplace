@@ -33,6 +33,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -64,7 +65,9 @@ export type BuySplInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
@@ -183,7 +186,7 @@ export type BuySplInstructionDataArgs = {
   creatorVerified: Array<boolean>;
   sellerFeeBasisPoints: number;
   maxAmount: number | bigint;
-  optionalRoyaltyPct: OptionOrNullable<number>;
+  optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
 export function getBuySplInstructionDataEncoder(): Encoder<BuySplInstructionDataArgs> {
@@ -203,6 +206,7 @@ export function getBuySplInstructionDataEncoder(): Encoder<BuySplInstructionData
     (value) => ({
       ...value,
       discriminator: [65, 136, 254, 255, 59, 130, 234, 174],
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
     })
   );
 }
@@ -268,7 +272,7 @@ export type BuySplInput<
   bubblegumProgram: Address<TAccountBubblegumProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
   buyer: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
@@ -290,7 +294,7 @@ export type BuySplInput<
   creatorVerified: BuySplInstructionDataArgs['creatorVerified'];
   sellerFeeBasisPoints: BuySplInstructionDataArgs['sellerFeeBasisPoints'];
   maxAmount: BuySplInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct: BuySplInstructionDataArgs['optionalRoyaltyPct'];
+  optionalRoyaltyPct?: BuySplInstructionDataArgs['optionalRoyaltyPct'];
 };
 
 export function getBuySplInstruction<
@@ -427,6 +431,10 @@ export function getBuySplInstruction<
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

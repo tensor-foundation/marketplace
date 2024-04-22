@@ -28,7 +28,7 @@ pub struct ListLegacy {
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
@@ -93,7 +93,7 @@ impl ListLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -208,8 +208,8 @@ pub struct ListLegacyInstructionArgs {
 ///   4. `[signer]` owner
 ///   5. `[writable, signer]` payer
 ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[]` associated_token_program
-///   8. `[]` tcomp_program
+///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   10. `[writable]` metadata
 ///   11. `[]` edition
@@ -229,7 +229,7 @@ pub struct ListLegacyBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     edition: Option<solana_program::pubkey::Pubkey>,
@@ -289,6 +289,7 @@ impl ListLegacyBuilder {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
     #[inline(always)]
     pub fn associated_token_program(
         &mut self,
@@ -297,9 +298,13 @@ impl ListLegacyBuilder {
         self.associated_token_program = Some(associated_token_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -438,10 +443,12 @@ impl ListLegacyBuilder {
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
-                associated_token_program: self
-                    .associated_token_program
-                    .expect("associated_token_program is not set"),
-                tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -489,7 +496,7 @@ pub struct ListLegacyCpiAccounts<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -531,7 +538,7 @@ pub struct ListLegacyCpi<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -570,7 +577,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             payer: accounts.payer,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
             metadata: accounts.metadata,
             edition: accounts.edition,
@@ -650,7 +657,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -743,7 +750,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
         account_infos.push(self.payer.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.edition.clone());
@@ -785,7 +792,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
 ///   5. `[writable, signer]` payer
 ///   6. `[]` token_program
 ///   7. `[]` associated_token_program
-///   8. `[]` tcomp_program
+///   8. `[]` marketplace_program
 ///   9. `[]` system_program
 ///   10. `[writable]` metadata
 ///   11. `[]` edition
@@ -811,7 +818,7 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
             payer: None,
             token_program: None,
             associated_token_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             system_program: None,
             metadata: None,
             edition: None,
@@ -888,11 +895,11 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -1083,10 +1090,10 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
                 .associated_token_program
                 .expect("associated_token_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             system_program: self
                 .instruction
@@ -1133,7 +1140,7 @@ struct ListLegacyCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,

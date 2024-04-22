@@ -21,13 +21,13 @@ pub struct DelistLegacy {
 
     pub owner: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
@@ -81,7 +81,7 @@ impl DelistLegacy {
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -93,7 +93,7 @@ impl DelistLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -201,10 +201,10 @@ pub struct DelistLegacyInstructionArgs {
 ///   2. `[writable]` list_token
 ///   3. `[writable]` list_state
 ///   4. `[signer]` owner
-///   5. `[writable, signer]` rent_dest
+///   5. `[writable, signer]` rent_destination
 ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[]` associated_token_program
-///   8. `[]` tcomp_program
+///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   10. `[writable]` metadata
 ///   11. `[]` edition
@@ -221,10 +221,10 @@ pub struct DelistLegacyBuilder {
     list_token: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     edition: Option<solana_program::pubkey::Pubkey>,
@@ -268,8 +268,11 @@ impl DelistLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -278,6 +281,7 @@ impl DelistLegacyBuilder {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
     #[inline(always)]
     pub fn associated_token_program(
         &mut self,
@@ -286,9 +290,13 @@ impl DelistLegacyBuilder {
         self.associated_token_program = Some(associated_token_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -394,14 +402,16 @@ impl DelistLegacyBuilder {
                 list_token: self.list_token.expect("list_token is not set"),
                 list_state: self.list_state.expect("list_state is not set"),
                 owner: self.owner.expect("owner is not set"),
-                rent_dest: self.rent_dest.expect("rent_dest is not set"),
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
-                associated_token_program: self
-                    .associated_token_program
-                    .expect("associated_token_program is not set"),
-                tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -438,13 +448,13 @@ pub struct DelistLegacyCpiAccounts<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -480,13 +490,13 @@ pub struct DelistLegacyCpi<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -522,10 +532,10 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
             list_token: accounts.list_token,
             list_state: accounts.list_state,
             owner: accounts.owner,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
             metadata: accounts.metadata,
             edition: accounts.edition,
@@ -593,7 +603,7 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -605,7 +615,7 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -695,10 +705,10 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
         account_infos.push(self.list_token.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.edition.clone());
@@ -737,10 +747,10 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
 ///   2. `[writable]` list_token
 ///   3. `[writable]` list_state
 ///   4. `[signer]` owner
-///   5. `[writable, signer]` rent_dest
+///   5. `[writable, signer]` rent_destination
 ///   6. `[]` token_program
 ///   7. `[]` associated_token_program
-///   8. `[]` tcomp_program
+///   8. `[]` marketplace_program
 ///   9. `[]` system_program
 ///   10. `[writable]` metadata
 ///   11. `[]` edition
@@ -763,10 +773,10 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
             list_token: None,
             list_state: None,
             owner: None,
-            rent_dest: None,
+            rent_destination: None,
             token_program: None,
             associated_token_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             system_program: None,
             metadata: None,
             edition: None,
@@ -816,11 +826,11 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -840,11 +850,11 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -989,7 +999,10 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
 
             owner: self.instruction.owner.expect("owner is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             token_program: self
                 .instruction
@@ -1001,10 +1014,10 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
                 .associated_token_program
                 .expect("associated_token_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             system_program: self
                 .instruction
@@ -1048,10 +1061,10 @@ struct DelistLegacyCpiBuilderInstruction<'a, 'b> {
     list_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,

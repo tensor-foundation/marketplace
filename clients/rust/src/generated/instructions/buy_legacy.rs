@@ -31,7 +31,7 @@ pub struct BuyLegacy {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
@@ -45,7 +45,7 @@ pub struct BuyLegacy {
 
     pub edition: solana_program::pubkey::Pubkey,
 
-    pub owner_token_record: Option<solana_program::pubkey::Pubkey>,
+    pub buyer_token_record: Option<solana_program::pubkey::Pubkey>,
 
     pub list_token_record: Option<solana_program::pubkey::Pubkey>,
 
@@ -123,7 +123,7 @@ impl BuyLegacy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -150,9 +150,9 @@ impl BuyLegacy {
             self.edition,
             false,
         ));
-        if let Some(owner_token_record) = self.owner_token_record {
+        if let Some(buyer_token_record) = self.buyer_token_record {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                owner_token_record,
+                buyer_token_record,
                 false,
             ));
         } else {
@@ -250,14 +250,14 @@ pub struct BuyLegacyInstructionArgs {
 ///   7. `[writable]` owner
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
-///   10. `[writable]` rent_dest
+///   10. `[writable]` rent_destination
 ///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   12. `[]` associated_token_program
-///   13. `[]` marketplace_program
+///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   13. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   15. `[writable]` metadata
 ///   16. `[]` edition
-///   17. `[writable, optional]` owner_token_record
+///   17. `[writable, optional]` buyer_token_record
 ///   18. `[writable, optional]` list_token_record
 ///   19. `[optional]` authorization_rules
 ///   20. `[optional]` authorization_rules_program
@@ -275,14 +275,14 @@ pub struct BuyLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     edition: Option<solana_program::pubkey::Pubkey>,
-    owner_token_record: Option<solana_program::pubkey::Pubkey>,
+    buyer_token_record: Option<solana_program::pubkey::Pubkey>,
     list_token_record: Option<solana_program::pubkey::Pubkey>,
     authorization_rules: Option<solana_program::pubkey::Pubkey>,
     authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
@@ -357,8 +357,11 @@ impl BuyLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -367,6 +370,7 @@ impl BuyLegacyBuilder {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
     #[inline(always)]
     pub fn associated_token_program(
         &mut self,
@@ -375,6 +379,7 @@ impl BuyLegacyBuilder {
         self.associated_token_program = Some(associated_token_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn marketplace_program(
         &mut self,
@@ -401,11 +406,11 @@ impl BuyLegacyBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn owner_token_record(
+    pub fn buyer_token_record(
         &mut self,
-        owner_token_record: Option<solana_program::pubkey::Pubkey>,
+        buyer_token_record: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.owner_token_record = owner_token_record;
+        self.buyer_token_record = buyer_token_record;
         self
     }
     /// `[optional account]`
@@ -502,22 +507,22 @@ impl BuyLegacyBuilder {
                 owner: self.owner.expect("owner is not set"),
                 taker_broker: self.taker_broker,
                 maker_broker: self.maker_broker,
-                rent_dest: self.rent_dest.expect("rent_dest is not set"),
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
-                associated_token_program: self
-                    .associated_token_program
-                    .expect("associated_token_program is not set"),
-                marketplace_program: self
-                    .marketplace_program
-                    .expect("marketplace_program is not set"),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
                 metadata: self.metadata.expect("metadata is not set"),
                 edition: self.edition.expect("edition is not set"),
-                owner_token_record: self.owner_token_record,
+                buyer_token_record: self.buyer_token_record,
                 list_token_record: self.list_token_record,
                 authorization_rules: self.authorization_rules,
                 authorization_rules_program: self.authorization_rules_program,
@@ -560,7 +565,7 @@ pub struct BuyLegacyCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -574,7 +579,7 @@ pub struct BuyLegacyCpiAccounts<'a, 'b> {
 
     pub edition: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub buyer_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub list_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -612,7 +617,7 @@ pub struct BuyLegacyCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -626,7 +631,7 @@ pub struct BuyLegacyCpi<'a, 'b> {
 
     pub edition: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub buyer_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub list_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -659,14 +664,14 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
             metadata: accounts.metadata,
             edition: accounts.edition,
-            owner_token_record: accounts.owner_token_record,
+            buyer_token_record: accounts.buyer_token_record,
             list_token_record: accounts.list_token_record,
             authorization_rules: accounts.authorization_rules,
             authorization_rules_program: accounts.authorization_rules_program,
@@ -764,7 +769,7 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -791,9 +796,9 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             *self.edition.key,
             false,
         ));
-        if let Some(owner_token_record) = self.owner_token_record {
+        if let Some(buyer_token_record) = self.buyer_token_record {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                *owner_token_record.key,
+                *buyer_token_record.key,
                 false,
             ));
         } else {
@@ -875,15 +880,15 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.edition.clone());
-        if let Some(owner_token_record) = self.owner_token_record {
-            account_infos.push(owner_token_record.clone());
+        if let Some(buyer_token_record) = self.buyer_token_record {
+            account_infos.push(buyer_token_record.clone());
         }
         if let Some(list_token_record) = self.list_token_record {
             account_infos.push(list_token_record.clone());
@@ -922,14 +927,14 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
 ///   7. `[writable]` owner
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
-///   10. `[writable]` rent_dest
+///   10. `[writable]` rent_destination
 ///   11. `[]` token_program
 ///   12. `[]` associated_token_program
 ///   13. `[]` marketplace_program
 ///   14. `[]` system_program
 ///   15. `[writable]` metadata
 ///   16. `[]` edition
-///   17. `[writable, optional]` owner_token_record
+///   17. `[writable, optional]` buyer_token_record
 ///   18. `[writable, optional]` list_token_record
 ///   19. `[optional]` authorization_rules
 ///   20. `[optional]` authorization_rules_program
@@ -953,14 +958,14 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            rent_dest: None,
+            rent_destination: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
             system_program: None,
             metadata: None,
             edition: None,
-            owner_token_record: None,
+            buyer_token_record: None,
             list_token_record: None,
             authorization_rules: None,
             authorization_rules_program: None,
@@ -1044,11 +1049,11 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -1101,11 +1106,11 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn owner_token_record(
+    pub fn buyer_token_record(
         &mut self,
-        owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        buyer_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.owner_token_record = owner_token_record;
+        self.instruction.buyer_token_record = buyer_token_record;
         self
     }
     /// `[optional account]`
@@ -1244,7 +1249,10 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             token_program: self
                 .instruction
@@ -1270,7 +1278,7 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
 
             edition: self.instruction.edition.expect("edition is not set"),
 
-            owner_token_record: self.instruction.owner_token_record,
+            buyer_token_record: self.instruction.buyer_token_record,
 
             list_token_record: self.instruction.list_token_record,
 
@@ -1308,14 +1316,14 @@ struct BuyLegacyCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    buyer_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authorization_rules: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

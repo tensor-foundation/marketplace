@@ -23,6 +23,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -35,8 +36,23 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import {
+  TokenStandard,
+  TokenStandardArgs,
+  resolveEditionFromTokenStandard,
+  resolveListTokenRecordFromTokenStandard,
+  resolveMetadata,
+  resolveOwnerToken,
+  resolveOwnerTokenRecordFromTokenStandard,
+} from '../../hooked';
+import { findListStatePda, findListTokenPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+} from '../shared';
 import {
   AuthorizationDataLocal,
   AuthorizationDataLocalArgs,
@@ -51,12 +67,16 @@ export type DelistLegacyInstruction<
   TAccountListToken extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -95,19 +115,19 @@ export type DelistLegacyInstruction<
         ? ReadonlySignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountRentDest extends string
-        ? WritableSignerAccount<TAccountRentDest> &
-            IAccountSignerMeta<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableSignerAccount<TAccountRentDestination> &
+            IAccountSignerMeta<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -145,7 +165,7 @@ export type DelistLegacyInstructionData = {
 };
 
 export type DelistLegacyInstructionDataArgs = {
-  authorizationData: OptionOrNullable<AuthorizationDataLocalArgs>;
+  authorizationData?: OptionOrNullable<AuthorizationDataLocalArgs>;
 };
 
 export function getDelistLegacyInstructionDataEncoder(): Encoder<DelistLegacyInstructionDataArgs> {
@@ -160,6 +180,7 @@ export function getDelistLegacyInstructionDataEncoder(): Encoder<DelistLegacyIns
     (value) => ({
       ...value,
       discriminator: [88, 35, 231, 184, 110, 218, 149, 23],
+      authorizationData: value.authorizationData ?? none(),
     })
   );
 }
@@ -181,16 +202,310 @@ export function getDelistLegacyInstructionDataCodec(): Codec<
   );
 }
 
+export type DelistLegacyInstructionExtraArgs = {
+  tokenStandard?: TokenStandardArgs;
+};
+
+export type DelistLegacyAsyncInput<
+  TAccountOwnerToken extends string = string,
+  TAccountMint extends string = string,
+  TAccountListToken extends string = string,
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountRentDestination extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMetadata extends string = string,
+  TAccountEdition extends string = string,
+  TAccountOwnerTokenRecord extends string = string,
+  TAccountListTokenRecord extends string = string,
+  TAccountAuthorizationRules extends string = string,
+  TAccountAuthorizationRulesProgram extends string = string,
+  TAccountTokenMetadataProgram extends string = string,
+  TAccountSysvarInstructions extends string = string,
+> = {
+  ownerToken?: Address<TAccountOwnerToken>;
+  mint: Address<TAccountMint>;
+  listToken?: Address<TAccountListToken>;
+  listState?: Address<TAccountListState>;
+  owner: TransactionSigner<TAccountOwner>;
+  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  metadata?: Address<TAccountMetadata>;
+  edition?: Address<TAccountEdition>;
+  ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
+  listTokenRecord?: Address<TAccountListTokenRecord>;
+  authorizationRules?: Address<TAccountAuthorizationRules>;
+  authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
+  tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
+  sysvarInstructions?: Address<TAccountSysvarInstructions>;
+  authorizationData?: DelistLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: DelistLegacyInstructionExtraArgs['tokenStandard'];
+};
+
+export async function getDelistLegacyInstructionAsync<
+  TAccountOwnerToken extends string,
+  TAccountMint extends string,
+  TAccountListToken extends string,
+  TAccountListState extends string,
+  TAccountOwner extends string,
+  TAccountRentDestination extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMetadata extends string,
+  TAccountEdition extends string,
+  TAccountOwnerTokenRecord extends string,
+  TAccountListTokenRecord extends string,
+  TAccountAuthorizationRules extends string,
+  TAccountAuthorizationRulesProgram extends string,
+  TAccountTokenMetadataProgram extends string,
+  TAccountSysvarInstructions extends string,
+>(
+  input: DelistLegacyAsyncInput<
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountMetadata,
+    TAccountEdition,
+    TAccountOwnerTokenRecord,
+    TAccountListTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountAuthorizationRulesProgram,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions
+  >
+): Promise<
+  DelistLegacyInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountMetadata,
+    TAccountEdition,
+    TAccountOwnerTokenRecord,
+    TAccountListTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountAuthorizationRulesProgram,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    ownerToken: { value: input.ownerToken ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    listToken: { value: input.listToken ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    metadata: { value: input.metadata ?? null, isWritable: true },
+    edition: { value: input.edition ?? null, isWritable: false },
+    ownerTokenRecord: {
+      value: input.ownerTokenRecord ?? null,
+      isWritable: true,
+    },
+    listTokenRecord: { value: input.listTokenRecord ?? null, isWritable: true },
+    authorizationRules: {
+      value: input.authorizationRules ?? null,
+      isWritable: false,
+    },
+    authorizationRulesProgram: {
+      value: input.authorizationRulesProgram ?? null,
+      isWritable: false,
+    },
+    tokenMetadataProgram: {
+      value: input.tokenMetadataProgram ?? null,
+      isWritable: false,
+    },
+    sysvarInstructions: {
+      value: input.sysvarInstructions ?? null,
+      isWritable: false,
+    },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.ownerToken.value) {
+    accounts.ownerToken = {
+      ...accounts.ownerToken,
+      ...(await resolveOwnerToken(resolverScope)),
+    };
+  }
+  if (!accounts.listToken.value) {
+    accounts.listToken.value = await findListTokenPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.metadata.value) {
+    accounts.metadata = {
+      ...accounts.metadata,
+      ...(await resolveMetadata(resolverScope)),
+    };
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.NonFungible;
+  }
+  if (!accounts.edition.value) {
+    accounts.edition = {
+      ...accounts.edition,
+      ...(await resolveEditionFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.ownerTokenRecord.value) {
+    accounts.ownerTokenRecord = {
+      ...accounts.ownerTokenRecord,
+      ...(await resolveOwnerTokenRecordFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.listTokenRecord.value) {
+    accounts.listTokenRecord = {
+      ...accounts.listTokenRecord,
+      ...(await resolveListTokenRecordFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.authorizationRulesProgram.value) {
+    if (accounts.authorizationRules.value) {
+      accounts.authorizationRulesProgram.value =
+        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
+    }
+  }
+  if (!accounts.tokenMetadataProgram.value) {
+    accounts.tokenMetadataProgram.value =
+      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+  }
+  if (!accounts.sysvarInstructions.value) {
+    accounts.sysvarInstructions.value =
+      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.ownerToken),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.listToken),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.metadata),
+      getAccountMeta(accounts.edition),
+      getAccountMeta(accounts.ownerTokenRecord),
+      getAccountMeta(accounts.listTokenRecord),
+      getAccountMeta(accounts.authorizationRules),
+      getAccountMeta(accounts.authorizationRulesProgram),
+      getAccountMeta(accounts.tokenMetadataProgram),
+      getAccountMeta(accounts.sysvarInstructions),
+    ],
+    programAddress,
+    data: getDelistLegacyInstructionDataEncoder().encode(
+      args as DelistLegacyInstructionDataArgs
+    ),
+  } as DelistLegacyInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountMetadata,
+    TAccountEdition,
+    TAccountOwnerTokenRecord,
+    TAccountListTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountAuthorizationRulesProgram,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions
+  >;
+
+  return instruction;
+}
+
 export type DelistLegacyInput<
   TAccountOwnerToken extends string = string,
   TAccountMint extends string = string,
   TAccountListToken extends string = string,
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMetadata extends string = string,
   TAccountEdition extends string = string,
@@ -206,10 +521,10 @@ export type DelistLegacyInput<
   listToken: Address<TAccountListToken>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  rentDest: TransactionSigner<TAccountRentDest>;
+  rentDestination?: TransactionSigner<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   metadata: Address<TAccountMetadata>;
   edition: Address<TAccountEdition>;
@@ -219,7 +534,8 @@ export type DelistLegacyInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  authorizationData: DelistLegacyInstructionDataArgs['authorizationData'];
+  authorizationData?: DelistLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: DelistLegacyInstructionExtraArgs['tokenStandard'];
 };
 
 export function getDelistLegacyInstruction<
@@ -228,10 +544,10 @@ export function getDelistLegacyInstruction<
   TAccountListToken extends string,
   TAccountListState extends string,
   TAccountOwner extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMetadata extends string,
   TAccountEdition extends string,
@@ -248,10 +564,10 @@ export function getDelistLegacyInstruction<
     TAccountListToken,
     TAccountListState,
     TAccountOwner,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram,
     TAccountMetadata,
     TAccountEdition,
@@ -269,10 +585,10 @@ export function getDelistLegacyInstruction<
   TAccountListToken,
   TAccountListState,
   TAccountOwner,
-  TAccountRentDest,
+  TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountSystemProgram,
   TAccountMetadata,
   TAccountEdition,
@@ -293,13 +609,16 @@ export function getDelistLegacyInstruction<
     listToken: { value: input.listToken ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     metadata: { value: input.metadata ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
@@ -338,9 +657,29 @@ export function getDelistLegacyInstruction<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.NonFungible;
+  }
+  if (!accounts.authorizationRulesProgram.value) {
+    if (accounts.authorizationRules.value) {
+      accounts.authorizationRulesProgram.value =
+        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
+    }
   }
   if (!accounts.tokenMetadataProgram.value) {
     accounts.tokenMetadataProgram.value =
@@ -359,10 +698,10 @@ export function getDelistLegacyInstruction<
       getAccountMeta(accounts.listToken),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.metadata),
       getAccountMeta(accounts.edition),
@@ -384,10 +723,10 @@ export function getDelistLegacyInstruction<
     TAccountListToken,
     TAccountListState,
     TAccountOwner,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram,
     TAccountMetadata,
     TAccountEdition,
@@ -413,10 +752,10 @@ export type ParsedDelistLegacyInstruction<
     listToken: TAccountMetas[2];
     listState: TAccountMetas[3];
     owner: TAccountMetas[4];
-    rentDest: TAccountMetas[5];
+    rentDestination: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];
     associatedTokenProgram: TAccountMetas[7];
-    tcompProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[8];
     systemProgram: TAccountMetas[9];
     metadata: TAccountMetas[10];
     edition: TAccountMetas[11];
@@ -462,10 +801,10 @@ export function parseDelistLegacyInstruction<
       listToken: getNextAccount(),
       listState: getNextAccount(),
       owner: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       metadata: getNextAccount(),
       edition: getNextAccount(),

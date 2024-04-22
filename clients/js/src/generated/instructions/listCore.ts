@@ -29,6 +29,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -104,10 +105,10 @@ export type ListCoreInstructionData = {
 
 export type ListCoreInstructionDataArgs = {
   amount: number | bigint;
-  expireInSec: OptionOrNullable<number | bigint>;
-  currency: OptionOrNullable<Address>;
-  privateTaker: OptionOrNullable<Address>;
-  makerBroker: OptionOrNullable<Address>;
+  expireInSec?: OptionOrNullable<number | bigint>;
+  currency?: OptionOrNullable<Address>;
+  privateTaker?: OptionOrNullable<Address>;
+  makerBroker?: OptionOrNullable<Address>;
 };
 
 export function getListCoreInstructionDataEncoder(): Encoder<ListCoreInstructionDataArgs> {
@@ -123,6 +124,10 @@ export function getListCoreInstructionDataEncoder(): Encoder<ListCoreInstruction
     (value) => ({
       ...value,
       discriminator: [173, 76, 167, 125, 118, 71, 1, 153],
+      expireInSec: value.expireInSec ?? none(),
+      currency: value.currency ?? none(),
+      privateTaker: value.privateTaker ?? none(),
+      makerBroker: value.makerBroker ?? none(),
     })
   );
 }
@@ -167,10 +172,10 @@ export type ListCoreInput<
   systemProgram?: Address<TAccountSystemProgram>;
   payer: TransactionSigner<TAccountPayer>;
   amount: ListCoreInstructionDataArgs['amount'];
-  expireInSec: ListCoreInstructionDataArgs['expireInSec'];
-  currency: ListCoreInstructionDataArgs['currency'];
-  privateTaker: ListCoreInstructionDataArgs['privateTaker'];
-  makerBroker: ListCoreInstructionDataArgs['makerBroker'];
+  expireInSec?: ListCoreInstructionDataArgs['expireInSec'];
+  currency?: ListCoreInstructionDataArgs['currency'];
+  privateTaker?: ListCoreInstructionDataArgs['privateTaker'];
+  makerBroker?: ListCoreInstructionDataArgs['makerBroker'];
 };
 
 export function getListCoreInstruction<
