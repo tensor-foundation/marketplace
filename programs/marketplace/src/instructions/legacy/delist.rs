@@ -21,7 +21,7 @@ pub struct DelistLegacy<'info> {
     #[account(
         mut,
         seeds=[
-            b"nft_escrow".as_ref(),
+            b"list_token".as_ref(),
             mint.key().as_ref(),
         ],
         bump,
@@ -32,7 +32,7 @@ pub struct DelistLegacy<'info> {
 
     #[account(
         mut,
-        close = rent_dest,
+        close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             mint.key().as_ref(),
@@ -48,15 +48,15 @@ pub struct DelistLegacy<'info> {
     //separate payer so that a program can list with owner being a PDA
     #[account(
         mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: Signer<'info>,
+    pub rent_destination: Signer<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
 
@@ -110,7 +110,7 @@ pub fn process_delist_legacy<'info>(
     tensor_toolbox::token_metadata::transfer(
         tensor_toolbox::token_metadata::TransferArgs {
             owner: &ctx.accounts.list_state.to_account_info(),
-            payer: &ctx.accounts.rent_dest,
+            payer: &ctx.accounts.rent_destination,
             source_ata: &ctx.accounts.list_token,
             destination_ata: &ctx.accounts.owner_token,
             destination_owner: &ctx.accounts.owner,
@@ -129,7 +129,7 @@ pub fn process_delist_legacy<'info>(
             token_metadata_program: &ctx.accounts.token_metadata_program,
             delegate: None,
         },
-        None,
+        Some(&[&ctx.accounts.list_state.seeds()]),
     )?;
 
     // records the delisting
@@ -151,7 +151,7 @@ pub fn process_delist_legacy<'info>(
             private_taker: list_state.private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
@@ -162,7 +162,7 @@ pub fn process_delist_legacy<'info>(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
                 account: ctx.accounts.list_token.to_account_info(),
-                destination: ctx.accounts.rent_dest.to_account_info(),
+                destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },
         )

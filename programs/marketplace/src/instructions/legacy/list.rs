@@ -24,7 +24,7 @@ pub struct ListLegacy<'info> {
         init, //<-- this HAS to be init, not init_if_needed for safety (else single listings and pool listings can get mixed)
         payer = payer,
         seeds=[
-            b"nft_escrow".as_ref(),
+            b"list_token".as_ref(),
             mint.key().as_ref(),
         ],
         bump,
@@ -56,7 +56,7 @@ pub struct ListLegacy<'info> {
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
 
@@ -182,7 +182,7 @@ pub fn process_list_legacy<'info>(
             private_taker,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )
 }

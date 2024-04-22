@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
@@ -26,7 +26,7 @@ pub struct BuyLegacy<'info> {
     #[account(
         mut,
         seeds=[
-            b"nft_escrow".as_ref(),
+            b"list_token".as_ref(),
             mint.key().as_ref(),
         ],
         bump,
@@ -37,7 +37,7 @@ pub struct BuyLegacy<'info> {
 
     #[account(
         mut,
-        close = rent_dest,
+        close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             mint.key().as_ref(),
@@ -80,9 +80,9 @@ pub struct BuyLegacy<'info> {
     /// CHECK: list_state.get_rent_payer()
     #[account(
         mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -111,7 +111,7 @@ pub struct BuyLegacy<'info> {
 
     /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
-    pub owner_token_record: Option<UncheckedAccount<'info>>,
+    pub buyer_token_record: Option<UncheckedAccount<'info>>,
 
     /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
@@ -198,7 +198,7 @@ pub fn process_buy_legacy<'info, 'b>(
     tensor_toolbox::token_metadata::transfer(
         tensor_toolbox::token_metadata::TransferArgs {
             owner: &ctx.accounts.list_state.to_account_info(),
-            payer: &ctx.accounts.rent_dest,
+            payer: &ctx.accounts.buyer,
             source_ata: &ctx.accounts.list_token,
             destination_ata: &ctx.accounts.buyer_token,
             destination_owner: &ctx.accounts.buyer,
@@ -210,14 +210,14 @@ pub fn process_buy_legacy<'info, 'b>(
             spl_ata_program: &ctx.accounts.associated_token_program,
             sysvar_instructions: &ctx.accounts.sysvar_instructions,
             owner_token_record: ctx.accounts.list_token_record.as_ref(),
-            destination_token_record: ctx.accounts.owner_token_record.as_ref(),
+            destination_token_record: ctx.accounts.buyer_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),
             authorization_data: authorization_data.map(AuthorizationData::from),
             token_metadata_program: &ctx.accounts.token_metadata_program,
             delegate: None,
         },
-        None,
+        Some(&[&ctx.accounts.list_state.seeds()]),
     )?;
 
     let asset_id = ctx.accounts.mint.key();
@@ -285,6 +285,20 @@ pub fn process_buy_legacy<'info, 'b>(
         },
     )?;
 
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)
+    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
+
+    // closes the list token account
+
+    close_account(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            CloseAccount {
+                account: ctx.accounts.list_token.to_account_info(),
+                destination: ctx.accounts.rent_destination.to_account_info(),
+                authority: ctx.accounts.list_state.to_account_info(),
+            },
+        )
+        .with_signer(&[&ctx.accounts.list_state.seeds()]),
+    )
 }

@@ -1285,7 +1285,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -1320,7 +1320,7 @@
           "isSigner": false
         },
         {
-          "name": "ownerTokenRecord",
+          "name": "buyerTokenRecord",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -1404,7 +1404,7 @@
           "isSigner": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": true
         },
@@ -1419,7 +1419,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1531,7 +1531,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
