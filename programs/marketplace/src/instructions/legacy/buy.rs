@@ -6,8 +6,10 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, token_metadata::assert_decode_metadata, transfer_creators_fee,
-    transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc, FromExternal,
+    calc_creators_fee, calc_fees,
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
+    FromExternal,
 };
 use vipers::Validate;
 
@@ -195,13 +197,13 @@ pub fn process_buy_legacy<'info, 'b>(
 
     // transfer the NFT to the buyer
 
-    tensor_toolbox::token_metadata::transfer(
-        tensor_toolbox::token_metadata::TransferArgs {
-            owner: &ctx.accounts.list_state.to_account_info(),
+    transfer(
+        TransferArgs {
+            source: &ctx.accounts.list_state.to_account_info(),
             payer: &ctx.accounts.buyer,
             source_ata: &ctx.accounts.list_token,
             destination_ata: &ctx.accounts.buyer_token,
-            destination_owner: &ctx.accounts.buyer,
+            destination: &ctx.accounts.buyer,
             mint: ctx.accounts.mint.deref(),
             metadata: &ctx.accounts.metadata,
             edition: &ctx.accounts.edition,
@@ -209,7 +211,7 @@ pub fn process_buy_legacy<'info, 'b>(
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
             sysvar_instructions: &ctx.accounts.sysvar_instructions,
-            owner_token_record: ctx.accounts.list_token_record.as_ref(),
+            source_token_record: ctx.accounts.list_token_record.as_ref(),
             destination_token_record: ctx.accounts.buyer_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),

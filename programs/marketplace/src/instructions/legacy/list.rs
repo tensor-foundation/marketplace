@@ -4,6 +4,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
+use tensor_toolbox::token_metadata::{transfer, TransferArgs};
 
 use crate::{
     maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
@@ -117,13 +118,13 @@ pub fn process_list_legacy<'info>(
 
     // transfer the NFT (the mint is validated on the transfer)
 
-    tensor_toolbox::token_metadata::transfer(
-        tensor_toolbox::token_metadata::TransferArgs {
-            owner: &ctx.accounts.owner,
+    transfer(
+        TransferArgs {
+            source: &ctx.accounts.owner,
             payer: &ctx.accounts.payer,
             source_ata: &ctx.accounts.owner_token,
             destination_ata: &ctx.accounts.list_token,
-            destination_owner: &ctx.accounts.list_state.to_account_info(),
+            destination: &ctx.accounts.list_state.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,
             edition: &ctx.accounts.edition,
@@ -131,7 +132,7 @@ pub fn process_list_legacy<'info>(
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
             sysvar_instructions: &ctx.accounts.sysvar_instructions,
-            owner_token_record: ctx.accounts.owner_token_record.as_ref(),
+            source_token_record: ctx.accounts.owner_token_record.as_ref(),
             destination_token_record: ctx.accounts.list_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),
