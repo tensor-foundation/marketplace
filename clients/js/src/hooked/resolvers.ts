@@ -1,4 +1,4 @@
-import { Address, ProgramDerivedAddress } from '@solana/addresses';
+import { ProgramDerivedAddress } from '@solana/addresses';
 import { ResolvedAccount, expectAddress } from '../generated';
 import {
   findAssociatedTokenAccountPda,
@@ -87,23 +87,6 @@ export const resolveBuyerTokenRecordFromTokenStandard = async ({
           mint: expectAddress(accounts.mint?.value),
           token: expectAddress(accounts.buyerToken?.value),
         }),
-      }
-    : { value: null };
-};
-
-export const resolveAuthorizationRulesProgramFromTokenStandard = async ({
-  accounts,
-  args,
-}: {
-  accounts: Record<string, ResolvedAccount>;
-  args: { tokenStandard?: TokenStandard | undefined };
-}): Promise<Partial<{ value: Address | null }>> => {
-  return (args.tokenStandard === TokenStandard.ProgrammableNonFungible ||
-    args.tokenStandard === TokenStandard.ProgrammableNonFungibleEdition) &&
-    expectAddress(accounts.authorizationRules?.value)
-    ? {
-        value:
-          'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>,
       }
     : { value: null };
 };
