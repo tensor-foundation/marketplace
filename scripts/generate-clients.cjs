@@ -398,7 +398,6 @@ kinobi.accept(
       "resolveOwnerTokenRecordFromTokenStandard",
       "resolveBuyerTokenRecordFromTokenStandard",
       "resolveListTokenRecordFromTokenStandard",
-      "resolveAuthorizationRulesProgramFromTokenStandard",
     ],
   })
 );
