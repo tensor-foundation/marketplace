@@ -1,5 +1,6 @@
 const path = require("path");
 const k = require("@metaplex-foundation/kinobi");
+const token22 = require("./kinobi/token22-instructions.cjs");
 
 // Paths.
 const clientDir = path.join(__dirname, "..", "clients");
@@ -352,6 +353,9 @@ kinobi.update(
     },
   })
 );
+
+// Update instructions for Token-2022 instructions.
+kinobi.update(token22());
 
 // Set more struct default values dynamically.
 kinobi.update(

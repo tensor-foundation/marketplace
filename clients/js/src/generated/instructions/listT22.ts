@@ -42,8 +42,15 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { resolveOwnerToken } from '../../hooked';
+import { findListStatePda, findListTokenPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type ListT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -165,6 +172,180 @@ export function getListT22InstructionDataCodec(): Codec<
   );
 }
 
+export type ListT22AsyncInput<
+  TAccountOwnerToken extends string = string,
+  TAccountMint extends string = string,
+  TAccountListToken extends string = string,
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountPayer extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  ownerToken?: Address<TAccountOwnerToken>;
+  mint: Address<TAccountMint>;
+  /** Implicitly checked via transfer. Will fail if wrong account */
+  listToken?: Address<TAccountListToken>;
+  listState?: Address<TAccountListState>;
+  owner: TransactionSigner<TAccountOwner>;
+  payer?: TransactionSigner<TAccountPayer>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  amount: ListT22InstructionDataArgs['amount'];
+  expireInSec?: ListT22InstructionDataArgs['expireInSec'];
+  currency?: ListT22InstructionDataArgs['currency'];
+  privateTaker?: ListT22InstructionDataArgs['privateTaker'];
+  makerBroker?: ListT22InstructionDataArgs['makerBroker'];
+};
+
+export async function getListT22InstructionAsync<
+  TAccountOwnerToken extends string,
+  TAccountMint extends string,
+  TAccountListToken extends string,
+  TAccountListState extends string,
+  TAccountOwner extends string,
+  TAccountPayer extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+>(
+  input: ListT22AsyncInput<
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountPayer,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >
+): Promise<
+  ListT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountPayer,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    ownerToken: { value: input.ownerToken ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    listToken: { value: input.listToken ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.ownerToken.value) {
+    accounts.ownerToken = {
+      ...accounts.ownerToken,
+      ...(await resolveOwnerToken(resolverScope)),
+    };
+  }
+  if (!accounts.listToken.value) {
+    accounts.listToken.value = await findListTokenPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.ownerToken),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.listToken),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getListT22InstructionDataEncoder().encode(
+      args as ListT22InstructionDataArgs
+    ),
+  } as ListT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountPayer,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >;
+
+  return instruction;
+}
+
 export type ListT22Input<
   TAccountOwnerToken extends string = string,
   TAccountMint extends string = string,
@@ -183,7 +364,7 @@ export type ListT22Input<
   listToken: Address<TAccountListToken>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  payer: TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -266,6 +447,9 @@ export function getListT22Instruction<
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =

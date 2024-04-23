@@ -31,8 +31,15 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { resolveOwnerToken } from '../../hooked';
+import { findListStatePda, findListTokenPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type DelistT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -121,6 +128,154 @@ export function getDelistT22InstructionDataCodec(): Codec<
   );
 }
 
+export type DelistT22AsyncInput<
+  TAccountOwnerToken extends string = string,
+  TAccountMint extends string = string,
+  TAccountListToken extends string = string,
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountRentDestination extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  ownerToken?: Address<TAccountOwnerToken>;
+  mint: Address<TAccountMint>;
+  listToken?: Address<TAccountListToken>;
+  listState?: Address<TAccountListState>;
+  owner: TransactionSigner<TAccountOwner>;
+  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+};
+
+export async function getDelistT22InstructionAsync<
+  TAccountOwnerToken extends string,
+  TAccountMint extends string,
+  TAccountListToken extends string,
+  TAccountListState extends string,
+  TAccountOwner extends string,
+  TAccountRentDestination extends string,
+  TAccountTokenProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+>(
+  input: DelistT22AsyncInput<
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >
+): Promise<
+  DelistT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    ownerToken: { value: input.ownerToken ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    listToken: { value: input.listToken ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts };
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.ownerToken.value) {
+    accounts.ownerToken = {
+      ...accounts.ownerToken,
+      ...(await resolveOwnerToken(resolverScope)),
+    };
+  }
+  if (!accounts.listToken.value) {
+    accounts.listToken.value = await findListTokenPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.ownerToken),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.listToken),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getDelistT22InstructionDataEncoder().encode({}),
+  } as DelistT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwnerToken,
+    TAccountMint,
+    TAccountListToken,
+    TAccountListState,
+    TAccountOwner,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram
+  >;
+
+  return instruction;
+}
+
 export type DelistT22Input<
   TAccountOwnerToken extends string = string,
   TAccountMint extends string = string,
@@ -137,7 +292,7 @@ export type DelistT22Input<
   listToken: Address<TAccountListToken>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  rentDestination: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: TransactionSigner<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -204,6 +359,9 @@ export function getDelistT22Instruction<
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =

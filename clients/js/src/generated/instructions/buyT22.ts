@@ -32,9 +32,16 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { findFeeVaultPda } from '../pdas';
+import { resolveBuyerToken } from '../../hooked';
+import { findFeeVaultPda, findListStatePda, findListTokenPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type BuyT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -171,16 +178,16 @@ export type BuyT22AsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  listToken: Address<TAccountListToken>;
-  listState: Address<TAccountListState>;
+  listToken?: Address<TAccountListToken>;
+  listState?: Address<TAccountListState>;
   mint: Address<TAccountMint>;
-  buyer: Address<TAccountBuyer>;
-  buyerToken: Address<TAccountBuyerToken>;
+  buyer?: Address<TAccountBuyer>;
+  buyerToken?: Address<TAccountBuyerToken>;
   payer: TransactionSigner<TAccountPayer>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -277,13 +284,40 @@ export async function getBuyT22InstructionAsync<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
   if (!accounts.feeVault.value) {
     accounts.feeVault.value = await findFeeVaultPda();
   }
+  if (!accounts.listToken.value) {
+    accounts.listToken.value = await findListTokenPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.buyerToken.value) {
+    accounts.buyerToken = {
+      ...accounts.buyerToken,
+      ...(await resolveBuyerToken(resolverScope)),
+    };
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -364,13 +398,13 @@ export type BuyT22Input<
   listToken: Address<TAccountListToken>;
   listState: Address<TAccountListState>;
   mint: Address<TAccountMint>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   buyerToken: Address<TAccountBuyerToken>;
   payer: TransactionSigner<TAccountPayer>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -466,9 +500,17 @@ export function getBuyT22Instruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
