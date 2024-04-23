@@ -341,7 +341,7 @@ pub mod marketplace_program {
         ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_t22::process_take_bid_t22(ctx, min_amount)
+        instructions::token22::process_take_bid_t22(ctx, min_amount)
     }
 
     //------------------- WNS

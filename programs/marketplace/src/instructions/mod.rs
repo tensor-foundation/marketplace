@@ -1,6 +1,9 @@
 pub mod legacy;
 pub use legacy::*;
 
+pub mod token22;
+pub use token22::*;
+
 pub mod bid;
 pub mod buy;
 pub mod buy_core;
@@ -18,7 +21,6 @@ pub mod noop;
 pub mod take_bid_common;
 pub mod take_bid_compressed;
 pub mod take_bid_core;
-pub mod take_bid_t22;
 pub mod take_bid_wns;
 pub mod withdraw_fees;
 
@@ -38,7 +40,6 @@ pub use list_core::*;
 pub use noop::*;
 pub use take_bid_compressed::*;
 pub use take_bid_core::*;
-pub use take_bid_t22::*;
 pub use take_bid_wns::*;
 pub use withdraw_fees::*;
 
