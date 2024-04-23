@@ -1,3 +1,4 @@
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   appendTransactionInstruction,
   assertAccountDecoded,
@@ -125,8 +126,13 @@ test('it can buy a legacy Programmable NFT', async (t) => {
     creators: [owner.address],
   });
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(buyLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
