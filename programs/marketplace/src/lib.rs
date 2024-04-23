@@ -337,6 +337,41 @@ pub mod marketplace_program {
 
     //------------------- Token Extensions (SPL Token-2022)
 
+    pub fn buy_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyT22<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::token22::process_buy_t22(ctx, max_amount)
+    }
+
+    pub fn close_expired_listing_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingT22<'info>>,
+    ) -> Result<()> {
+        instructions::token22::process_close_expired_listing_t22(ctx)
+    }
+
+    pub fn delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info>>) -> Result<()> {
+        instructions::token22::process_delist_t22(ctx)
+    }
+
+    pub fn list_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListT22<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::token22::process_list_t22(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
+
     pub fn take_bid_t22<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
         min_amount: u64,
