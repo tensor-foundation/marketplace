@@ -7,13 +7,24 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct TcompNoop<'info> {
-    // TODO: is this secure enough? or do we need to bother checking seeds?
-    /// CHECK: has to be signed by an account owned by tcomp
+    /// CHECK: has to be signed by an account owned by the program (data checked in the instruction)
     #[account(owner = crate::ID)]
     pub tcomp_signer: Signer<'info>,
 }
 
-pub fn process_noop(_ctx: Context<TcompNoop>) -> Result<()> {
+pub fn process_noop(ctx: Context<TcompNoop>) -> Result<()> {
+    let data = &(*ctx.accounts.tcomp_signer.data).borrow();
+    // the account must not be empty
+    if data.is_empty()
+        || u64::from_le_bytes(
+            data[0..8]
+                .try_into()
+                .map_err(|_error| ErrorCode::AccountDiscriminatorNotFound)?,
+        ) == 0
+    {
+        return Err(ErrorCode::AccountDiscriminatorNotFound.into());
+    }
+
     Ok(())
 }
 
