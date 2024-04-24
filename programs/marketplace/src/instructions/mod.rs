@@ -4,6 +4,9 @@ pub use legacy::*;
 pub mod token22;
 pub use token22::*;
 
+pub mod wns;
+pub use wns::*;
+
 pub mod bid;
 pub mod buy;
 pub mod buy_core;
@@ -21,7 +24,6 @@ pub mod noop;
 pub mod take_bid_common;
 pub mod take_bid_compressed;
 pub mod take_bid_core;
-pub mod take_bid_wns;
 pub mod withdraw_fees;
 
 pub use bid::*;
@@ -40,7 +42,6 @@ pub use list_core::*;
 pub use noop::*;
 pub use take_bid_compressed::*;
 pub use take_bid_core::*;
-pub use take_bid_wns::*;
 pub use withdraw_fees::*;
 
 use anchor_lang::solana_program::pubkey::Pubkey;
