@@ -2,20 +2,32 @@
   "name": "@tensor-foundation/marketplace",
   "version": "0.0.0",
   "description": "Your one-stop-shop for your NFT needs.",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "sideEffects": false,
+  "module": "./dist/src/index.js",
+  "main": "dist/src/index.cjs",
+  "types": "dist/types/src/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.cjs"
+    }
+  },
+  "files": [
+    "./dist/src",
+    "./dist/types"
+  ],
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.json",
+    "build": "rimraf dist && tsup && tsc -p ./tsconfig.declarations.json",
     "build:docs": "typedoc",
+    "clean": "rm -rf node_modules && rm -rf dist",
     "test": "ava",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "format": "prettier --check src test",
     "format:fix": "prettier --write src test"
   },
-  "files": [
-    "/dist/src"
-  ],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -59,5 +71,5 @@
       }
     }
   },
-  "packageManager": "pnpm@8.2.0"
+  "packageManager": "pnpm@9.0.6"
 }
