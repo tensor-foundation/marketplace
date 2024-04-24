@@ -1,6 +1,6 @@
 use tensor_toolbox::transfer_lamports_from_pda;
 
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 pub struct CloseExpiredBid<'info> {

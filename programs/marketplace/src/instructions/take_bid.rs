@@ -6,7 +6,7 @@ use tensor_toolbox::{
 use tensor_whitelist::MintProof;
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
 
-use crate::*;
+use crate::{noop::record_event, *};
 
 pub struct TakeBidArgs<'a, 'info> {
     pub bid_state: &'a mut Account<'info, BidState>,

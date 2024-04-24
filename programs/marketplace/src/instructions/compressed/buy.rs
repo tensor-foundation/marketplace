@@ -3,7 +3,7 @@ use tensor_toolbox::{
     CreatorFeeMode, DataHashArgs, FromAcc, FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 pub struct Buy<'info> {

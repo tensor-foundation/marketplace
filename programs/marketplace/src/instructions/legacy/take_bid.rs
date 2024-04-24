@@ -11,7 +11,7 @@ use vipers::Validate;
 
 use crate::{
     pnft_adapter::*,
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
     CURRENT_TCOMP_VERSION,
 };

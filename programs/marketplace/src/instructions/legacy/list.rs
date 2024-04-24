@@ -7,9 +7,9 @@ use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::token_metadata::{transfer, TransferArgs};
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
-    ListState, MakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    LIST_STATE_SIZE, MAX_EXPIRY_SEC,
+    maker_broker_is_whitelisted, noop::record_event, program::MarketplaceProgram,
+    AuthorizationDataLocal, ListState, MakeEvent, Target, TcompError, TcompEvent, TcompSigner,
+    CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]

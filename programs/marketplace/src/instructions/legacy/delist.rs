@@ -7,7 +7,7 @@ use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::token_metadata::{transfer, TransferArgs};
 
 use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
+    noop::record_event, program::MarketplaceProgram, AuthorizationDataLocal, ListState, MakeEvent,
     Target, TcompError, TcompEvent, TcompSigner,
 };
 

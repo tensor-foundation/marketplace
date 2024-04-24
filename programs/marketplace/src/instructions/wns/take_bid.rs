@@ -15,7 +15,7 @@ use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    instructions::take_bid::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 

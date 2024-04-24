@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use mpl_core::{
+use metaplex_core::{
     accounts::BaseAssetV1,
     instructions::TransferV1CpiBuilder,
     types::{Royalties, UpdateAuthority},
@@ -12,7 +12,7 @@ use vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram,
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 

@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 pub struct Edit<'info> {

@@ -7,7 +7,7 @@ use anchor_spl::{
 use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts};
 
 use crate::{
-    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    noop::record_event, program::MarketplaceProgram, ListState, MakeEvent, Target, TcompError,
     TcompEvent, TcompSigner,
 };
 

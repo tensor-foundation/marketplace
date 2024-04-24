@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 
 use crate::{
-    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    noop::record_event, program::MarketplaceProgram, ListState, MakeEvent, Target, TcompError,
     TcompEvent, TcompSigner,
 };
 

@@ -2,6 +2,8 @@ use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
+use self::noop::record_event;
+
 #[derive(Accounts)]
 pub struct Delist<'info> {
     /// CHECK: downstream

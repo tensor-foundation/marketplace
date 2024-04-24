@@ -5,7 +5,7 @@ use tensor_toolbox::{
 use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;
 
-use crate::{take_bid_common::*, *};
+use crate::*;
 
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {

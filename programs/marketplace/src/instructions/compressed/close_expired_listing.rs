@@ -1,6 +1,6 @@
 use tensor_toolbox::{transfer_cnft, TransferArgs};
 
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 pub struct CloseExpiredListing<'info> {

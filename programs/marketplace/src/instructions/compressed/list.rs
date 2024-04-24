@@ -1,7 +1,7 @@
 use mpl_bubblegum::utils::get_asset_id;
 use tensor_toolbox::{transfer_cnft, TransferArgs};
 
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 #[instruction(nonce: u64)]

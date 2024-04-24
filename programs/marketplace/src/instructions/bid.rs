@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{noop::record_event, *};
 use tensor_toolbox::transfer_lamports_from_pda;
 use tensorswap::instructions::assert_decode_margin_account;
 

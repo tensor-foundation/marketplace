@@ -21,7 +21,7 @@ testing = []
 anchor-lang = "0.29.0"
 anchor-spl = { version = "0.29.0", features =  ["default"] }
 mpl-bubblegum = "1.0.0"
-mpl-core = "0.4.3"
+metaplex-core = { package="mpl-core", version="0.4.3" }
 mpl-token-metadata = "4.0.0"
 spl-account-compression = { version = "0.2.0", features = ["cpi"] }
 spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }

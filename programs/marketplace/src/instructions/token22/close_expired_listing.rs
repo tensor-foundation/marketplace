@@ -4,7 +4,7 @@ use anchor_spl::{
 };
 
 use self::program::MarketplaceProgram;
-use crate::*;
+use crate::{noop::record_event, *};
 
 #[derive(Accounts)]
 pub struct CloseExpiredListingT22<'info> {

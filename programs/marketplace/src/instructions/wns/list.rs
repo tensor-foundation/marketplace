@@ -10,8 +10,8 @@ use tensor_toolbox::token_2022::{
 };
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
+    maker_broker_is_whitelisted, noop::record_event, program::MarketplaceProgram, ListState,
+    MakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
     MAX_EXPIRY_SEC,
 };
 

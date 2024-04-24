@@ -1,5 +1,5 @@
 use anchor_lang::solana_program::{program::invoke, system_instruction};
-use mpl_core::{instructions::TransferV1CpiBuilder, types::Royalties};
+use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
@@ -7,9 +7,8 @@ use tensor_toolbox::{
     transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
 };
 
+use self::{noop::record_event, program::MarketplaceProgram};
 use crate::*;
-
-use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
 pub struct BuyCore<'info> {

@@ -10,7 +10,7 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
+    noop::record_event, program::MarketplaceProgram, ListState, TakeEvent, Target, TcompError,
     TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
