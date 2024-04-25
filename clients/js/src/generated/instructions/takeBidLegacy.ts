@@ -29,6 +29,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -80,7 +81,9 @@ export type TakeBidLegacyInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -197,9 +200,9 @@ export type TakeBidLegacyInstructionData = {
 
 export type TakeBidLegacyInstructionDataArgs = {
   minAmount: number | bigint;
-  optionalRoyaltyPct: OptionOrNullable<number>;
+  optionalRoyaltyPct?: OptionOrNullable<number>;
   rulesAccPresent: boolean;
-  authorizationData: OptionOrNullable<AuthorizationDataLocalArgs>;
+  authorizationData?: OptionOrNullable<AuthorizationDataLocalArgs>;
 };
 
 export function getTakeBidLegacyInstructionDataEncoder(): Encoder<TakeBidLegacyInstructionDataArgs> {
@@ -217,6 +220,8 @@ export function getTakeBidLegacyInstructionDataEncoder(): Encoder<TakeBidLegacyI
     (value) => ({
       ...value,
       discriminator: [188, 35, 116, 108, 0, 233, 237, 201],
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      authorizationData: value.authorizationData ?? none(),
     })
   );
 }
@@ -295,7 +300,7 @@ export type TakeBidLegacyInput<
   tempEscrowTokenRecord: Address<TAccountTempEscrowTokenRecord>;
   authRules: Address<TAccountAuthRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
@@ -304,9 +309,9 @@ export type TakeBidLegacyInput<
   mintProof: Address<TAccountMintProof>;
   rentDest: Address<TAccountRentDest>;
   minAmount: TakeBidLegacyInstructionDataArgs['minAmount'];
-  optionalRoyaltyPct: TakeBidLegacyInstructionDataArgs['optionalRoyaltyPct'];
+  optionalRoyaltyPct?: TakeBidLegacyInstructionDataArgs['optionalRoyaltyPct'];
   rulesAccPresent: TakeBidLegacyInstructionDataArgs['rulesAccPresent'];
-  authorizationData: TakeBidLegacyInstructionDataArgs['authorizationData'];
+  authorizationData?: TakeBidLegacyInstructionDataArgs['authorizationData'];
 };
 
 export function getTakeBidLegacyInstruction<
@@ -476,6 +481,10 @@ export function getTakeBidLegacyInstruction<
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =

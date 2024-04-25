@@ -50,7 +50,9 @@ export type BuyCoreInstruction<
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
-  TAccountMarketplaceProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -166,7 +168,7 @@ export type BuyCoreInput<
   makerBroker?: Address<TAccountMakerBroker>;
   rentDest: Address<TAccountRentDest>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
-  marketplaceProgram: Address<TAccountMarketplaceProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
 };
@@ -251,6 +253,10 @@ export function getBuyCoreInstruction<
   if (!accounts.mplCoreProgram.value) {
     accounts.mplCoreProgram.value =
       'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =

@@ -35,6 +35,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -213,7 +214,7 @@ export type TakeBidFullMetaInstructionDataArgs = {
   creatorShares: Uint8Array;
   creatorVerified: Array<boolean>;
   minAmount: number | bigint;
-  optionalRoyaltyPct: OptionOrNullable<number>;
+  optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
 export function getTakeBidFullMetaInstructionDataEncoder(): Encoder<TakeBidFullMetaInstructionDataArgs> {
@@ -242,6 +243,7 @@ export function getTakeBidFullMetaInstructionDataEncoder(): Encoder<TakeBidFullM
     (value) => ({
       ...value,
       discriminator: [242, 194, 203, 225, 234, 53, 10, 96],
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
     })
   );
 }
@@ -337,7 +339,7 @@ export type TakeBidFullMetaInput<
   creatorShares: TakeBidFullMetaInstructionDataArgs['creatorShares'];
   creatorVerified: TakeBidFullMetaInstructionDataArgs['creatorVerified'];
   minAmount: TakeBidFullMetaInstructionDataArgs['minAmount'];
-  optionalRoyaltyPct: TakeBidFullMetaInstructionDataArgs['optionalRoyaltyPct'];
+  optionalRoyaltyPct?: TakeBidFullMetaInstructionDataArgs['optionalRoyaltyPct'];
 };
 
 export function getTakeBidFullMetaInstruction<

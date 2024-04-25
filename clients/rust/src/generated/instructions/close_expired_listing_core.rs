@@ -109,7 +109,7 @@ impl CloseExpiredListingCoreInstructionData {
 ///   3. `[]` owner
 ///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[]` marketplace_program
+///   6. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   7. `[writable]` rent_dest
 #[derive(Default)]
 pub struct CloseExpiredListingCoreBuilder {
@@ -164,6 +164,7 @@ impl CloseExpiredListingCoreBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn marketplace_program(
         &mut self,
@@ -208,9 +209,9 @@ impl CloseExpiredListingCoreBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            marketplace_program: self
-                .marketplace_program
-                .expect("marketplace_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
 

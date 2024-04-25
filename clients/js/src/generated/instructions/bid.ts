@@ -31,6 +31,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -123,10 +124,10 @@ export type BidInstructionDataArgs = {
   fieldId: OptionOrNullable<Address>;
   amount: number | bigint;
   quantity: number;
-  expireInSec: OptionOrNullable<number | bigint>;
-  currency: OptionOrNullable<Address>;
-  privateTaker: OptionOrNullable<Address>;
-  makerBroker: OptionOrNullable<Address>;
+  expireInSec?: OptionOrNullable<number | bigint>;
+  currency?: OptionOrNullable<Address>;
+  privateTaker?: OptionOrNullable<Address>;
+  makerBroker?: OptionOrNullable<Address>;
 };
 
 export function getBidInstructionDataEncoder(): Encoder<BidInstructionDataArgs> {
@@ -148,6 +149,10 @@ export function getBidInstructionDataEncoder(): Encoder<BidInstructionDataArgs> 
     (value) => ({
       ...value,
       discriminator: [199, 56, 85, 38, 146, 243, 37, 158],
+      expireInSec: value.expireInSec ?? none(),
+      currency: value.currency ?? none(),
+      privateTaker: value.privateTaker ?? none(),
+      makerBroker: value.makerBroker ?? none(),
     })
   );
 }
@@ -202,10 +207,10 @@ export type BidInput<
   fieldId: BidInstructionDataArgs['fieldId'];
   amount: BidInstructionDataArgs['amount'];
   quantity: BidInstructionDataArgs['quantity'];
-  expireInSec: BidInstructionDataArgs['expireInSec'];
-  currency: BidInstructionDataArgs['currency'];
-  privateTaker: BidInstructionDataArgs['privateTaker'];
-  makerBroker: BidInstructionDataArgs['makerBroker'];
+  expireInSec?: BidInstructionDataArgs['expireInSec'];
+  currency?: BidInstructionDataArgs['currency'];
+  privateTaker?: BidInstructionDataArgs['privateTaker'];
+  makerBroker?: BidInstructionDataArgs['makerBroker'];
 };
 
 export function getBidInstruction<

@@ -47,6 +47,7 @@ import {
   getU8Encoder,
   mapEncoder,
 } from '@solana/codecs';
+import { ListStateSeeds, findListStatePda } from '../pdas';
 
 export type ListState<TAddress extends string = string> = Account<
   ListStateAccountData,
@@ -194,4 +195,24 @@ export async function fetchAllMaybeListState(
 ): Promise<MaybeListState[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeListState(maybeAccount));
+}
+
+export async function fetchListStateFromSeeds(
+  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  seeds: ListStateSeeds,
+  config: FetchAccountConfig & { programAddress?: Address } = {}
+): Promise<ListState> {
+  const maybeAccount = await fetchMaybeListStateFromSeeds(rpc, seeds, config);
+  assertAccountExists(maybeAccount);
+  return maybeAccount;
+}
+
+export async function fetchMaybeListStateFromSeeds(
+  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  seeds: ListStateSeeds,
+  config: FetchAccountConfig & { programAddress?: Address } = {}
+): Promise<MaybeListState> {
+  const { programAddress, ...fetchConfig } = config;
+  const [address] = await findListStatePda(seeds, { programAddress });
+  return await fetchMaybeListState(rpc, address, fetchConfig);
 }

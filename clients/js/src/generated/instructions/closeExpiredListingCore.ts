@@ -43,7 +43,9 @@ export type CloseExpiredListingCoreInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountMarketplaceProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -125,7 +127,7 @@ export type CloseExpiredListingCoreInput<
   owner: Address<TAccountOwner>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  marketplaceProgram: Address<TAccountMarketplaceProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDest: Address<TAccountRentDest>;
 };
 
@@ -190,6 +192,10 @@ export function getCloseExpiredListingCoreInstruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

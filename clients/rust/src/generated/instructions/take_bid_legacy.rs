@@ -273,7 +273,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   19. `[writable]` temp_escrow_token_record
 ///   20. `[]` auth_rules
 ///   21. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   22. `[]` associated_token_program
+///   22. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   23. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   24. `[]` tcomp_program
 ///   25. `[]` tensorswap_program
@@ -459,6 +459,7 @@ impl TakeBidLegacyBuilder {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
     #[inline(always)]
     pub fn associated_token_program(
         &mut self,
@@ -580,9 +581,9 @@ impl TakeBidLegacyBuilder {
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
-                associated_token_program: self
-                    .associated_token_program
-                    .expect("associated_token_program is not set"),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),

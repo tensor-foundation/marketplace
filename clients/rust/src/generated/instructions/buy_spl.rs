@@ -247,7 +247,7 @@ pub struct BuySplInstructionArgs {
 ///   7. `[]` bubblegum_program
 ///   8. `[]` tcomp_program
 ///   9. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   10. `[]` associated_token_program
+///   10. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   11. `[writable]` list_state
 ///   12. `[]` buyer
 ///   13. `[signer]` payer
@@ -361,6 +361,7 @@ impl BuySplBuilder {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
     #[inline(always)]
     pub fn associated_token_program(
         &mut self,
@@ -535,9 +536,9 @@ impl BuySplBuilder {
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
-            associated_token_program: self
-                .associated_token_program
-                .expect("associated_token_program is not set"),
+            associated_token_program: self.associated_token_program.unwrap_or(
+                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+            ),
             list_state: self.list_state.expect("list_state is not set"),
             buyer: self.buyer.expect("buyer is not set"),
             payer: self.payer.expect("payer is not set"),

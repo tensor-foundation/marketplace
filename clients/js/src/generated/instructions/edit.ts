@@ -29,6 +29,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -78,10 +79,10 @@ export type EditInstructionData = {
 
 export type EditInstructionDataArgs = {
   amount: number | bigint;
-  expireInSec: OptionOrNullable<number | bigint>;
-  currency: OptionOrNullable<Address>;
-  privateTaker: OptionOrNullable<Address>;
-  makerBroker: OptionOrNullable<Address>;
+  expireInSec?: OptionOrNullable<number | bigint>;
+  currency?: OptionOrNullable<Address>;
+  privateTaker?: OptionOrNullable<Address>;
+  makerBroker?: OptionOrNullable<Address>;
 };
 
 export function getEditInstructionDataEncoder(): Encoder<EditInstructionDataArgs> {
@@ -97,6 +98,10 @@ export function getEditInstructionDataEncoder(): Encoder<EditInstructionDataArgs
     (value) => ({
       ...value,
       discriminator: [15, 183, 33, 86, 87, 28, 151, 145],
+      expireInSec: value.expireInSec ?? none(),
+      currency: value.currency ?? none(),
+      privateTaker: value.privateTaker ?? none(),
+      makerBroker: value.makerBroker ?? none(),
     })
   );
 }
@@ -131,10 +136,10 @@ export type EditInput<
   owner: TransactionSigner<TAccountOwner>;
   tcompProgram: Address<TAccountTcompProgram>;
   amount: EditInstructionDataArgs['amount'];
-  expireInSec: EditInstructionDataArgs['expireInSec'];
-  currency: EditInstructionDataArgs['currency'];
-  privateTaker: EditInstructionDataArgs['privateTaker'];
-  makerBroker: EditInstructionDataArgs['makerBroker'];
+  expireInSec?: EditInstructionDataArgs['expireInSec'];
+  currency?: EditInstructionDataArgs['currency'];
+  privateTaker?: EditInstructionDataArgs['privateTaker'];
+  makerBroker?: EditInstructionDataArgs['makerBroker'];
 };
 
 export function getEditInstruction<

@@ -165,7 +165,7 @@ pub struct BuyCoreInstructionArgs {
 ///   8. `[writable, optional]` maker_broker
 ///   9. `[writable]` rent_dest
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
-///   11. `[]` marketplace_program
+///   11. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct BuyCoreBuilder {
@@ -258,6 +258,7 @@ impl BuyCoreBuilder {
         self.mpl_core_program = Some(mpl_core_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn marketplace_program(
         &mut self,
@@ -311,9 +312,9 @@ impl BuyCoreBuilder {
             mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
                 "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
             )),
-            marketplace_program: self
-                .marketplace_program
-                .expect("marketplace_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
