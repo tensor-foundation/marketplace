@@ -141,7 +141,7 @@ pub fn process_close_expired_listing_legacy<'info>(
             field: None,
             field_id: None,
             amount: list_state.amount,
-            quantity: 1, // <-- represents how many NFTs got delisted
+            quantity: 0,
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,

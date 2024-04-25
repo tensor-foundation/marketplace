@@ -85,11 +85,11 @@ kinobi.update(
       ),
     },
     {
-      account: "authoritzationRulesProgram",
+      account: "authorizationRulesProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-        "authoritzationRulesProgram"
+        "authorizationRulesProgram"
       ),
     },
     {
