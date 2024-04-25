@@ -1404,6 +1404,16 @@
           "isSigner": false
         },
         {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1421,11 +1431,6 @@
         {
           "name": "marketplaceProgram",
           "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDestination",
-          "isMut": true,
           "isSigner": false
         },
         {
@@ -1488,13 +1493,13 @@
       "name": "delistLegacy",
       "accounts": [
         {
-          "name": "ownerAta",
+          "name": "owner",
           "isMut": true,
-          "isSigner": false
+          "isSigner": true
         },
         {
-          "name": "mint",
-          "isMut": false,
+          "name": "ownerAta",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1508,14 +1513,14 @@
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "mint",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "rentDestination",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "tokenProgram",

@@ -17,7 +17,7 @@ import {
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
 
-test.only('it can list a legacy NFT', async (t) => {
+test('it can list a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.

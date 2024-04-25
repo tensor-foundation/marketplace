@@ -13,15 +13,16 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct DelistLegacy<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
     #[account(
         init_if_needed,
-        payer = rent_destination,
+        payer = owner,
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
     pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
@@ -42,15 +43,14 @@ pub struct DelistLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    //separate payer so that a program can list with owner being a PDA
+    /// CHECK: list_state.get_rent_payer()
     #[account(
         mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_destination: Signer<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -145,7 +145,7 @@ pub fn process_delist_legacy<'info>(
             field: None,
             field_id: None,
             amount: list_state.amount,
-            quantity: 1, // <-- represents how many NFTs got delisted
+            quantity: 0,
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,

@@ -228,7 +228,7 @@ pub fn process_buy_legacy<'info, 'b>(
             field: None,
             field_id: None,
             amount,
-            quantity: 1, // <-- represents how many NFTs got bought
+            quantity: 0,
             tcomp_fee,
             taker_broker_fee,
             maker_broker_fee,

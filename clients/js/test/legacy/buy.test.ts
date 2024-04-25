@@ -20,6 +20,7 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
+  TensorMarketplaceProgramErrorCode,
   TokenStandard,
   findListStatePda,
   getBuyLegacyInstructionAsync,
@@ -162,4 +163,62 @@ test('it can buy a legacy Programmable NFT', async (t) => {
       tokenAmount: { amount: '1' },
     },
   });
+});
+
+test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
+  const client = createDefaultSolanaClient();
+  const owner = await generateKeyPairSignerWithSol(client);
+  // We create an NFT.
+  const { mint } = await createDefaultpNft(client, owner, owner, owner);
+
+  // And we list the NFT.
+  const listLegacyIx = await getListLegacyInstructionAsync({
+    owner,
+    mint,
+    amount: 10,
+    tokenStandard: TokenStandard.ProgrammableNonFungible,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [listing] = await findListStatePda({ mint });
+  assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
+
+  // When a buyer tries to buy the NFT with a lower amount.
+  const buyer = await generateKeyPairSignerWithSol(client);
+  const buyLegacyIx = await getBuyLegacyInstructionAsync({
+    owner: owner.address,
+    payer: buyer,
+    mint,
+    maxAmount: 5,
+    tokenStandard: TokenStandard.ProgrammableNonFungible,
+    creators: [owner.address],
+  });
+
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
+  // Then we expect an error.
+  try {
+    await pipe(
+      await createDefaultTransaction(client, buyer),
+      (tx) => appendTransactionInstruction(computeIx, tx),
+      (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+      (tx) => signAndSendTransaction(client, tx)
+    );
+    t.fail('Expected price mismatch error.');
+  } catch (error) {
+    t.like(error, {
+      cause: {
+        context: {
+          code: TensorMarketplaceProgramErrorCode.PRICE_MISMATCH,
+        },
+      },
+    });
+  }
 });

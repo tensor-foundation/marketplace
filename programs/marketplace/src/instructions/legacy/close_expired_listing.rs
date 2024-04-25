@@ -16,7 +16,7 @@ pub struct CloseExpiredListingLegacy<'info> {
 
     #[account(
         init_if_needed,
-        payer = rent_destination,
+        payer = payer,
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
@@ -40,6 +40,16 @@ pub struct CloseExpiredListingLegacy<'info> {
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
+    //separate payer so that a program can list with owner being a PDA
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// CHECK: list_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_destination: UncheckedAccount<'info>,
+
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -47,12 +57,6 @@ pub struct CloseExpiredListingLegacy<'info> {
     pub system_program: Program<'info, System>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
-
-    /// CHECK: list_state.get_rent_payer()
-    #[account(mut,
-        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
-    )]
-    pub rent_destination: UncheckedAccount<'info>,
 
     // ------------------------------------------------ Token Metadata accounts
     /// CHECK: assert_decode_metadata + seeds below
@@ -110,7 +114,7 @@ pub fn process_close_expired_listing_legacy<'info>(
     transfer(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
-            payer: &ctx.accounts.rent_destination,
+            payer: &ctx.accounts.payer,
             source_ata: &ctx.accounts.list_ata,
             destination_ata: &ctx.accounts.owner_ata,
             destination: &ctx.accounts.owner,
@@ -141,7 +145,7 @@ pub fn process_close_expired_listing_legacy<'info>(
             field: None,
             field_id: None,
             amount: list_state.amount,
-            quantity: 1, // <-- represents how many NFTs got delisted
+            quantity: 0,
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,

@@ -31,7 +31,6 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -51,7 +50,7 @@ import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
   expectAddress,
-  expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 import {
@@ -63,11 +62,11 @@ import {
 
 export type DelistLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountOwnerAta extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
@@ -100,25 +99,24 @@ export type DelistLegacyInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountOwner extends string
+        ? WritableSignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
+        : TAccountOwner,
       TAccountOwnerAta extends string
         ? WritableAccount<TAccountOwnerAta>
         : TAccountOwnerAta,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
       TAccountListAta extends string
         ? WritableAccount<TAccountListAta>
         : TAccountListAta,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
-        : TAccountOwner,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -208,11 +206,11 @@ export type DelistLegacyInstructionExtraArgs = {
 };
 
 export type DelistLegacyAsyncInput<
+  TAccountOwner extends string = string,
   TAccountOwnerAta extends string = string,
-  TAccountMint extends string = string,
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
-  TAccountOwner extends string = string,
+  TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
@@ -227,12 +225,12 @@ export type DelistLegacyAsyncInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
+  owner: TransactionSigner<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
-  mint: Address<TAccountMint>;
   listAta?: Address<TAccountListAta>;
   listState?: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  mint: Address<TAccountMint>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -250,11 +248,11 @@ export type DelistLegacyAsyncInput<
 };
 
 export async function getDelistLegacyInstructionAsync<
+  TAccountOwner extends string,
   TAccountOwnerAta extends string,
-  TAccountMint extends string,
   TAccountListAta extends string,
   TAccountListState extends string,
-  TAccountOwner extends string,
+  TAccountMint extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
@@ -270,11 +268,11 @@ export async function getDelistLegacyInstructionAsync<
   TAccountSysvarInstructions extends string,
 >(
   input: DelistLegacyAsyncInput<
+    TAccountOwner,
     TAccountOwnerAta,
-    TAccountMint,
     TAccountListAta,
     TAccountListState,
-    TAccountOwner,
+    TAccountMint,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -292,11 +290,11 @@ export async function getDelistLegacyInstructionAsync<
 ): Promise<
   DelistLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwner,
     TAccountOwnerAta,
-    TAccountMint,
     TAccountListAta,
     TAccountListState,
-    TAccountOwner,
+    TAccountMint,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -317,11 +315,11 @@ export async function getDelistLegacyInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
+    owner: { value: input.owner ?? null, isWritable: true },
     ownerAta: { value: input.ownerAta ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -391,7 +389,9 @@ export async function getDelistLegacyInstructionAsync<
     };
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -450,11 +450,11 @@ export async function getDelistLegacyInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.ownerAta),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
@@ -475,11 +475,11 @@ export async function getDelistLegacyInstructionAsync<
     ),
   } as DelistLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwner,
     TAccountOwnerAta,
-    TAccountMint,
     TAccountListAta,
     TAccountListState,
-    TAccountOwner,
+    TAccountMint,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -499,11 +499,11 @@ export async function getDelistLegacyInstructionAsync<
 }
 
 export type DelistLegacyInput<
+  TAccountOwner extends string = string,
   TAccountOwnerAta extends string = string,
-  TAccountMint extends string = string,
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
-  TAccountOwner extends string = string,
+  TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
@@ -518,12 +518,12 @@ export type DelistLegacyInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
+  owner: TransactionSigner<TAccountOwner>;
   ownerAta: Address<TAccountOwnerAta>;
-  mint: Address<TAccountMint>;
   listAta: Address<TAccountListAta>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  mint: Address<TAccountMint>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -541,11 +541,11 @@ export type DelistLegacyInput<
 };
 
 export function getDelistLegacyInstruction<
+  TAccountOwner extends string,
   TAccountOwnerAta extends string,
-  TAccountMint extends string,
   TAccountListAta extends string,
   TAccountListState extends string,
-  TAccountOwner extends string,
+  TAccountMint extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
@@ -561,11 +561,11 @@ export function getDelistLegacyInstruction<
   TAccountSysvarInstructions extends string,
 >(
   input: DelistLegacyInput<
+    TAccountOwner,
     TAccountOwnerAta,
-    TAccountMint,
     TAccountListAta,
     TAccountListState,
-    TAccountOwner,
+    TAccountMint,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -582,11 +582,11 @@ export function getDelistLegacyInstruction<
   >
 ): DelistLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountOwner,
   TAccountOwnerAta,
-  TAccountMint,
   TAccountListAta,
   TAccountListState,
-  TAccountOwner,
+  TAccountMint,
   TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
@@ -606,11 +606,11 @@ export function getDelistLegacyInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    owner: { value: input.owner ?? null, isWritable: true },
     ownerAta: { value: input.ownerAta ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -660,7 +660,9 @@ export function getDelistLegacyInstruction<
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -695,11 +697,11 @@ export function getDelistLegacyInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.ownerAta),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
@@ -720,11 +722,11 @@ export function getDelistLegacyInstruction<
     ),
   } as DelistLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountOwner,
     TAccountOwnerAta,
-    TAccountMint,
     TAccountListAta,
     TAccountListState,
-    TAccountOwner,
+    TAccountMint,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -749,11 +751,11 @@ export type ParsedDelistLegacyInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    ownerAta: TAccountMetas[0];
-    mint: TAccountMetas[1];
+    owner: TAccountMetas[0];
+    ownerAta: TAccountMetas[1];
     listAta: TAccountMetas[2];
     listState: TAccountMetas[3];
-    owner: TAccountMetas[4];
+    mint: TAccountMetas[4];
     rentDestination: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];
     associatedTokenProgram: TAccountMetas[7];
@@ -798,11 +800,11 @@ export function parseDelistLegacyInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      owner: getNextAccount(),
       ownerAta: getNextAccount(),
-      mint: getNextAccount(),
       listAta: getNextAccount(),
       listState: getNextAccount(),
-      owner: getNextAccount(),
+      mint: getNextAccount(),
       rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),

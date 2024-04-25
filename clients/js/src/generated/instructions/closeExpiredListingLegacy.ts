@@ -32,7 +32,9 @@ import {
   IInstructionWithData,
   ReadonlyAccount,
   WritableAccount,
+  WritableSignerAccount,
 } from '@solana/instructions';
+import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import {
   TokenStandard,
   TokenStandardArgs,
@@ -49,6 +51,7 @@ import {
   ResolvedAccount,
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 import {
@@ -65,6 +68,8 @@ export type CloseExpiredListingLegacyInstruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -77,7 +82,6 @@ export type CloseExpiredListingLegacyInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountMetadata extends string | IAccountMeta<string> = string,
   TAccountEdition extends string | IAccountMeta<string> = string,
   TAccountOwnerTokenRecord extends string | IAccountMeta<string> = string,
@@ -112,6 +116,13 @@ export type CloseExpiredListingLegacyInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -124,9 +135,6 @@ export type CloseExpiredListingLegacyInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountRentDestination extends string
-        ? WritableAccount<TAccountRentDestination>
-        : TAccountRentDestination,
       TAccountMetadata extends string
         ? WritableAccount<TAccountMetadata>
         : TAccountMetadata,
@@ -208,11 +216,12 @@ export type CloseExpiredListingLegacyAsyncInput<
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
+  TAccountPayer extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDestination extends string = string,
   TAccountMetadata extends string = string,
   TAccountEdition extends string = string,
   TAccountOwnerTokenRecord extends string = string,
@@ -222,16 +231,17 @@ export type CloseExpiredListingLegacyAsyncInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
-  owner: Address<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
   listAta?: Address<TAccountListAta>;
   listState?: Address<TAccountListState>;
   mint: Address<TAccountMint>;
+  payer: TransactionSigner<TAccountPayer>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination?: Address<TAccountRentDestination>;
   metadata?: Address<TAccountMetadata>;
   edition?: Address<TAccountEdition>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -250,11 +260,12 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   TAccountListAta extends string,
   TAccountListState extends string,
   TAccountMint extends string,
+  TAccountPayer extends string,
+  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDestination extends string,
   TAccountMetadata extends string,
   TAccountEdition extends string,
   TAccountOwnerTokenRecord extends string,
@@ -270,11 +281,12 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     TAccountListAta,
     TAccountListState,
     TAccountMint,
+    TAccountPayer,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
     TAccountOwnerTokenRecord,
@@ -292,11 +304,12 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     TAccountListAta,
     TAccountListState,
     TAccountMint,
+    TAccountPayer,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
     TAccountOwnerTokenRecord,
@@ -317,6 +330,8 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -327,7 +342,6 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     metadata: { value: input.metadata ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     ownerTokenRecord: {
@@ -364,6 +378,11 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -385,6 +404,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
       ...(await resolveListAta(resolverScope)),
     };
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -396,9 +418,6 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.metadata.value) {
     accounts.metadata = {
@@ -450,11 +469,12 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.metadata),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.ownerTokenRecord),
@@ -475,11 +495,12 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     TAccountListAta,
     TAccountListState,
     TAccountMint,
+    TAccountPayer,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
     TAccountOwnerTokenRecord,
@@ -499,11 +520,12 @@ export type CloseExpiredListingLegacyInput<
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
+  TAccountPayer extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDestination extends string = string,
   TAccountMetadata extends string = string,
   TAccountEdition extends string = string,
   TAccountOwnerTokenRecord extends string = string,
@@ -513,16 +535,17 @@ export type CloseExpiredListingLegacyInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
-  owner: Address<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta: Address<TAccountOwnerAta>;
   listAta: Address<TAccountListAta>;
   listState: Address<TAccountListState>;
   mint: Address<TAccountMint>;
+  payer: TransactionSigner<TAccountPayer>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination?: Address<TAccountRentDestination>;
   metadata: Address<TAccountMetadata>;
   edition: Address<TAccountEdition>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -541,11 +564,12 @@ export function getCloseExpiredListingLegacyInstruction<
   TAccountListAta extends string,
   TAccountListState extends string,
   TAccountMint extends string,
+  TAccountPayer extends string,
+  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDestination extends string,
   TAccountMetadata extends string,
   TAccountEdition extends string,
   TAccountOwnerTokenRecord extends string,
@@ -561,11 +585,12 @@ export function getCloseExpiredListingLegacyInstruction<
     TAccountListAta,
     TAccountListState,
     TAccountMint,
+    TAccountPayer,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
     TAccountOwnerTokenRecord,
@@ -582,11 +607,12 @@ export function getCloseExpiredListingLegacyInstruction<
   TAccountListAta,
   TAccountListState,
   TAccountMint,
+  TAccountPayer,
+  TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountSystemProgram,
   TAccountMarketplaceProgram,
-  TAccountRentDestination,
   TAccountMetadata,
   TAccountEdition,
   TAccountOwnerTokenRecord,
@@ -606,6 +632,8 @@ export function getCloseExpiredListingLegacyInstruction<
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -616,7 +644,6 @@ export function getCloseExpiredListingLegacyInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     metadata: { value: input.metadata ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     ownerTokenRecord: {
@@ -650,9 +677,17 @@ export function getCloseExpiredListingLegacyInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -665,9 +700,6 @@ export function getCloseExpiredListingLegacyInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!args.tokenStandard) {
     args.tokenStandard = TokenStandard.NonFungible;
@@ -695,11 +727,12 @@ export function getCloseExpiredListingLegacyInstruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.metadata),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.ownerTokenRecord),
@@ -720,11 +753,12 @@ export function getCloseExpiredListingLegacyInstruction<
     TAccountListAta,
     TAccountListState,
     TAccountMint,
+    TAccountPayer,
+    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
     TAccountOwnerTokenRecord,
@@ -749,19 +783,20 @@ export type ParsedCloseExpiredListingLegacyInstruction<
     listAta: TAccountMetas[2];
     listState: TAccountMetas[3];
     mint: TAccountMetas[4];
-    tokenProgram: TAccountMetas[5];
-    associatedTokenProgram: TAccountMetas[6];
-    systemProgram: TAccountMetas[7];
-    marketplaceProgram: TAccountMetas[8];
-    rentDestination: TAccountMetas[9];
-    metadata: TAccountMetas[10];
-    edition: TAccountMetas[11];
-    ownerTokenRecord?: TAccountMetas[12] | undefined;
-    listTokenRecord?: TAccountMetas[13] | undefined;
-    authorizationRules?: TAccountMetas[14] | undefined;
-    authorizationRulesProgram?: TAccountMetas[15] | undefined;
-    tokenMetadataProgram: TAccountMetas[16];
-    sysvarInstructions: TAccountMetas[17];
+    payer: TAccountMetas[5];
+    rentDestination: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
+    marketplaceProgram: TAccountMetas[10];
+    metadata: TAccountMetas[11];
+    edition: TAccountMetas[12];
+    ownerTokenRecord?: TAccountMetas[13] | undefined;
+    listTokenRecord?: TAccountMetas[14] | undefined;
+    authorizationRules?: TAccountMetas[15] | undefined;
+    authorizationRulesProgram?: TAccountMetas[16] | undefined;
+    tokenMetadataProgram: TAccountMetas[17];
+    sysvarInstructions: TAccountMetas[18];
   };
   data: CloseExpiredListingLegacyInstructionData;
 };
@@ -774,7 +809,7 @@ export function parseCloseExpiredListingLegacyInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseExpiredListingLegacyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 18) {
+  if (instruction.accounts.length < 19) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -798,11 +833,12 @@ export function parseCloseExpiredListingLegacyInstruction<
       listAta: getNextAccount(),
       listState: getNextAccount(),
       mint: getNextAccount(),
+      payer: getNextAccount(),
+      rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      rentDestination: getNextAccount(),
       metadata: getNextAccount(),
       edition: getNextAccount(),
       ownerTokenRecord: getNextOptionalAccount(),
