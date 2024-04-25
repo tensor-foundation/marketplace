@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
+    token_2022::{close_account, CloseAccount},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
@@ -14,25 +15,22 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct ListLegacy<'info> {
-    #[account(mut, token::mint = mint, token::authority = owner)]
-    pub owner_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = owner,
+    )]
+    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: seed in nft_escrow & nft_receipt
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Implicitly checked via transfer. Will fail if wrong account
     #[account(
-        init, //<-- this HAS to be init, not init_if_needed for safety (else single listings and pool listings can get mixed)
+        init,
         payer = payer,
-        seeds=[
-            b"list_token".as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump,
-        token::mint = mint,
-        token::authority = list_state,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
     )]
-    pub list_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -122,8 +120,8 @@ pub fn process_list_legacy<'info>(
         TransferArgs {
             source: &ctx.accounts.owner,
             payer: &ctx.accounts.payer,
-            source_ata: &ctx.accounts.owner_token,
-            destination_ata: &ctx.accounts.list_token,
+            source_ata: &ctx.accounts.owner_ata,
+            destination_ata: &ctx.accounts.list_ata,
             destination: &ctx.accounts.list_state.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,
@@ -185,5 +183,19 @@ pub fn process_list_legacy<'info>(
         }),
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    // closes the owner token account
+
+    close_account(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            CloseAccount {
+                account: ctx.accounts.owner_ata.to_account_info(),
+                destination: ctx.accounts.payer.to_account_info(),
+                authority: ctx.accounts.owner.to_account_info(),
+            },
+        )
+        .with_signer(&[&ctx.accounts.list_state.seeds()]),
     )
 }

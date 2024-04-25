@@ -17,6 +17,7 @@ export * from './cancelBid';
 export * from './closeExpiredBid';
 export * from './closeExpiredListing';
 export * from './closeExpiredListingCore';
+export * from './closeExpiredListingLegacy';
 export * from './closeExpiredListingT22';
 export * from './delist';
 export * from './delistCore';

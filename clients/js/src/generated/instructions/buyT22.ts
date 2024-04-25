@@ -32,8 +32,8 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveBuyerToken } from '../../hooked';
-import { findFeeVaultPda, findListStatePda, findListTokenPda } from '../pdas';
+import { resolveBuyerAta } from '../../hooked';
+import { findFeeVaultPda, findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
@@ -46,13 +46,13 @@ import {
 export type BuyT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
-  TAccountListToken extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountBuyerToken extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountBuyerAta extends string | IAccountMeta<string> = string,
+  TAccountListState extends string | IAccountMeta<string> = string,
+  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
@@ -76,28 +76,28 @@ export type BuyT22Instruction<
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
-      TAccountListToken extends string
-        ? WritableAccount<TAccountListToken>
-        : TAccountListToken,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
       TAccountBuyer extends string
         ? ReadonlyAccount<TAccountBuyer>
         : TAccountBuyer,
-      TAccountBuyerToken extends string
-        ? WritableAccount<TAccountBuyerToken>
-        : TAccountBuyerToken,
+      TAccountBuyerAta extends string
+        ? WritableAccount<TAccountBuyerAta>
+        : TAccountBuyerAta,
+      TAccountListState extends string
+        ? WritableAccount<TAccountListState>
+        : TAccountListState,
+      TAccountListAta extends string
+        ? WritableAccount<TAccountListAta>
+        : TAccountListAta,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
+      TAccountOwner extends string
+        ? WritableAccount<TAccountOwner>
+        : TAccountOwner,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
-        : TAccountOwner,
       TAccountTakerBroker extends string
         ? WritableAccount<TAccountTakerBroker>
         : TAccountTakerBroker,
@@ -162,13 +162,13 @@ export function getBuyT22InstructionDataCodec(): Codec<
 
 export type BuyT22AsyncInput<
   TAccountFeeVault extends string = string,
-  TAccountListToken extends string = string,
-  TAccountListState extends string = string,
-  TAccountMint extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerToken extends string = string,
-  TAccountPayer extends string = string,
+  TAccountBuyerAta extends string = string,
+  TAccountListState extends string = string,
+  TAccountListAta extends string = string,
+  TAccountMint extends string = string,
   TAccountOwner extends string = string,
+  TAccountPayer extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDestination extends string = string,
@@ -178,13 +178,13 @@ export type BuyT22AsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  listToken?: Address<TAccountListToken>;
-  listState?: Address<TAccountListState>;
-  mint: Address<TAccountMint>;
   buyer?: Address<TAccountBuyer>;
-  buyerToken?: Address<TAccountBuyerToken>;
-  payer: TransactionSigner<TAccountPayer>;
+  buyerAta?: Address<TAccountBuyerAta>;
+  listState?: Address<TAccountListState>;
+  listAta: Address<TAccountListAta>;
+  mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
+  payer: TransactionSigner<TAccountPayer>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -197,13 +197,13 @@ export type BuyT22AsyncInput<
 
 export async function getBuyT22InstructionAsync<
   TAccountFeeVault extends string,
-  TAccountListToken extends string,
-  TAccountListState extends string,
-  TAccountMint extends string,
   TAccountBuyer extends string,
-  TAccountBuyerToken extends string,
-  TAccountPayer extends string,
+  TAccountBuyerAta extends string,
+  TAccountListState extends string,
+  TAccountListAta extends string,
+  TAccountMint extends string,
   TAccountOwner extends string,
+  TAccountPayer extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDestination extends string,
@@ -214,13 +214,13 @@ export async function getBuyT22InstructionAsync<
 >(
   input: BuyT22AsyncInput<
     TAccountFeeVault,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountBuyer,
-    TAccountBuyerToken,
-    TAccountPayer,
+    TAccountBuyerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
     TAccountOwner,
+    TAccountPayer,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
@@ -233,13 +233,13 @@ export async function getBuyT22InstructionAsync<
   BuyT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountBuyer,
-    TAccountBuyerToken,
-    TAccountPayer,
+    TAccountBuyerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
     TAccountOwner,
+    TAccountPayer,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
@@ -255,13 +255,13 @@ export async function getBuyT22InstructionAsync<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    listToken: { value: input.listToken ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerToken: { value: input.buyerToken ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
+    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    listAta: { value: input.listAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -291,16 +291,6 @@ export async function getBuyT22InstructionAsync<
   if (!accounts.feeVault.value) {
     accounts.feeVault.value = await findFeeVaultPda();
   }
-  if (!accounts.listToken.value) {
-    accounts.listToken.value = await findListTokenPda({
-      mint: expectAddress(accounts.mint.value),
-    });
-  }
-  if (!accounts.listState.value) {
-    accounts.listState.value = await findListStatePda({
-      mint: expectAddress(accounts.mint.value),
-    });
-  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
@@ -310,11 +300,16 @@ export async function getBuyT22InstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.buyerToken.value) {
-    accounts.buyerToken = {
-      ...accounts.buyerToken,
-      ...(await resolveBuyerToken(resolverScope)),
+  if (!accounts.buyerAta.value) {
+    accounts.buyerAta = {
+      ...accounts.buyerAta,
+      ...(await resolveBuyerAta(resolverScope)),
     };
+  }
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
@@ -336,13 +331,13 @@ export async function getBuyT22InstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.listToken),
-      getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerToken),
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.buyerAta),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDestination),
@@ -358,13 +353,13 @@ export async function getBuyT22InstructionAsync<
   } as BuyT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountBuyer,
-    TAccountBuyerToken,
-    TAccountPayer,
+    TAccountBuyerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
     TAccountOwner,
+    TAccountPayer,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
@@ -379,13 +374,13 @@ export async function getBuyT22InstructionAsync<
 
 export type BuyT22Input<
   TAccountFeeVault extends string = string,
-  TAccountListToken extends string = string,
-  TAccountListState extends string = string,
-  TAccountMint extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerToken extends string = string,
-  TAccountPayer extends string = string,
+  TAccountBuyerAta extends string = string,
+  TAccountListState extends string = string,
+  TAccountListAta extends string = string,
+  TAccountMint extends string = string,
   TAccountOwner extends string = string,
+  TAccountPayer extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDestination extends string = string,
@@ -395,13 +390,13 @@ export type BuyT22Input<
   TAccountSystemProgram extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  listToken: Address<TAccountListToken>;
-  listState: Address<TAccountListState>;
-  mint: Address<TAccountMint>;
   buyer?: Address<TAccountBuyer>;
-  buyerToken: Address<TAccountBuyerToken>;
-  payer: TransactionSigner<TAccountPayer>;
+  buyerAta: Address<TAccountBuyerAta>;
+  listState: Address<TAccountListState>;
+  listAta: Address<TAccountListAta>;
+  mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
+  payer: TransactionSigner<TAccountPayer>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -414,13 +409,13 @@ export type BuyT22Input<
 
 export function getBuyT22Instruction<
   TAccountFeeVault extends string,
-  TAccountListToken extends string,
-  TAccountListState extends string,
-  TAccountMint extends string,
   TAccountBuyer extends string,
-  TAccountBuyerToken extends string,
-  TAccountPayer extends string,
+  TAccountBuyerAta extends string,
+  TAccountListState extends string,
+  TAccountListAta extends string,
+  TAccountMint extends string,
   TAccountOwner extends string,
+  TAccountPayer extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDestination extends string,
@@ -431,13 +426,13 @@ export function getBuyT22Instruction<
 >(
   input: BuyT22Input<
     TAccountFeeVault,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountBuyer,
-    TAccountBuyerToken,
-    TAccountPayer,
+    TAccountBuyerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
     TAccountOwner,
+    TAccountPayer,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
@@ -449,13 +444,13 @@ export function getBuyT22Instruction<
 ): BuyT22Instruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
-  TAccountListToken,
-  TAccountListState,
-  TAccountMint,
   TAccountBuyer,
-  TAccountBuyerToken,
-  TAccountPayer,
+  TAccountBuyerAta,
+  TAccountListState,
+  TAccountListAta,
+  TAccountMint,
   TAccountOwner,
+  TAccountPayer,
   TAccountTakerBroker,
   TAccountMakerBroker,
   TAccountRentDestination,
@@ -470,13 +465,13 @@ export function getBuyT22Instruction<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    listToken: { value: input.listToken ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerToken: { value: input.buyerToken ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
+    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    listAta: { value: input.listAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -529,13 +524,13 @@ export function getBuyT22Instruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.listToken),
-      getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerToken),
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.buyerAta),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDestination),
@@ -551,13 +546,13 @@ export function getBuyT22Instruction<
   } as BuyT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountBuyer,
-    TAccountBuyerToken,
-    TAccountPayer,
+    TAccountBuyerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
     TAccountOwner,
+    TAccountPayer,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
@@ -577,13 +572,13 @@ export type ParsedBuyT22Instruction<
   programAddress: Address<TProgram>;
   accounts: {
     feeVault: TAccountMetas[0];
-    listToken: TAccountMetas[1];
-    listState: TAccountMetas[2];
-    mint: TAccountMetas[3];
-    buyer: TAccountMetas[4];
-    buyerToken: TAccountMetas[5];
-    payer: TAccountMetas[6];
-    owner: TAccountMetas[7];
+    buyer: TAccountMetas[1];
+    buyerAta: TAccountMetas[2];
+    listState: TAccountMetas[3];
+    listAta: TAccountMetas[4];
+    mint: TAccountMetas[5];
+    owner: TAccountMetas[6];
+    payer: TAccountMetas[7];
     takerBroker?: TAccountMetas[8] | undefined;
     makerBroker?: TAccountMetas[9] | undefined;
     rentDestination: TAccountMetas[10];
@@ -623,13 +618,13 @@ export function parseBuyT22Instruction<
     programAddress: instruction.programAddress,
     accounts: {
       feeVault: getNextAccount(),
-      listToken: getNextAccount(),
-      listState: getNextAccount(),
-      mint: getNextAccount(),
       buyer: getNextAccount(),
-      buyerToken: getNextAccount(),
-      payer: getNextAccount(),
+      buyerAta: getNextAccount(),
+      listState: getNextAccount(),
+      listAta: getNextAccount(),
+      mint: getNextAccount(),
       owner: getNextAccount(),
+      payer: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
       rentDestination: getNextAccount(),

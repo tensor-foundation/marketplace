@@ -28,8 +28,8 @@ import {
   ReadonlyAccount,
   WritableAccount,
 } from '@solana/instructions';
-import { resolveOwnerToken } from '../../hooked';
-import { findListStatePda, findListTokenPda } from '../pdas';
+import { resolveOwnerAta } from '../../hooked';
+import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
@@ -40,53 +40,59 @@ import {
 
 export type CloseExpiredListingT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountOwnerToken extends string | IAccountMeta<string> = string,
-  TAccountListToken extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountListState extends string | IAccountMeta<string> = string,
+  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountAssociatedTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountOwnerToken extends string
-        ? WritableAccount<TAccountOwnerToken>
-        : TAccountOwnerToken,
-      TAccountListToken extends string
-        ? WritableAccount<TAccountListToken>
-        : TAccountListToken,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
       TAccountOwner extends string
         ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
+      TAccountOwnerAta extends string
+        ? WritableAccount<TAccountOwnerAta>
+        : TAccountOwnerAta,
+      TAccountListState extends string
+        ? WritableAccount<TAccountListState>
+        : TAccountListState,
+      TAccountListAta extends string
+        ? WritableAccount<TAccountListAta>
+        : TAccountListAta,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountRentDestination extends string
-        ? WritableAccount<TAccountRentDestination>
-        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -126,61 +132,66 @@ export function getCloseExpiredListingT22InstructionDataCodec(): Codec<
 }
 
 export type CloseExpiredListingT22AsyncInput<
-  TAccountOwnerToken extends string = string,
-  TAccountListToken extends string = string,
-  TAccountListState extends string = string,
-  TAccountMint extends string = string,
   TAccountOwner extends string = string,
+  TAccountOwnerAta extends string = string,
+  TAccountListState extends string = string,
+  TAccountListAta extends string = string,
+  TAccountMint extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDestination extends string = string,
 > = {
-  ownerToken?: Address<TAccountOwnerToken>;
-  listToken?: Address<TAccountListToken>;
-  listState?: Address<TAccountListState>;
-  mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
+  ownerAta?: Address<TAccountOwnerAta>;
+  listState?: Address<TAccountListState>;
+  listAta: Address<TAccountListAta>;
+  mint: Address<TAccountMint>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination?: Address<TAccountRentDestination>;
 };
 
 export async function getCloseExpiredListingT22InstructionAsync<
-  TAccountOwnerToken extends string,
-  TAccountListToken extends string,
-  TAccountListState extends string,
-  TAccountMint extends string,
   TAccountOwner extends string,
+  TAccountOwnerAta extends string,
+  TAccountListState extends string,
+  TAccountListAta extends string,
+  TAccountMint extends string,
+  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDestination extends string,
 >(
   input: CloseExpiredListingT22AsyncInput<
-    TAccountOwnerToken,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountOwner,
+    TAccountOwnerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
+    TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountMarketplaceProgram,
-    TAccountRentDestination
+    TAccountMarketplaceProgram
   >
 ): Promise<
   CloseExpiredListingT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwnerToken,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountOwner,
+    TAccountOwnerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
+    TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountMarketplaceProgram,
-    TAccountRentDestination
+    TAccountMarketplaceProgram
   >
 > {
   // Program address.
@@ -188,18 +199,22 @@ export async function getCloseExpiredListingT22InstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    ownerToken: { value: input.ownerToken ?? null, isWritable: true },
-    listToken: { value: input.listToken ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: false },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    listAta: { value: input.listAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -214,21 +229,23 @@ export async function getCloseExpiredListingT22InstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.ownerToken.value) {
-    accounts.ownerToken = {
-      ...accounts.ownerToken,
-      ...(await resolveOwnerToken(resolverScope)),
+  if (!accounts.ownerAta.value) {
+    accounts.ownerAta = {
+      ...accounts.ownerAta,
+      ...(await resolveOwnerAta(resolverScope)),
     };
-  }
-  if (!accounts.listToken.value) {
-    accounts.listToken.value = await findListTokenPda({
-      mint: expectAddress(accounts.mint.value),
-    });
   }
   if (!accounts.listState.value) {
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -238,114 +255,122 @@ export async function getCloseExpiredListingT22InstructionAsync<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.ownerToken),
-      getAccountMeta(accounts.listToken),
-      getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getCloseExpiredListingT22InstructionDataEncoder().encode({}),
   } as CloseExpiredListingT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwnerToken,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountOwner,
+    TAccountOwnerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
+    TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountMarketplaceProgram,
-    TAccountRentDestination
+    TAccountMarketplaceProgram
   >;
 
   return instruction;
 }
 
 export type CloseExpiredListingT22Input<
-  TAccountOwnerToken extends string = string,
-  TAccountListToken extends string = string,
-  TAccountListState extends string = string,
-  TAccountMint extends string = string,
   TAccountOwner extends string = string,
+  TAccountOwnerAta extends string = string,
+  TAccountListState extends string = string,
+  TAccountListAta extends string = string,
+  TAccountMint extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDestination extends string = string,
 > = {
-  ownerToken: Address<TAccountOwnerToken>;
-  listToken: Address<TAccountListToken>;
-  listState: Address<TAccountListState>;
-  mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
+  ownerAta: Address<TAccountOwnerAta>;
+  listState: Address<TAccountListState>;
+  listAta: Address<TAccountListAta>;
+  mint: Address<TAccountMint>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination?: Address<TAccountRentDestination>;
 };
 
 export function getCloseExpiredListingT22Instruction<
-  TAccountOwnerToken extends string,
-  TAccountListToken extends string,
-  TAccountListState extends string,
-  TAccountMint extends string,
   TAccountOwner extends string,
+  TAccountOwnerAta extends string,
+  TAccountListState extends string,
+  TAccountListAta extends string,
+  TAccountMint extends string,
+  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDestination extends string,
 >(
   input: CloseExpiredListingT22Input<
-    TAccountOwnerToken,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountOwner,
+    TAccountOwnerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
+    TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountMarketplaceProgram,
-    TAccountRentDestination
+    TAccountMarketplaceProgram
   >
 ): CloseExpiredListingT22Instruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountOwnerToken,
-  TAccountListToken,
-  TAccountListState,
-  TAccountMint,
   TAccountOwner,
+  TAccountOwnerAta,
+  TAccountListState,
+  TAccountListAta,
+  TAccountMint,
+  TAccountRentDestination,
   TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountSystemProgram,
-  TAccountMarketplaceProgram,
-  TAccountRentDestination
+  TAccountMarketplaceProgram
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    ownerToken: { value: input.ownerToken ?? null, isWritable: true },
-    listToken: { value: input.listToken ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: false },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    listAta: { value: input.listAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -357,6 +382,13 @@ export function getCloseExpiredListingT22Instruction<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -365,36 +397,35 @@ export function getCloseExpiredListingT22Instruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.ownerToken),
-      getAccountMeta(accounts.listToken),
-      getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getCloseExpiredListingT22InstructionDataEncoder().encode({}),
   } as CloseExpiredListingT22Instruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwnerToken,
-    TAccountListToken,
-    TAccountListState,
-    TAccountMint,
     TAccountOwner,
+    TAccountOwnerAta,
+    TAccountListState,
+    TAccountListAta,
+    TAccountMint,
+    TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountMarketplaceProgram,
-    TAccountRentDestination
+    TAccountMarketplaceProgram
   >;
 
   return instruction;
@@ -406,15 +437,16 @@ export type ParsedCloseExpiredListingT22Instruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    ownerToken: TAccountMetas[0];
-    listToken: TAccountMetas[1];
+    owner: TAccountMetas[0];
+    ownerAta: TAccountMetas[1];
     listState: TAccountMetas[2];
-    mint: TAccountMetas[3];
-    owner: TAccountMetas[4];
-    tokenProgram: TAccountMetas[5];
-    systemProgram: TAccountMetas[6];
-    marketplaceProgram: TAccountMetas[7];
-    rentDestination: TAccountMetas[8];
+    listAta: TAccountMetas[3];
+    mint: TAccountMetas[4];
+    rentDestination: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
+    associatedTokenProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[9];
   };
   data: CloseExpiredListingT22InstructionData;
 };
@@ -427,7 +459,7 @@ export function parseCloseExpiredListingT22Instruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseExpiredListingT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 10) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -440,15 +472,16 @@ export function parseCloseExpiredListingT22Instruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      ownerToken: getNextAccount(),
-      listToken: getNextAccount(),
-      listState: getNextAccount(),
-      mint: getNextAccount(),
       owner: getNextAccount(),
+      ownerAta: getNextAccount(),
+      listState: getNextAccount(),
+      listAta: getNextAccount(),
+      mint: getNextAccount(),
+      rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      rentDestination: getNextAccount(),
     },
     data: getCloseExpiredListingT22InstructionDataDecoder().decode(
       instruction.data

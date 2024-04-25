@@ -20,43 +20,35 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
   none,
 } from '@solana/codecs';
 import {
-  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
   WritableAccount,
-  WritableSignerAccount,
 } from '@solana/instructions';
-import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import {
   TokenStandard,
   TokenStandardArgs,
-  resolveBuyerAta,
-  resolveBuyerTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
+  resolveOwnerAta,
+  resolveOwnerTokenRecordFromTokenStandard,
 } from '../../hooked';
-import { findFeeVaultPda, findListStatePda } from '../pdas';
+import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
   expectAddress,
   expectSome,
-  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 import {
@@ -66,34 +58,29 @@ import {
   getAuthorizationDataLocalEncoder,
 } from '../types';
 
-export type BuyLegacyInstruction<
+export type CloseExpiredListingLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountFeeVault extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountOwnerAta extends string | IAccountMeta<string> = string,
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
-  TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountBuyerAta extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-  TAccountMarketplaceProgram extends
-    | string
-    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountMetadata extends string | IAccountMeta<string> = string,
   TAccountEdition extends string | IAccountMeta<string> = string,
-  TAccountBuyerTokenRecord extends string | IAccountMeta<string> = string,
+  TAccountOwnerTokenRecord extends string | IAccountMeta<string> = string,
   TAccountListTokenRecord extends string | IAccountMeta<string> = string,
   TAccountAuthorizationRules extends string | IAccountMeta<string> = string,
   TAccountAuthorizationRulesProgram extends
@@ -110,9 +97,12 @@ export type BuyLegacyInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountFeeVault extends string
-        ? WritableAccount<TAccountFeeVault>
-        : TAccountFeeVault,
+      TAccountOwner extends string
+        ? ReadonlyAccount<TAccountOwner>
+        : TAccountOwner,
+      TAccountOwnerAta extends string
+        ? WritableAccount<TAccountOwnerAta>
+        : TAccountOwnerAta,
       TAccountListAta extends string
         ? WritableAccount<TAccountListAta>
         : TAccountListAta,
@@ -122,49 +112,30 @@ export type BuyLegacyInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
-      TAccountBuyer extends string
-        ? ReadonlyAccount<TAccountBuyer>
-        : TAccountBuyer,
-      TAccountBuyerAta extends string
-        ? WritableAccount<TAccountBuyerAta>
-        : TAccountBuyerAta,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
-      TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
-        : TAccountOwner,
-      TAccountTakerBroker extends string
-        ? WritableAccount<TAccountTakerBroker>
-        : TAccountTakerBroker,
-      TAccountMakerBroker extends string
-        ? WritableAccount<TAccountMakerBroker>
-        : TAccountMakerBroker,
-      TAccountRentDestination extends string
-        ? WritableAccount<TAccountRentDestination>
-        : TAccountRentDestination,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountMarketplaceProgram extends string
-        ? ReadonlyAccount<TAccountMarketplaceProgram>
-        : TAccountMarketplaceProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountMetadata extends string
         ? WritableAccount<TAccountMetadata>
         : TAccountMetadata,
       TAccountEdition extends string
         ? ReadonlyAccount<TAccountEdition>
         : TAccountEdition,
-      TAccountBuyerTokenRecord extends string
-        ? WritableAccount<TAccountBuyerTokenRecord>
-        : TAccountBuyerTokenRecord,
+      TAccountOwnerTokenRecord extends string
+        ? WritableAccount<TAccountOwnerTokenRecord>
+        : TAccountOwnerTokenRecord,
       TAccountListTokenRecord extends string
         ? WritableAccount<TAccountListTokenRecord>
         : TAccountListTokenRecord,
@@ -184,25 +155,19 @@ export type BuyLegacyInstruction<
     ]
   >;
 
-export type BuyLegacyInstructionData = {
+export type CloseExpiredListingLegacyInstructionData = {
   discriminator: Array<number>;
-  maxAmount: bigint;
-  optionalRoyaltyPct: Option<number>;
   authorizationData: Option<AuthorizationDataLocal>;
 };
 
-export type BuyLegacyInstructionDataArgs = {
-  maxAmount: number | bigint;
-  optionalRoyaltyPct?: OptionOrNullable<number>;
+export type CloseExpiredListingLegacyInstructionDataArgs = {
   authorizationData?: OptionOrNullable<AuthorizationDataLocalArgs>;
 };
 
-export function getBuyLegacyInstructionDataEncoder(): Encoder<BuyLegacyInstructionDataArgs> {
+export function getCloseExpiredListingLegacyInstructionDataEncoder(): Encoder<CloseExpiredListingLegacyInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
-      ['maxAmount', getU64Encoder()],
-      ['optionalRoyaltyPct', getOptionEncoder(getU16Encoder())],
       [
         'authorizationData',
         getOptionEncoder(getAuthorizationDataLocalEncoder()),
@@ -210,135 +175,109 @@ export function getBuyLegacyInstructionDataEncoder(): Encoder<BuyLegacyInstructi
     ]),
     (value) => ({
       ...value,
-      discriminator: [68, 127, 43, 8, 212, 31, 249, 114],
-      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      discriminator: [56, 16, 96, 188, 55, 68, 250, 58],
       authorizationData: value.authorizationData ?? none(),
     })
   );
 }
 
-export function getBuyLegacyInstructionDataDecoder(): Decoder<BuyLegacyInstructionData> {
+export function getCloseExpiredListingLegacyInstructionDataDecoder(): Decoder<CloseExpiredListingLegacyInstructionData> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
-    ['maxAmount', getU64Decoder()],
-    ['optionalRoyaltyPct', getOptionDecoder(getU16Decoder())],
     ['authorizationData', getOptionDecoder(getAuthorizationDataLocalDecoder())],
   ]);
 }
 
-export function getBuyLegacyInstructionDataCodec(): Codec<
-  BuyLegacyInstructionDataArgs,
-  BuyLegacyInstructionData
+export function getCloseExpiredListingLegacyInstructionDataCodec(): Codec<
+  CloseExpiredListingLegacyInstructionDataArgs,
+  CloseExpiredListingLegacyInstructionData
 > {
   return combineCodec(
-    getBuyLegacyInstructionDataEncoder(),
-    getBuyLegacyInstructionDataDecoder()
+    getCloseExpiredListingLegacyInstructionDataEncoder(),
+    getCloseExpiredListingLegacyInstructionDataDecoder()
   );
 }
 
-export type BuyLegacyInstructionExtraArgs = {
+export type CloseExpiredListingLegacyInstructionExtraArgs = {
   tokenStandard?: TokenStandardArgs;
 };
 
-export type BuyLegacyAsyncInput<
-  TAccountFeeVault extends string = string,
+export type CloseExpiredListingLegacyAsyncInput<
+  TAccountOwner extends string = string,
+  TAccountOwnerAta extends string = string,
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
-  TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
-  TAccountPayer extends string = string,
-  TAccountOwner extends string = string,
-  TAccountTakerBroker extends string = string,
-  TAccountMakerBroker extends string = string,
-  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
-  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountMetadata extends string = string,
   TAccountEdition extends string = string,
-  TAccountBuyerTokenRecord extends string = string,
+  TAccountOwnerTokenRecord extends string = string,
   TAccountListTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
-  feeVault?: Address<TAccountFeeVault>;
+  owner: Address<TAccountOwner>;
+  ownerAta?: Address<TAccountOwnerAta>;
   listAta?: Address<TAccountListAta>;
   listState?: Address<TAccountListState>;
   mint: Address<TAccountMint>;
-  buyer?: Address<TAccountBuyer>;
-  buyerAta?: Address<TAccountBuyerAta>;
-  payer: TransactionSigner<TAccountPayer>;
-  owner: Address<TAccountOwner>;
-  takerBroker?: Address<TAccountTakerBroker>;
-  makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  rentDestination?: Address<TAccountRentDestination>;
   metadata?: Address<TAccountMetadata>;
   edition?: Address<TAccountEdition>;
-  buyerTokenRecord?: Address<TAccountBuyerTokenRecord>;
+  ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
   listTokenRecord?: Address<TAccountListTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
-  authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];
-  tokenStandard?: BuyLegacyInstructionExtraArgs['tokenStandard'];
-  creators?: Array<Address>;
+  authorizationData?: CloseExpiredListingLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: CloseExpiredListingLegacyInstructionExtraArgs['tokenStandard'];
 };
 
-export async function getBuyLegacyInstructionAsync<
-  TAccountFeeVault extends string,
+export async function getCloseExpiredListingLegacyInstructionAsync<
+  TAccountOwner extends string,
+  TAccountOwnerAta extends string,
   TAccountListAta extends string,
   TAccountListState extends string,
   TAccountMint extends string,
-  TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountRentDestination extends string,
   TAccountMetadata extends string,
   TAccountEdition extends string,
-  TAccountBuyerTokenRecord extends string,
+  TAccountOwnerTokenRecord extends string,
   TAccountListTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountAuthorizationRulesProgram extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
 >(
-  input: BuyLegacyAsyncInput<
-    TAccountFeeVault,
+  input: CloseExpiredListingLegacyAsyncInput<
+    TAccountOwner,
+    TAccountOwnerAta,
     TAccountListAta,
     TAccountListState,
     TAccountMint,
-    TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
-    TAccountBuyerTokenRecord,
+    TAccountOwnerTokenRecord,
     TAccountListTokenRecord,
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
@@ -346,26 +285,21 @@ export async function getBuyLegacyInstructionAsync<
     TAccountSysvarInstructions
   >
 ): Promise<
-  BuyLegacyInstruction<
+  CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountFeeVault,
+    TAccountOwner,
+    TAccountOwnerAta,
     TAccountListAta,
     TAccountListState,
     TAccountMint,
-    TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
-    TAccountBuyerTokenRecord,
+    TAccountOwnerTokenRecord,
     TAccountListTokenRecord,
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
@@ -378,31 +312,26 @@ export async function getBuyLegacyInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
-    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
     },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     metadata: { value: input.metadata ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
-    buyerTokenRecord: {
-      value: input.buyerTokenRecord ?? null,
+    ownerTokenRecord: {
+      value: input.ownerTokenRecord ?? null,
       isWritable: true,
     },
     listTokenRecord: { value: input.listTokenRecord ?? null, isWritable: true },
@@ -435,17 +364,20 @@ export async function getBuyLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
-  if (!accounts.feeVault.value) {
-    accounts.feeVault.value = await findFeeVaultPda();
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.ownerAta.value) {
+    accounts.ownerAta = {
+      ...accounts.ownerAta,
+      ...(await resolveOwnerAta(resolverScope)),
+    };
   }
   if (!accounts.listState.value) {
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
-  }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!accounts.listAta.value) {
     accounts.listAta = {
@@ -453,31 +385,20 @@ export async function getBuyLegacyInstructionAsync<
       ...(await resolveListAta(resolverScope)),
     };
   }
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
-  if (!accounts.buyerAta.value) {
-    accounts.buyerAta = {
-      ...accounts.buyerAta,
-      ...(await resolveBuyerAta(resolverScope)),
-    };
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.metadata.value) {
     accounts.metadata = {
@@ -494,10 +415,10 @@ export async function getBuyLegacyInstructionAsync<
       ...(await resolveEditionFromTokenStandard(resolverScope)),
     };
   }
-  if (!accounts.buyerTokenRecord.value) {
-    accounts.buyerTokenRecord = {
-      ...accounts.buyerTokenRecord,
-      ...(await resolveBuyerTokenRecordFromTokenStandard(resolverScope)),
+  if (!accounts.ownerTokenRecord.value) {
+    accounts.ownerTokenRecord = {
+      ...accounts.ownerTokenRecord,
+      ...(await resolveOwnerTokenRecordFromTokenStandard(resolverScope)),
     };
   }
   if (!accounts.listTokenRecord.value) {
@@ -521,63 +442,47 @@ export async function getBuyLegacyInstructionAsync<
       'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerAta),
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.metadata),
       getAccountMeta(accounts.edition),
-      getAccountMeta(accounts.buyerTokenRecord),
+      getAccountMeta(accounts.ownerTokenRecord),
       getAccountMeta(accounts.listTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.authorizationRulesProgram),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
-      ...remainingAccounts,
     ],
     programAddress,
-    data: getBuyLegacyInstructionDataEncoder().encode(
-      args as BuyLegacyInstructionDataArgs
+    data: getCloseExpiredListingLegacyInstructionDataEncoder().encode(
+      args as CloseExpiredListingLegacyInstructionDataArgs
     ),
-  } as BuyLegacyInstruction<
+  } as CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountFeeVault,
+    TAccountOwner,
+    TAccountOwnerAta,
     TAccountListAta,
     TAccountListState,
     TAccountMint,
-    TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
-    TAccountBuyerTokenRecord,
+    TAccountOwnerTokenRecord,
     TAccountListTokenRecord,
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
@@ -588,131 +493,103 @@ export async function getBuyLegacyInstructionAsync<
   return instruction;
 }
 
-export type BuyLegacyInput<
-  TAccountFeeVault extends string = string,
+export type CloseExpiredListingLegacyInput<
+  TAccountOwner extends string = string,
+  TAccountOwnerAta extends string = string,
   TAccountListAta extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
-  TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
-  TAccountPayer extends string = string,
-  TAccountOwner extends string = string,
-  TAccountTakerBroker extends string = string,
-  TAccountMakerBroker extends string = string,
-  TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
-  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountMetadata extends string = string,
   TAccountEdition extends string = string,
-  TAccountBuyerTokenRecord extends string = string,
+  TAccountOwnerTokenRecord extends string = string,
   TAccountListTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  owner: Address<TAccountOwner>;
+  ownerAta: Address<TAccountOwnerAta>;
   listAta: Address<TAccountListAta>;
   listState: Address<TAccountListState>;
   mint: Address<TAccountMint>;
-  buyer?: Address<TAccountBuyer>;
-  buyerAta: Address<TAccountBuyerAta>;
-  payer: TransactionSigner<TAccountPayer>;
-  owner: Address<TAccountOwner>;
-  takerBroker?: Address<TAccountTakerBroker>;
-  makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  rentDestination?: Address<TAccountRentDestination>;
   metadata: Address<TAccountMetadata>;
   edition: Address<TAccountEdition>;
-  buyerTokenRecord?: Address<TAccountBuyerTokenRecord>;
+  ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
   listTokenRecord?: Address<TAccountListTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
-  authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];
-  tokenStandard?: BuyLegacyInstructionExtraArgs['tokenStandard'];
-  creators?: Array<Address>;
+  authorizationData?: CloseExpiredListingLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: CloseExpiredListingLegacyInstructionExtraArgs['tokenStandard'];
 };
 
-export function getBuyLegacyInstruction<
-  TAccountFeeVault extends string,
+export function getCloseExpiredListingLegacyInstruction<
+  TAccountOwner extends string,
+  TAccountOwnerAta extends string,
   TAccountListAta extends string,
   TAccountListState extends string,
   TAccountMint extends string,
-  TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountRentDestination extends string,
   TAccountMetadata extends string,
   TAccountEdition extends string,
-  TAccountBuyerTokenRecord extends string,
+  TAccountOwnerTokenRecord extends string,
   TAccountListTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountAuthorizationRulesProgram extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
 >(
-  input: BuyLegacyInput<
-    TAccountFeeVault,
+  input: CloseExpiredListingLegacyInput<
+    TAccountOwner,
+    TAccountOwnerAta,
     TAccountListAta,
     TAccountListState,
     TAccountMint,
-    TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
-    TAccountBuyerTokenRecord,
+    TAccountOwnerTokenRecord,
     TAccountListTokenRecord,
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions
   >
-): BuyLegacyInstruction<
+): CloseExpiredListingLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountFeeVault,
+  TAccountOwner,
+  TAccountOwnerAta,
   TAccountListAta,
   TAccountListState,
   TAccountMint,
-  TAccountBuyer,
-  TAccountBuyerAta,
-  TAccountPayer,
-  TAccountOwner,
-  TAccountTakerBroker,
-  TAccountMakerBroker,
-  TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
-  TAccountMarketplaceProgram,
   TAccountSystemProgram,
+  TAccountMarketplaceProgram,
+  TAccountRentDestination,
   TAccountMetadata,
   TAccountEdition,
-  TAccountBuyerTokenRecord,
+  TAccountOwnerTokenRecord,
   TAccountListTokenRecord,
   TAccountAuthorizationRules,
   TAccountAuthorizationRulesProgram,
@@ -724,31 +601,26 @@ export function getBuyLegacyInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
     listAta: { value: input.listAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
-    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
     },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     metadata: { value: input.metadata ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
-    buyerTokenRecord: {
-      value: input.buyerTokenRecord ?? null,
+    ownerTokenRecord: {
+      value: input.ownerTokenRecord ?? null,
       isWritable: true,
     },
     listTokenRecord: { value: input.listTokenRecord ?? null, isWritable: true },
@@ -782,25 +654,20 @@ export function getBuyLegacyInstruction<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!args.tokenStandard) {
     args.tokenStandard = TokenStandard.NonFungible;
@@ -820,63 +687,47 @@ export function getBuyLegacyInstruction<
       'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerAta),
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.metadata),
       getAccountMeta(accounts.edition),
-      getAccountMeta(accounts.buyerTokenRecord),
+      getAccountMeta(accounts.ownerTokenRecord),
       getAccountMeta(accounts.listTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.authorizationRulesProgram),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
-      ...remainingAccounts,
     ],
     programAddress,
-    data: getBuyLegacyInstructionDataEncoder().encode(
-      args as BuyLegacyInstructionDataArgs
+    data: getCloseExpiredListingLegacyInstructionDataEncoder().encode(
+      args as CloseExpiredListingLegacyInstructionDataArgs
     ),
-  } as BuyLegacyInstruction<
+  } as CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountFeeVault,
+    TAccountOwner,
+    TAccountOwnerAta,
     TAccountListAta,
     TAccountListState,
     TAccountMint,
-    TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination,
     TAccountMetadata,
     TAccountEdition,
-    TAccountBuyerTokenRecord,
+    TAccountOwnerTokenRecord,
     TAccountListTokenRecord,
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
@@ -887,48 +738,43 @@ export function getBuyLegacyInstruction<
   return instruction;
 }
 
-export type ParsedBuyLegacyInstruction<
+export type ParsedCloseExpiredListingLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    feeVault: TAccountMetas[0];
-    listAta: TAccountMetas[1];
-    listState: TAccountMetas[2];
-    mint: TAccountMetas[3];
-    buyer: TAccountMetas[4];
-    buyerAta: TAccountMetas[5];
-    payer: TAccountMetas[6];
-    owner: TAccountMetas[7];
-    takerBroker?: TAccountMetas[8] | undefined;
-    makerBroker?: TAccountMetas[9] | undefined;
-    rentDestination: TAccountMetas[10];
-    tokenProgram: TAccountMetas[11];
-    associatedTokenProgram: TAccountMetas[12];
-    marketplaceProgram: TAccountMetas[13];
-    systemProgram: TAccountMetas[14];
-    metadata: TAccountMetas[15];
-    edition: TAccountMetas[16];
-    buyerTokenRecord?: TAccountMetas[17] | undefined;
-    listTokenRecord?: TAccountMetas[18] | undefined;
-    authorizationRules?: TAccountMetas[19] | undefined;
-    authorizationRulesProgram?: TAccountMetas[20] | undefined;
-    tokenMetadataProgram: TAccountMetas[21];
-    sysvarInstructions: TAccountMetas[22];
+    owner: TAccountMetas[0];
+    ownerAta: TAccountMetas[1];
+    listAta: TAccountMetas[2];
+    listState: TAccountMetas[3];
+    mint: TAccountMetas[4];
+    tokenProgram: TAccountMetas[5];
+    associatedTokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
+    marketplaceProgram: TAccountMetas[8];
+    rentDestination: TAccountMetas[9];
+    metadata: TAccountMetas[10];
+    edition: TAccountMetas[11];
+    ownerTokenRecord?: TAccountMetas[12] | undefined;
+    listTokenRecord?: TAccountMetas[13] | undefined;
+    authorizationRules?: TAccountMetas[14] | undefined;
+    authorizationRulesProgram?: TAccountMetas[15] | undefined;
+    tokenMetadataProgram: TAccountMetas[16];
+    sysvarInstructions: TAccountMetas[17];
   };
-  data: BuyLegacyInstructionData;
+  data: CloseExpiredListingLegacyInstructionData;
 };
 
-export function parseBuyLegacyInstruction<
+export function parseCloseExpiredListingLegacyInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedBuyLegacyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 23) {
+): ParsedCloseExpiredListingLegacyInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 18) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -947,30 +793,27 @@ export function parseBuyLegacyInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      feeVault: getNextAccount(),
+      owner: getNextAccount(),
+      ownerAta: getNextAccount(),
       listAta: getNextAccount(),
       listState: getNextAccount(),
       mint: getNextAccount(),
-      buyer: getNextAccount(),
-      buyerAta: getNextAccount(),
-      payer: getNextAccount(),
-      owner: getNextAccount(),
-      takerBroker: getNextOptionalAccount(),
-      makerBroker: getNextOptionalAccount(),
-      rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
-      marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
+      rentDestination: getNextAccount(),
       metadata: getNextAccount(),
       edition: getNextAccount(),
-      buyerTokenRecord: getNextOptionalAccount(),
+      ownerTokenRecord: getNextOptionalAccount(),
       listTokenRecord: getNextOptionalAccount(),
       authorizationRules: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
       sysvarInstructions: getNextAccount(),
     },
-    data: getBuyLegacyInstructionDataDecoder().decode(instruction.data),
+    data: getCloseExpiredListingLegacyInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

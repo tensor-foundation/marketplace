@@ -10,23 +10,25 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct CloseExpiredListingT22 {
-    pub owner_token: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
-    pub list_token: solana_program::pubkey::Pubkey,
+    pub owner_ata: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
+    pub list_ata: solana_program::pubkey::Pubkey,
+
     pub mint: solana_program::pubkey::Pubkey,
 
-    pub owner: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
+
+    pub associated_token_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
-
-    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl CloseExpiredListingT22 {
@@ -38,27 +40,35 @@ impl CloseExpiredListingT22 {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_token,
-            false,
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.owner, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_token,
+            self.owner_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_state,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.list_ata,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner, false,
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.rent_destination,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.associated_token_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -67,10 +77,6 @@ impl CloseExpiredListingT22 {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.marketplace_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -103,26 +109,28 @@ impl CloseExpiredListingT22InstructionData {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
-///   1. `[writable]` list_token
+///   0. `[]` owner
+///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
-///   3. `[]` mint
-///   4. `[]` owner
-///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   8. `[writable]` rent_destination
+///   3. `[writable]` list_ata
+///   4. `[]` mint
+///   5. `[writable]` rent_destination
+///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Default)]
 pub struct CloseExpiredListingT22Builder {
-    owner_token: Option<solana_program::pubkey::Pubkey>,
-    list_token: Option<solana_program::pubkey::Pubkey>,
-    list_state: Option<solana_program::pubkey::Pubkey>,
-    mint: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
+    owner_ata: Option<solana_program::pubkey::Pubkey>,
+    list_state: Option<solana_program::pubkey::Pubkey>,
+    list_ata: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
+    associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
-    rent_destination: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -131,13 +139,13 @@ impl CloseExpiredListingT22Builder {
         Self::default()
     }
     #[inline(always)]
-    pub fn owner_token(&mut self, owner_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_token = Some(owner_token);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
-    pub fn list_token(&mut self, list_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_token = Some(list_token);
+    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -146,19 +154,36 @@ impl CloseExpiredListingT22Builder {
         self
     }
     #[inline(always)]
+    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
+        self
+    }
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
+    #[inline(always)]
+    pub fn associated_token_program(
+        &mut self,
+        associated_token_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.associated_token_program = Some(associated_token_program);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -174,14 +199,6 @@ impl CloseExpiredListingT22Builder {
         marketplace_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
-    pub fn rent_destination(
-        &mut self,
-        rent_destination: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.rent_destination = Some(rent_destination);
         self
     }
     /// Add an aditional account to the instruction.
@@ -205,21 +222,24 @@ impl CloseExpiredListingT22Builder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CloseExpiredListingT22 {
-            owner_token: self.owner_token.expect("owner_token is not set"),
-            list_token: self.list_token.expect("list_token is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
-            mint: self.mint.expect("mint is not set"),
             owner: self.owner.expect("owner is not set"),
+            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            list_state: self.list_state.expect("list_state is not set"),
+            list_ata: self.list_ata.expect("list_ata is not set"),
+            mint: self.mint.expect("mint is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
+            associated_token_program: self.associated_token_program.unwrap_or(
+                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+            ),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -228,23 +248,25 @@ impl CloseExpiredListingT22Builder {
 
 /// `close_expired_listing_t22` CPI accounts.
 pub struct CloseExpiredListingT22CpiAccounts<'a, 'b> {
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `close_expired_listing_t22` CPI instruction.
@@ -252,23 +274,25 @@ pub struct CloseExpiredListingT22Cpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
@@ -278,15 +302,16 @@ impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            owner_token: accounts.owner_token,
-            list_token: accounts.list_token,
-            list_state: accounts.list_state,
-            mint: accounts.mint,
             owner: accounts.owner,
+            owner_ata: accounts.owner_ata,
+            list_state: accounts.list_state,
+            list_ata: accounts.list_ata,
+            mint: accounts.mint,
+            rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
+            associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
             marketplace_program: accounts.marketplace_program,
-            rent_destination: accounts.rent_destination,
         }
     }
     #[inline(always)]
@@ -322,29 +347,37 @@ impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_token.key,
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.owner.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_token.key,
+            *self.owner_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.list_state.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.list_ata.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.owner.key,
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.rent_destination.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.associated_token_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -353,10 +386,6 @@ impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.marketplace_program.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -375,17 +404,18 @@ impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.owner_token.clone());
-        account_infos.push(self.list_token.clone());
-        account_infos.push(self.list_state.clone());
-        account_infos.push(self.mint.clone());
         account_infos.push(self.owner.clone());
+        account_infos.push(self.owner_ata.clone());
+        account_infos.push(self.list_state.clone());
+        account_infos.push(self.list_ata.clone());
+        account_infos.push(self.mint.clone());
+        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
+        account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.marketplace_program.clone());
-        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -402,15 +432,16 @@ impl<'a, 'b> CloseExpiredListingT22Cpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
-///   1. `[writable]` list_token
+///   0. `[]` owner
+///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
-///   3. `[]` mint
-///   4. `[]` owner
-///   5. `[]` token_program
-///   6. `[]` system_program
-///   7. `[]` marketplace_program
-///   8. `[writable]` rent_destination
+///   3. `[writable]` list_ata
+///   4. `[]` mint
+///   5. `[writable]` rent_destination
+///   6. `[]` token_program
+///   7. `[]` associated_token_program
+///   8. `[]` system_program
+///   9. `[]` marketplace_program
 pub struct CloseExpiredListingT22CpiBuilder<'a, 'b> {
     instruction: Box<CloseExpiredListingT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -419,33 +450,31 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(CloseExpiredListingT22CpiBuilderInstruction {
             __program: program,
-            owner_token: None,
-            list_token: None,
-            list_state: None,
-            mint: None,
             owner: None,
+            owner_ata: None,
+            list_state: None,
+            list_ata: None,
+            mint: None,
+            rent_destination: None,
             token_program: None,
+            associated_token_program: None,
             system_program: None,
             marketplace_program: None,
-            rent_destination: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
     #[inline(always)]
-    pub fn owner_token(
-        &mut self,
-        owner_token: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.owner_token = Some(owner_token);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
-    pub fn list_token(
+    pub fn owner_ata(
         &mut self,
-        list_token: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_token = Some(list_token);
+        self.instruction.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -457,13 +486,24 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn list_ata(
+        &mut self,
+        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -472,6 +512,14 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
         token_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program = Some(token_program);
+        self
+    }
+    #[inline(always)]
+    pub fn associated_token_program(
+        &mut self,
+        associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.associated_token_program = Some(associated_token_program);
         self
     }
     #[inline(always)]
@@ -488,14 +536,6 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
         marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
-    pub fn rent_destination(
-        &mut self,
-        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     /// Add an additional account to the instruction.
@@ -542,23 +582,30 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
         let instruction = CloseExpiredListingT22Cpi {
             __program: self.instruction.__program,
 
-            owner_token: self
-                .instruction
-                .owner_token
-                .expect("owner_token is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
 
-            list_token: self.instruction.list_token.expect("list_token is not set"),
+            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
+            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
+
             mint: self.instruction.mint.expect("mint is not set"),
 
-            owner: self.instruction.owner.expect("owner is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             token_program: self
                 .instruction
                 .token_program
                 .expect("token_program is not set"),
+
+            associated_token_program: self
+                .instruction
+                .associated_token_program
+                .expect("associated_token_program is not set"),
 
             system_program: self
                 .instruction
@@ -569,11 +616,6 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
                 .instruction
                 .marketplace_program
                 .expect("marketplace_program is not set"),
-
-            rent_destination: self
-                .instruction
-                .rent_destination
-                .expect("rent_destination is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -584,15 +626,16 @@ impl<'a, 'b> CloseExpiredListingT22CpiBuilder<'a, 'b> {
 
 struct CloseExpiredListingT22CpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    owner_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -49,7 +49,7 @@ export const resolveOwnerTokenRecordFromTokenStandard = async ({
     ? {
         value: await findTokenRecordPda({
           mint: expectAddress(accounts.mint?.value),
-          token: expectAddress(accounts.ownerToken?.value),
+          token: expectAddress(accounts.ownerAta?.value),
         }),
       }
     : { value: null };
@@ -67,7 +67,7 @@ export const resolveListTokenRecordFromTokenStandard = async ({
     ? {
         value: await findTokenRecordPda({
           mint: expectAddress(accounts.mint?.value),
-          token: expectAddress(accounts.listToken?.value),
+          token: expectAddress(accounts.listAta?.value),
         }),
       }
     : { value: null };
@@ -85,27 +85,13 @@ export const resolveBuyerTokenRecordFromTokenStandard = async ({
     ? {
         value: await findTokenRecordPda({
           mint: expectAddress(accounts.mint?.value),
-          token: expectAddress(accounts.buyerToken?.value),
+          token: expectAddress(accounts.buyerAta?.value),
         }),
       }
     : { value: null };
 };
 
-export const resolveOwnerToken = async ({
-  accounts,
-}: {
-  accounts: Record<string, ResolvedAccount>;
-}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
-  return {
-    value: await findAssociatedTokenAccountPda({
-      owner: expectAddress(accounts.owner?.value),
-      mint: expectAddress(accounts.mint?.value),
-      tokenProgram: expectAddress(accounts.tokenProgram?.value),
-    }),
-  };
-};
-
-export const resolveBuyerToken = async ({
+export const resolveBuyerAta = async ({
   accounts,
 }: {
   accounts: Record<string, ResolvedAccount>;
@@ -113,6 +99,34 @@ export const resolveBuyerToken = async ({
   return {
     value: await findAssociatedTokenAccountPda({
       owner: expectAddress(accounts.buyer?.value),
+      mint: expectAddress(accounts.mint?.value),
+      tokenProgram: expectAddress(accounts.tokenProgram?.value),
+    }),
+  };
+};
+
+export const resolveListAta = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findAssociatedTokenAccountPda({
+      owner: expectAddress(accounts.listState?.value),
+      mint: expectAddress(accounts.mint?.value),
+      tokenProgram: expectAddress(accounts.tokenProgram?.value),
+    }),
+  };
+};
+
+export const resolveOwnerAta = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findAssociatedTokenAccountPda({
+      owner: expectAddress(accounts.owner?.value),
       mint: expectAddress(accounts.mint?.value),
       tokenProgram: expectAddress(accounts.tokenProgram?.value),
     }),
