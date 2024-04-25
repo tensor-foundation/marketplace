@@ -1404,6 +1404,16 @@
           "isSigner": false
         },
         {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1421,11 +1431,6 @@
         {
           "name": "marketplaceProgram",
           "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDestination",
-          "isMut": true,
           "isSigner": false
         },
         {
