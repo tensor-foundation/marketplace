@@ -1,7 +1,7 @@
 import {
   appendTransactionInstruction,
   fetchEncodedAccount,
-  pipe
+  pipe,
 } from '@solana/web3.js';
 import {
   createDefaultSolanaClient,
