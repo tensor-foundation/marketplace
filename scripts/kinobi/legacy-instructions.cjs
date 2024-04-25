@@ -196,6 +196,9 @@ module.exports = function visitor(options) {
         },
         delistLegacy: {
           accounts: {
+            payer: {
+              defaultValue: k.accountValueNode("owner"),
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
