@@ -11,15 +11,15 @@ use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 pub struct ListT22 {
-    pub owner_token: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
-    pub mint: solana_program::pubkey::Pubkey,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: solana_program::pubkey::Pubkey,
+    pub owner_ata: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
-    pub owner: solana_program::pubkey::Pubkey,
+    pub list_ata: solana_program::pubkey::Pubkey,
+
+    pub mint: solana_program::pubkey::Pubkey,
 
     pub payer: solana_program::pubkey::Pubkey,
 
@@ -46,23 +46,23 @@ impl ListT22 {
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_token,
-            false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.mint, false,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_token,
+            self.owner_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_state,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.list_ata,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner, true,
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
@@ -123,11 +123,11 @@ pub struct ListT22InstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
-///   1. `[]` mint
-///   2. `[writable]` list_token
-///   3. `[writable]` list_state
-///   4. `[signer]` owner
+///   0. `[signer]` owner
+///   1. `[writable]` owner_ata
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
+///   4. `[]` mint
 ///   5. `[writable, signer]` payer
 ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
@@ -135,11 +135,11 @@ pub struct ListT22InstructionArgs {
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct ListT22Builder {
-    owner_token: Option<solana_program::pubkey::Pubkey>,
-    mint: Option<solana_program::pubkey::Pubkey>,
-    list_token: Option<solana_program::pubkey::Pubkey>,
-    list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
+    owner_ata: Option<solana_program::pubkey::Pubkey>,
+    list_state: Option<solana_program::pubkey::Pubkey>,
+    list_ata: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
@@ -158,19 +158,13 @@ impl ListT22Builder {
         Self::default()
     }
     #[inline(always)]
-    pub fn owner_token(&mut self, owner_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_token = Some(owner_token);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint = Some(mint);
-        self
-    }
-    /// Implicitly checked via transfer. Will fail if wrong account
-    #[inline(always)]
-    pub fn list_token(&mut self, list_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_token = Some(list_token);
+    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -179,8 +173,13 @@ impl ListT22Builder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
+    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -268,11 +267,11 @@ impl ListT22Builder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = ListT22 {
-            owner_token: self.owner_token.expect("owner_token is not set"),
-            mint: self.mint.expect("mint is not set"),
-            list_token: self.list_token.expect("list_token is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
+            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            list_state: self.list_state.expect("list_state is not set"),
+            list_ata: self.list_ata.expect("list_ata is not set"),
+            mint: self.mint.expect("mint is not set"),
             payer: self.payer.expect("payer is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
@@ -301,15 +300,15 @@ impl ListT22Builder {
 
 /// `list_t22` CPI accounts.
 pub struct ListT22CpiAccounts<'a, 'b> {
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -327,15 +326,15 @@ pub struct ListT22Cpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -358,11 +357,11 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            owner_token: accounts.owner_token,
-            mint: accounts.mint,
-            list_token: accounts.list_token,
-            list_state: accounts.list_state,
             owner: accounts.owner,
+            owner_ata: accounts.owner_ata,
+            list_state: accounts.list_state,
+            list_ata: accounts.list_ata,
+            mint: accounts.mint,
             payer: accounts.payer,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
@@ -405,25 +404,25 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
         )],
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_token.key,
-            false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.mint.key,
-            false,
+            *self.owner.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_token.key,
+            *self.owner_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.list_state.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.list_ata.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.owner.key,
-            true,
+            *self.mint.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
@@ -463,11 +462,11 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.owner_token.clone());
-        account_infos.push(self.mint.clone());
-        account_infos.push(self.list_token.clone());
-        account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
+        account_infos.push(self.owner_ata.clone());
+        account_infos.push(self.list_state.clone());
+        account_infos.push(self.list_ata.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
@@ -489,11 +488,11 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
-///   1. `[]` mint
-///   2. `[writable]` list_token
-///   3. `[writable]` list_state
-///   4. `[signer]` owner
+///   0. `[signer]` owner
+///   1. `[writable]` owner_ata
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
+///   4. `[]` mint
 ///   5. `[writable, signer]` payer
 ///   6. `[]` token_program
 ///   7. `[]` associated_token_program
@@ -507,11 +506,11 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(ListT22CpiBuilderInstruction {
             __program: program,
-            owner_token: None,
-            mint: None,
-            list_token: None,
-            list_state: None,
             owner: None,
+            owner_ata: None,
+            list_state: None,
+            list_ata: None,
+            mint: None,
             payer: None,
             token_program: None,
             associated_token_program: None,
@@ -527,25 +526,16 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn owner_token(
-        &mut self,
-        owner_token: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.owner_token = Some(owner_token);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.mint = Some(mint);
-        self
-    }
-    /// Implicitly checked via transfer. Will fail if wrong account
-    #[inline(always)]
-    pub fn list_token(
+    pub fn owner_ata(
         &mut self,
-        list_token: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_token = Some(list_token);
+        self.instruction.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -557,8 +547,16 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
+    pub fn list_ata(
+        &mut self,
+        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -678,18 +676,15 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
         let instruction = ListT22Cpi {
             __program: self.instruction.__program,
 
-            owner_token: self
-                .instruction
-                .owner_token
-                .expect("owner_token is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
 
-            mint: self.instruction.mint.expect("mint is not set"),
-
-            list_token: self.instruction.list_token.expect("list_token is not set"),
+            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
-            owner: self.instruction.owner.expect("owner is not set"),
+            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
+
+            mint: self.instruction.mint.expect("mint is not set"),
 
             payer: self.instruction.payer.expect("payer is not set"),
 
@@ -723,11 +718,11 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
 
 struct ListT22CpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    owner_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

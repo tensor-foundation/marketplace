@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
+    associated_token::AssociatedToken,
     token_2022::{transfer_checked, Token2022, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
@@ -11,23 +12,16 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct DelistT22<'info> {
-    #[account(mut, token::mint = mint, token::authority = owner)]
-    pub owner_token: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    /// CHECK: seed in nft_escrow & nft_receipt
-    pub mint: Box<InterfaceAccount<'info, Mint>>,
+    /// CHECK: the token transfer will fail if owner is wrong (signature error)
+    pub owner: Signer<'info>,
 
     #[account(
-        mut,
-        seeds=[
-            b"list_token".as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump,
-        token::mint = mint,
-        token::authority = list_state,
+        init_if_needed,
+        payer = rent_destination,
+        associated_token::mint = mint,
+        associated_token::authority = owner,
     )]
-    pub list_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -41,8 +35,15 @@ pub struct DelistT22<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// CHECK: seed in nft_escrow & nft_receipt
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
     #[account(
@@ -52,6 +53,8 @@ pub struct DelistT22<'info> {
     pub rent_destination: Signer<'info>,
 
     pub token_program: Program<'info, Token2022>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
@@ -64,8 +67,8 @@ pub fn process_delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.list_token.to_account_info(),
-            to: ctx.accounts.owner_token.to_account_info(),
+            from: ctx.accounts.list_ata.to_account_info(),
+            to: ctx.accounts.owner_ata.to_account_info(),
             authority: ctx.accounts.list_state.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -106,7 +109,7 @@ pub fn process_delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_token.to_account_info(),
+                account: ctx.accounts.list_ata.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

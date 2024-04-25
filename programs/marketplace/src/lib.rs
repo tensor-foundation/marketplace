@@ -292,6 +292,13 @@ pub mod marketplace_program {
         )
     }
 
+    pub fn close_expired_listing_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingLegacy<'info>>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_close_expired_listing_legacy(ctx, authorization_data)
+    }
+
     pub fn delist_legacy<'info>(
         ctx: Context<'_, '_, '_, 'info, DelistLegacy<'info>>,
         authorization_data: Option<AuthorizationDataLocal>,

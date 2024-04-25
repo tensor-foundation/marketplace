@@ -1,6 +1,5 @@
 const path = require("path");
 const k = require("@metaplex-foundation/kinobi");
-const token22 = require("./kinobi/token22-instructions.cjs");
 
 // Paths.
 const clientDir = path.join(__dirname, "..", "clients");
@@ -8,6 +7,10 @@ const idlDir = path.join(__dirname, "..", "programs", "marketplace");
 
 // Instanciate Kinobi.
 const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
+
+// Additional visitors for instrunctions.
+const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
+const token22Instructions = require("./kinobi/token22-instructions.cjs");
 
 // Update programs.
 kinobi.update(
@@ -25,13 +28,7 @@ kinobi.update(
         k.assertIsNode(node, "programNode");
         return {
           ...node,
-          pdas: [
-            k.pdaNode("listToken", [
-              k.constantPdaSeedNodeFromString("list_token"),
-              k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
-            ]),
-            k.pdaNode("feeVault", []),
-          ],
+          pdas: [k.pdaNode("feeVault", [])],
         };
       },
     },
@@ -47,6 +44,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.pdaValueNode("feeVault"),
     },
+    // default programs
     {
       account: "tokenProgram",
       ignoreIfOptional: true,
@@ -118,244 +116,9 @@ kinobi.update(
   })
 );
 
-//---------------------------------------------------------------------------//
-// Update instructions for legacy NFTs                                       //
-//---------------------------------------------------------------------------//
-kinobi.update(
-  k.updateInstructionsVisitor({
-    buyLegacy: {
-      accounts: {
-        buyer: {
-          defaultValue: k.accountValueNode("payer"),
-        },
-        rentDestination: {
-          defaultValue: k.accountValueNode("owner"),
-        },
-        buyerToken: {
-          defaultValue: k.resolverValueNode("resolveBuyerToken", {
-            dependsOn: [
-              k.accountValueNode("buyer"),
-              k.accountValueNode("tokenProgram"),
-              k.accountValueNode("mint"),
-            ],
-          }),
-        },
-        listToken: { defaultValue: k.pdaValueNode("listToken") },
-        listState: { defaultValue: k.pdaValueNode("listState") },
-        metadata: {
-          defaultValue: k.resolverValueNode("resolveMetadata", {
-            dependsOn: [k.accountValueNode("mint")],
-          }),
-        },
-        edition: {
-          defaultValue: k.resolverValueNode("resolveEditionFromTokenStandard", {
-            dependsOn: [
-              k.accountValueNode("mint"),
-              k.argumentValueNode("tokenStandard"),
-            ],
-          }),
-        },
-        buyerTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveBuyerTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("buyerToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        listTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveListTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("listToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        authorizationRulesProgram: {
-          defaultValue: k.conditionalValueNode({
-            condition: k.accountValueNode("authorizationRules"),
-            ifTrue: k.publicKeyValueNode(
-              "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-              "mplTokenAuthRules"
-            ),
-          }),
-        },
-      },
-      remainingAccounts: [
-        k.instructionRemainingAccountsNode(k.argumentValueNode("creators"), {
-          isWritable: true,
-          isOptional: true,
-        }),
-      ],
-      arguments: {
-        tokenStandard: {
-          type: k.definedTypeLinkNode("TokenStandard", "hooked"),
-          defaultValue: k.enumValueNode(
-            k.definedTypeLinkNode("TokenStandard", "hooked"),
-            "NonFungible"
-          ),
-        },
-      },
-    },
-    delistLegacy: {
-      accounts: {
-        rentDestination: {
-          defaultValue: k.accountValueNode("owner"),
-        },
-        ownerToken: {
-          defaultValue: k.resolverValueNode("resolveOwnerToken", {
-            dependsOn: [
-              k.accountValueNode("owner"),
-              k.accountValueNode("tokenProgram"),
-              k.accountValueNode("mint"),
-            ],
-          }),
-        },
-        listToken: { defaultValue: k.pdaValueNode("listToken") },
-        listState: { defaultValue: k.pdaValueNode("listState") },
-        metadata: {
-          defaultValue: k.resolverValueNode("resolveMetadata", {
-            dependsOn: [k.accountValueNode("mint")],
-          }),
-        },
-        edition: {
-          defaultValue: k.resolverValueNode("resolveEditionFromTokenStandard", {
-            dependsOn: [
-              k.accountValueNode("mint"),
-              k.argumentValueNode("tokenStandard"),
-            ],
-          }),
-        },
-        ownerTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveOwnerTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("ownerToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        listTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveListTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("listToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        authorizationRulesProgram: {
-          defaultValue: k.conditionalValueNode({
-            condition: k.accountValueNode("authorizationRules"),
-            ifTrue: k.publicKeyValueNode(
-              "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-              "mplTokenAuthRules"
-            ),
-          }),
-        },
-      },
-      arguments: {
-        tokenStandard: {
-          type: k.definedTypeLinkNode("TokenStandard", "hooked"),
-          defaultValue: k.enumValueNode(
-            k.definedTypeLinkNode("TokenStandard", "hooked"),
-            "NonFungible"
-          ),
-        },
-      },
-    },
-    listLegacy: {
-      accounts: {
-        payer: {
-          defaultValue: k.accountValueNode("owner"),
-        },
-        ownerToken: {
-          defaultValue: k.resolverValueNode("resolveOwnerToken", {
-            dependsOn: [
-              k.accountValueNode("owner"),
-              k.accountValueNode("tokenProgram"),
-              k.accountValueNode("mint"),
-            ],
-          }),
-        },
-        listToken: { defaultValue: k.pdaValueNode("listToken") },
-        listState: { defaultValue: k.pdaValueNode("listState") },
-        metadata: {
-          defaultValue: k.resolverValueNode("resolveMetadata", {
-            dependsOn: [k.accountValueNode("mint")],
-          }),
-        },
-        edition: {
-          defaultValue: k.resolverValueNode("resolveEditionFromTokenStandard", {
-            dependsOn: [
-              k.accountValueNode("mint"),
-              k.argumentValueNode("tokenStandard"),
-            ],
-          }),
-        },
-        ownerTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveOwnerTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("ownerToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        listTokenRecord: {
-          defaultValue: k.resolverValueNode(
-            "resolveListTokenRecordFromTokenStandard",
-            {
-              dependsOn: [
-                k.accountValueNode("mint"),
-                k.accountValueNode("listToken"),
-                k.argumentValueNode("tokenStandard"),
-              ],
-            }
-          ),
-        },
-        authorizationRulesProgram: {
-          defaultValue: k.conditionalValueNode({
-            condition: k.accountValueNode("authorizationRules"),
-            ifTrue: k.publicKeyValueNode(
-              "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-              "mplTokenAuthRules"
-            ),
-          }),
-        },
-      },
-      arguments: {
-        tokenStandard: {
-          type: k.definedTypeLinkNode("TokenStandard", "hooked"),
-          defaultValue: k.enumValueNode(
-            k.definedTypeLinkNode("TokenStandard", "hooked"),
-            "NonFungible"
-          ),
-        },
-      },
-    },
-  })
-);
-
-// Update instructions for Token-2022 instructions.
-kinobi.update(token22());
+// Update instructions using additional visitors.
+kinobi.update(legacyInstructions());
+kinobi.update(token22Instructions());
 
 // Set more struct default values dynamically.
 kinobi.update(
@@ -395,8 +158,9 @@ kinobi.accept(
   k.renderJavaScriptExperimentalVisitor(jsDir, {
     prettier,
     asyncResolvers: [
-      "resolveOwnerToken",
-      "resolveBuyerToken",
+      "resolveBuyerAta",
+      "resolveListAta",
+      "resolveOwnerAta",
       "resolveMetadata",
       "resolveEditionFromTokenStandard",
       "resolveOwnerTokenRecordFromTokenStandard",

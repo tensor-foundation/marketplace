@@ -19,8 +19,8 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            buyerToken: {
-              defaultValue: k.resolverValueNode("resolveBuyerToken", {
+            buyerAta: {
+              defaultValue: k.resolverValueNode("resolveBuyerAta", {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -28,7 +28,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listToken: { defaultValue: k.pdaValueNode("listAta") },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
@@ -37,8 +37,8 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -46,7 +46,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listToken: { defaultValue: k.pdaValueNode("listAta") },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
@@ -55,8 +55,8 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -64,7 +64,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listToken: { defaultValue: k.pdaValueNode("listAta") },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
@@ -73,8 +73,8 @@ module.exports = function visitor(options) {
             payer: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -82,7 +82,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listToken: { defaultValue: k.pdaValueNode("listAta") },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },

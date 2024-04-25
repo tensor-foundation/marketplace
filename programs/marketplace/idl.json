@@ -1238,7 +1238,7 @@
           "isSigner": false
         },
         {
-          "name": "listToken",
+          "name": "listAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1258,7 +1258,7 @@
           "isSigner": false
         },
         {
-          "name": "buyerToken",
+          "name": "buyerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1376,10 +1376,25 @@
       ]
     },
     {
-      "name": "delistLegacy",
+      "name": "closeExpiredListingLegacy",
       "accounts": [
         {
-          "name": "ownerToken",
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
@@ -1389,7 +1404,101 @@
           "isSigner": false
         },
         {
-          "name": "listToken",
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "edition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ownerTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "listTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "authorizationData",
+          "type": {
+            "option": {
+              "defined": "AuthorizationDataLocal"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "delistLegacy",
+      "accounts": [
+        {
+          "name": "ownerAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1488,7 +1597,7 @@
       "name": "listLegacy",
       "accounts": [
         {
-          "name": "ownerToken",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1498,12 +1607,9 @@
           "isSigner": false
         },
         {
-          "name": "listToken",
+          "name": "listAta",
           "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Implicitly checked via transfer. Will fail if wrong account"
-          ]
+          "isSigner": false
         },
         {
           "name": "listState",
@@ -1820,7 +1926,12 @@
           "isSigner": false
         },
         {
-          "name": "listToken",
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1830,17 +1941,17 @@
           "isSigner": false
         },
         {
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "buyerToken",
+          "name": "owner",
           "isMut": true,
           "isSigner": false
         },
@@ -1848,11 +1959,6 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
         },
         {
           "name": "takerBroker",
@@ -1903,12 +2009,12 @@
       "name": "closeExpiredListingT22",
       "accounts": [
         {
-          "name": "ownerToken",
-          "isMut": true,
+          "name": "owner",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "listToken",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1918,17 +2024,27 @@
           "isSigner": false
         },
         {
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": false,
+          "name": "rentDestination",
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1941,11 +2057,6 @@
           "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rentDestination",
-          "isMut": true,
-          "isSigner": false
         }
       ],
       "args": []
@@ -1954,17 +2065,12 @@
       "name": "delistT22",
       "accounts": [
         {
-          "name": "ownerToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
+          "name": "owner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
-          "name": "listToken",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1974,9 +2080,14 @@
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "rentDestination",
@@ -1985,6 +2096,11 @@
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2005,22 +2121,14 @@
       "name": "listT22",
       "accounts": [
         {
-          "name": "ownerToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
+          "name": "owner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
-          "name": "listToken",
+          "name": "ownerAta",
           "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Implicitly checked via transfer. Will fail if wrong account"
-          ]
+          "isSigner": false
         },
         {
           "name": "listState",
@@ -2028,9 +2136,14 @@
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "payer",

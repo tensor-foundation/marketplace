@@ -12,11 +12,11 @@ use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 pub struct ListLegacy {
-    pub owner_token: solana_program::pubkey::Pubkey,
+    pub owner_ata: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: solana_program::pubkey::Pubkey,
+
+    pub list_ata: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -64,14 +64,14 @@ impl ListLegacy {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(18 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_token,
+            self.owner_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_token,
+            self.list_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -201,9 +201,9 @@ pub struct ListLegacyInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
+///   0. `[writable]` owner_ata
 ///   1. `[]` mint
-///   2. `[writable]` list_token
+///   2. `[writable]` list_ata
 ///   3. `[writable]` list_state
 ///   4. `[signer]` owner
 ///   5. `[writable, signer]` payer
@@ -221,9 +221,9 @@ pub struct ListLegacyInstructionArgs {
 ///   17. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
 #[derive(Default)]
 pub struct ListLegacyBuilder {
-    owner_token: Option<solana_program::pubkey::Pubkey>,
+    owner_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    list_token: Option<solana_program::pubkey::Pubkey>,
+    list_ata: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -253,8 +253,8 @@ impl ListLegacyBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn owner_token(&mut self, owner_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_token = Some(owner_token);
+    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -262,10 +262,9 @@ impl ListLegacyBuilder {
         self.mint = Some(mint);
         self
     }
-    /// Implicitly checked via transfer. Will fail if wrong account
     #[inline(always)]
-    pub fn list_token(&mut self, list_token: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_token = Some(list_token);
+    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ata = Some(list_ata);
         self
     }
     #[inline(always)]
@@ -434,9 +433,9 @@ impl ListLegacyBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts =
             ListLegacy {
-                owner_token: self.owner_token.expect("owner_token is not set"),
+                owner_ata: self.owner_ata.expect("owner_ata is not set"),
                 mint: self.mint.expect("mint is not set"),
-                list_token: self.list_token.expect("list_token is not set"),
+                list_ata: self.list_ata.expect("list_ata is not set"),
                 list_state: self.list_state.expect("list_state is not set"),
                 owner: self.owner.expect("owner is not set"),
                 payer: self.payer.expect("payer is not set"),
@@ -480,11 +479,11 @@ impl ListLegacyBuilder {
 
 /// `list_legacy` CPI accounts.
 pub struct ListLegacyCpiAccounts<'a, 'b> {
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -522,11 +521,11 @@ pub struct ListLegacyCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Implicitly checked via transfer. Will fail if wrong account
-    pub list_token: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -569,9 +568,9 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            owner_token: accounts.owner_token,
+            owner_ata: accounts.owner_ata,
             mint: accounts.mint,
-            list_token: accounts.list_token,
+            list_ata: accounts.list_ata,
             list_state: accounts.list_state,
             owner: accounts.owner,
             payer: accounts.payer,
@@ -625,7 +624,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(18 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_token.key,
+            *self.owner_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -633,7 +632,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_token.key,
+            *self.list_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -742,9 +741,9 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(18 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.owner_token.clone());
+        account_infos.push(self.owner_ata.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.list_token.clone());
+        account_infos.push(self.list_ata.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.payer.clone());
@@ -784,9 +783,9 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` owner_token
+///   0. `[writable]` owner_ata
 ///   1. `[]` mint
-///   2. `[writable]` list_token
+///   2. `[writable]` list_ata
 ///   3. `[writable]` list_state
 ///   4. `[signer]` owner
 ///   5. `[writable, signer]` payer
@@ -810,9 +809,9 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(ListLegacyCpiBuilderInstruction {
             __program: program,
-            owner_token: None,
+            owner_ata: None,
             mint: None,
-            list_token: None,
+            list_ata: None,
             list_state: None,
             owner: None,
             payer: None,
@@ -839,11 +838,11 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn owner_token(
+    pub fn owner_ata(
         &mut self,
-        owner_token: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.owner_token = Some(owner_token);
+        self.instruction.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -851,13 +850,12 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
         self.instruction.mint = Some(mint);
         self
     }
-    /// Implicitly checked via transfer. Will fail if wrong account
     #[inline(always)]
-    pub fn list_token(
+    pub fn list_ata(
         &mut self,
-        list_token: &'b solana_program::account_info::AccountInfo<'a>,
+        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_token = Some(list_token);
+        self.instruction.list_ata = Some(list_ata);
         self
     }
     #[inline(always)]
@@ -1065,14 +1063,11 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
         let instruction = ListLegacyCpi {
             __program: self.instruction.__program,
 
-            owner_token: self
-                .instruction
-                .owner_token
-                .expect("owner_token is not set"),
+            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
-            list_token: self.instruction.list_token.expect("list_token is not set"),
+            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
@@ -1132,9 +1127,9 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
 
 struct ListLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    owner_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,

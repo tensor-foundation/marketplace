@@ -24,6 +24,7 @@ import {
   ParsedCloseExpiredBidInstruction,
   ParsedCloseExpiredListingCoreInstruction,
   ParsedCloseExpiredListingInstruction,
+  ParsedCloseExpiredListingLegacyInstruction,
   ParsedCloseExpiredListingT22Instruction,
   ParsedDelistCoreInstruction,
   ParsedDelistInstruction,
@@ -100,6 +101,7 @@ export enum TensorMarketplaceInstruction {
   TakeBidMetaHash,
   TakeBidFullMeta,
   BuyLegacy,
+  CloseExpiredListingLegacy,
   DelistLegacy,
   ListLegacy,
   TakeBidLegacy,
@@ -164,6 +166,9 @@ export function identifyTensorMarketplaceInstruction(
   }
   if (memcmp(data, new Uint8Array([68, 127, 43, 8, 212, 31, 249, 114]), 0)) {
     return TensorMarketplaceInstruction.BuyLegacy;
+  }
+  if (memcmp(data, new Uint8Array([56, 16, 96, 188, 55, 68, 250, 58]), 0)) {
+    return TensorMarketplaceInstruction.CloseExpiredListingLegacy;
   }
   if (memcmp(data, new Uint8Array([88, 35, 231, 184, 110, 218, 149, 23]), 0)) {
     return TensorMarketplaceInstruction.DelistLegacy;
@@ -257,6 +262,9 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.BuyLegacy;
     } & ParsedBuyLegacyInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListingLegacy;
+    } & ParsedCloseExpiredListingLegacyInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.DelistLegacy;
     } & ParsedDelistLegacyInstruction<TProgram>)

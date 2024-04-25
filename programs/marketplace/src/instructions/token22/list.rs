@@ -13,24 +13,11 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct ListT22<'info> {
+    /// CHECK: the token transfer will fail if owner is wrong (signature error)
+    pub owner: Signer<'info>,
+
     #[account(mut, token::mint = mint, token::authority = owner)]
-    pub owner_token: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub mint: Box<InterfaceAccount<'info, Mint>>,
-
-    /// Implicitly checked via transfer. Will fail if wrong account
-    #[account(
-        init, //<-- this HAS to be init, not init_if_needed for safety (else single listings and pool listings can get mixed)
-        payer = payer,
-        seeds=[
-            b"list_token".as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump,
-        token::mint = mint,
-        token::authority = list_state,
-    )]
-    pub list_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -44,8 +31,15 @@ pub struct ListT22<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+    #[account(
+        init,
+        payer = payer,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
@@ -78,8 +72,8 @@ pub fn process_list_t22<'info>(
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.owner_token.to_account_info(),
-            to: ctx.accounts.list_token.to_account_info(),
+            from: ctx.accounts.owner_ata.to_account_info(),
+            to: ctx.accounts.list_ata.to_account_info(),
             authority: ctx.accounts.owner.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
