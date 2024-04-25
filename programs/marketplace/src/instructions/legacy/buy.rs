@@ -27,15 +27,10 @@ pub struct BuyLegacy<'info> {
 
     #[account(
         mut,
-        seeds=[
-            b"list_token".as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump,
-        token::mint = mint,
-        token::authority = list_state,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
     )]
-    pub list_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -49,7 +44,6 @@ pub struct BuyLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: seed in nft_escrow & nft_receipt
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -61,7 +55,7 @@ pub struct BuyLegacy<'info> {
         associated_token::mint = mint,
         associated_token::authority = buyer,
     )]
-    pub buyer_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -201,8 +195,8 @@ pub fn process_buy_legacy<'info, 'b>(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
             payer: &ctx.accounts.buyer,
-            source_ata: &ctx.accounts.list_token,
-            destination_ata: &ctx.accounts.buyer_token,
+            source_ata: &ctx.accounts.list_ata,
+            destination_ata: &ctx.accounts.buyer_ata,
             destination: &ctx.accounts.buyer,
             mint: ctx.accounts.mint.deref(),
             metadata: &ctx.accounts.metadata,
@@ -234,7 +228,7 @@ pub fn process_buy_legacy<'info, 'b>(
             field: None,
             field_id: None,
             amount,
-            quantity: 0, //quantity left
+            quantity: 1, // <-- represents how many NFTs got bought
             tcomp_fee,
             taker_broker_fee,
             maker_broker_fee,
@@ -296,7 +290,7 @@ pub fn process_buy_legacy<'info, 'b>(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_token.to_account_info(),
+                account: ctx.accounts.list_ata.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },
