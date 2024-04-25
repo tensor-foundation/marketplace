@@ -15,9 +15,9 @@ pub struct CloseExpiredListingLegacy {
 
     pub owner_ata: solana_program::pubkey::Pubkey,
 
-    pub list_ata: solana_program::pubkey::Pubkey,
-
     pub list_state: solana_program::pubkey::Pubkey,
+
+    pub list_ata: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
 
@@ -72,11 +72,11 @@ impl CloseExpiredListingLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_ata,
+            self.list_state,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+            self.list_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -205,8 +205,8 @@ pub struct CloseExpiredListingLegacyInstructionArgs {
 ///
 ///   0. `[]` owner
 ///   1. `[writable]` owner_ata
-///   2. `[writable]` list_ata
-///   3. `[writable]` list_state
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
 ///   6. `[writable]` rent_destination
@@ -226,8 +226,8 @@ pub struct CloseExpiredListingLegacyInstructionArgs {
 pub struct CloseExpiredListingLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     owner_ata: Option<solana_program::pubkey::Pubkey>,
-    list_ata: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
+    list_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
@@ -262,13 +262,13 @@ impl CloseExpiredListingLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_ata = Some(list_ata);
+    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_state = Some(list_state);
         self
     }
     #[inline(always)]
-    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_state = Some(list_state);
+    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ata = Some(list_ata);
         self
     }
     #[inline(always)]
@@ -413,8 +413,8 @@ impl CloseExpiredListingLegacyBuilder {
             CloseExpiredListingLegacy {
                 owner: self.owner.expect("owner is not set"),
                 owner_ata: self.owner_ata.expect("owner_ata is not set"),
-                list_ata: self.list_ata.expect("list_ata is not set"),
                 list_state: self.list_state.expect("list_state is not set"),
+                list_ata: self.list_ata.expect("list_ata is not set"),
                 mint: self.mint.expect("mint is not set"),
                 payer: self.payer.expect("payer is not set"),
                 rent_destination: self.rent_destination.expect("rent_destination is not set"),
@@ -457,9 +457,9 @@ pub struct CloseExpiredListingLegacyCpiAccounts<'a, 'b> {
 
     pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -501,9 +501,9 @@ pub struct CloseExpiredListingLegacyCpi<'a, 'b> {
 
     pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -548,8 +548,8 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             __program: program,
             owner: accounts.owner,
             owner_ata: accounts.owner_ata,
-            list_ata: accounts.list_ata,
             list_state: accounts.list_state,
+            list_ata: accounts.list_ata,
             mint: accounts.mint,
             payer: accounts.payer,
             rent_destination: accounts.rent_destination,
@@ -611,11 +611,11 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_ata.key,
+            *self.list_state.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
+            *self.list_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -728,8 +728,8 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ata.clone());
-        account_infos.push(self.list_ata.clone());
         account_infos.push(self.list_state.clone());
+        account_infos.push(self.list_ata.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.rent_destination.clone());
@@ -771,8 +771,8 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
 ///
 ///   0. `[]` owner
 ///   1. `[writable]` owner_ata
-///   2. `[writable]` list_ata
-///   3. `[writable]` list_state
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
 ///   6. `[writable]` rent_destination
@@ -798,8 +798,8 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
             __program: program,
             owner: None,
             owner_ata: None,
-            list_ata: None,
             list_state: None,
+            list_ata: None,
             mint: None,
             payer: None,
             rent_destination: None,
@@ -834,19 +834,19 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn list_ata(
-        &mut self,
-        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.list_ata = Some(list_ata);
-        self
-    }
-    #[inline(always)]
     pub fn list_state(
         &mut self,
         list_state: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.list_state = Some(list_state);
+        self
+    }
+    #[inline(always)]
+    pub fn list_ata(
+        &mut self,
+        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ata = Some(list_ata);
         self
     }
     #[inline(always)]
@@ -1024,9 +1024,9 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
 
             owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
-            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
-
             list_state: self.instruction.list_state.expect("list_state is not set"),
+
+            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -1091,8 +1091,8 @@ struct CloseExpiredListingLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,

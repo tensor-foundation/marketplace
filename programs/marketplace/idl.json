@@ -1238,6 +1238,16 @@
           "isSigner": false
         },
         {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "listAta",
           "isMut": true,
           "isSigner": false
@@ -1253,12 +1263,7 @@
           "isSigner": false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "buyerAta",
+          "name": "owner",
           "isMut": true,
           "isSigner": false
         },
@@ -1266,11 +1271,6 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
         },
         {
           "name": "takerBroker",
@@ -1389,12 +1389,12 @@
           "isSigner": false
         },
         {
-          "name": "listAta",
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "listState",
+          "name": "listAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1503,12 +1503,12 @@
           "isSigner": false
         },
         {
-          "name": "listAta",
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "listState",
+          "name": "listAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1521,6 +1521,11 @@
           "name": "rentDestination",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "tokenProgram",
@@ -1602,17 +1607,12 @@
       "name": "listLegacy",
       "accounts": [
         {
-          "name": "ownerAta",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
+          "name": "owner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
-          "name": "listAta",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -1622,9 +1622,14 @@
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "listAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "payer",

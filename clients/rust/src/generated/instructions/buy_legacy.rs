@@ -13,19 +13,19 @@ use borsh::BorshSerialize;
 pub struct BuyLegacy {
     pub fee_vault: solana_program::pubkey::Pubkey,
 
+    pub buyer: solana_program::pubkey::Pubkey,
+
+    pub buyer_ata: solana_program::pubkey::Pubkey,
+
     pub list_ata: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
 
-    pub buyer: solana_program::pubkey::Pubkey,
-
-    pub buyer_ata: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub payer: solana_program::pubkey::Pubkey,
-
-    pub owner: solana_program::pubkey::Pubkey,
 
     pub taker_broker: Option<solana_program::pubkey::Pubkey>,
 
@@ -76,6 +76,13 @@ impl BuyLegacy {
             self.fee_vault,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.buyer, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.buyer_ata,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_ata,
             false,
@@ -87,18 +94,11 @@ impl BuyLegacy {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.buyer, false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.buyer_ata,
-            false,
+            self.owner, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner, false,
         ));
         if let Some(taker_broker) = self.taker_broker {
             accounts.push(solana_program::instruction::AccountMeta::new(
@@ -241,13 +241,13 @@ pub struct BuyLegacyInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` fee_vault
-///   1. `[writable]` list_ata
-///   2. `[writable]` list_state
-///   3. `[]` mint
-///   4. `[]` buyer
-///   5. `[writable]` buyer_ata
-///   6. `[writable, signer]` payer
-///   7. `[writable]` owner
+///   1. `[]` buyer
+///   2. `[writable]` buyer_ata
+///   3. `[writable]` list_ata
+///   4. `[writable]` list_state
+///   5. `[]` mint
+///   6. `[writable]` owner
+///   7. `[writable, signer]` payer
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
@@ -266,13 +266,13 @@ pub struct BuyLegacyInstructionArgs {
 #[derive(Default)]
 pub struct BuyLegacyBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
+    buyer: Option<solana_program::pubkey::Pubkey>,
+    buyer_ata: Option<solana_program::pubkey::Pubkey>,
     list_ata: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    buyer: Option<solana_program::pubkey::Pubkey>,
-    buyer_ata: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
@@ -304,6 +304,16 @@ impl BuyLegacyBuilder {
         self
     }
     #[inline(always)]
+    pub fn buyer(&mut self, buyer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.buyer = Some(buyer);
+        self
+    }
+    #[inline(always)]
+    pub fn buyer_ata(&mut self, buyer_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.buyer_ata = Some(buyer_ata);
+        self
+    }
+    #[inline(always)]
     pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
         self.list_ata = Some(list_ata);
         self
@@ -319,23 +329,13 @@ impl BuyLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn buyer(&mut self, buyer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.buyer = Some(buyer);
-        self
-    }
-    #[inline(always)]
-    pub fn buyer_ata(&mut self, buyer_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.buyer_ata = Some(buyer_ata);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
-        self
-    }
-    #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
         self
     }
     /// `[optional account]`
@@ -498,13 +498,13 @@ impl BuyLegacyBuilder {
         let accounts =
             BuyLegacy {
                 fee_vault: self.fee_vault.expect("fee_vault is not set"),
+                buyer: self.buyer.expect("buyer is not set"),
+                buyer_ata: self.buyer_ata.expect("buyer_ata is not set"),
                 list_ata: self.list_ata.expect("list_ata is not set"),
                 list_state: self.list_state.expect("list_state is not set"),
                 mint: self.mint.expect("mint is not set"),
-                buyer: self.buyer.expect("buyer is not set"),
-                buyer_ata: self.buyer_ata.expect("buyer_ata is not set"),
-                payer: self.payer.expect("payer is not set"),
                 owner: self.owner.expect("owner is not set"),
+                payer: self.payer.expect("payer is not set"),
                 taker_broker: self.taker_broker,
                 maker_broker: self.maker_broker,
                 rent_destination: self.rent_destination.expect("rent_destination is not set"),
@@ -547,19 +547,19 @@ impl BuyLegacyBuilder {
 pub struct BuyLegacyCpiAccounts<'a, 'b> {
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -599,19 +599,19 @@ pub struct BuyLegacyCpi<'a, 'b> {
 
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -655,13 +655,13 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
         Self {
             __program: program,
             fee_vault: accounts.fee_vault,
+            buyer: accounts.buyer,
+            buyer_ata: accounts.buyer_ata,
             list_ata: accounts.list_ata,
             list_state: accounts.list_state,
             mint: accounts.mint,
-            buyer: accounts.buyer,
-            buyer_ata: accounts.buyer_ata,
-            payer: accounts.payer,
             owner: accounts.owner,
+            payer: accounts.payer,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_destination: accounts.rent_destination,
@@ -718,6 +718,14 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             *self.fee_vault.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.buyer.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.buyer_ata.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.list_ata.key,
             false,
@@ -730,21 +738,13 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             *self.mint.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.buyer.key,
-            false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.buyer_ata.key,
+            *self.owner.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner.key,
-            false,
         ));
         if let Some(taker_broker) = self.taker_broker {
             accounts.push(solana_program::instruction::AccountMeta::new(
@@ -867,13 +867,13 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(23 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
+        account_infos.push(self.buyer.clone());
+        account_infos.push(self.buyer_ata.clone());
         account_infos.push(self.list_ata.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.buyer.clone());
-        account_infos.push(self.buyer_ata.clone());
-        account_infos.push(self.payer.clone());
         account_infos.push(self.owner.clone());
+        account_infos.push(self.payer.clone());
         if let Some(taker_broker) = self.taker_broker {
             account_infos.push(taker_broker.clone());
         }
@@ -918,13 +918,13 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` fee_vault
-///   1. `[writable]` list_ata
-///   2. `[writable]` list_state
-///   3. `[]` mint
-///   4. `[]` buyer
-///   5. `[writable]` buyer_ata
-///   6. `[writable, signer]` payer
-///   7. `[writable]` owner
+///   1. `[]` buyer
+///   2. `[writable]` buyer_ata
+///   3. `[writable]` list_ata
+///   4. `[writable]` list_state
+///   5. `[]` mint
+///   6. `[writable]` owner
+///   7. `[writable, signer]` payer
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
@@ -949,13 +949,13 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
         let instruction = Box::new(BuyLegacyCpiBuilderInstruction {
             __program: program,
             fee_vault: None,
+            buyer: None,
+            buyer_ata: None,
             list_ata: None,
             list_state: None,
             mint: None,
-            buyer: None,
-            buyer_ata: None,
-            payer: None,
             owner: None,
+            payer: None,
             taker_broker: None,
             maker_broker: None,
             rent_destination: None,
@@ -987,6 +987,19 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn buyer(&mut self, buyer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.buyer = Some(buyer);
+        self
+    }
+    #[inline(always)]
+    pub fn buyer_ata(
+        &mut self,
+        buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.buyer_ata = Some(buyer_ata);
+        self
+    }
+    #[inline(always)]
     pub fn list_ata(
         &mut self,
         list_ata: &'b solana_program::account_info::AccountInfo<'a>,
@@ -1008,26 +1021,13 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn buyer(&mut self, buyer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.buyer = Some(buyer);
-        self
-    }
-    #[inline(always)]
-    pub fn buyer_ata(
-        &mut self,
-        buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.buyer_ata = Some(buyer_ata);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
-        self
-    }
-    #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
         self
     }
     /// `[optional account]`
@@ -1228,19 +1228,19 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
 
             fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
+            buyer: self.instruction.buyer.expect("buyer is not set"),
+
+            buyer_ata: self.instruction.buyer_ata.expect("buyer_ata is not set"),
+
             list_ata: self.instruction.list_ata.expect("list_ata is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
-            buyer: self.instruction.buyer.expect("buyer is not set"),
-
-            buyer_ata: self.instruction.buyer_ata.expect("buyer_ata is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
 
             payer: self.instruction.payer.expect("payer is not set"),
-
-            owner: self.instruction.owner.expect("owner is not set"),
 
             taker_broker: self.instruction.taker_broker,
 
@@ -1304,13 +1304,13 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
 struct BuyLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    buyer_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    buyer_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,

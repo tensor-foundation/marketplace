@@ -24,13 +24,6 @@ pub struct CloseExpiredListingLegacy<'info> {
 
     #[account(
         mut,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(
-        mut,
         seeds=[b"list_state".as_ref(), mint.key().as_ref()],
         bump = list_state.bump[0],
         close = rent_destination,
@@ -38,9 +31,15 @@ pub struct CloseExpiredListingLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -157,12 +156,13 @@ pub fn process_close_expired_listing_legacy<'info>(
 
     // closes the list token account
 
+    // returns the rent to the payer (most likely the payer funded the owner ata)
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
                 account: ctx.accounts.list_ata.to_account_info(),
-                destination: ctx.accounts.rent_destination.to_account_info(),
+                destination: ctx.accounts.payer.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },
         )

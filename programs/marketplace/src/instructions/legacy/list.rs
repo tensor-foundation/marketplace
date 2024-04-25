@@ -15,22 +15,15 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct ListLegacy<'info> {
+    /// CHECK: the token transfer will fail if owner is wrong (signature error)
+    pub owner: Signer<'info>,
+
     #[account(
         mut,
         token::mint = mint,
         token::authority = owner,
     )]
     pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub mint: Box<InterfaceAccount<'info, Mint>>,
-
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -44,8 +37,15 @@ pub struct ListLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+    #[account(
+        init,
+        payer = payer,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
