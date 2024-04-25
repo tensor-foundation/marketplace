@@ -45,12 +45,11 @@ pub struct BuyT22<'info> {
 
     #[account(
         mut,
-        token::mint = mint,
-        token::authority = list_state,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
     )]
     pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: seed in nft_escrow & nft_receipt
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -163,7 +162,7 @@ pub fn process_buy_t22<'info, 'b>(
             field: None,
             field_id: None,
             amount,
-            quantity: 1, // <-- represents how many NFTs got bought
+            quantity: 0,
             tcomp_fee,
             taker_broker_fee,
             maker_broker_fee,

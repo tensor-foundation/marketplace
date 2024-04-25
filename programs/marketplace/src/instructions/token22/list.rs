@@ -6,9 +6,8 @@ use anchor_spl::{
 };
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
@@ -62,11 +61,6 @@ pub fn process_list_t22<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     // transfer the NFT
 
     let transfer_cpi = CpiContext::new(
