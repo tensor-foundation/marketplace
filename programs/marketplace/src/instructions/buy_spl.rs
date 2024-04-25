@@ -10,16 +10,23 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
     #[account(init_if_needed,
         payer = rent_payer,
         associated_token::mint = currency,
-        associated_token::authority = tcomp,
+        associated_token::authority = fee_vault,
     )]
-    pub tcomp_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -278,7 +285,7 @@ pub fn process_buy_spl<'info>(
 
     // Pay fees
     ctx.accounts.transfer_ata(
-        ctx.accounts.tcomp_ata.deref().as_ref(),
+        ctx.accounts.fee_vault_ata.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
         ctx.accounts.currency.decimals,
@@ -288,7 +295,7 @@ pub fn process_buy_spl<'info>(
         ctx.accounts
             .maker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ata)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -300,7 +307,7 @@ pub fn process_buy_spl<'info>(
         ctx.accounts
             .taker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ata)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),

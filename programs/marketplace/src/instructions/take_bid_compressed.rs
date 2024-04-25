@@ -9,10 +9,17 @@ use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the bid_state as the fee shard number
+            shard_num!(bid_state),
+        ],
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
@@ -137,7 +144,7 @@ impl<'info> TakeBidCompressed<'info> {
             rent_dest: &self.rent_dest,
             maker_broker: &self.maker_broker,
             taker_broker: &self.taker_broker,
-            tcomp: self.tcomp.deref(),
+            fee_vault: self.fee_vault.deref(),
             asset_id,
             token_standard: None,
             creators: creators.into_iter().map(Into::into).collect(),

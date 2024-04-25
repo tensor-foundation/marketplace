@@ -7,10 +7,18 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct Buy<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -215,13 +223,13 @@ pub fn process_buy<'info>(
 
     // Pay fees
     ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+        .transfer_lamports(&ctx.accounts.fee_vault.to_account_info(), tcomp_fee)?;
 
     ctx.accounts.transfer_lamports_min_balance(
         &ctx.accounts
             .maker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         maker_broker_fee,
     )?;
@@ -230,7 +238,7 @@ pub fn process_buy<'info>(
         &ctx.accounts
             .taker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         taker_broker_fee,
     )?;

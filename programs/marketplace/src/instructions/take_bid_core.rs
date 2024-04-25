@@ -12,16 +12,24 @@ use vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram,
+    shard_num,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
 pub struct TakeBidCore<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -236,7 +244,7 @@ pub fn process_take_bid_core<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
         token_standard: Some(token_standard),
         creators: creators.into_iter().map(Into::into).collect(),

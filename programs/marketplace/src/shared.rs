@@ -1,5 +1,12 @@
 use crate::*;
 
+#[macro_export]
+macro_rules! shard_num {
+    ($account:expr) => {
+        &$account.key().as_ref()[32].to_le_bytes()
+    };
+}
+
 pub(crate) enum TcompSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
     List(&'a Account<'info, ListState>),
