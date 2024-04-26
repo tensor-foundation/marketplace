@@ -10,6 +10,7 @@ const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
 
 // Additional visitors for instrunctions.
 const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
+const token22Instructions = require("./kinobi/token22-instructions.cjs");
 
 // Update programs.
 kinobi.update(
@@ -117,6 +118,7 @@ kinobi.update(
 
 // Update instructions using additional visitors.
 kinobi.update(legacyInstructions());
+kinobi.update(token22Instructions());
 
 // Set more struct default values dynamically.
 kinobi.update(
