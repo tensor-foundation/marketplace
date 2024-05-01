@@ -5,6 +5,9 @@
 
 use crate::*;
 
+// Anchor discriminator length.
+const DISCRIMINATOR_LEN: usize = 8;
+
 #[derive(Accounts)]
 pub struct TcompNoop<'info> {
     /// CHECK: has to be signed by an account owned by the program (data checked in the instruction)
@@ -15,9 +18,9 @@ pub struct TcompNoop<'info> {
 pub fn process_noop(ctx: Context<TcompNoop>) -> Result<()> {
     let data = &(*ctx.accounts.tcomp_signer.data).borrow();
     // the account must not be empty
-    if data.is_empty()
+    if data.len() < DISCRIMINATOR_LEN
         || u64::from_le_bytes(
-            data[0..8]
+            data[..DISCRIMINATOR_LEN]
                 .try_into()
                 .map_err(|_error| ErrorCode::AccountDiscriminatorNotFound)?,
         ) == 0
