@@ -16,18 +16,11 @@ pub struct CloseExpiredListingLegacy<'info> {
 
     #[account(
         init_if_needed,
-        payer = rent_destination,
+        payer = payer,
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
     pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -38,7 +31,23 @@ pub struct CloseExpiredListingLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
     pub mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// CHECK: list_state.get_rent_payer()
+    #[account(mut,
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+    )]
+    pub rent_destination: UncheckedAccount<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -47,12 +56,6 @@ pub struct CloseExpiredListingLegacy<'info> {
     pub system_program: Program<'info, System>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
-
-    /// CHECK: list_state.get_rent_payer()
-    #[account(mut,
-        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
-    )]
-    pub rent_destination: UncheckedAccount<'info>,
 
     // ------------------------------------------------ Token Metadata accounts
     /// CHECK: assert_decode_metadata + seeds below
@@ -110,7 +113,7 @@ pub fn process_close_expired_listing_legacy<'info>(
     transfer(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
-            payer: &ctx.accounts.rent_destination,
+            payer: &ctx.accounts.payer,
             source_ata: &ctx.accounts.list_ata,
             destination_ata: &ctx.accounts.owner_ata,
             destination: &ctx.accounts.owner,
@@ -141,7 +144,7 @@ pub fn process_close_expired_listing_legacy<'info>(
             field: None,
             field_id: None,
             amount: list_state.amount,
-            quantity: 1, // <-- represents how many NFTs got delisted
+            quantity: 0,
             currency: list_state.currency,
             expiry: list_state.expiry,
             private_taker: list_state.private_taker,
@@ -153,12 +156,13 @@ pub fn process_close_expired_listing_legacy<'info>(
 
     // closes the list token account
 
+    // returns the rent to the payer (most likely the payer funded the owner ata)
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
                 account: ctx.accounts.list_ata.to_account_info(),
-                destination: ctx.accounts.rent_destination.to_account_info(),
+                destination: ctx.accounts.payer.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },
         )

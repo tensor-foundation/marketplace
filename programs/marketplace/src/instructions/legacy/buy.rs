@@ -25,6 +25,17 @@ pub struct BuyLegacy<'info> {
     #[account(mut, seeds=[], bump)]
     pub fee_vault: UncheckedAccount<'info>,
 
+    /// CHECK: it can be a 3rd party receiver address
+    pub buyer: UncheckedAccount<'info>,
+
+    #[account(
+        init_if_needed,
+        payer = payer,
+        associated_token::mint = mint,
+        associated_token::authority = buyer,
+    )]
+    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
     #[account(
         mut,
         associated_token::mint = mint,
@@ -46,24 +57,13 @@ pub struct BuyLegacy<'info> {
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// CHECK: it can be a 3rd party receiver address
-    pub buyer: UncheckedAccount<'info>,
-
-    #[account(
-        init_if_needed,
-        payer = payer,
-        associated_token::mint = mint,
-        associated_token::authority = buyer,
-    )]
-    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
     /// CHECK: has_one = owner on list_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     /// CHECK: none, can be anything
     #[account(mut)]
@@ -228,7 +228,7 @@ pub fn process_buy_legacy<'info, 'b>(
             field: None,
             field_id: None,
             amount,
-            quantity: 1, // <-- represents how many NFTs got bought
+            quantity: 0,
             tcomp_fee,
             taker_broker_fee,
             maker_broker_fee,

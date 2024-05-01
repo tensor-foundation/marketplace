@@ -27,14 +27,17 @@ import {
   IInstructionWithData,
   ReadonlyAccount,
   WritableAccount,
+  WritableSignerAccount,
 } from '@solana/instructions';
-import { resolveOwnerAta } from '../../hooked';
+import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { resolveListAta, resolveOwnerAta } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 
@@ -46,6 +49,7 @@ export type CloseExpiredListingT22Instruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -81,6 +85,10 @@ export type CloseExpiredListingT22Instruction<
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -138,17 +146,19 @@ export type CloseExpiredListingT22AsyncInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
 > = {
-  owner: Address<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
   listState?: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -162,6 +172,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
+  TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -174,6 +185,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -188,6 +200,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -205,6 +218,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -225,6 +239,11 @@ export async function getCloseExpiredListingT22InstructionAsync<
   const resolverScope = { programAddress, accounts };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -239,6 +258,12 @@ export async function getCloseExpiredListingT22InstructionAsync<
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
+  }
+  if (!accounts.listAta.value) {
+    accounts.listAta = {
+      ...accounts.listAta,
+      ...(await resolveListAta(resolverScope)),
+    };
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
@@ -265,6 +290,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
@@ -280,6 +306,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -296,17 +323,19 @@ export type CloseExpiredListingT22Input<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
 > = {
-  owner: Address<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta: Address<TAccountOwnerAta>;
   listState: Address<TAccountListState>;
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -320,6 +349,7 @@ export function getCloseExpiredListingT22Instruction<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
+  TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -332,6 +362,7 @@ export function getCloseExpiredListingT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -345,6 +376,7 @@ export function getCloseExpiredListingT22Instruction<
   TAccountListAta,
   TAccountMint,
   TAccountRentDestination,
+  TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountSystemProgram,
@@ -361,6 +393,7 @@ export function getCloseExpiredListingT22Instruction<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -378,6 +411,11 @@ export function getCloseExpiredListingT22Instruction<
   >;
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -407,6 +445,7 @@ export function getCloseExpiredListingT22Instruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
@@ -422,6 +461,7 @@ export function getCloseExpiredListingT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -443,10 +483,11 @@ export type ParsedCloseExpiredListingT22Instruction<
     listAta: TAccountMetas[3];
     mint: TAccountMetas[4];
     rentDestination: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    associatedTokenProgram: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
-    marketplaceProgram: TAccountMetas[9];
+    payer: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
+    marketplaceProgram: TAccountMetas[10];
   };
   data: CloseExpiredListingT22InstructionData;
 };
@@ -459,7 +500,7 @@ export function parseCloseExpiredListingT22Instruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseExpiredListingT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 11) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -478,6 +519,7 @@ export function parseCloseExpiredListingT22Instruction<
       listAta: getNextAccount(),
       mint: getNextAccount(),
       rentDestination: getNextAccount(),
+      payer: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),

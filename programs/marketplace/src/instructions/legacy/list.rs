@@ -8,29 +8,22 @@ use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::token_metadata::{transfer, TransferArgs};
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
-    ListState, MakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    LIST_STATE_SIZE, MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
+    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
+    MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
 pub struct ListLegacy<'info> {
+    /// CHECK: the token transfer will fail if owner is wrong (signature error)
+    pub owner: Signer<'info>,
+
     #[account(
         mut,
         token::mint = mint,
         token::authority = owner,
     )]
     pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub mint: Box<InterfaceAccount<'info, Mint>>,
-
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -44,8 +37,15 @@ pub struct ListLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+    #[account(
+        init,
+        payer = payer,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
@@ -109,11 +109,6 @@ pub fn process_list_legacy<'info>(
     maker_broker: Option<Pubkey>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     // transfer the NFT (the mint is validated on the transfer)
 
     transfer(
@@ -187,15 +182,12 @@ pub fn process_list_legacy<'info>(
 
     // closes the owner token account
 
-    close_account(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            CloseAccount {
-                account: ctx.accounts.owner_ata.to_account_info(),
-                destination: ctx.accounts.payer.to_account_info(),
-                authority: ctx.accounts.owner.to_account_info(),
-            },
-        )
-        .with_signer(&[&ctx.accounts.list_state.seeds()]),
-    )
+    close_account(CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.owner_ata.to_account_info(),
+            destination: ctx.accounts.payer.to_account_info(),
+            authority: ctx.accounts.owner.to_account_info(),
+        },
+    ))
 }

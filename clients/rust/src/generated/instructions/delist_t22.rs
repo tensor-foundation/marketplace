@@ -22,6 +22,8 @@ pub struct DelistT22 {
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
+    pub payer: solana_program::pubkey::Pubkey,
+
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -40,8 +42,8 @@ impl DelistT22 {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -61,7 +63,10 @@ impl DelistT22 {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
-            true,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
@@ -107,16 +112,17 @@ impl DelistT22InstructionData {
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` owner
+///   0. `[writable, signer]` owner
 ///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   5. `[writable]` rent_destination
+///   6. `[writable, signer]` payer
+///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct DelistT22Builder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -125,6 +131,7 @@ pub struct DelistT22Builder {
     list_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -167,6 +174,11 @@ impl DelistT22Builder {
         rent_destination: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.rent_destination = Some(rent_destination);
+        self
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -226,6 +238,7 @@ impl DelistT22Builder {
             list_ata: self.list_ata.expect("list_ata is not set"),
             mint: self.mint.expect("mint is not set"),
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
+            payer: self.payer.expect("payer is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -258,6 +271,8 @@ pub struct DelistT22CpiAccounts<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -284,6 +299,8 @@ pub struct DelistT22Cpi<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -306,6 +323,7 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
             list_ata: accounts.list_ata,
             mint: accounts.mint,
             rent_destination: accounts.rent_destination,
+            payer: accounts.payer,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
@@ -345,8 +363,8 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner.key,
             true,
         ));
@@ -368,6 +386,10 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -400,7 +422,7 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ata.clone());
@@ -408,6 +430,7 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
         account_infos.push(self.list_ata.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.rent_destination.clone());
+        account_infos.push(self.payer.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -428,16 +451,17 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` owner
+///   0. `[writable, signer]` owner
 ///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
-///   6. `[]` token_program
-///   7. `[]` associated_token_program
-///   8. `[]` marketplace_program
-///   9. `[]` system_program
+///   5. `[writable]` rent_destination
+///   6. `[writable, signer]` payer
+///   7. `[]` token_program
+///   8. `[]` associated_token_program
+///   9. `[]` marketplace_program
+///   10. `[]` system_program
 pub struct DelistT22CpiBuilder<'a, 'b> {
     instruction: Box<DelistT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -452,6 +476,7 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
             list_ata: None,
             mint: None,
             rent_destination: None,
+            payer: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
@@ -500,6 +525,11 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
         rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_destination = Some(rent_destination);
+        self
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
         self
     }
     #[inline(always)]
@@ -593,6 +623,8 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
                 .rent_destination
                 .expect("rent_destination is not set"),
 
+            payer: self.instruction.payer.expect("payer is not set"),
+
             token_program: self
                 .instruction
                 .token_program
@@ -628,6 +660,7 @@ struct DelistT22CpiBuilderInstruction<'a, 'b> {
     list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

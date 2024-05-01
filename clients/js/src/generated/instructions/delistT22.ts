@@ -26,18 +26,18 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveOwnerAta } from '../../hooked';
+import { resolveListAta, resolveOwnerAta } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 
@@ -49,6 +49,7 @@ export type DelistT22Instruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -67,7 +68,7 @@ export type DelistT22Instruction<
   IInstructionWithAccounts<
     [
       TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
+        ? WritableSignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       TAccountOwnerAta extends string
@@ -83,9 +84,12 @@ export type DelistT22Instruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -141,6 +145,7 @@ export type DelistT22AsyncInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -149,9 +154,10 @@ export type DelistT22AsyncInput<
   owner: TransactionSigner<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
   listState?: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -165,6 +171,7 @@ export async function getDelistT22InstructionAsync<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
+  TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -177,6 +184,7 @@ export async function getDelistT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -191,6 +199,7 @@ export async function getDelistT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -202,12 +211,13 @@ export async function getDelistT22InstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    owner: { value: input.owner ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: true },
     ownerAta: { value: input.ownerAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -243,8 +253,19 @@ export async function getDelistT22InstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
+  if (!accounts.listAta.value) {
+    accounts.listAta = {
+      ...accounts.listAta,
+      ...(await resolveListAta(resolverScope)),
+    };
+  }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -268,6 +289,7 @@ export async function getDelistT22InstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -283,6 +305,7 @@ export async function getDelistT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -299,6 +322,7 @@ export type DelistT22Input<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -309,7 +333,8 @@ export type DelistT22Input<
   listState: Address<TAccountListState>;
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -323,6 +348,7 @@ export function getDelistT22Instruction<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
+  TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -335,6 +361,7 @@ export function getDelistT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -348,6 +375,7 @@ export function getDelistT22Instruction<
   TAccountListAta,
   TAccountMint,
   TAccountRentDestination,
+  TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -358,12 +386,13 @@ export function getDelistT22Instruction<
 
   // Original accounts.
   const originalAccounts = {
-    owner: { value: input.owner ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: true },
     ownerAta: { value: input.ownerAta ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -386,7 +415,12 @@ export function getDelistT22Instruction<
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -410,6 +444,7 @@ export function getDelistT22Instruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -425,6 +460,7 @@ export function getDelistT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountRentDestination,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -446,10 +482,11 @@ export type ParsedDelistT22Instruction<
     listAta: TAccountMetas[3];
     mint: TAccountMetas[4];
     rentDestination: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    associatedTokenProgram: TAccountMetas[7];
-    marketplaceProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    payer: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[9];
+    systemProgram: TAccountMetas[10];
   };
   data: DelistT22InstructionData;
 };
@@ -462,7 +499,7 @@ export function parseDelistT22Instruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedDelistT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 11) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -481,6 +518,7 @@ export function parseDelistT22Instruction<
       listAta: getNextAccount(),
       mint: getNextAccount(),
       rentDestination: getNextAccount(),
+      payer: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),

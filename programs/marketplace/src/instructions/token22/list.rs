@@ -1,14 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, Token2022, TransferChecked},
+    token_2022::{close_account, transfer_checked, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
@@ -62,11 +61,6 @@ pub fn process_list_t22<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     // transfer the NFT
 
     let transfer_cpi = CpiContext::new(
@@ -123,5 +117,16 @@ pub fn process_list_t22<'info>(
         }),
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
-    )
+    )?;
+
+    // closes the owner token account
+
+    close_account(CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.owner_ata.to_account_info(),
+            destination: ctx.accounts.payer.to_account_info(),
+            authority: ctx.accounts.owner.to_account_info(),
+        },
+    ))
 }

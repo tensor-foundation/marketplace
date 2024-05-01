@@ -109,6 +109,9 @@ module.exports = function visitor(options) {
         },
         closeExpiredListingLegacy: {
           accounts: {
+            owner: {
+              defaultValue: k.accountValueNode("payer"),
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
@@ -193,6 +196,9 @@ module.exports = function visitor(options) {
         },
         delistLegacy: {
           accounts: {
+            payer: {
+              defaultValue: k.accountValueNode("owner"),
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },

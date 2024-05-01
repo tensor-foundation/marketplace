@@ -42,7 +42,7 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveOwnerAta } from '../../hooked';
+import { resolveListAta, resolveOwnerAta } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -187,7 +187,7 @@ export type ListT22AsyncInput<
   owner: TransactionSigner<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
   listState?: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -288,6 +288,12 @@ export async function getListT22InstructionAsync<
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
+  }
+  if (!accounts.listAta.value) {
+    accounts.listAta = {
+      ...accounts.listAta,
+      ...(await resolveListAta(resolverScope)),
+    };
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);

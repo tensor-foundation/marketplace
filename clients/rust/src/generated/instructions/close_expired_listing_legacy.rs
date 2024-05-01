@@ -15,11 +15,15 @@ pub struct CloseExpiredListingLegacy {
 
     pub owner_ata: solana_program::pubkey::Pubkey,
 
-    pub list_ata: solana_program::pubkey::Pubkey,
-
     pub list_state: solana_program::pubkey::Pubkey,
 
+    pub list_ata: solana_program::pubkey::Pubkey,
+
     pub mint: solana_program::pubkey::Pubkey,
+
+    pub payer: solana_program::pubkey::Pubkey,
+
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
@@ -28,8 +32,6 @@ pub struct CloseExpiredListingLegacy {
     pub system_program: solana_program::pubkey::Pubkey,
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
-
-    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub metadata: solana_program::pubkey::Pubkey,
 
@@ -61,7 +63,7 @@ impl CloseExpiredListingLegacy {
         args: CloseExpiredListingLegacyInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(18 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, false,
         ));
@@ -70,15 +72,22 @@ impl CloseExpiredListingLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_ata,
+            self.list_state,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+            self.list_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.rent_destination,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
@@ -94,10 +103,6 @@ impl CloseExpiredListingLegacy {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.marketplace_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_destination,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -200,34 +205,36 @@ pub struct CloseExpiredListingLegacyInstructionArgs {
 ///
 ///   0. `[]` owner
 ///   1. `[writable]` owner_ata
-///   2. `[writable]` list_ata
-///   3. `[writable]` list_state
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   6. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   9. `[writable]` rent_destination
-///   10. `[writable]` metadata
-///   11. `[]` edition
-///   12. `[writable, optional]` owner_token_record
-///   13. `[writable, optional]` list_token_record
-///   14. `[optional]` authorization_rules
-///   15. `[optional]` authorization_rules_program
-///   16. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
-///   17. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
+///   5. `[writable, signer]` payer
+///   6. `[writable]` rent_destination
+///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   11. `[writable]` metadata
+///   12. `[]` edition
+///   13. `[writable, optional]` owner_token_record
+///   14. `[writable, optional]` list_token_record
+///   15. `[optional]` authorization_rules
+///   16. `[optional]` authorization_rules_program
+///   17. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
+///   18. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
 #[derive(Default)]
 pub struct CloseExpiredListingLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     owner_ata: Option<solana_program::pubkey::Pubkey>,
-    list_ata: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
+    list_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
-    rent_destination: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     edition: Option<solana_program::pubkey::Pubkey>,
     owner_token_record: Option<solana_program::pubkey::Pubkey>,
@@ -255,18 +262,31 @@ impl CloseExpiredListingLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_ata = Some(list_ata);
-        self
-    }
-    #[inline(always)]
     pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
         self.list_state = Some(list_state);
         self
     }
     #[inline(always)]
+    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
+        self
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
+        self
+    }
+    #[inline(always)]
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -297,14 +317,6 @@ impl CloseExpiredListingLegacyBuilder {
         marketplace_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
-    pub fn rent_destination(
-        &mut self,
-        rent_destination: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -401,9 +413,11 @@ impl CloseExpiredListingLegacyBuilder {
             CloseExpiredListingLegacy {
                 owner: self.owner.expect("owner is not set"),
                 owner_ata: self.owner_ata.expect("owner_ata is not set"),
-                list_ata: self.list_ata.expect("list_ata is not set"),
                 list_state: self.list_state.expect("list_state is not set"),
+                list_ata: self.list_ata.expect("list_ata is not set"),
                 mint: self.mint.expect("mint is not set"),
+                payer: self.payer.expect("payer is not set"),
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
@@ -416,7 +430,6 @@ impl CloseExpiredListingLegacyBuilder {
                 marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                     "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
                 )),
-                rent_destination: self.rent_destination.expect("rent_destination is not set"),
                 metadata: self.metadata.expect("metadata is not set"),
                 edition: self.edition.expect("edition is not set"),
                 owner_token_record: self.owner_token_record,
@@ -444,11 +457,15 @@ pub struct CloseExpiredListingLegacyCpiAccounts<'a, 'b> {
 
     pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -457,8 +474,6 @@ pub struct CloseExpiredListingLegacyCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -486,11 +501,15 @@ pub struct CloseExpiredListingLegacyCpi<'a, 'b> {
 
     pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -499,8 +518,6 @@ pub struct CloseExpiredListingLegacyCpi<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -531,14 +548,15 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             __program: program,
             owner: accounts.owner,
             owner_ata: accounts.owner_ata,
-            list_ata: accounts.list_ata,
             list_state: accounts.list_state,
+            list_ata: accounts.list_ata,
             mint: accounts.mint,
+            payer: accounts.payer,
+            rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
             marketplace_program: accounts.marketplace_program,
-            rent_destination: accounts.rent_destination,
             metadata: accounts.metadata,
             edition: accounts.edition,
             owner_token_record: accounts.owner_token_record,
@@ -583,7 +601,7 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(18 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.owner.key,
             false,
@@ -593,15 +611,23 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_ata.key,
+            *self.list_state.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
+            *self.list_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.rent_destination.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -618,10 +644,6 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.marketplace_program.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_destination.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -702,18 +724,19 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(18 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ata.clone());
-        account_infos.push(self.list_ata.clone());
         account_infos.push(self.list_state.clone());
+        account_infos.push(self.list_ata.clone());
         account_infos.push(self.mint.clone());
+        account_infos.push(self.payer.clone());
+        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.marketplace_program.clone());
-        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.edition.clone());
         if let Some(owner_token_record) = self.owner_token_record {
@@ -748,22 +771,23 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
 ///
 ///   0. `[]` owner
 ///   1. `[writable]` owner_ata
-///   2. `[writable]` list_ata
-///   3. `[writable]` list_state
+///   2. `[writable]` list_state
+///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[]` token_program
-///   6. `[]` associated_token_program
-///   7. `[]` system_program
-///   8. `[]` marketplace_program
-///   9. `[writable]` rent_destination
-///   10. `[writable]` metadata
-///   11. `[]` edition
-///   12. `[writable, optional]` owner_token_record
-///   13. `[writable, optional]` list_token_record
-///   14. `[optional]` authorization_rules
-///   15. `[optional]` authorization_rules_program
-///   16. `[]` token_metadata_program
-///   17. `[]` sysvar_instructions
+///   5. `[writable, signer]` payer
+///   6. `[writable]` rent_destination
+///   7. `[]` token_program
+///   8. `[]` associated_token_program
+///   9. `[]` system_program
+///   10. `[]` marketplace_program
+///   11. `[writable]` metadata
+///   12. `[]` edition
+///   13. `[writable, optional]` owner_token_record
+///   14. `[writable, optional]` list_token_record
+///   15. `[optional]` authorization_rules
+///   16. `[optional]` authorization_rules_program
+///   17. `[]` token_metadata_program
+///   18. `[]` sysvar_instructions
 pub struct CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
     instruction: Box<CloseExpiredListingLegacyCpiBuilderInstruction<'a, 'b>>,
 }
@@ -774,14 +798,15 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
             __program: program,
             owner: None,
             owner_ata: None,
-            list_ata: None,
             list_state: None,
+            list_ata: None,
             mint: None,
+            payer: None,
+            rent_destination: None,
             token_program: None,
             associated_token_program: None,
             system_program: None,
             marketplace_program: None,
-            rent_destination: None,
             metadata: None,
             edition: None,
             owner_token_record: None,
@@ -809,14 +834,6 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn list_ata(
-        &mut self,
-        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.list_ata = Some(list_ata);
-        self
-    }
-    #[inline(always)]
     pub fn list_state(
         &mut self,
         list_state: &'b solana_program::account_info::AccountInfo<'a>,
@@ -825,8 +842,29 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn list_ata(
+        &mut self,
+        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ata = Some(list_ata);
+        self
+    }
+    #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
+        self
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
+        self
+    }
+    #[inline(always)]
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -859,14 +897,6 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
         marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
-    pub fn rent_destination(
-        &mut self,
-        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -994,11 +1024,18 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
 
             owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
-            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
-
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
+            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
+
             mint: self.instruction.mint.expect("mint is not set"),
+
+            payer: self.instruction.payer.expect("payer is not set"),
+
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             token_program: self
                 .instruction
@@ -1019,11 +1056,6 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
                 .instruction
                 .marketplace_program
                 .expect("marketplace_program is not set"),
-
-            rent_destination: self
-                .instruction
-                .rent_destination
-                .expect("rent_destination is not set"),
 
             metadata: self.instruction.metadata.expect("metadata is not set"),
 
@@ -1059,14 +1091,15 @@ struct CloseExpiredListingLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,

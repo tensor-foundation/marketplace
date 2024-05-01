@@ -61,7 +61,11 @@ test('it can delist a legacy NFT', async (t) => {
   t.false(account.exists);
 });
 
+<<<<<<< HEAD
 test('it can list a legacy Programmable NFT', async (t) => {
+=======
+test('it can delist a legacy Programmable NFT', async (t) => {
+>>>>>>> main
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an pNFT.
