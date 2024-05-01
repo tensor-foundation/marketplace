@@ -395,6 +395,12 @@ pub mod marketplace_program {
         instructions::wns::process_buy_wns(ctx, max_amount)
     }
 
+    pub fn close_expired_listing_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingWns<'info>>,
+    ) -> Result<()> {
+        instructions::wns::process_close_expired_listing_wns(ctx)
+    }
+
     pub fn delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info>>) -> Result<()> {
         instructions::wns::process_delist_wns(ctx)
     }

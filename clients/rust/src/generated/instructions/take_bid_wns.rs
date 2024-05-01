@@ -238,7 +238,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   18. `[writable]` rent_dest
 ///   19. `[writable]` approve_account
 ///   20. `[writable]` distribution
-///   21. `[]` wns_program
+///   21. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
 ///   22. `[]` distribution_program
 ///   23. `[]` extra_metas
 #[derive(Default)]
@@ -401,6 +401,7 @@ impl TakeBidWnsBuilder {
         self.distribution = Some(distribution);
         self
     }
+    /// `[optional account, default to 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM']`
     #[inline(always)]
     pub fn wns_program(&mut self, wns_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.wns_program = Some(wns_program);
@@ -474,7 +475,9 @@ impl TakeBidWnsBuilder {
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
             approve_account: self.approve_account.expect("approve_account is not set"),
             distribution: self.distribution.expect("distribution is not set"),
-            wns_program: self.wns_program.expect("wns_program is not set"),
+            wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
+                "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
+            )),
             distribution_program: self
                 .distribution_program
                 .expect("distribution_program is not set"),

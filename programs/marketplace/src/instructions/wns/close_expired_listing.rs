@@ -1,20 +1,19 @@
-use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_2022::{transfer_checked, TransferChecked},
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
+    token_interface::{Mint, TokenAccount},
 };
-use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts};
+use tensor_toolbox::token_2022::{
+    transfer::transfer_checked,
+    wns::{approve, ApproveAccounts},
+};
 
-use crate::{
-    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner,
-};
+use self::program::MarketplaceProgram;
+use crate::*;
 
 #[derive(Accounts)]
-pub struct DelistWns<'info> {
-    /// CHECK: the token transfer will fail if owner is wrong (signature error)
-    pub owner: Signer<'info>,
+pub struct CloseExpiredListingWns<'info> {
+    /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
+    pub owner: UncheckedAccount<'info>,
 
     #[account(
         init_if_needed,
@@ -26,13 +25,10 @@ pub struct DelistWns<'info> {
 
     #[account(
         mut,
-        close = rent_destination,
-        seeds=[
-            b"list_state".as_ref(),
-            mint.key().as_ref(),
-        ],
+        seeds=[b"list_state".as_ref(), mint.key().as_ref()],
         bump = list_state.bump[0],
-        has_one = owner
+        close = rent_destination,
+        has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -46,23 +42,22 @@ pub struct DelistWns<'info> {
     /// CHECK: seed in nft_escrow & nft_receipt
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    //separate payer so that a program can list with owner being a PDA
-    #[account(
-        mut,
+    /// CHECK: list_state.get_rent_payer()
+    #[account(mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_destination: Signer<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub marketplace_program: Program<'info, MarketplaceProgram>,
-
     pub system_program: Program<'info, System>,
+
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     // ---- WNS royalty enforcement
     /// CHECK: checked on approve CPI
@@ -83,7 +78,15 @@ pub struct DelistWns<'info> {
     pub extra_metas: UncheckedAccount<'info>,
 }
 
-pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info>>) -> Result<()> {
+pub fn process_close_expired_listing_wns<'info>(
+    ctx: Context<'_, '_, '_, 'info, CloseExpiredListingWns<'info>>,
+) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+    require!(
+        list_state.expiry < Clock::get()?.unix_timestamp,
+        TcompError::ListingNotYetExpired
+    );
+
     let approve_accounts = ApproveAccounts {
         payer: ctx.accounts.payer.to_account_info(),
         authority: ctx.accounts.list_state.to_account_info(),
@@ -126,10 +129,6 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
         0, // decimals = 0
     )?;
 
-    // records the delisting
-
-    let list_state = &ctx.accounts.list_state;
-
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
@@ -149,8 +148,10 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // closes the list token account
+    // closes the list ata account
 
+    // payer receives the rent from the list_ata (most likely had to pay for
+    // the owner_ata rent)
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
@@ -161,5 +162,7 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
             },
         )
         .with_signer(&[&ctx.accounts.list_state.seeds()]),
-    )
+    )?;
+
+    Ok(())
 }

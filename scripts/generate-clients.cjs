@@ -11,6 +11,7 @@ const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
 // Additional visitors for instrunctions.
 const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
 const token22Instructions = require("./kinobi/token22-instructions.cjs");
+const wnsInstructions = require("./kinobi/wns-instructions.cjs");
 
 // Update programs.
 kinobi.update(
@@ -101,6 +102,22 @@ kinobi.update(
         "sysvarInstructions"
       ),
     },
+    {
+      account: "wnsProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM",
+        "wnsProgram"
+      ),
+    },
+    {
+      account: "wnsDistributionProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
+        "wnsDistributionProgram"
+      ),
+    },
   ])
 );
 
@@ -119,6 +136,7 @@ kinobi.update(
 // Update instructions using additional visitors.
 kinobi.update(legacyInstructions());
 kinobi.update(token22Instructions());
+kinobi.update(wnsInstructions());
 
 // Set more struct default values dynamically.
 kinobi.update(
@@ -166,6 +184,9 @@ kinobi.accept(
       "resolveOwnerTokenRecordFromTokenStandard",
       "resolveBuyerTokenRecordFromTokenStandard",
       "resolveListTokenRecordFromTokenStandard",
+      "resolveWnsApprovePda",
+      "resolveWnsDistributionPda",
+      "resolveWnsExtraAccountMetasPda",
     ],
   })
 );

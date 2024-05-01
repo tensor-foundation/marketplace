@@ -19,6 +19,7 @@ export * from './closeExpiredListing';
 export * from './closeExpiredListingCore';
 export * from './closeExpiredListingLegacy';
 export * from './closeExpiredListingT22';
+export * from './closeExpiredListingWns';
 export * from './delist';
 export * from './delistCore';
 export * from './delistLegacy';
