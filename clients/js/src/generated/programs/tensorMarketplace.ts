@@ -25,7 +25,9 @@ import {
   ParsedCloseExpiredBidInstruction,
   ParsedCloseExpiredListingCoreInstruction,
   ParsedCloseExpiredListingInstruction,
+  ParsedCloseExpiredListingLegacyInstruction,
   ParsedCloseExpiredListingT22Instruction,
+  ParsedCloseExpiredListingWnsInstruction,
   ParsedDelistCoreInstruction,
   ParsedDelistInstruction,
   ParsedDelistLegacyInstruction,
@@ -103,6 +105,7 @@ export enum TensorMarketplaceInstruction {
   TakeBidMetaHash,
   TakeBidFullMeta,
   BuyLegacy,
+  CloseExpiredListingLegacy,
   DelistLegacy,
   ListLegacy,
   TakeBidLegacy,
@@ -112,6 +115,7 @@ export enum TensorMarketplaceInstruction {
   ListT22,
   TakeBidT22,
   BuyWns,
+  CloseExpiredListingWns,
   DelistWns,
   ListWns,
   TakeBidWns,
@@ -171,6 +175,9 @@ export function identifyTensorMarketplaceInstruction(
   if (memcmp(data, new Uint8Array([68, 127, 43, 8, 212, 31, 249, 114]), 0)) {
     return TensorMarketplaceInstruction.BuyLegacy;
   }
+  if (memcmp(data, new Uint8Array([56, 16, 96, 188, 55, 68, 250, 58]), 0)) {
+    return TensorMarketplaceInstruction.CloseExpiredListingLegacy;
+  }
   if (memcmp(data, new Uint8Array([88, 35, 231, 184, 110, 218, 149, 23]), 0)) {
     return TensorMarketplaceInstruction.DelistLegacy;
   }
@@ -197,6 +204,9 @@ export function identifyTensorMarketplaceInstruction(
   }
   if (memcmp(data, new Uint8Array([168, 43, 179, 217, 44, 59, 35, 244]), 0)) {
     return TensorMarketplaceInstruction.BuyWns;
+  }
+  if (memcmp(data, new Uint8Array([222, 31, 183, 134, 230, 207, 7, 132]), 0)) {
+    return TensorMarketplaceInstruction.CloseExpiredListingWns;
   }
   if (memcmp(data, new Uint8Array([172, 171, 57, 16, 74, 158, 32, 57]), 0)) {
     return TensorMarketplaceInstruction.DelistWns;
@@ -273,6 +283,9 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.BuyLegacy;
     } & ParsedBuyLegacyInstruction<TProgram>)
   | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListingLegacy;
+    } & ParsedCloseExpiredListingLegacyInstruction<TProgram>)
+  | ({
       instructionType: TensorMarketplaceInstruction.DelistLegacy;
     } & ParsedDelistLegacyInstruction<TProgram>)
   | ({
@@ -299,6 +312,9 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.BuyWns;
     } & ParsedBuyWnsInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListingWns;
+    } & ParsedCloseExpiredListingWnsInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.DelistWns;
     } & ParsedDelistWnsInstruction<TProgram>)

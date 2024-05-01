@@ -1,20 +1,18 @@
-use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_2022::{close_account, CloseAccount},
+    token_interface::{Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::token_metadata::{transfer, TransferArgs};
 
-use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner,
-};
+use crate::*;
+
+use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
-pub struct DelistLegacy<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
+pub struct CloseExpiredListingLegacy<'info> {
+    /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
+    pub owner: UncheckedAccount<'info>,
 
     #[account(
         init_if_needed,
@@ -26,13 +24,10 @@ pub struct DelistLegacy<'info> {
 
     #[account(
         mut,
-        close = rent_destination,
-        seeds=[
-            b"list_state".as_ref(),
-            mint.key().as_ref(),
-        ],
+        seeds=[b"list_state".as_ref(), mint.key().as_ref()],
         bump = list_state.bump[0],
-        has_one = owner
+        close = rent_destination,
+        has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -45,23 +40,22 @@ pub struct DelistLegacy<'info> {
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
     /// CHECK: list_state.get_rent_payer()
-    #[account(
-        mut,
+    #[account(mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_destination: UncheckedAccount<'info>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub marketplace_program: Program<'info, MarketplaceProgram>,
-
     pub system_program: Program<'info, System>,
+
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     // ------------------------------------------------ Token Metadata accounts
     /// CHECK: assert_decode_metadata + seeds below
@@ -104,10 +98,16 @@ pub struct DelistLegacy<'info> {
     pub sysvar_instructions: UncheckedAccount<'info>,
 }
 
-pub fn process_delist_legacy<'info>(
-    ctx: Context<'_, '_, '_, 'info, DelistLegacy<'info>>,
+pub fn process_close_expired_listing_legacy<'info>(
+    ctx: Context<'_, '_, '_, 'info, CloseExpiredListingLegacy<'info>>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+    require!(
+        list_state.expiry < Clock::get()?.unix_timestamp,
+        TcompError::ListingNotYetExpired
+    );
+
     // transfer the NFT (the mint is validated on the transfer)
 
     transfer(
@@ -134,10 +134,6 @@ pub fn process_delist_legacy<'info>(
         },
         Some(&[&ctx.accounts.list_state.seeds()]),
     )?;
-
-    // records the delisting
-
-    let list_state = &ctx.accounts.list_state;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

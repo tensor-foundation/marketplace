@@ -19,8 +19,8 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            buyerToken: {
-              defaultValue: k.resolverValueNode("resolveBuyerToken", {
+            buyerAta: {
+              defaultValue: k.resolverValueNode("resolveBuyerAta", {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -28,17 +28,28 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listAta: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
         closeExpiredListingT22: {
           accounts: {
+            owner: {
+              defaultValue: k.accountValueNode("payer"),
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -46,17 +57,28 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listAta: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
         delistT22: {
           accounts: {
+            payer: {
+              defaultValue: k.accountValueNode("owner"),
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -64,7 +86,15 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listAta: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
@@ -73,8 +103,8 @@ module.exports = function visitor(options) {
             payer: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerToken: {
-              defaultValue: k.resolverValueNode("resolveOwnerToken", {
+            ownerAta: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -82,7 +112,15 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listToken: { defaultValue: k.pdaValueNode("listToken") },
+            listAta: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
             listState: { defaultValue: k.pdaValueNode("listState") },
           },
         },
@@ -91,4 +129,4 @@ module.exports = function visitor(options) {
 
     return root;
   });
-}
+};

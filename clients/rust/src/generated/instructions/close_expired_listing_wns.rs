@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct DelistWns {
+pub struct CloseExpiredListingWns {
     pub owner: solana_program::pubkey::Pubkey,
 
     pub owner_ata: solana_program::pubkey::Pubkey,
@@ -28,9 +28,9 @@ pub struct DelistWns {
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
-    pub marketplace_program: solana_program::pubkey::Pubkey,
-
     pub system_program: solana_program::pubkey::Pubkey,
+
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub approve: solana_program::pubkey::Pubkey,
 
@@ -43,7 +43,7 @@ pub struct DelistWns {
     pub extra_metas: solana_program::pubkey::Pubkey,
 }
 
-impl DelistWns {
+impl CloseExpiredListingWns {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -54,7 +54,7 @@ impl DelistWns {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner, true,
+            self.owner, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner_ata,
@@ -73,7 +73,7 @@ impl DelistWns {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
@@ -87,11 +87,11 @@ impl DelistWns {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.marketplace_program,
+            self.system_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -115,7 +115,9 @@ impl DelistWns {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = DelistWnsInstructionData::new().try_to_vec().unwrap();
+        let data = CloseExpiredListingWnsInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::TENSOR_MARKETPLACE_ID,
@@ -126,40 +128,40 @@ impl DelistWns {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct DelistWnsInstructionData {
+struct CloseExpiredListingWnsInstructionData {
     discriminator: [u8; 8],
 }
 
-impl DelistWnsInstructionData {
+impl CloseExpiredListingWnsInstructionData {
     fn new() -> Self {
         Self {
-            discriminator: [172, 171, 57, 16, 74, 158, 32, 57],
+            discriminator: [222, 31, 183, 134, 230, 207, 7, 132],
         }
     }
 }
 
-/// Instruction builder for `DelistWns`.
+/// Instruction builder for `CloseExpiredListingWns`.
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` owner
+///   0. `[]` owner
 ///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   11. `[writable]` approve
 ///   12. `[writable]` distribution
 ///   13. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
 ///   14. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   15. `[]` extra_metas
 #[derive(Default)]
-pub struct DelistWnsBuilder {
+pub struct CloseExpiredListingWnsBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     owner_ata: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
@@ -169,8 +171,8 @@ pub struct DelistWnsBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
-    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     approve: Option<solana_program::pubkey::Pubkey>,
     distribution: Option<solana_program::pubkey::Pubkey>,
     wns_program: Option<solana_program::pubkey::Pubkey>,
@@ -179,7 +181,7 @@ pub struct DelistWnsBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl DelistWnsBuilder {
+impl CloseExpiredListingWnsBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -236,6 +238,12 @@ impl DelistWnsBuilder {
         self.associated_token_program = Some(associated_token_program);
         self
     }
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    #[inline(always)]
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.system_program = Some(system_program);
+        self
+    }
     /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn marketplace_program(
@@ -243,12 +251,6 @@ impl DelistWnsBuilder {
         marketplace_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.marketplace_program = Some(marketplace_program);
-        self
-    }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
         self
     }
     #[inline(always)]
@@ -301,7 +303,7 @@ impl DelistWnsBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = DelistWns {
+        let accounts = CloseExpiredListingWns {
             owner: self.owner.expect("owner is not set"),
             owner_ata: self.owner_ata.expect("owner_ata is not set"),
             list_state: self.list_state.expect("list_state is not set"),
@@ -315,12 +317,12 @@ impl DelistWnsBuilder {
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
             ),
-            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             approve: self.approve.expect("approve is not set"),
             distribution: self.distribution.expect("distribution is not set"),
             wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
@@ -336,8 +338,8 @@ impl DelistWnsBuilder {
     }
 }
 
-/// `delist_wns` CPI accounts.
-pub struct DelistWnsCpiAccounts<'a, 'b> {
+/// `close_expired_listing_wns` CPI accounts.
+pub struct CloseExpiredListingWnsCpiAccounts<'a, 'b> {
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
@@ -356,9 +358,9 @@ pub struct DelistWnsCpiAccounts<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub approve: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -371,8 +373,8 @@ pub struct DelistWnsCpiAccounts<'a, 'b> {
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `delist_wns` CPI instruction.
-pub struct DelistWnsCpi<'a, 'b> {
+/// `close_expired_listing_wns` CPI instruction.
+pub struct CloseExpiredListingWnsCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -394,9 +396,9 @@ pub struct DelistWnsCpi<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub approve: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -409,10 +411,10 @@ pub struct DelistWnsCpi<'a, 'b> {
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> DelistWnsCpi<'a, 'b> {
+impl<'a, 'b> CloseExpiredListingWnsCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: DelistWnsCpiAccounts<'a, 'b>,
+        accounts: CloseExpiredListingWnsCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
@@ -425,8 +427,8 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
             payer: accounts.payer,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
-            marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
+            marketplace_program: accounts.marketplace_program,
             approve: accounts.approve,
             distribution: accounts.distribution,
             wns_program: accounts.wns_program,
@@ -470,7 +472,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.owner.key,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner_ata.key,
@@ -490,7 +492,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
@@ -505,11 +507,11 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.marketplace_program.key,
+            *self.system_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -539,7 +541,9 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = DelistWnsInstructionData::new().try_to_vec().unwrap();
+        let data = CloseExpiredListingWnsInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::TENSOR_MARKETPLACE_ID,
@@ -557,8 +561,8 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         account_infos.push(self.payer.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
-        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.approve.clone());
         account_infos.push(self.distribution.clone());
         account_infos.push(self.wns_program.clone());
@@ -576,33 +580,33 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `DelistWns` via CPI.
+/// Instruction builder for `CloseExpiredListingWns` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` owner
+///   0. `[]` owner
 ///   1. `[writable]` owner_ata
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
 ///   7. `[]` token_program
 ///   8. `[]` associated_token_program
-///   9. `[]` marketplace_program
-///   10. `[]` system_program
+///   9. `[]` system_program
+///   10. `[]` marketplace_program
 ///   11. `[writable]` approve
 ///   12. `[writable]` distribution
 ///   13. `[]` wns_program
 ///   14. `[]` wns_distribution_program
 ///   15. `[]` extra_metas
-pub struct DelistWnsCpiBuilder<'a, 'b> {
-    instruction: Box<DelistWnsCpiBuilderInstruction<'a, 'b>>,
+pub struct CloseExpiredListingWnsCpiBuilder<'a, 'b> {
+    instruction: Box<CloseExpiredListingWnsCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
+impl<'a, 'b> CloseExpiredListingWnsCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(DelistWnsCpiBuilderInstruction {
+        let instruction = Box::new(CloseExpiredListingWnsCpiBuilderInstruction {
             __program: program,
             owner: None,
             owner_ata: None,
@@ -613,8 +617,8 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
             payer: None,
             token_program: None,
             associated_token_program: None,
-            marketplace_program: None,
             system_program: None,
+            marketplace_program: None,
             approve: None,
             distribution: None,
             wns_program: None,
@@ -688,19 +692,19 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn marketplace_program(
-        &mut self,
-        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
     pub fn system_program(
         &mut self,
         system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -784,7 +788,7 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = DelistWnsCpi {
+        let instruction = CloseExpiredListingWnsCpi {
             __program: self.instruction.__program,
 
             owner: self.instruction.owner.expect("owner is not set"),
@@ -814,15 +818,15 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
                 .associated_token_program
                 .expect("associated_token_program is not set"),
 
-            marketplace_program: self
-                .instruction
-                .marketplace_program
-                .expect("marketplace_program is not set"),
-
             system_program: self
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
+
+            marketplace_program: self
+                .instruction
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             approve: self.instruction.approve.expect("approve is not set"),
 
@@ -853,7 +857,7 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
     }
 }
 
-struct DelistWnsCpiBuilderInstruction<'a, 'b> {
+struct CloseExpiredListingWnsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -864,8 +868,8 @@ struct DelistWnsCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     approve: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

@@ -8,4 +8,3 @@
 
 export * from './feeVault';
 export * from './listState';
-export * from './listToken';

@@ -26,7 +26,6 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -44,10 +43,11 @@ import {
   ResolvedAccount,
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
 } from '../shared';
 
-export type DelistWnsInstruction<
+export type CloseExpiredListingWnsInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountOwnerAta extends string | IAccountMeta<string> = string,
@@ -62,12 +62,12 @@ export type DelistWnsInstruction<
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-  TAccountMarketplaceProgram extends
-    | string
-    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountApprove extends string | IAccountMeta<string> = string,
   TAccountDistribution extends string | IAccountMeta<string> = string,
   TAccountWnsProgram extends
@@ -83,8 +83,7 @@ export type DelistWnsInstruction<
   IInstructionWithAccounts<
     [
       TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
+        ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
       TAccountOwnerAta extends string
         ? WritableAccount<TAccountOwnerAta>
@@ -99,8 +98,7 @@ export type DelistWnsInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
@@ -112,12 +110,12 @@ export type DelistWnsInstruction<
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountMarketplaceProgram extends string
-        ? ReadonlyAccount<TAccountMarketplaceProgram>
-        : TAccountMarketplaceProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountApprove extends string
         ? WritableAccount<TAccountApprove>
         : TAccountApprove,
@@ -137,44 +135,46 @@ export type DelistWnsInstruction<
     ]
   >;
 
-export type DelistWnsInstructionData = { discriminator: Array<number> };
+export type CloseExpiredListingWnsInstructionData = {
+  discriminator: Array<number>;
+};
 
-export type DelistWnsInstructionDataArgs = {};
+export type CloseExpiredListingWnsInstructionDataArgs = {};
 
-export function getDelistWnsInstructionDataEncoder(): Encoder<DelistWnsInstructionDataArgs> {
+export function getCloseExpiredListingWnsInstructionDataEncoder(): Encoder<CloseExpiredListingWnsInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ]),
     (value) => ({
       ...value,
-      discriminator: [172, 171, 57, 16, 74, 158, 32, 57],
+      discriminator: [222, 31, 183, 134, 230, 207, 7, 132],
     })
   );
 }
 
-export function getDelistWnsInstructionDataDecoder(): Decoder<DelistWnsInstructionData> {
+export function getCloseExpiredListingWnsInstructionDataDecoder(): Decoder<CloseExpiredListingWnsInstructionData> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
   ]);
 }
 
-export function getDelistWnsInstructionDataCodec(): Codec<
-  DelistWnsInstructionDataArgs,
-  DelistWnsInstructionData
+export function getCloseExpiredListingWnsInstructionDataCodec(): Codec<
+  CloseExpiredListingWnsInstructionDataArgs,
+  CloseExpiredListingWnsInstructionData
 > {
   return combineCodec(
-    getDelistWnsInstructionDataEncoder(),
-    getDelistWnsInstructionDataDecoder()
+    getCloseExpiredListingWnsInstructionDataEncoder(),
+    getCloseExpiredListingWnsInstructionDataDecoder()
   );
 }
 
-export type DelistWnsInstructionExtraArgs = {
+export type CloseExpiredListingWnsInstructionExtraArgs = {
   collection: Address;
   paymentMint?: Address;
 };
 
-export type DelistWnsAsyncInput<
+export type CloseExpiredListingWnsAsyncInput<
   TAccountOwner extends string = string,
   TAccountOwnerAta extends string = string,
   TAccountListState extends string = string,
@@ -184,35 +184,35 @@ export type DelistWnsAsyncInput<
   TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
-  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
   TAccountWnsDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
-  owner: TransactionSigner<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
   listState?: Address<TAccountListState>;
   listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
-  payer?: TransactionSigner<TAccountPayer>;
+  rentDestination?: Address<TAccountRentDestination>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   approve?: Address<TAccountApprove>;
   distribution?: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
   wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
-  collection: DelistWnsInstructionExtraArgs['collection'];
-  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
+  collection: CloseExpiredListingWnsInstructionExtraArgs['collection'];
+  paymentMint?: CloseExpiredListingWnsInstructionExtraArgs['paymentMint'];
 };
 
-export async function getDelistWnsInstructionAsync<
+export async function getCloseExpiredListingWnsInstructionAsync<
   TAccountOwner extends string,
   TAccountOwnerAta extends string,
   TAccountListState extends string,
@@ -222,15 +222,15 @@ export async function getDelistWnsInstructionAsync<
   TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
   TAccountWnsDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
-  input: DelistWnsAsyncInput<
+  input: CloseExpiredListingWnsAsyncInput<
     TAccountOwner,
     TAccountOwnerAta,
     TAccountListState,
@@ -240,8 +240,8 @@ export async function getDelistWnsInstructionAsync<
     TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
@@ -249,7 +249,7 @@ export async function getDelistWnsInstructionAsync<
     TAccountExtraMetas
   >
 ): Promise<
-  DelistWnsInstruction<
+  CloseExpiredListingWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
     TAccountOwnerAta,
@@ -260,8 +260,8 @@ export async function getDelistWnsInstructionAsync<
     TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
@@ -286,11 +286,11 @@ export async function getDelistWnsInstructionAsync<
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
     },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
@@ -312,6 +312,11 @@ export async function getDelistWnsInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -336,20 +341,17 @@ export async function getDelistWnsInstructionAsync<
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
-  if (!accounts.payer.value) {
-    accounts.payer.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
-  if (!accounts.marketplaceProgram.value) {
-    accounts.marketplaceProgram.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.approve.value) {
     accounts.approve = {
@@ -394,8 +396,8 @@ export async function getDelistWnsInstructionAsync<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
@@ -403,8 +405,8 @@ export async function getDelistWnsInstructionAsync<
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
-    data: getDelistWnsInstructionDataEncoder().encode({}),
-  } as DelistWnsInstruction<
+    data: getCloseExpiredListingWnsInstructionDataEncoder().encode({}),
+  } as CloseExpiredListingWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
     TAccountOwnerAta,
@@ -415,8 +417,8 @@ export async function getDelistWnsInstructionAsync<
     TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
@@ -427,7 +429,7 @@ export async function getDelistWnsInstructionAsync<
   return instruction;
 }
 
-export type DelistWnsInput<
+export type CloseExpiredListingWnsInput<
   TAccountOwner extends string = string,
   TAccountOwnerAta extends string = string,
   TAccountListState extends string = string,
@@ -437,35 +439,35 @@ export type DelistWnsInput<
   TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
-  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
   TAccountWnsDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
-  owner: TransactionSigner<TAccountOwner>;
+  owner?: Address<TAccountOwner>;
   ownerAta: Address<TAccountOwnerAta>;
   listState: Address<TAccountListState>;
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
-  payer?: TransactionSigner<TAccountPayer>;
+  rentDestination?: Address<TAccountRentDestination>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   approve: Address<TAccountApprove>;
   distribution: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
   wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
-  collection: DelistWnsInstructionExtraArgs['collection'];
-  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
+  collection: CloseExpiredListingWnsInstructionExtraArgs['collection'];
+  paymentMint?: CloseExpiredListingWnsInstructionExtraArgs['paymentMint'];
 };
 
-export function getDelistWnsInstruction<
+export function getCloseExpiredListingWnsInstruction<
   TAccountOwner extends string,
   TAccountOwnerAta extends string,
   TAccountListState extends string,
@@ -475,15 +477,15 @@ export function getDelistWnsInstruction<
   TAccountPayer extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
   TAccountWnsDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
-  input: DelistWnsInput<
+  input: CloseExpiredListingWnsInput<
     TAccountOwner,
     TAccountOwnerAta,
     TAccountListState,
@@ -493,15 +495,15 @@ export function getDelistWnsInstruction<
     TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
     TAccountExtraMetas
   >
-): DelistWnsInstruction<
+): CloseExpiredListingWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner,
   TAccountOwnerAta,
@@ -512,8 +514,8 @@ export function getDelistWnsInstruction<
   TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
-  TAccountMarketplaceProgram,
   TAccountSystemProgram,
+  TAccountMarketplaceProgram,
   TAccountApprove,
   TAccountDistribution,
   TAccountWnsProgram,
@@ -537,11 +539,11 @@ export function getDelistWnsInstruction<
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
     },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
@@ -560,6 +562,11 @@ export function getDelistWnsInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -567,20 +574,17 @@ export function getDelistWnsInstruction<
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
-  if (!accounts.payer.value) {
-    accounts.payer.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
-  if (!accounts.marketplaceProgram.value) {
-    accounts.marketplaceProgram.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.paymentMint) {
     args.paymentMint =
@@ -607,8 +611,8 @@ export function getDelistWnsInstruction<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
@@ -616,8 +620,8 @@ export function getDelistWnsInstruction<
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
-    data: getDelistWnsInstructionDataEncoder().encode({}),
-  } as DelistWnsInstruction<
+    data: getCloseExpiredListingWnsInstructionDataEncoder().encode({}),
+  } as CloseExpiredListingWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
     TAccountOwnerAta,
@@ -628,8 +632,8 @@ export function getDelistWnsInstruction<
     TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountMarketplaceProgram,
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
@@ -640,7 +644,7 @@ export function getDelistWnsInstruction<
   return instruction;
 }
 
-export type ParsedDelistWnsInstruction<
+export type ParsedCloseExpiredListingWnsInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -655,25 +659,25 @@ export type ParsedDelistWnsInstruction<
     payer: TAccountMetas[6];
     tokenProgram: TAccountMetas[7];
     associatedTokenProgram: TAccountMetas[8];
-    marketplaceProgram: TAccountMetas[9];
-    systemProgram: TAccountMetas[10];
+    systemProgram: TAccountMetas[9];
+    marketplaceProgram: TAccountMetas[10];
     approve: TAccountMetas[11];
     distribution: TAccountMetas[12];
     wnsProgram: TAccountMetas[13];
     wnsDistributionProgram: TAccountMetas[14];
     extraMetas: TAccountMetas[15];
   };
-  data: DelistWnsInstructionData;
+  data: CloseExpiredListingWnsInstructionData;
 };
 
-export function parseDelistWnsInstruction<
+export function parseCloseExpiredListingWnsInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedDelistWnsInstruction<TProgram, TAccountMetas> {
+): ParsedCloseExpiredListingWnsInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -696,14 +700,16 @@ export function parseDelistWnsInstruction<
       payer: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
-      marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       approve: getNextAccount(),
       distribution: getNextAccount(),
       wnsProgram: getNextAccount(),
       wnsDistributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
     },
-    data: getDelistWnsInstructionDataDecoder().decode(instruction.data),
+    data: getCloseExpiredListingWnsInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

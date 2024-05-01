@@ -65,7 +65,9 @@ export type TakeBidWnsInstruction<
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TAccountApproveAccount extends string | IAccountMeta<string> = string,
   TAccountDistribution extends string | IAccountMeta<string> = string,
-  TAccountWnsProgram extends string | IAccountMeta<string> = string,
+  TAccountWnsProgram extends
+    | string
+    | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
   TAccountDistributionProgram extends string | IAccountMeta<string> = string,
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -236,7 +238,7 @@ export type TakeBidWnsInput<
   rentDest: Address<TAccountRentDest>;
   approveAccount: Address<TAccountApproveAccount>;
   distribution: Address<TAccountDistribution>;
-  wnsProgram: Address<TAccountWnsProgram>;
+  wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
@@ -380,6 +382,10 @@ export function getTakeBidWnsInstruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.wnsProgram.value) {
+    accounts.wnsProgram.value =
+      'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
