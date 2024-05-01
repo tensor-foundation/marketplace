@@ -52,20 +52,12 @@ test('it can close an expired listing', async (t) => {
   });
 
   // And we wait for the listing to expire.
-<<<<<<< HEAD
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-=======
   await new Promise((resolve) => setTimeout(resolve, 3000));
->>>>>>> main
 
   // When we close an expired listing.
   const closeExpiredListingIx =
     await getCloseExpiredListingLegacyInstructionAsync({
-<<<<<<< HEAD
-      owner: owner.address,
-=======
       payer: owner,
->>>>>>> main
       mint,
     });
 
@@ -120,11 +112,7 @@ test('it cannot close an active listing', async (t) => {
   // When we try to close an active listing.
   const closeExpiredListingIx =
     await getCloseExpiredListingLegacyInstructionAsync({
-<<<<<<< HEAD
-      owner: owner.address,
-=======
       payer: owner,
->>>>>>> main
       mint,
     });
 
@@ -146,8 +134,6 @@ test('it cannot close an active listing', async (t) => {
     });
   }
 });
-<<<<<<< HEAD
-=======
 
 test('it can close an expired listing with another payer', async (t) => {
   const client = createDefaultSolanaClient();
@@ -208,4 +194,3 @@ test('it can close an expired listing with another payer', async (t) => {
     ).exists
   );
 });
->>>>>>> main

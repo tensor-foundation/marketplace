@@ -20,10 +20,7 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-<<<<<<< HEAD
-=======
   TensorMarketplaceProgramErrorCode,
->>>>>>> main
   TokenStandard,
   findListStatePda,
   getBuyLegacyInstructionAsync,
@@ -167,8 +164,6 @@ test('it can buy a legacy Programmable NFT', async (t) => {
     },
   });
 });
-<<<<<<< HEAD
-=======
 
 test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
   const client = createDefaultSolanaClient();
@@ -227,4 +222,3 @@ test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
     });
   }
 });
->>>>>>> main
