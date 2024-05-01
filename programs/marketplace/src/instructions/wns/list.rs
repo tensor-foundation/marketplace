@@ -156,6 +156,8 @@ pub fn process_list_wns<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
+    // seriallizes the account data
+    list_state.exit(ctx.program_id)?;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {
