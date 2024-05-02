@@ -159,7 +159,6 @@ pub fn process_list_wns<'info>(
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 
-
     record_event(
         &TcompEvent::Maker(MakeEvent {
             maker: *ctx.accounts.owner.key,
