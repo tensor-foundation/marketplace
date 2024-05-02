@@ -388,11 +388,46 @@ pub mod marketplace_program {
 
     //------------------- WNS
 
+    pub fn buy_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyWns<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::wns::process_buy_wns(ctx, max_amount)
+    }
+
+    pub fn close_expired_listing_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingWns<'info>>,
+    ) -> Result<()> {
+        instructions::wns::process_close_expired_listing_wns(ctx)
+    }
+
+    pub fn delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info>>) -> Result<()> {
+        instructions::wns::process_delist_wns(ctx)
+    }
+
+    pub fn list_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::wns::process_list_wns(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
+
     pub fn take_bid_wns<'info>(
         ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_wns::process_take_bid_wns(ctx, min_amount)
+        instructions::wns::process_take_bid_wns(ctx, min_amount)
     }
 
     //------------------- Metaplex Core

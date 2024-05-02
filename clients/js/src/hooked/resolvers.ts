@@ -1,10 +1,13 @@
-import { ProgramDerivedAddress } from '@solana/addresses';
+import { Address, ProgramDerivedAddress } from '@solana/addresses';
 import { ResolvedAccount, expectAddress } from '../generated';
 import {
   findAssociatedTokenAccountPda,
+  findExtraAccountMetasPda,
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
+  findWnsApprovePda,
+  findWnsDistributionPda,
 } from './pdas';
 import { TokenStandard } from './types';
 
@@ -130,5 +133,45 @@ export const resolveOwnerAta = async ({
       mint: expectAddress(accounts.mint?.value),
       tokenProgram: expectAddress(accounts.tokenProgram?.value),
     }),
+  };
+};
+
+export const resolveWnsApprovePda = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findWnsApprovePda({
+      mint: expectAddress(accounts.mint?.value),
+    }),
+  };
+};
+
+export const resolveWnsDistributionPda = async ({
+  args,
+}: {
+  args: { collection: Address; paymentMint?: Address | null };
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findWnsDistributionPda({
+      collection: expectAddress(args.collection),
+      paymentMint: args.paymentMint,
+    }),
+  };
+};
+
+export const resolveWnsExtraAccountMetasPda = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findExtraAccountMetasPda(
+      {
+        mint: expectAddress(accounts.mint?.value),
+      },
+      { programAddress: expectAddress(accounts.wnsProgram?.value) }
+    ),
   };
 };
