@@ -99,6 +99,8 @@ pub fn process_list<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.rent_payer.key();
+    // seriallizes the account data
+    list_state.exit(ctx.program_id)?;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

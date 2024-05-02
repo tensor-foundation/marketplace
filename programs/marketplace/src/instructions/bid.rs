@@ -153,6 +153,8 @@ pub fn process_bid<'info>(
     bid_state.expiry = expiry;
 
     let remaining_quantity = unwrap_int!(quantity.checked_sub(bid_state.filled_quantity));
+    // seriallizes the account data
+    bid_state.exit(ctx.program_id)?;
 
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
     record_event(
