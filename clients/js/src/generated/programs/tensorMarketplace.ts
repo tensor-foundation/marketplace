@@ -93,15 +93,15 @@ export function identifyTensorMarketplaceAccount(
 export enum TensorMarketplaceInstruction {
   TcompNoop,
   WithdrawFees,
-  Buy,
-  BuySpl,
-  List,
-  Delist,
   Edit,
   Bid,
   CancelBid,
   CloseExpiredBid,
+  Buy,
+  BuySpl,
   CloseExpiredListing,
+  List,
+  Delist,
   TakeBidMetaHash,
   TakeBidFullMeta,
   BuyLegacy,
@@ -139,18 +139,6 @@ export function identifyTensorMarketplaceInstruction(
   ) {
     return TensorMarketplaceInstruction.WithdrawFees;
   }
-  if (memcmp(data, new Uint8Array([102, 6, 61, 18, 1, 218, 235, 234]), 0)) {
-    return TensorMarketplaceInstruction.Buy;
-  }
-  if (memcmp(data, new Uint8Array([65, 136, 254, 255, 59, 130, 234, 174]), 0)) {
-    return TensorMarketplaceInstruction.BuySpl;
-  }
-  if (memcmp(data, new Uint8Array([54, 174, 193, 67, 17, 41, 132, 38]), 0)) {
-    return TensorMarketplaceInstruction.List;
-  }
-  if (memcmp(data, new Uint8Array([55, 136, 205, 107, 107, 173, 4, 31]), 0)) {
-    return TensorMarketplaceInstruction.Delist;
-  }
   if (memcmp(data, new Uint8Array([15, 183, 33, 86, 87, 28, 151, 145]), 0)) {
     return TensorMarketplaceInstruction.Edit;
   }
@@ -163,8 +151,20 @@ export function identifyTensorMarketplaceInstruction(
   if (memcmp(data, new Uint8Array([83, 20, 105, 67, 248, 68, 104, 190]), 0)) {
     return TensorMarketplaceInstruction.CloseExpiredBid;
   }
+  if (memcmp(data, new Uint8Array([102, 6, 61, 18, 1, 218, 235, 234]), 0)) {
+    return TensorMarketplaceInstruction.Buy;
+  }
+  if (memcmp(data, new Uint8Array([65, 136, 254, 255, 59, 130, 234, 174]), 0)) {
+    return TensorMarketplaceInstruction.BuySpl;
+  }
   if (memcmp(data, new Uint8Array([150, 70, 13, 135, 9, 204, 75, 4]), 0)) {
     return TensorMarketplaceInstruction.CloseExpiredListing;
+  }
+  if (memcmp(data, new Uint8Array([54, 174, 193, 67, 17, 41, 132, 38]), 0)) {
+    return TensorMarketplaceInstruction.List;
+  }
+  if (memcmp(data, new Uint8Array([55, 136, 205, 107, 107, 173, 4, 31]), 0)) {
+    return TensorMarketplaceInstruction.Delist;
   }
   if (memcmp(data, new Uint8Array([85, 227, 202, 70, 45, 215, 10, 193]), 0)) {
     return TensorMarketplaceInstruction.TakeBidMetaHash;
@@ -247,18 +247,6 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.WithdrawFees;
     } & ParsedWithdrawFeesInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.Buy;
-    } & ParsedBuyInstruction<TProgram>)
-  | ({
-      instructionType: TensorMarketplaceInstruction.BuySpl;
-    } & ParsedBuySplInstruction<TProgram>)
-  | ({
-      instructionType: TensorMarketplaceInstruction.List;
-    } & ParsedListInstruction<TProgram>)
-  | ({
-      instructionType: TensorMarketplaceInstruction.Delist;
-    } & ParsedDelistInstruction<TProgram>)
-  | ({
       instructionType: TensorMarketplaceInstruction.Edit;
     } & ParsedEditInstruction<TProgram>)
   | ({
@@ -271,8 +259,20 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.CloseExpiredBid;
     } & ParsedCloseExpiredBidInstruction<TProgram>)
   | ({
+      instructionType: TensorMarketplaceInstruction.Buy;
+    } & ParsedBuyInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuySpl;
+    } & ParsedBuySplInstruction<TProgram>)
+  | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListing;
     } & ParsedCloseExpiredListingInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.List;
+    } & ParsedListInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.Delist;
+    } & ParsedDelistInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.TakeBidMetaHash;
     } & ParsedTakeBidMetaHashInstruction<TProgram>)
