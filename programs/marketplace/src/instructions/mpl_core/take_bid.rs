@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use mpl_core::{
+use metaplex_core::{
     accounts::BaseAssetV1,
     instructions::TransferV1CpiBuilder,
     types::{Royalties, UpdateAuthority},

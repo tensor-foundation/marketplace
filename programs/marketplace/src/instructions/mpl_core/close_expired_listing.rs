@@ -1,4 +1,4 @@
-use mpl_core::instructions::TransferV1CpiBuilder;
+use metaplex_core::instructions::TransferV1CpiBuilder;
 use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
 
 use crate::*;
@@ -6,7 +6,16 @@ use crate::*;
 use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
-pub struct DelistCore<'info> {
+pub struct CloseExpiredListingCore<'info> {
+    #[account(
+        mut,
+        seeds=[b"list_state".as_ref(), asset.key.as_ref()],
+        bump = list_state.bump[0],
+        close = rent_dest,
+        has_one = owner,
+    )]
+    pub list_state: Box<Account<'info, ListState>>,
+
     /// CHECK: validated on instruction handler
     #[account(mut)]
     pub asset: UncheckedAccount<'info>,
@@ -14,37 +23,31 @@ pub struct DelistCore<'info> {
     /// CHECK: validated on instruction handler
     pub collection: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: has_one = owner in single_listing
-    #[account(mut)]
-    pub owner: Signer<'info>,
-
-    /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(mut, close = rent_dest,
-        seeds=[
-            b"list_state".as_ref(),
-            asset.key.as_ref(),
-        ],
-        bump = list_state.bump[0],
-        has_one = owner
-    )]
-    pub list_state: Box<Account<'info, ListState>>,
+    /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
+    pub owner: UncheckedAccount<'info>,
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
-
     pub system_program: Program<'info, System>,
 
-    //separate payer so that a program can list with owner being a PDA
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
+
+    /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: Signer<'info>,
+    pub rent_dest: UncheckedAccount<'info>,
 }
 
-pub fn process_delist_core<'info>(
-    ctx: Context<'_, '_, '_, 'info, DelistCore<'info>>,
+pub fn process_close_expired_listing_core<'info>(
+    ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
 ) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+    require!(
+        list_state.expiry < Clock::get()?.unix_timestamp,
+        TcompError::ListingNotYetExpired
+    );
+
     validate_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
@@ -54,11 +57,9 @@ pub fn process_delist_core<'info>(
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
         .new_owner(&ctx.accounts.owner.to_account_info())
-        .payer(&ctx.accounts.rent_dest) // pay for what?
+        .payer(&ctx.accounts.list_state.to_account_info()) // pay for what?
         .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
         .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
-
-    let list_state = &ctx.accounts.list_state;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {
@@ -75,7 +76,7 @@ pub fn process_delist_core<'info>(
             private_taker: list_state.private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
