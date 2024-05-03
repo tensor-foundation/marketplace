@@ -436,17 +436,17 @@ pub mod marketplace_program {
         ctx: Context<'_, '_, '_, 'info, BuyCore<'info>>,
         max_amount: u64,
     ) -> Result<()> {
-        instructions::buy_core::process_buy_core(ctx, max_amount)
+        instructions::mpl_core::process_buy_core(ctx, max_amount)
     }
 
     pub fn close_expired_listing_core<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
     ) -> Result<()> {
-        instructions::close_expired_listing_core::process_close_expired_listing_core(ctx)
+        instructions::mpl_core::process_close_expired_listing_core(ctx)
     }
 
     pub fn delist_core<'info>(ctx: Context<'_, '_, '_, 'info, DelistCore<'info>>) -> Result<()> {
-        instructions::delist_core::process_delist_core(ctx)
+        instructions::mpl_core::process_delist_core(ctx)
     }
 
     pub fn list_core<'info>(
@@ -457,7 +457,7 @@ pub mod marketplace_program {
         private_taker: Option<Pubkey>,
         maker_broker: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::list_core::process_list_core(
+        instructions::mpl_core::process_list_core(
             ctx,
             amount,
             expire_in_sec,
@@ -471,6 +471,6 @@ pub mod marketplace_program {
         ctx: Context<'_, '_, '_, 'info, TakeBidCore<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_core::process_take_bid_core(ctx, min_amount)
+        instructions::mpl_core::process_take_bid_core(ctx, min_amount)
     }
 }
