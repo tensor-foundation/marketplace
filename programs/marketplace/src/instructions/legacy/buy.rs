@@ -194,7 +194,7 @@ pub fn process_buy_legacy<'info, 'b>(
     transfer(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
-            payer: &ctx.accounts.buyer,
+            payer: &ctx.accounts.payer,
             source_ata: &ctx.accounts.list_ata,
             destination_ata: &ctx.accounts.buyer_ata,
             destination: &ctx.accounts.buyer,
