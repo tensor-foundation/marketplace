@@ -1,4 +1,8 @@
-import { appendTransactionInstruction, generateKeyPairSigner, pipe } from '@solana/web3.js';
+import {
+  appendTransactionInstruction,
+  generateKeyPairSigner,
+  pipe,
+} from '@solana/web3.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
