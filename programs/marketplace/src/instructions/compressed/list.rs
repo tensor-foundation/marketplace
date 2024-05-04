@@ -1,5 +1,5 @@
 use mpl_bubblegum::utils::get_asset_id;
-use tensor_toolbox::{transfer_cnft, TransferArgs};
+use tensor_toolbox::{transfer_cnft, NullableOption, TransferArgs};
 
 use crate::*;
 
@@ -8,18 +8,27 @@ use crate::*;
 pub struct List<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
     pub owner: UncheckedAccount<'info>,
+
     /// CHECK: downstream (dont make Signer coz either this or owner will sign)
     pub delegate: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
+
     pub log_wrapper: Program<'info, Noop>,
+
     pub compression_program: Program<'info, SplAccountCompression>,
+
     pub system_program: Program<'info, System>,
+
     pub bubblegum_program: Program<'info, Bubblegum>,
+
     pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+
     #[account(init, payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
@@ -29,8 +38,11 @@ pub struct List<'info> {
         space = LIST_STATE_SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
     #[account(mut)]
     pub rent_payer: Signer<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
@@ -98,7 +110,8 @@ pub fn process_list<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.rent_payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

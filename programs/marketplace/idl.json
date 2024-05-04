@@ -393,6 +393,12 @@
           "name": "rentDest",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -778,6 +784,12 @@
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1290,6 +1302,12 @@
           "isSigner": false
         },
         {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1635,6 +1653,12 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -1988,6 +2012,12 @@
           "isSigner": false
         },
         {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2169,6 +2199,12 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -2392,6 +2428,12 @@
           "name": "rentDestination",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -2650,6 +2692,12 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -2921,6 +2969,12 @@
           "isSigner": false
         },
         {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -3062,6 +3116,17 @@
           "isSigner": true
         },
         {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -3075,11 +3140,6 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         }
       ],
       "args": [
@@ -3272,17 +3332,19 @@
           {
             "name": "rentPayer",
             "docs": [
-              "owner is the rent payer when this is PublicKey::default"
+              "owner is the rent payer when this is `None`"
             ],
-            "type": "publicKey"
+            "type": {
+              "defined": "NullableOption<Pubkey>"
+            }
           },
           {
-            "name": "reserved",
+            "name": "cosigner",
+            "docs": [
+              "cosigner"
+            ],
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "defined": "NullableOption<Pubkey>"
             }
           },
           {

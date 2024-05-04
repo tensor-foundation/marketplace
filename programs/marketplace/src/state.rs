@@ -1,3 +1,5 @@
+use tensor_toolbox::NullableOption;
+
 use crate::*;
 
 // (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
@@ -39,10 +41,10 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is PublicKey::default
-    pub rent_payer: Pubkey,
-
-    pub _reserved: [u8; 32],
+    /// owner is the rent payer when this is `None`
+    pub rent_payer: NullableOption<Pubkey>,
+    /// cosigner
+    pub cosigner: NullableOption<Pubkey>,
     pub _reserved1: [u8; 64],
 }
 
@@ -56,7 +58,11 @@ impl ListState {
         [b"list_state".as_ref(), self.asset_id.as_ref(), &self.bump]
     }
     pub fn get_rent_payer(&self) -> Pubkey {
-        get_rent_payer(self.rent_payer, self.owner)
+        if let Some(rent_payer) = self.rent_payer.value() {
+            *rent_payer
+        } else {
+            self.owner
+        }
     }
 }
 

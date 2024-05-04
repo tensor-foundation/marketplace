@@ -4,9 +4,12 @@ use anchor_spl::{
     token_2022::{close_account, CloseAccount, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
-use tensor_toolbox::token_2022::{
-    transfer::transfer_checked,
-    wns::{approve, validate_mint, ApproveAccounts},
+use tensor_toolbox::{
+    token_2022::{
+        transfer::transfer_checked,
+        wns::{approve, validate_mint, ApproveAccounts},
+    },
+    NullableOption,
 };
 
 use crate::{
@@ -48,6 +51,8 @@ pub struct ListWns<'info> {
     //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -155,7 +160,8 @@ pub fn process_list_wns<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

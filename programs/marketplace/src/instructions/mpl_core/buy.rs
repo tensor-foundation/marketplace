@@ -61,6 +61,9 @@ pub struct BuyCore<'info> {
     )]
     pub rent_dest: UncheckedAccount<'info>,
 
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
+
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
@@ -103,24 +106,36 @@ impl<'info> BuyCore<'info> {
 impl<'info> Validate<'info> for BuyCore<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
