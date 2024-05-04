@@ -107,7 +107,7 @@ pub struct TakeBidLegacy<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub tensorswap_program: Program<'info, EscrowProgram>,
     // seller or cosigner
     #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
@@ -320,7 +320,7 @@ pub fn process_take_bid_legacy<'info>(
         optional_royalty_pct,
         seller_fee_basis_points: metadata.seller_fee_basis_points,
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.tcomp_program,
+        tcomp_prog: &ctx.accounts.marketplace_program,
         tswap_prog: &ctx.accounts.tensorswap_program,
         system_prog: &ctx.accounts.system_program,
     })

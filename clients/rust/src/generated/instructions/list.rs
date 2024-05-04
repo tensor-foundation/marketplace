@@ -27,7 +27,7 @@ pub struct List {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -82,7 +82,7 @@ impl List {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -156,7 +156,7 @@ pub struct ListInstructionArgs {
 ///   5. `[]` compression_program
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   7. `[]` bubblegum_program
-///   8. `[]` tcomp_program
+///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
 ///   11. `[signer, optional]` cosigner
@@ -170,7 +170,7 @@ pub struct ListBuilder {
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     rent_payer: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
@@ -238,9 +238,13 @@ impl ListBuilder {
         self.bubblegum_program = Some(bubblegum_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -348,7 +352,9 @@ impl ListBuilder {
             bubblegum_program: self
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             list_state: self.list_state.expect("list_state is not set"),
             rent_payer: self.rent_payer.expect("rent_payer is not set"),
             cosigner: self.cosigner,
@@ -388,7 +394,7 @@ pub struct ListCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -418,7 +424,7 @@ pub struct ListCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -445,7 +451,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             list_state: accounts.list_state,
             rent_payer: accounts.rent_payer,
             cosigner: accounts.cosigner,
@@ -519,7 +525,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -567,7 +573,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.rent_payer.clone());
         if let Some(cosigner) = self.cosigner {
@@ -597,7 +603,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
 ///   5. `[]` compression_program
 ///   6. `[]` system_program
 ///   7. `[]` bubblegum_program
-///   8. `[]` tcomp_program
+///   8. `[]` marketplace_program
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
 ///   11. `[signer, optional]` cosigner
@@ -617,7 +623,7 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             list_state: None,
             rent_payer: None,
             cosigner: None,
@@ -697,11 +703,11 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -881,10 +887,10 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
@@ -910,7 +916,7 @@ struct ListCpiBuilderInstruction<'a, 'b> {
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

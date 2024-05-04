@@ -27,7 +27,7 @@ pub struct List<'info> {
 
     pub bubblegum_program: Program<'info, Bubblegum>,
 
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
     #[account(init, payer = rent_payer,
         seeds=[
@@ -130,7 +130,7 @@ pub fn process_list<'info>(
             private_taker,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

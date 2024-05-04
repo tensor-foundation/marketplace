@@ -27,7 +27,7 @@ pub struct TakeBidCompressed<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub tensorswap_program: Program<'info, EscrowProgram>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut,
@@ -145,7 +145,7 @@ impl<'info> TakeBidCompressed<'info> {
             optional_royalty_pct,
             seller_fee_basis_points,
             creator_accounts,
-            tcomp_prog: &self.tcomp_program,
+            tcomp_prog: &self.marketplace_program,
             tswap_prog: &self.tensorswap_program,
             system_prog: &self.system_program,
         })

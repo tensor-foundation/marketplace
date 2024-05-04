@@ -56,7 +56,9 @@ export type ListCoreInstruction<
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -89,9 +91,9 @@ export type ListCoreInstruction<
       TAccountMplCoreProgram extends string
         ? ReadonlyAccount<TAccountMplCoreProgram>
         : TAccountMplCoreProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -166,7 +168,7 @@ export type ListCoreInput<
   TAccountPayer extends string = string,
   TAccountCosigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   asset: Address<TAccountAsset>;
@@ -176,7 +178,7 @@ export type ListCoreInput<
   payer: TransactionSigner<TAccountPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   amount: ListCoreInstructionDataArgs['amount'];
   expireInSec?: ListCoreInstructionDataArgs['expireInSec'];
@@ -193,7 +195,7 @@ export function getListCoreInstruction<
   TAccountPayer extends string,
   TAccountCosigner extends string,
   TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
 >(
   input: ListCoreInput<
@@ -204,7 +206,7 @@ export function getListCoreInstruction<
     TAccountPayer,
     TAccountCosigner,
     TAccountMplCoreProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram
   >
 ): ListCoreInstruction<
@@ -216,7 +218,7 @@ export function getListCoreInstruction<
   TAccountPayer,
   TAccountCosigner,
   TAccountMplCoreProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountSystemProgram
 > {
   // Program address.
@@ -231,7 +233,10 @@ export function getListCoreInstruction<
     payer: { value: input.payer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -246,6 +251,10 @@ export function getListCoreInstruction<
   if (!accounts.mplCoreProgram.value) {
     accounts.mplCoreProgram.value =
       'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -262,7 +271,7 @@ export function getListCoreInstruction<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mplCoreProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -278,7 +287,7 @@ export function getListCoreInstruction<
     TAccountPayer,
     TAccountCosigner,
     TAccountMplCoreProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram
   >;
 
@@ -298,7 +307,7 @@ export type ParsedListCoreInstruction<
     payer: TAccountMetas[4];
     cosigner?: TAccountMetas[5] | undefined;
     mplCoreProgram: TAccountMetas[6];
-    tcompProgram: TAccountMetas[7];
+    marketplaceProgram: TAccountMetas[7];
     systemProgram: TAccountMetas[8];
   };
   data: ListCoreInstructionData;
@@ -338,7 +347,7 @@ export function parseListCoreInstruction<
       payer: getNextAccount(),
       cosigner: getNextOptionalAccount(),
       mplCoreProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getListCoreInstructionDataDecoder().decode(instruction.data),

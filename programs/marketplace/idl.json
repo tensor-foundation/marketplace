@@ -114,7 +114,7 @@
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -159,7 +159,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -271,7 +271,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -302,7 +302,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -353,7 +353,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -498,7 +498,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -654,7 +654,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -771,7 +771,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -902,7 +902,7 @@
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -999,7 +999,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1153,7 +1153,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1898,7 +1898,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2334,7 +2334,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2852,7 +2852,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3074,7 +3074,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3132,7 +3132,7 @@
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },

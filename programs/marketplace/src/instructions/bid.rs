@@ -6,7 +6,7 @@ use tensorswap::instructions::assert_decode_margin_account;
 #[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
     pub system_program: Program<'info, System>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     #[account(init_if_needed, payer = rent_payer,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,
@@ -176,7 +176,7 @@ pub fn process_bid<'info>(
                 None
             },
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
 

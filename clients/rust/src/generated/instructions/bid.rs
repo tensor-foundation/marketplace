@@ -15,7 +15,7 @@ use solana_program::pubkey::Pubkey;
 pub struct Bid {
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub bid_state: solana_program::pubkey::Pubkey,
 
@@ -47,7 +47,7 @@ impl Bid {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -116,7 +116,7 @@ pub struct BidInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   1. `[]` tcomp_program
+///   1. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
 ///   4. `[writable]` margin_account
@@ -125,7 +125,7 @@ pub struct BidInstructionArgs {
 #[derive(Default)]
 pub struct BidBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     margin_account: Option<solana_program::pubkey::Pubkey>,
@@ -155,9 +155,13 @@ impl BidBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -270,7 +274,9 @@ impl BidBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
             margin_account: self.margin_account.expect("margin_account is not set"),
@@ -299,7 +305,7 @@ impl BidBuilder {
 pub struct BidCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -319,7 +325,7 @@ pub struct BidCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -343,7 +349,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
         Self {
             __program: program,
             system_program: accounts.system_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
             margin_account: accounts.margin_account,
@@ -391,7 +397,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -433,7 +439,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.margin_account.clone());
@@ -456,7 +462,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` system_program
-///   1. `[]` tcomp_program
+///   1. `[]` marketplace_program
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
 ///   4. `[writable]` margin_account
@@ -471,7 +477,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
         let instruction = Box::new(BidCpiBuilderInstruction {
             __program: program,
             system_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             bid_state: None,
             owner: None,
             margin_account: None,
@@ -501,11 +507,11 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -676,10 +682,10 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             bid_state: self.instruction.bid_state.expect("bid_state is not set"),
 
@@ -705,7 +711,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
 struct BidCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,

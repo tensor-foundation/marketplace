@@ -38,7 +38,7 @@ pub struct ListCore<'info> {
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
 }
@@ -112,7 +112,7 @@ pub fn process_list_core<'info>(
             private_taker,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

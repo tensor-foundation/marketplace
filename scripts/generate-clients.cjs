@@ -220,6 +220,7 @@ kinobi.accept(
 );
 
 // Render Rust.
+/* Disabled for now since need to fix NullableAddress type.
 const crateDir = path.join(clientDir, "rust");
 const rustDir = path.join(clientDir, "rust", "src", "generated");
 kinobi.accept(
@@ -228,3 +229,4 @@ kinobi.accept(
     crateFolder: crateDir,
   })
 );
+*/

@@ -59,7 +59,7 @@ pub struct TakeBidLegacy {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub tensorswap_program: solana_program::pubkey::Pubkey,
 
@@ -193,7 +193,7 @@ impl TakeBidLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -275,7 +275,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   21. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   22. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   23. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   24. `[]` tcomp_program
+///   24. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   25. `[]` tensorswap_program
 ///   26. `[signer]` cosigner
 ///   27. `[]` mint_proof
@@ -306,7 +306,7 @@ pub struct TakeBidLegacyBuilder {
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     tensorswap_program: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     mint_proof: Option<solana_program::pubkey::Pubkey>,
@@ -474,9 +474,13 @@ impl TakeBidLegacyBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -587,7 +591,9 @@ impl TakeBidLegacyBuilder {
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-                tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
                 tensorswap_program: self
                     .tensorswap_program
                     .expect("tensorswap_program is not set"),
@@ -659,7 +665,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -723,7 +729,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -768,7 +774,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             tensorswap_program: accounts.tensorswap_program,
             cosigner: accounts.cosigner,
             mint_proof: accounts.mint_proof,
@@ -921,7 +927,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -986,7 +992,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tensorswap_program.clone());
         account_infos.push(self.cosigner.clone());
         account_infos.push(self.mint_proof.clone());
@@ -1031,7 +1037,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   21. `[]` token_program
 ///   22. `[]` associated_token_program
 ///   23. `[]` system_program
-///   24. `[]` tcomp_program
+///   24. `[]` marketplace_program
 ///   25. `[]` tensorswap_program
 ///   26. `[signer]` cosigner
 ///   27. `[]` mint_proof
@@ -1068,7 +1074,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             token_program: None,
             associated_token_program: None,
             system_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             tensorswap_program: None,
             cosigner: None,
             mint_proof: None,
@@ -1271,11 +1277,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -1481,10 +1487,10 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             tensorswap_program: self
                 .instruction
@@ -1531,7 +1537,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint_proof: Option<&'b solana_program::account_info::AccountInfo<'a>>,

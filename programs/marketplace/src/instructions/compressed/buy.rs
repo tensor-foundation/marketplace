@@ -27,7 +27,7 @@ pub struct Buy<'info> {
 
     pub bubblegum_program: Program<'info, Bubblegum>,
 
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
     #[account(mut, close = rent_dest,
         seeds=[
@@ -236,7 +236,7 @@ pub fn process_buy<'info>(
             currency,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

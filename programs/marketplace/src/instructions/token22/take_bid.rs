@@ -74,7 +74,7 @@ pub struct TakeBidT22<'info> {
 
     pub system_program: Program<'info, System>,
 
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
     pub tensorswap_program: Program<'info, EscrowProgram>,
 
@@ -222,7 +222,7 @@ pub fn process_take_bid_t22<'info>(
         optional_royalty_pct: None,
         seller_fee_basis_points: 0, // no royalties on T22
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.tcomp_program,
+        tcomp_prog: &ctx.accounts.marketplace_program,
         tswap_prog: &ctx.accounts.tensorswap_program,
         system_prog: &ctx.accounts.system_program,
     })
