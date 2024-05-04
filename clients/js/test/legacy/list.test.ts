@@ -1,3 +1,4 @@
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   appendTransactionInstruction,
   generateKeyPairSigner,
@@ -67,9 +68,14 @@ test('it can list a legacy Programmable NFT', async (t) => {
     tokenStandard: TokenStandard.ProgrammableNonFungible,
   });
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
   // When we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -137,10 +143,14 @@ test('it can list a legacy Programmable NFT with a cosigner', async (t) => {
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     cosigner,
   });
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
 
   // When we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
