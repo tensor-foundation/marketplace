@@ -169,6 +169,34 @@ kinobi.update(
   ])
 );
 
+// Add missing types from the IDL.
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    {
+      select:
+        "[accountNode]listState.[structTypeNode].[structFieldTypeNode]rentPayer",
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
+      },
+    },
+    {
+      select:
+        "[accountNode]listState.[structTypeNode].[structFieldTypeNode]cosigner",
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
+      },
+    },
+  ]),
+);
+
 // Render JavaScript.
 const jsDir = path.join(clientDir, "js", "src", "generated");
 const prettier = require(path.join(clientDir, "js", ".prettierrc.json"));

@@ -39,6 +39,8 @@ pub struct Buy {
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl Buy {
@@ -54,7 +56,7 @@ impl Buy {
         args: BuyInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.tcomp, false,
         ));
@@ -125,6 +127,16 @@ impl Buy {
             self.rent_dest,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = BuyInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -184,6 +196,7 @@ pub struct BuyInstructionArgs {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_dest
+///   15. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuyBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -201,6 +214,7 @@ pub struct BuyBuilder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_dest: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -307,6 +321,12 @@ impl BuyBuilder {
         self.rent_dest = Some(rent_dest);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn nonce(&mut self, nonce: u64) -> &mut Self {
         self.nonce = Some(nonce);
@@ -395,6 +415,7 @@ impl BuyBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            cosigner: self.cosigner,
         };
         let args = BuyInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -452,6 +473,8 @@ pub struct BuyCpiAccounts<'a, 'b> {
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `buy` CPI instruction.
@@ -488,6 +511,8 @@ pub struct BuyCpi<'a, 'b> {
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: BuyInstructionArgs,
 }
@@ -515,6 +540,7 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_dest: accounts.rent_dest,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -551,7 +577,7 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.tcomp.key,
             false,
@@ -626,6 +652,17 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             *self.rent_dest.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -642,7 +679,7 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(15 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(16 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tcomp.clone());
         account_infos.push(self.tree_authority.clone());
@@ -663,6 +700,9 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             account_infos.push(maker_broker.clone());
         }
         account_infos.push(self.rent_dest.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -694,6 +734,7 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_dest
+///   15. `[signer, optional]` cosigner
 pub struct BuyCpiBuilder<'a, 'b> {
     instruction: Box<BuyCpiBuilderInstruction<'a, 'b>>,
 }
@@ -717,6 +758,7 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
             taker_broker: None,
             maker_broker: None,
             rent_dest: None,
+            cosigner: None,
             nonce: None,
             index: None,
             root: None,
@@ -838,6 +880,15 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_dest = Some(rent_dest);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1011,6 +1062,8 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
             maker_broker: self.instruction.maker_broker,
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1037,6 +1090,7 @@ struct BuyCpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

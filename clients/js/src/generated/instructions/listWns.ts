@@ -66,6 +66,7 @@ export type ListWnsInstruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -112,6 +113,10 @@ export type ListWnsInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -214,6 +219,7 @@ export type ListWnsAsyncInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -230,6 +236,7 @@ export type ListWnsAsyncInput<
   listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -255,6 +262,7 @@ export async function getListWnsInstructionAsync<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -272,6 +280,7 @@ export async function getListWnsInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -291,6 +300,7 @@ export async function getListWnsInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -313,6 +323,7 @@ export async function getListWnsInstructionAsync<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -420,6 +431,7 @@ export async function getListWnsInstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -442,6 +454,7 @@ export async function getListWnsInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -463,6 +476,7 @@ export type ListWnsInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -479,6 +493,7 @@ export type ListWnsInput<
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -504,6 +519,7 @@ export function getListWnsInstruction<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -521,6 +537,7 @@ export function getListWnsInstruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -539,6 +556,7 @@ export function getListWnsInstruction<
   TAccountListAta,
   TAccountMint,
   TAccountPayer,
+  TAccountCosigner,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -560,6 +578,7 @@ export function getListWnsInstruction<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -629,6 +648,7 @@ export function getListWnsInstruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -651,6 +671,7 @@ export function getListWnsInstruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -677,15 +698,16 @@ export type ParsedListWnsInstruction<
     listAta: TAccountMetas[3];
     mint: TAccountMetas[4];
     payer: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    associatedTokenProgram: TAccountMetas[7];
-    marketplaceProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
-    approve: TAccountMetas[10];
-    distribution: TAccountMetas[11];
-    wnsProgram: TAccountMetas[12];
-    wnsDistributionProgram: TAccountMetas[13];
-    extraMetas: TAccountMetas[14];
+    cosigner?: TAccountMetas[6] | undefined;
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[9];
+    systemProgram: TAccountMetas[10];
+    approve: TAccountMetas[11];
+    distribution: TAccountMetas[12];
+    wnsProgram: TAccountMetas[13];
+    wnsDistributionProgram: TAccountMetas[14];
+    extraMetas: TAccountMetas[15];
   };
   data: ListWnsInstructionData;
 };
@@ -698,7 +720,7 @@ export function parseListWnsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedListWnsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 15) {
+  if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -707,6 +729,12 @@ export function parseListWnsInstruction<
     const accountMeta = instruction.accounts![accountIndex]!;
     accountIndex += 1;
     return accountMeta;
+  };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -717,6 +745,7 @@ export function parseListWnsInstruction<
       listAta: getNextAccount(),
       mint: getNextAccount(),
       payer: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),

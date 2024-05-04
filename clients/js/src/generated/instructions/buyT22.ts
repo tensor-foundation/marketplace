@@ -28,6 +28,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -56,6 +57,7 @@ export type BuyT22Instruction<
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -107,6 +109,10 @@ export type BuyT22Instruction<
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -172,6 +178,7 @@ export type BuyT22AsyncInput<
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -188,6 +195,7 @@ export type BuyT22AsyncInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -207,6 +215,7 @@ export async function getBuyT22InstructionAsync<
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDestination extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -224,6 +233,7 @@ export async function getBuyT22InstructionAsync<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -243,6 +253,7 @@ export async function getBuyT22InstructionAsync<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -265,6 +276,7 @@ export async function getBuyT22InstructionAsync<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -347,6 +359,7 @@ export async function getBuyT22InstructionAsync<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -369,6 +382,7 @@ export async function getBuyT22InstructionAsync<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -390,6 +404,7 @@ export type BuyT22Input<
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDestination extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -406,6 +421,7 @@ export type BuyT22Input<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -425,6 +441,7 @@ export function getBuyT22Instruction<
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDestination extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -442,6 +459,7 @@ export function getBuyT22Instruction<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -460,6 +478,7 @@ export function getBuyT22Instruction<
   TAccountTakerBroker,
   TAccountMakerBroker,
   TAccountRentDestination,
+  TAccountCosigner,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -481,6 +500,7 @@ export function getBuyT22Instruction<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -540,6 +560,7 @@ export function getBuyT22Instruction<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -562,6 +583,7 @@ export function getBuyT22Instruction<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -588,10 +610,11 @@ export type ParsedBuyT22Instruction<
     takerBroker?: TAccountMetas[8] | undefined;
     makerBroker?: TAccountMetas[9] | undefined;
     rentDestination: TAccountMetas[10];
-    tokenProgram: TAccountMetas[11];
-    associatedTokenProgram: TAccountMetas[12];
-    marketplaceProgram: TAccountMetas[13];
-    systemProgram: TAccountMetas[14];
+    cosigner?: TAccountMetas[11] | undefined;
+    tokenProgram: TAccountMetas[12];
+    associatedTokenProgram: TAccountMetas[13];
+    marketplaceProgram: TAccountMetas[14];
+    systemProgram: TAccountMetas[15];
   };
   data: BuyT22InstructionData;
 };
@@ -604,7 +627,7 @@ export function parseBuyT22Instruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 15) {
+  if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -634,6 +657,7 @@ export function parseBuyT22Instruction<
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),

@@ -30,6 +30,8 @@ pub struct BuyCore {
 
     pub rent_dest: solana_program::pubkey::Pubkey,
 
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+
     pub mpl_core_program: solana_program::pubkey::Pubkey,
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
@@ -50,7 +52,7 @@ impl BuyCore {
         args: BuyCoreInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(13 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.tcomp, false,
         ));
@@ -106,6 +108,16 @@ impl BuyCore {
             self.rent_dest,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mpl_core_program,
             false,
@@ -164,9 +176,10 @@ pub struct BuyCoreInstructionArgs {
 ///   7. `[writable, optional]` taker_broker
 ///   8. `[writable, optional]` maker_broker
 ///   9. `[writable]` rent_dest
-///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
-///   11. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[signer, optional]` cosigner
+///   11. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
+///   12. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct BuyCoreBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
@@ -179,6 +192,7 @@ pub struct BuyCoreBuilder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_dest: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -249,6 +263,12 @@ impl BuyCoreBuilder {
         self.rent_dest = Some(rent_dest);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
+        self
+    }
     /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
     #[inline(always)]
     pub fn mpl_core_program(
@@ -309,6 +329,7 @@ impl BuyCoreBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            cosigner: self.cosigner,
             mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
                 "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
             )),
@@ -349,6 +370,8 @@ pub struct BuyCoreCpiAccounts<'a, 'b> {
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -381,6 +404,8 @@ pub struct BuyCoreCpi<'a, 'b> {
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -408,6 +433,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_dest: accounts.rent_dest,
+            cosigner: accounts.cosigner,
             mpl_core_program: accounts.mpl_core_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
@@ -447,7 +473,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(13 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.tcomp.key,
             false,
@@ -509,6 +535,17 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             *self.rent_dest.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mpl_core_program.key,
             false,
@@ -537,7 +574,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(13 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(14 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tcomp.clone());
         account_infos.push(self.list_state.clone());
@@ -555,6 +592,9 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             account_infos.push(maker_broker.clone());
         }
         account_infos.push(self.rent_dest.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
@@ -584,9 +624,10 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
 ///   7. `[writable, optional]` taker_broker
 ///   8. `[writable, optional]` maker_broker
 ///   9. `[writable]` rent_dest
-///   10. `[]` mpl_core_program
-///   11. `[]` marketplace_program
-///   12. `[]` system_program
+///   10. `[signer, optional]` cosigner
+///   11. `[]` mpl_core_program
+///   12. `[]` marketplace_program
+///   13. `[]` system_program
 pub struct BuyCoreCpiBuilder<'a, 'b> {
     instruction: Box<BuyCoreCpiBuilderInstruction<'a, 'b>>,
 }
@@ -605,6 +646,7 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
             taker_broker: None,
             maker_broker: None,
             rent_dest: None,
+            cosigner: None,
             mpl_core_program: None,
             marketplace_program: None,
             system_program: None,
@@ -679,6 +721,15 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
         rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_dest = Some(rent_dest);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -781,6 +832,8 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
 
+            cosigner: self.instruction.cosigner,
+
             mpl_core_program: self
                 .instruction
                 .mpl_core_program
@@ -816,6 +869,7 @@ struct BuyCoreCpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

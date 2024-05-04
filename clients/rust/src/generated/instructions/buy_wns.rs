@@ -32,6 +32,8 @@ pub struct BuyWns {
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -64,7 +66,7 @@ impl BuyWns {
         args: BuyWnsInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(20 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(21 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.fee_vault,
             false,
@@ -119,6 +121,16 @@ impl BuyWns {
             self.rent_destination,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
@@ -202,15 +214,16 @@ pub struct BuyWnsInstructionArgs {
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
-///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   13. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   15. `[writable]` approve
-///   16. `[writable]` distribution
-///   17. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
-///   18. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
-///   19. `[]` extra_metas
+///   11. `[signer, optional]` cosigner
+///   12. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   13. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   15. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   16. `[writable]` approve
+///   17. `[writable]` distribution
+///   18. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
+///   19. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   20. `[]` extra_metas
 #[derive(Default)]
 pub struct BuyWnsBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -224,6 +237,7 @@ pub struct BuyWnsBuilder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -305,6 +319,12 @@ impl BuyWnsBuilder {
         rent_destination: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.rent_destination = Some(rent_destination);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -404,6 +424,7 @@ impl BuyWnsBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
+            cosigner: self.cosigner,
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -458,6 +479,8 @@ pub struct BuyWnsCpiAccounts<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -504,6 +527,8 @@ pub struct BuyWnsCpi<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -544,6 +569,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_destination: accounts.rent_destination,
+            cosigner: accounts.cosigner,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
@@ -589,7 +615,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(20 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(21 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.fee_vault.key,
             false,
@@ -648,6 +674,17 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             *self.rent_destination.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
@@ -700,7 +737,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(20 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(21 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.buyer.clone());
@@ -717,6 +754,9 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             account_infos.push(maker_broker.clone());
         }
         account_infos.push(self.rent_destination.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -753,15 +793,16 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
-///   11. `[]` token_program
-///   12. `[]` associated_token_program
-///   13. `[]` marketplace_program
-///   14. `[]` system_program
-///   15. `[writable]` approve
-///   16. `[writable]` distribution
-///   17. `[]` wns_program
-///   18. `[]` wns_distribution_program
-///   19. `[]` extra_metas
+///   11. `[signer, optional]` cosigner
+///   12. `[]` token_program
+///   13. `[]` associated_token_program
+///   14. `[]` marketplace_program
+///   15. `[]` system_program
+///   16. `[writable]` approve
+///   17. `[writable]` distribution
+///   18. `[]` wns_program
+///   19. `[]` wns_distribution_program
+///   20. `[]` extra_metas
 pub struct BuyWnsCpiBuilder<'a, 'b> {
     instruction: Box<BuyWnsCpiBuilderInstruction<'a, 'b>>,
 }
@@ -781,6 +822,7 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
             taker_broker: None,
             maker_broker: None,
             rent_destination: None,
+            cosigner: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
@@ -871,6 +913,15 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
         rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_destination = Some(rent_destination);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1026,6 +1077,8 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
                 .rent_destination
                 .expect("rent_destination is not set"),
 
+            cosigner: self.instruction.cosigner,
+
             token_program: self
                 .instruction
                 .token_program
@@ -1089,6 +1142,7 @@ struct BuyWnsCpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

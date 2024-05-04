@@ -28,6 +28,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -47,6 +48,7 @@ export type BuyCoreInstruction<
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
@@ -92,6 +94,10 @@ export type BuyCoreInstruction<
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       TAccountMplCoreProgram extends string
         ? ReadonlyAccount<TAccountMplCoreProgram>
         : TAccountMplCoreProgram,
@@ -153,6 +159,7 @@ export type BuyCoreInput<
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDest extends string = string,
+  TAccountCosigner extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -167,6 +174,7 @@ export type BuyCoreInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDest: Address<TAccountRentDest>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -184,6 +192,7 @@ export function getBuyCoreInstruction<
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDest extends string,
+  TAccountCosigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
@@ -199,6 +208,7 @@ export function getBuyCoreInstruction<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDest,
+    TAccountCosigner,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram
@@ -215,6 +225,7 @@ export function getBuyCoreInstruction<
   TAccountTakerBroker,
   TAccountMakerBroker,
   TAccountRentDest,
+  TAccountCosigner,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram
@@ -234,6 +245,7 @@ export function getBuyCoreInstruction<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
@@ -276,6 +288,7 @@ export function getBuyCoreInstruction<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
@@ -296,6 +309,7 @@ export function getBuyCoreInstruction<
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDest,
+    TAccountCosigner,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram
@@ -320,9 +334,10 @@ export type ParsedBuyCoreInstruction<
     takerBroker?: TAccountMetas[7] | undefined;
     makerBroker?: TAccountMetas[8] | undefined;
     rentDest: TAccountMetas[9];
-    mplCoreProgram: TAccountMetas[10];
-    marketplaceProgram: TAccountMetas[11];
-    systemProgram: TAccountMetas[12];
+    cosigner?: TAccountMetas[10] | undefined;
+    mplCoreProgram: TAccountMetas[11];
+    marketplaceProgram: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
   };
   data: BuyCoreInstructionData;
 };
@@ -335,7 +350,7 @@ export function parseBuyCoreInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyCoreInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 14) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -364,6 +379,7 @@ export function parseBuyCoreInstruction<
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
       rentDest: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       mplCoreProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),

@@ -41,6 +41,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -67,6 +68,7 @@ export type BuyInstruction<
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -118,6 +120,10 @@ export type BuyInstruction<
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -210,6 +216,7 @@ export type BuyInput<
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDest extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   tcomp: Address<TAccountTcomp>;
   treeAuthority: Address<TAccountTreeAuthority>;
@@ -226,6 +233,7 @@ export type BuyInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDest: Address<TAccountRentDest>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuyInstructionDataArgs['nonce'];
   index: BuyInstructionDataArgs['index'];
   root: BuyInstructionDataArgs['root'];
@@ -253,6 +261,7 @@ export function getBuyInstruction<
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDest extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyInput<
     TAccountTcomp,
@@ -269,7 +278,8 @@ export function getBuyInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest
+    TAccountRentDest,
+    TAccountCosigner
   >
 ): BuyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -287,7 +297,8 @@ export function getBuyInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountRentDest
+  TAccountRentDest,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -315,6 +326,7 @@ export function getBuyInstruction<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -348,6 +360,7 @@ export function getBuyInstruction<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyInstructionDataEncoder().encode(args as BuyInstructionDataArgs),
@@ -367,7 +380,8 @@ export function getBuyInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest
+    TAccountRentDest,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -394,6 +408,7 @@ export type ParsedBuyInstruction<
     takerBroker?: TAccountMetas[12] | undefined;
     makerBroker?: TAccountMetas[13] | undefined;
     rentDest: TAccountMetas[14];
+    cosigner?: TAccountMetas[15] | undefined;
   };
   data: BuyInstructionData;
 };
@@ -406,7 +421,7 @@ export function parseBuyInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 15) {
+  if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -440,6 +455,7 @@ export function parseBuyInstruction<
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
       rentDest: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getBuyInstructionDataDecoder().decode(instruction.data),
   };

@@ -39,16 +39,16 @@
     "@solana/accounts": "2.0.0-preview.2",
     "@solana/addresses": "2.0.0-preview.2",
     "@solana/codecs": "2.0.0-preview.2",
+    "@solana/errors": "2.0.0-preview.2",
     "@solana/instructions": "2.0.0-preview.2",
     "@solana/programs": "2.0.0-preview.2",
-    "@solana/signers": "2.0.0-preview.2"
+    "@solana/signers": "2.0.0-preview.2",
+    "@solana/web3.js": "2.0.0-preview.2"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
     "@solana-program/compute-budget": "0.2.0",
-    "@solana/errors": "2.0.0-preview.2",
     "@solana/eslint-config-solana": "^3.0.3",
-    "@solana/web3.js": "2.0.0-preview.2",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.2",
     "@tensor-foundation/test-helpers": "0.0.1-alpha.3",
     "@tensor-foundation/toolkit-token-metadata": "0.0.1-alpha.3",

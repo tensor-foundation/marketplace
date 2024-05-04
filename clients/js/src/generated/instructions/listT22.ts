@@ -60,6 +60,7 @@ export type ListT22Instruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -97,6 +98,10 @@ export type ListT22Instruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -179,6 +184,7 @@ export type ListT22AsyncInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -190,6 +196,7 @@ export type ListT22AsyncInput<
   listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -208,6 +215,7 @@ export async function getListT22InstructionAsync<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -220,6 +228,7 @@ export async function getListT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -234,6 +243,7 @@ export async function getListT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -251,6 +261,7 @@ export async function getListT22InstructionAsync<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -320,6 +331,7 @@ export async function getListT22InstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -337,6 +349,7 @@ export async function getListT22InstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -353,6 +366,7 @@ export type ListT22Input<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
+  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -364,6 +378,7 @@ export type ListT22Input<
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -382,6 +397,7 @@ export function getListT22Instruction<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
+  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -394,6 +410,7 @@ export function getListT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -407,6 +424,7 @@ export function getListT22Instruction<
   TAccountListAta,
   TAccountMint,
   TAccountPayer,
+  TAccountCosigner,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -423,6 +441,7 @@ export function getListT22Instruction<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -472,6 +491,7 @@ export function getListT22Instruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -489,6 +509,7 @@ export function getListT22Instruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
+    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -510,10 +531,11 @@ export type ParsedListT22Instruction<
     listAta: TAccountMetas[3];
     mint: TAccountMetas[4];
     payer: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    associatedTokenProgram: TAccountMetas[7];
-    marketplaceProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    cosigner?: TAccountMetas[6] | undefined;
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[9];
+    systemProgram: TAccountMetas[10];
   };
   data: ListT22InstructionData;
 };
@@ -526,7 +548,7 @@ export function parseListT22Instruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedListT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 11) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -535,6 +557,12 @@ export function parseListT22Instruction<
     const accountMeta = instruction.accounts![accountIndex]!;
     accountIndex += 1;
     return accountMeta;
+  };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -545,6 +573,7 @@ export function parseListT22Instruction<
       listAta: getNextAccount(),
       mint: getNextAccount(),
       payer: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),

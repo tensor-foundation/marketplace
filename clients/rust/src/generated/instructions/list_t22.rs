@@ -23,6 +23,8 @@ pub struct ListT22 {
 
     pub payer: solana_program::pubkey::Pubkey,
 
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -45,7 +47,7 @@ impl ListT22 {
         args: ListT22InstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, true,
         ));
@@ -67,6 +69,16 @@ impl ListT22 {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
@@ -129,10 +141,11 @@ pub struct ListT22InstructionArgs {
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   6. `[signer, optional]` cosigner
+///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct ListT22Builder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -141,6 +154,7 @@ pub struct ListT22Builder {
     list_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -185,6 +199,12 @@ impl ListT22Builder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -273,6 +293,7 @@ impl ListT22Builder {
             list_ata: self.list_ata.expect("list_ata is not set"),
             mint: self.mint.expect("mint is not set"),
             payer: self.payer.expect("payer is not set"),
+            cosigner: self.cosigner,
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -312,6 +333,8 @@ pub struct ListT22CpiAccounts<'a, 'b> {
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -338,6 +361,8 @@ pub struct ListT22Cpi<'a, 'b> {
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -363,6 +388,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             list_ata: accounts.list_ata,
             mint: accounts.mint,
             payer: accounts.payer,
+            cosigner: accounts.cosigner,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
@@ -403,7 +429,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.owner.key,
             true,
@@ -428,6 +454,17 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             *self.payer.key,
             true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
@@ -460,7 +497,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ata.clone());
@@ -468,6 +505,9 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
         account_infos.push(self.list_ata.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.payer.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -494,10 +534,11 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
-///   6. `[]` token_program
-///   7. `[]` associated_token_program
-///   8. `[]` marketplace_program
-///   9. `[]` system_program
+///   6. `[signer, optional]` cosigner
+///   7. `[]` token_program
+///   8. `[]` associated_token_program
+///   9. `[]` marketplace_program
+///   10. `[]` system_program
 pub struct ListT22CpiBuilder<'a, 'b> {
     instruction: Box<ListT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -512,6 +553,7 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
             list_ata: None,
             mint: None,
             payer: None,
+            cosigner: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
@@ -562,6 +604,15 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -688,6 +739,8 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
+            cosigner: self.instruction.cosigner,
+
             token_program: self
                 .instruction
                 .token_program
@@ -724,6 +777,7 @@ struct ListT22CpiBuilderInstruction<'a, 'b> {
     list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

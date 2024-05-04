@@ -41,6 +41,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -63,6 +64,7 @@ export type ListInstruction<
   TAccountTcompProgram extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -102,6 +104,10 @@ export type ListInstruction<
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -197,6 +203,7 @@ export type ListInput<
   TAccountTcompProgram extends string = string,
   TAccountListState extends string = string,
   TAccountRentPayer extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
   owner: Address<TAccountOwner>;
@@ -209,6 +216,7 @@ export type ListInput<
   tcompProgram: Address<TAccountTcompProgram>;
   listState: Address<TAccountListState>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: ListInstructionDataArgs['nonce'];
   index: ListInstructionDataArgs['index'];
   root: ListInstructionDataArgs['root'];
@@ -233,6 +241,7 @@ export function getListInstruction<
   TAccountTcompProgram extends string,
   TAccountListState extends string,
   TAccountRentPayer extends string,
+  TAccountCosigner extends string,
 >(
   input: ListInput<
     TAccountTreeAuthority,
@@ -245,7 +254,8 @@ export function getListInstruction<
     TAccountBubblegumProgram,
     TAccountTcompProgram,
     TAccountListState,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >
 ): ListInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -259,7 +269,8 @@ export function getListInstruction<
   TAccountBubblegumProgram,
   TAccountTcompProgram,
   TAccountListState,
-  TAccountRentPayer
+  TAccountRentPayer,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -283,6 +294,7 @@ export function getListInstruction<
     tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
     listState: { value: input.listState ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -312,6 +324,7 @@ export function getListInstruction<
       getAccountMeta(accounts.tcompProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.rentPayer),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getListInstructionDataEncoder().encode(
@@ -329,7 +342,8 @@ export function getListInstruction<
     TAccountBubblegumProgram,
     TAccountTcompProgram,
     TAccountListState,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -352,6 +366,7 @@ export type ParsedListInstruction<
     tcompProgram: TAccountMetas[8];
     listState: TAccountMetas[9];
     rentPayer: TAccountMetas[10];
+    cosigner?: TAccountMetas[11] | undefined;
   };
   data: ListInstructionData;
 };
@@ -364,7 +379,7 @@ export function parseListInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedListInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 11) {
+  if (instruction.accounts.length < 12) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -373,6 +388,12 @@ export function parseListInstruction<
     const accountMeta = instruction.accounts![accountIndex]!;
     accountIndex += 1;
     return accountMeta;
+  };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -388,6 +409,7 @@ export function parseListInstruction<
       tcompProgram: getNextAccount(),
       listState: getNextAccount(),
       rentPayer: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getListInstructionDataDecoder().decode(instruction.data),
   };

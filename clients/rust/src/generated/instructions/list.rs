@@ -32,6 +32,8 @@ pub struct List {
     pub list_state: solana_program::pubkey::Pubkey,
 
     pub rent_payer: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl List {
@@ -47,7 +49,7 @@ impl List {
         args: ListInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
             false,
@@ -91,6 +93,16 @@ impl List {
             self.rent_payer,
             true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ListInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -147,6 +159,7 @@ pub struct ListInstructionArgs {
 ///   8. `[]` tcomp_program
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
+///   11. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct ListBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -160,6 +173,7 @@ pub struct ListBuilder {
     tcomp_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     rent_payer: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -237,6 +251,12 @@ impl ListBuilder {
     #[inline(always)]
     pub fn rent_payer(&mut self, rent_payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_payer = Some(rent_payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -331,6 +351,7 @@ impl ListBuilder {
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             list_state: self.list_state.expect("list_state is not set"),
             rent_payer: self.rent_payer.expect("rent_payer is not set"),
+            cosigner: self.cosigner,
         };
         let args = ListInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -372,6 +393,8 @@ pub struct ListCpiAccounts<'a, 'b> {
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list` CPI instruction.
@@ -400,6 +423,8 @@ pub struct ListCpi<'a, 'b> {
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListInstructionArgs,
 }
@@ -423,6 +448,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             tcomp_program: accounts.tcomp_program,
             list_state: accounts.list_state,
             rent_payer: accounts.rent_payer,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -459,7 +485,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.tree_authority.key,
             false,
@@ -504,6 +530,17 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             *self.rent_payer.key,
             true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -520,7 +557,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(12 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.owner.clone());
@@ -533,6 +570,9 @@ impl<'a, 'b> ListCpi<'a, 'b> {
         account_infos.push(self.tcomp_program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.rent_payer.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -560,6 +600,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
 ///   8. `[]` tcomp_program
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
+///   11. `[signer, optional]` cosigner
 pub struct ListCpiBuilder<'a, 'b> {
     instruction: Box<ListCpiBuilderInstruction<'a, 'b>>,
 }
@@ -579,6 +620,7 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
             tcomp_program: None,
             list_state: None,
             rent_payer: None,
+            cosigner: None,
             nonce: None,
             index: None,
             root: None,
@@ -676,6 +718,15 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_payer = Some(rent_payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -838,6 +889,8 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
             rent_payer: self.instruction.rent_payer.expect("rent_payer is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -860,6 +913,7 @@ struct ListCpiBuilderInstruction<'a, 'b> {
     tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
