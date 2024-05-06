@@ -366,7 +366,13 @@ export type Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {
@@ -3333,7 +3339,13 @@ export const IDL: Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {

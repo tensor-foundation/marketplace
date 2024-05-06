@@ -86,6 +86,8 @@ pub struct BuySpl<'info> {
     pub rent_dest: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. creators atas (1-5)
@@ -95,20 +97,24 @@ pub struct BuySpl<'info> {
 impl<'info> Validate<'info> for BuySpl<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
@@ -129,6 +135,14 @@ impl<'info> Validate<'info> for BuySpl<'info> {
             (self.taker_broker.is_none() && self.taker_broker_ata.is_none()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }

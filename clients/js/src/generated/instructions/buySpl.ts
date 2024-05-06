@@ -83,6 +83,7 @@ export type BuySplInstruction<
   TAccountMakerBrokerAta extends string | IAccountMeta<string> = string,
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -162,6 +163,10 @@ export type BuySplInstruction<
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -263,6 +268,7 @@ export type BuySplInput<
   TAccountMakerBrokerAta extends string = string,
   TAccountRentDest extends string = string,
   TAccountRentPayer extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   tcomp: Address<TAccountTcomp>;
   tcompAta: Address<TAccountTcompAta>;
@@ -288,6 +294,7 @@ export type BuySplInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDest: Address<TAccountRentDest>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -324,6 +331,7 @@ export function getBuySplInstruction<
   TAccountMakerBrokerAta extends string,
   TAccountRentDest extends string,
   TAccountRentPayer extends string,
+  TAccountCosigner extends string,
 >(
   input: BuySplInput<
     TAccountTcomp,
@@ -349,7 +357,8 @@ export function getBuySplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >
 ): BuySplInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -376,7 +385,8 @@ export function getBuySplInstruction<
   TAccountMakerBroker,
   TAccountMakerBrokerAta,
   TAccountRentDest,
-  TAccountRentPayer
+  TAccountRentPayer,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -419,6 +429,7 @@ export function getBuySplInstruction<
     makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -473,6 +484,7 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.makerBrokerAta),
       getAccountMeta(accounts.rentDest),
       getAccountMeta(accounts.rentPayer),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuySplInstructionDataEncoder().encode(
@@ -503,7 +515,8 @@ export function getBuySplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -539,6 +552,7 @@ export type ParsedBuySplInstruction<
     makerBrokerAta?: TAccountMetas[21] | undefined;
     rentDest: TAccountMetas[22];
     rentPayer: TAccountMetas[23];
+    cosigner?: TAccountMetas[24] | undefined;
   };
   data: BuySplInstructionData;
 };
@@ -551,7 +565,7 @@ export function parseBuySplInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuySplInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 24) {
+  if (instruction.accounts.length < 25) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -594,6 +608,7 @@ export function parseBuySplInstruction<
       makerBrokerAta: getNextOptionalAccount(),
       rentDest: getNextAccount(),
       rentPayer: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getBuySplInstructionDataDecoder().decode(instruction.data),
   };

@@ -580,6 +580,12 @@
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
