@@ -45,24 +45,40 @@ import {
   WritableAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import {
+  resolveCreatorPath,
+  resolveProofPath,
+  resolveTreeAuthorityPda,
+} from '../../hooked';
+import { findFeeVaultPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type TakeBidMetaHashInstruction<
+export type TakeBidCompressedMetaHashInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
+  TAccountLogWrapper extends
+    | string
+    | IAccountMeta<string> = 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV',
+  TAccountCompressionProgram extends
+    | string
+    | IAccountMeta<string> = 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
-  TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
+  TAccountBubblegumProgram extends
+    | string
+    | IAccountMeta<string> = 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY',
+  TAccountTcompProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TAccountTensorswapProgram extends
+    | string
+    | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
@@ -138,7 +154,7 @@ export type TakeBidMetaHashInstruction<
     ]
   >;
 
-export type TakeBidMetaHashInstructionData = {
+export type TakeBidCompressedMetaHashInstructionData = {
   discriminator: Array<number>;
   nonce: bigint;
   index: number;
@@ -151,7 +167,7 @@ export type TakeBidMetaHashInstructionData = {
   optionalRoyaltyPct: Option<number>;
 };
 
-export type TakeBidMetaHashInstructionDataArgs = {
+export type TakeBidCompressedMetaHashInstructionDataArgs = {
   nonce: number | bigint;
   index: number;
   root: Uint8Array;
@@ -163,7 +179,7 @@ export type TakeBidMetaHashInstructionDataArgs = {
   optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
-export function getTakeBidMetaHashInstructionDataEncoder(): Encoder<TakeBidMetaHashInstructionDataArgs> {
+export function getTakeBidCompressedMetaHashInstructionDataEncoder(): Encoder<TakeBidCompressedMetaHashInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
@@ -185,7 +201,7 @@ export function getTakeBidMetaHashInstructionDataEncoder(): Encoder<TakeBidMetaH
   );
 }
 
-export function getTakeBidMetaHashInstructionDataDecoder(): Decoder<TakeBidMetaHashInstructionData> {
+export function getTakeBidCompressedMetaHashInstructionDataDecoder(): Decoder<TakeBidCompressedMetaHashInstructionData> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['nonce', getU64Decoder()],
@@ -200,17 +216,295 @@ export function getTakeBidMetaHashInstructionDataDecoder(): Decoder<TakeBidMetaH
   ]);
 }
 
-export function getTakeBidMetaHashInstructionDataCodec(): Codec<
-  TakeBidMetaHashInstructionDataArgs,
-  TakeBidMetaHashInstructionData
+export function getTakeBidCompressedMetaHashInstructionDataCodec(): Codec<
+  TakeBidCompressedMetaHashInstructionDataArgs,
+  TakeBidCompressedMetaHashInstructionData
 > {
   return combineCodec(
-    getTakeBidMetaHashInstructionDataEncoder(),
-    getTakeBidMetaHashInstructionDataDecoder()
+    getTakeBidCompressedMetaHashInstructionDataEncoder(),
+    getTakeBidCompressedMetaHashInstructionDataDecoder()
   );
 }
 
-export type TakeBidMetaHashInput<
+export type TakeBidCompressedMetaHashInstructionExtraArgs = {
+  /** creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ] */
+  creators?: Array<[Address, number]>;
+  /** proof path, can be shortened if canopyDepth of merkle tree is also specified */
+  proof?: Array<Address>;
+  /** canopy depth of merkle tree, reduces proofPath length if specified */
+  canopyDepth?: number;
+};
+
+export type TakeBidCompressedMetaHashAsyncInput<
+  TAccountTcomp extends string = string,
+  TAccountTreeAuthority extends string = string,
+  TAccountSeller extends string = string,
+  TAccountDelegate extends string = string,
+  TAccountMerkleTree extends string = string,
+  TAccountLogWrapper extends string = string,
+  TAccountCompressionProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountBubblegumProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountTensorswapProgram extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMarginAccount extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountRentDest extends string = string,
+> = {
+  tcomp?: Address<TAccountTcomp>;
+  treeAuthority?: Address<TAccountTreeAuthority>;
+  seller: Address<TAccountSeller>;
+  delegate: Address<TAccountDelegate>;
+  merkleTree: Address<TAccountMerkleTree>;
+  logWrapper?: Address<TAccountLogWrapper>;
+  compressionProgram?: Address<TAccountCompressionProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  bubblegumProgram?: Address<TAccountBubblegumProgram>;
+  tcompProgram?: Address<TAccountTcompProgram>;
+  tensorswapProgram?: Address<TAccountTensorswapProgram>;
+  bidState: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  marginAccount: Address<TAccountMarginAccount>;
+  whitelist: Address<TAccountWhitelist>;
+  cosigner: TransactionSigner<TAccountCosigner>;
+  rentDest: Address<TAccountRentDest>;
+  nonce: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
+  index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
+  root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
+  metaHash: TakeBidCompressedMetaHashInstructionDataArgs['metaHash'];
+  creatorShares: TakeBidCompressedMetaHashInstructionDataArgs['creatorShares'];
+  creatorVerified: TakeBidCompressedMetaHashInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: TakeBidCompressedMetaHashInstructionDataArgs['sellerFeeBasisPoints'];
+  minAmount: TakeBidCompressedMetaHashInstructionDataArgs['minAmount'];
+  optionalRoyaltyPct?: TakeBidCompressedMetaHashInstructionDataArgs['optionalRoyaltyPct'];
+  creators?: TakeBidCompressedMetaHashInstructionExtraArgs['creators'];
+  proof?: TakeBidCompressedMetaHashInstructionExtraArgs['proof'];
+  canopyDepth?: TakeBidCompressedMetaHashInstructionExtraArgs['canopyDepth'];
+};
+
+export async function getTakeBidCompressedMetaHashInstructionAsync<
+  TAccountTcomp extends string,
+  TAccountTreeAuthority extends string,
+  TAccountSeller extends string,
+  TAccountDelegate extends string,
+  TAccountMerkleTree extends string,
+  TAccountLogWrapper extends string,
+  TAccountCompressionProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountBubblegumProgram extends string,
+  TAccountTcompProgram extends string,
+  TAccountTensorswapProgram extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountMarginAccount extends string,
+  TAccountWhitelist extends string,
+  TAccountCosigner extends string,
+  TAccountRentDest extends string,
+>(
+  input: TakeBidCompressedMetaHashAsyncInput<
+    TAccountTcomp,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >
+): Promise<
+  TakeBidCompressedMetaHashInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountTcomp,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
+    seller: { value: input.seller ?? null, isWritable: true },
+    delegate: { value: input.delegate ?? null, isWritable: false },
+    merkleTree: { value: input.merkleTree ?? null, isWritable: true },
+    logWrapper: { value: input.logWrapper ?? null, isWritable: false },
+    compressionProgram: {
+      value: input.compressionProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    bubblegumProgram: {
+      value: input.bubblegumProgram ?? null,
+      isWritable: false,
+    },
+    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    tensorswapProgram: {
+      value: input.tensorswapProgram ?? null,
+      isWritable: false,
+    },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    rentDest: { value: input.rentDest ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.tcomp.value) {
+    accounts.tcomp.value = await findFeeVaultPda();
+  }
+  if (!accounts.bubblegumProgram.value) {
+    accounts.bubblegumProgram.value =
+      'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
+  }
+  if (!accounts.treeAuthority.value) {
+    accounts.treeAuthority = {
+      ...accounts.treeAuthority,
+      ...(await resolveTreeAuthorityPda(resolverScope)),
+    };
+  }
+  if (!accounts.logWrapper.value) {
+    accounts.logWrapper.value =
+      'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
+  }
+  if (!accounts.compressionProgram.value) {
+    accounts.compressionProgram.value =
+      'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.tcompProgram.value) {
+    accounts.tcompProgram.value = programAddress;
+    accounts.tcompProgram.isWritable = false;
+  }
+  if (!accounts.tensorswapProgram.value) {
+    accounts.tensorswapProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!args.creators) {
+    args.creators = [];
+  }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...resolveCreatorPath(resolverScope),
+    ...resolveProofPath(resolverScope),
+  ];
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.treeAuthority),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.delegate),
+      getAccountMeta(accounts.merkleTree),
+      getAccountMeta(accounts.logWrapper),
+      getAccountMeta(accounts.compressionProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.bubblegumProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.tensorswapProgram),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.rentDest),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getTakeBidCompressedMetaHashInstructionDataEncoder().encode(
+      args as TakeBidCompressedMetaHashInstructionDataArgs
+    ),
+  } as TakeBidCompressedMetaHashInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountTcomp,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >;
+
+  return instruction;
+}
+
+export type TakeBidCompressedMetaHashInput<
   TAccountTcomp extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountSeller extends string = string,
@@ -236,12 +530,12 @@ export type TakeBidMetaHashInput<
   seller: Address<TAccountSeller>;
   delegate: Address<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
-  logWrapper: Address<TAccountLogWrapper>;
-  compressionProgram: Address<TAccountCompressionProgram>;
+  logWrapper?: Address<TAccountLogWrapper>;
+  compressionProgram?: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
-  tensorswapProgram: Address<TAccountTensorswapProgram>;
+  bubblegumProgram?: Address<TAccountBubblegumProgram>;
+  tcompProgram?: Address<TAccountTcompProgram>;
+  tensorswapProgram?: Address<TAccountTensorswapProgram>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -250,18 +544,21 @@ export type TakeBidMetaHashInput<
   whitelist: Address<TAccountWhitelist>;
   cosigner: TransactionSigner<TAccountCosigner>;
   rentDest: Address<TAccountRentDest>;
-  nonce: TakeBidMetaHashInstructionDataArgs['nonce'];
-  index: TakeBidMetaHashInstructionDataArgs['index'];
-  root: TakeBidMetaHashInstructionDataArgs['root'];
-  metaHash: TakeBidMetaHashInstructionDataArgs['metaHash'];
-  creatorShares: TakeBidMetaHashInstructionDataArgs['creatorShares'];
-  creatorVerified: TakeBidMetaHashInstructionDataArgs['creatorVerified'];
-  sellerFeeBasisPoints: TakeBidMetaHashInstructionDataArgs['sellerFeeBasisPoints'];
-  minAmount: TakeBidMetaHashInstructionDataArgs['minAmount'];
-  optionalRoyaltyPct?: TakeBidMetaHashInstructionDataArgs['optionalRoyaltyPct'];
+  nonce: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
+  index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
+  root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
+  metaHash: TakeBidCompressedMetaHashInstructionDataArgs['metaHash'];
+  creatorShares: TakeBidCompressedMetaHashInstructionDataArgs['creatorShares'];
+  creatorVerified: TakeBidCompressedMetaHashInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: TakeBidCompressedMetaHashInstructionDataArgs['sellerFeeBasisPoints'];
+  minAmount: TakeBidCompressedMetaHashInstructionDataArgs['minAmount'];
+  optionalRoyaltyPct?: TakeBidCompressedMetaHashInstructionDataArgs['optionalRoyaltyPct'];
+  creators?: TakeBidCompressedMetaHashInstructionExtraArgs['creators'];
+  proof?: TakeBidCompressedMetaHashInstructionExtraArgs['proof'];
+  canopyDepth?: TakeBidCompressedMetaHashInstructionExtraArgs['canopyDepth'];
 };
 
-export function getTakeBidMetaHashInstruction<
+export function getTakeBidCompressedMetaHashInstruction<
   TAccountTcomp extends string,
   TAccountTreeAuthority extends string,
   TAccountSeller extends string,
@@ -282,7 +579,7 @@ export function getTakeBidMetaHashInstruction<
   TAccountCosigner extends string,
   TAccountRentDest extends string,
 >(
-  input: TakeBidMetaHashInput<
+  input: TakeBidCompressedMetaHashInput<
     TAccountTcomp,
     TAccountTreeAuthority,
     TAccountSeller,
@@ -303,7 +600,7 @@ export function getTakeBidMetaHashInstruction<
     TAccountCosigner,
     TAccountRentDest
   >
-): TakeBidMetaHashInstruction<
+): TakeBidCompressedMetaHashInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTcomp,
   TAccountTreeAuthority,
@@ -367,11 +664,49 @@ export function getTakeBidMetaHashInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
+  if (!accounts.bubblegumProgram.value) {
+    accounts.bubblegumProgram.value =
+      'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
+  }
+  if (!accounts.logWrapper.value) {
+    accounts.logWrapper.value =
+      'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
+  }
+  if (!accounts.compressionProgram.value) {
+    accounts.compressionProgram.value =
+      'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.tcompProgram.value) {
+    accounts.tcompProgram.value = programAddress;
+    accounts.tcompProgram.isWritable = false;
+  }
+  if (!accounts.tensorswapProgram.value) {
+    accounts.tensorswapProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!args.creators) {
+    args.creators = [];
+  }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...resolveCreatorPath(resolverScope),
+    ...resolveProofPath(resolverScope),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -395,12 +730,13 @@ export function getTakeBidMetaHashInstruction<
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentDest),
+      ...remainingAccounts,
     ],
     programAddress,
-    data: getTakeBidMetaHashInstructionDataEncoder().encode(
-      args as TakeBidMetaHashInstructionDataArgs
+    data: getTakeBidCompressedMetaHashInstructionDataEncoder().encode(
+      args as TakeBidCompressedMetaHashInstructionDataArgs
     ),
-  } as TakeBidMetaHashInstruction<
+  } as TakeBidCompressedMetaHashInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTcomp,
     TAccountTreeAuthority,
@@ -426,7 +762,7 @@ export function getTakeBidMetaHashInstruction<
   return instruction;
 }
 
-export type ParsedTakeBidMetaHashInstruction<
+export type ParsedTakeBidCompressedMetaHashInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -452,17 +788,17 @@ export type ParsedTakeBidMetaHashInstruction<
     cosigner: TAccountMetas[17];
     rentDest: TAccountMetas[18];
   };
-  data: TakeBidMetaHashInstructionData;
+  data: TakeBidCompressedMetaHashInstructionData;
 };
 
-export function parseTakeBidMetaHashInstruction<
+export function parseTakeBidCompressedMetaHashInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedTakeBidMetaHashInstruction<TProgram, TAccountMetas> {
+): ParsedTakeBidCompressedMetaHashInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 19) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -502,6 +838,8 @@ export function parseTakeBidMetaHashInstruction<
       cosigner: getNextAccount(),
       rentDest: getNextAccount(),
     },
-    data: getTakeBidMetaHashInstructionDataDecoder().decode(instruction.data),
+    data: getTakeBidCompressedMetaHashInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

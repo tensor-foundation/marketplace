@@ -6,10 +6,12 @@ import {
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
+  findTreeAuthorityPda,
   findWnsApprovePda,
   findWnsDistributionPda,
 } from './pdas';
 import { TokenStandard } from './types';
+import { IAccountMeta } from '@solana/instructions';
 
 export const resolveMetadata = async ({
   accounts,
@@ -174,4 +176,47 @@ export const resolveWnsExtraAccountMetasPda = async ({
       { programAddress: expectAddress(accounts.wnsProgram?.value) }
     ),
   };
+};
+
+export const resolveTreeAuthorityPda = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findTreeAuthorityPda(
+      {
+        merkleTree: expectAddress(accounts.merkleTree?.value),
+      },
+      { programAddress: expectAddress(accounts.bubblegumProgram?.value) }
+    ),
+  };
+};
+
+export const resolveCreatorPath = ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: any;
+}): IAccountMeta[] => {
+  return args.creators.map(([address, share]: [Address, number]) => ({
+    address,
+    role: +(share > 0),
+  }));
+};
+
+export const resolveProofPath = ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: any;
+}): IAccountMeta[] => {
+  return args.proof
+    .slice(0, args.proof.length - args.canopyDepth)
+    .map((address: Address) => ({
+      address,
+      role: 0,
+    }));
 };

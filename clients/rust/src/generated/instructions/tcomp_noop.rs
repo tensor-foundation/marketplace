@@ -46,12 +46,12 @@ impl TcompNoop {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct TcompNoopInstructionData {
+pub struct TcompNoopInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TcompNoopInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [106, 162, 10, 226, 132, 68, 223, 21],
         }

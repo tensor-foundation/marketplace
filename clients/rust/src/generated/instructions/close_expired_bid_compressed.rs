@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct CloseExpiredBid {
+pub struct CloseExpiredBidCompressed {
     pub bid_state: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
@@ -21,7 +21,7 @@ pub struct CloseExpiredBid {
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl CloseExpiredBid {
+impl CloseExpiredBidCompressed {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -51,7 +51,9 @@ impl CloseExpiredBid {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = CloseExpiredBidInstructionData::new().try_to_vec().unwrap();
+        let data = CloseExpiredBidCompressedInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::TENSOR_MARKETPLACE_ID,
@@ -62,19 +64,19 @@ impl CloseExpiredBid {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct CloseExpiredBidInstructionData {
+pub struct CloseExpiredBidCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
-impl CloseExpiredBidInstructionData {
-    fn new() -> Self {
+impl CloseExpiredBidCompressedInstructionData {
+    pub fn new() -> Self {
         Self {
             discriminator: [83, 20, 105, 67, 248, 68, 104, 190],
         }
     }
 }
 
-/// Instruction builder for `CloseExpiredBid`.
+/// Instruction builder for `CloseExpiredBidCompressed`.
 ///
 /// ### Accounts:
 ///
@@ -84,7 +86,7 @@ impl CloseExpiredBidInstructionData {
 ///   3. `[]` tcomp_program
 ///   4. `[writable]` rent_dest
 #[derive(Default)]
-pub struct CloseExpiredBidBuilder {
+pub struct CloseExpiredBidCompressedBuilder {
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -93,7 +95,7 @@ pub struct CloseExpiredBidBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CloseExpiredBidBuilder {
+impl CloseExpiredBidCompressedBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -143,7 +145,7 @@ impl CloseExpiredBidBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CloseExpiredBid {
+        let accounts = CloseExpiredBidCompressed {
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
             system_program: self
@@ -157,8 +159,8 @@ impl CloseExpiredBidBuilder {
     }
 }
 
-/// `close_expired_bid` CPI accounts.
-pub struct CloseExpiredBidCpiAccounts<'a, 'b> {
+/// `close_expired_bid_compressed` CPI accounts.
+pub struct CloseExpiredBidCompressedCpiAccounts<'a, 'b> {
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
@@ -170,8 +172,8 @@ pub struct CloseExpiredBidCpiAccounts<'a, 'b> {
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `close_expired_bid` CPI instruction.
-pub struct CloseExpiredBidCpi<'a, 'b> {
+/// `close_expired_bid_compressed` CPI instruction.
+pub struct CloseExpiredBidCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -186,10 +188,10 @@ pub struct CloseExpiredBidCpi<'a, 'b> {
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> CloseExpiredBidCpi<'a, 'b> {
+impl<'a, 'b> CloseExpiredBidCompressedCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CloseExpiredBidCpiAccounts<'a, 'b>,
+        accounts: CloseExpiredBidCompressedCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
@@ -261,7 +263,9 @@ impl<'a, 'b> CloseExpiredBidCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = CloseExpiredBidInstructionData::new().try_to_vec().unwrap();
+        let data = CloseExpiredBidCompressedInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::TENSOR_MARKETPLACE_ID,
@@ -287,7 +291,7 @@ impl<'a, 'b> CloseExpiredBidCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CloseExpiredBid` via CPI.
+/// Instruction builder for `CloseExpiredBidCompressed` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -296,13 +300,13 @@ impl<'a, 'b> CloseExpiredBidCpi<'a, 'b> {
 ///   2. `[]` system_program
 ///   3. `[]` tcomp_program
 ///   4. `[writable]` rent_dest
-pub struct CloseExpiredBidCpiBuilder<'a, 'b> {
-    instruction: Box<CloseExpiredBidCpiBuilderInstruction<'a, 'b>>,
+pub struct CloseExpiredBidCompressedCpiBuilder<'a, 'b> {
+    instruction: Box<CloseExpiredBidCompressedCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CloseExpiredBidCpiBuilder<'a, 'b> {
+impl<'a, 'b> CloseExpiredBidCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CloseExpiredBidCpiBuilderInstruction {
+        let instruction = Box::new(CloseExpiredBidCompressedCpiBuilderInstruction {
             __program: program,
             bid_state: None,
             owner: None,
@@ -391,7 +395,7 @@ impl<'a, 'b> CloseExpiredBidCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = CloseExpiredBidCpi {
+        let instruction = CloseExpiredBidCompressedCpi {
             __program: self.instruction.__program,
 
             bid_state: self.instruction.bid_state.expect("bid_state is not set"),
@@ -417,7 +421,7 @@ impl<'a, 'b> CloseExpiredBidCpiBuilder<'a, 'b> {
     }
 }
 
-struct CloseExpiredBidCpiBuilderInstruction<'a, 'b> {
+struct CloseExpiredBidCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

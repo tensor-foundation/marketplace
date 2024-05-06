@@ -42,7 +42,9 @@ export type DelistCoreInstruction<
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountTcompProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -126,7 +128,7 @@ export type DelistCoreInput<
   owner: TransactionSigner<TAccountOwner>;
   listState: Address<TAccountListState>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  tcompProgram?: Address<TAccountTcompProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   rentDest: TransactionSigner<TAccountRentDest>;
 };
@@ -185,6 +187,10 @@ export function getDelistCoreInstruction<
   if (!accounts.mplCoreProgram.value) {
     accounts.mplCoreProgram.value =
       'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.tcompProgram.value) {
+    accounts.tcompProgram.value = programAddress;
+    accounts.tcompProgram.isWritable = false;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =

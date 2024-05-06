@@ -15,34 +15,34 @@ import {
 } from '../errors';
 import {
   ParsedBidInstruction,
+  ParsedBuyCompressedInstruction,
   ParsedBuyCoreInstruction,
-  ParsedBuyInstruction,
   ParsedBuyLegacyInstruction,
   ParsedBuySplInstruction,
   ParsedBuyT22Instruction,
   ParsedBuyWnsInstruction,
   ParsedCancelBidInstruction,
-  ParsedCloseExpiredBidInstruction,
+  ParsedCloseExpiredBidCompressedInstruction,
+  ParsedCloseExpiredListingCompressedInstruction,
   ParsedCloseExpiredListingCoreInstruction,
-  ParsedCloseExpiredListingInstruction,
   ParsedCloseExpiredListingLegacyInstruction,
   ParsedCloseExpiredListingT22Instruction,
   ParsedCloseExpiredListingWnsInstruction,
+  ParsedDelistCompressedInstruction,
   ParsedDelistCoreInstruction,
-  ParsedDelistInstruction,
   ParsedDelistLegacyInstruction,
   ParsedDelistT22Instruction,
   ParsedDelistWnsInstruction,
   ParsedEditInstruction,
+  ParsedListCompressedInstruction,
   ParsedListCoreInstruction,
-  ParsedListInstruction,
   ParsedListLegacyInstruction,
   ParsedListT22Instruction,
   ParsedListWnsInstruction,
+  ParsedTakeBidCompressedFullMetaInstruction,
+  ParsedTakeBidCompressedMetaHashInstruction,
   ParsedTakeBidCoreInstruction,
-  ParsedTakeBidFullMetaInstruction,
   ParsedTakeBidLegacyInstruction,
-  ParsedTakeBidMetaHashInstruction,
   ParsedTakeBidT22Instruction,
   ParsedTakeBidWnsInstruction,
   ParsedTcompNoopInstruction,
@@ -96,14 +96,14 @@ export enum TensorMarketplaceInstruction {
   Edit,
   Bid,
   CancelBid,
-  CloseExpiredBid,
-  Buy,
+  CloseExpiredBidCompressed,
+  BuyCompressed,
   BuySpl,
-  CloseExpiredListing,
-  List,
-  Delist,
-  TakeBidMetaHash,
-  TakeBidFullMeta,
+  CloseExpiredListingCompressed,
+  ListCompressed,
+  DelistCompressed,
+  TakeBidCompressedMetaHash,
+  TakeBidCompressedFullMeta,
   BuyLegacy,
   CloseExpiredListingLegacy,
   DelistLegacy,
@@ -149,28 +149,28 @@ export function identifyTensorMarketplaceInstruction(
     return TensorMarketplaceInstruction.CancelBid;
   }
   if (memcmp(data, new Uint8Array([83, 20, 105, 67, 248, 68, 104, 190]), 0)) {
-    return TensorMarketplaceInstruction.CloseExpiredBid;
+    return TensorMarketplaceInstruction.CloseExpiredBidCompressed;
   }
   if (memcmp(data, new Uint8Array([102, 6, 61, 18, 1, 218, 235, 234]), 0)) {
-    return TensorMarketplaceInstruction.Buy;
+    return TensorMarketplaceInstruction.BuyCompressed;
   }
   if (memcmp(data, new Uint8Array([65, 136, 254, 255, 59, 130, 234, 174]), 0)) {
     return TensorMarketplaceInstruction.BuySpl;
   }
   if (memcmp(data, new Uint8Array([150, 70, 13, 135, 9, 204, 75, 4]), 0)) {
-    return TensorMarketplaceInstruction.CloseExpiredListing;
+    return TensorMarketplaceInstruction.CloseExpiredListingCompressed;
   }
   if (memcmp(data, new Uint8Array([54, 174, 193, 67, 17, 41, 132, 38]), 0)) {
-    return TensorMarketplaceInstruction.List;
+    return TensorMarketplaceInstruction.ListCompressed;
   }
   if (memcmp(data, new Uint8Array([55, 136, 205, 107, 107, 173, 4, 31]), 0)) {
-    return TensorMarketplaceInstruction.Delist;
+    return TensorMarketplaceInstruction.DelistCompressed;
   }
   if (memcmp(data, new Uint8Array([85, 227, 202, 70, 45, 215, 10, 193]), 0)) {
-    return TensorMarketplaceInstruction.TakeBidMetaHash;
+    return TensorMarketplaceInstruction.TakeBidCompressedMetaHash;
   }
   if (memcmp(data, new Uint8Array([242, 194, 203, 225, 234, 53, 10, 96]), 0)) {
-    return TensorMarketplaceInstruction.TakeBidFullMeta;
+    return TensorMarketplaceInstruction.TakeBidCompressedFullMeta;
   }
   if (memcmp(data, new Uint8Array([68, 127, 43, 8, 212, 31, 249, 114]), 0)) {
     return TensorMarketplaceInstruction.BuyLegacy;
@@ -256,29 +256,29 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.CancelBid;
     } & ParsedCancelBidInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.CloseExpiredBid;
-    } & ParsedCloseExpiredBidInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.CloseExpiredBidCompressed;
+    } & ParsedCloseExpiredBidCompressedInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.Buy;
-    } & ParsedBuyInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.BuyCompressed;
+    } & ParsedBuyCompressedInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.BuySpl;
     } & ParsedBuySplInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.CloseExpiredListing;
-    } & ParsedCloseExpiredListingInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.CloseExpiredListingCompressed;
+    } & ParsedCloseExpiredListingCompressedInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.List;
-    } & ParsedListInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.ListCompressed;
+    } & ParsedListCompressedInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.Delist;
-    } & ParsedDelistInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.DelistCompressed;
+    } & ParsedDelistCompressedInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.TakeBidMetaHash;
-    } & ParsedTakeBidMetaHashInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.TakeBidCompressedMetaHash;
+    } & ParsedTakeBidCompressedMetaHashInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.TakeBidFullMeta;
-    } & ParsedTakeBidFullMetaInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.TakeBidCompressedFullMeta;
+    } & ParsedTakeBidCompressedFullMetaInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.BuyLegacy;
     } & ParsedBuyLegacyInstruction<TProgram>)

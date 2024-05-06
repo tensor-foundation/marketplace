@@ -139,12 +139,12 @@ impl BuyT22 {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct BuyT22InstructionData {
+pub struct BuyT22InstructionData {
     discriminator: [u8; 8],
 }
 
 impl BuyT22InstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [81, 98, 227, 171, 201, 105, 180, 216],
         }

@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct Delist {
+pub struct DelistCompressed {
     pub tree_authority: solana_program::pubkey::Pubkey,
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
@@ -31,17 +31,17 @@ pub struct Delist {
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl Delist {
+impl DelistCompressed {
     pub fn instruction(
         &self,
-        args: DelistInstructionArgs,
+        args: DelistCompressedInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: DelistInstructionArgs,
+        args: DelistCompressedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
@@ -85,7 +85,7 @@ impl Delist {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = DelistInstructionData::new().try_to_vec().unwrap();
+        let mut data = DelistCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -98,12 +98,12 @@ impl Delist {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct DelistInstructionData {
+pub struct DelistCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
-impl DelistInstructionData {
-    fn new() -> Self {
+impl DelistCompressedInstructionData {
+    pub fn new() -> Self {
         Self {
             discriminator: [55, 136, 205, 107, 107, 173, 4, 31],
         }
@@ -112,7 +112,7 @@ impl DelistInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct DelistInstructionArgs {
+pub struct DelistCompressedInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
@@ -120,22 +120,22 @@ pub struct DelistInstructionArgs {
     pub creator_hash: [u8; 32],
 }
 
-/// Instruction builder for `Delist`.
+/// Instruction builder for `DelistCompressed`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[]` tree_authority
 ///   1. `[writable]` merkle_tree
-///   2. `[]` log_wrapper
-///   3. `[]` compression_program
+///   2. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
+///   3. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   5. `[]` bubblegum_program
+///   5. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
 ///   8. `[]` tcomp_program
 ///   9. `[writable]` rent_dest
 #[derive(Default)]
-pub struct DelistBuilder {
+pub struct DelistCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
@@ -154,7 +154,7 @@ pub struct DelistBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl DelistBuilder {
+impl DelistCompressedBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -168,11 +168,13 @@ impl DelistBuilder {
         self.merkle_tree = Some(merkle_tree);
         self
     }
+    /// `[optional account, default to 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV']`
     #[inline(always)]
     pub fn log_wrapper(&mut self, log_wrapper: solana_program::pubkey::Pubkey) -> &mut Self {
         self.log_wrapper = Some(log_wrapper);
         self
     }
+    /// `[optional account, default to 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK']`
     #[inline(always)]
     pub fn compression_program(
         &mut self,
@@ -187,6 +189,7 @@ impl DelistBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY']`
     #[inline(always)]
     pub fn bubblegum_program(
         &mut self,
@@ -260,25 +263,27 @@ impl DelistBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = Delist {
+        let accounts = DelistCompressed {
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
-            log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
-            compression_program: self
-                .compression_program
-                .expect("compression_program is not set"),
+            log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
+                "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
+            )),
+            compression_program: self.compression_program.unwrap_or(solana_program::pubkey!(
+                "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            bubblegum_program: self
-                .bubblegum_program
-                .expect("bubblegum_program is not set"),
+            bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
+                "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+            )),
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
-        let args = DelistInstructionArgs {
+        let args = DelistCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
@@ -290,8 +295,8 @@ impl DelistBuilder {
     }
 }
 
-/// `delist` CPI accounts.
-pub struct DelistCpiAccounts<'a, 'b> {
+/// `delist_compressed` CPI accounts.
+pub struct DelistCompressedCpiAccounts<'a, 'b> {
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
@@ -313,8 +318,8 @@ pub struct DelistCpiAccounts<'a, 'b> {
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `delist` CPI instruction.
-pub struct DelistCpi<'a, 'b> {
+/// `delist_compressed` CPI instruction.
+pub struct DelistCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -338,14 +343,14 @@ pub struct DelistCpi<'a, 'b> {
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: DelistInstructionArgs,
+    pub __args: DelistCompressedInstructionArgs,
 }
 
-impl<'a, 'b> DelistCpi<'a, 'b> {
+impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: DelistCpiAccounts<'a, 'b>,
-        args: DelistInstructionArgs,
+        accounts: DelistCompressedCpiAccounts<'a, 'b>,
+        args: DelistCompressedInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -443,7 +448,7 @@ impl<'a, 'b> DelistCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = DelistInstructionData::new().try_to_vec().unwrap();
+        let mut data = DelistCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -476,7 +481,7 @@ impl<'a, 'b> DelistCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `Delist` via CPI.
+/// Instruction builder for `DelistCompressed` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -490,13 +495,13 @@ impl<'a, 'b> DelistCpi<'a, 'b> {
 ///   7. `[signer]` owner
 ///   8. `[]` tcomp_program
 ///   9. `[writable]` rent_dest
-pub struct DelistCpiBuilder<'a, 'b> {
-    instruction: Box<DelistCpiBuilderInstruction<'a, 'b>>,
+pub struct DelistCompressedCpiBuilder<'a, 'b> {
+    instruction: Box<DelistCompressedCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> DelistCpiBuilder<'a, 'b> {
+impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(DelistCpiBuilderInstruction {
+        let instruction = Box::new(DelistCompressedCpiBuilderInstruction {
             __program: program,
             tree_authority: None,
             merkle_tree: None,
@@ -660,7 +665,7 @@ impl<'a, 'b> DelistCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = DelistInstructionArgs {
+        let args = DelistCompressedInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
@@ -675,7 +680,7 @@ impl<'a, 'b> DelistCpiBuilder<'a, 'b> {
                 .clone()
                 .expect("creator_hash is not set"),
         };
-        let instruction = DelistCpi {
+        let instruction = DelistCompressedCpi {
             __program: self.instruction.__program,
 
             tree_authority: self
@@ -727,7 +732,7 @@ impl<'a, 'b> DelistCpiBuilder<'a, 'b> {
     }
 }
 
-struct DelistCpiBuilderInstruction<'a, 'b> {
+struct DelistCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,

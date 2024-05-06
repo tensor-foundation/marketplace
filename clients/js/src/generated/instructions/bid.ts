@@ -62,7 +62,9 @@ export type BidInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountTcompProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
@@ -194,7 +196,7 @@ export type BidInput<
   TAccountRentPayer extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  tcompProgram?: Address<TAccountTcompProgram>;
   bidState: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
   marginAccount: Address<TAccountMarginAccount>;
@@ -266,6 +268,10 @@ export function getBidInstruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.tcompProgram.value) {
+    accounts.tcompProgram.value = programAddress;
+    accounts.tcompProgram.isWritable = false;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

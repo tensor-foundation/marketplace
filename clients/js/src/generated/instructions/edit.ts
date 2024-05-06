@@ -48,7 +48,9 @@ export type EditInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountTcompProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -134,7 +136,7 @@ export type EditInput<
 > = {
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  tcompProgram?: Address<TAccountTcompProgram>;
   amount: EditInstructionDataArgs['amount'];
   expireInSec?: EditInstructionDataArgs['expireInSec'];
   currency?: EditInstructionDataArgs['currency'];
@@ -170,6 +172,12 @@ export function getEditInstruction<
 
   // Original args.
   const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.tcompProgram.value) {
+    accounts.tcompProgram.value = programAddress;
+    accounts.tcompProgram.isWritable = false;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {

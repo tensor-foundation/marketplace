@@ -128,12 +128,12 @@ impl CloseExpiredListingWns {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct CloseExpiredListingWnsInstructionData {
+pub struct CloseExpiredListingWnsInstructionData {
     discriminator: [u8; 8],
 }
 
 impl CloseExpiredListingWnsInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [222, 31, 183, 134, 230, 207, 7, 132],
         }

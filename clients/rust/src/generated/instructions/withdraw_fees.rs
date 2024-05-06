@@ -72,12 +72,12 @@ impl WithdrawFees {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct WithdrawFeesInstructionData {
+pub struct WithdrawFeesInstructionData {
     discriminator: [u8; 8],
 }
 
 impl WithdrawFeesInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [198, 212, 171, 109, 144, 215, 174, 89],
         }

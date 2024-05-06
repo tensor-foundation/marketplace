@@ -35,6 +35,53 @@ kinobi.update(
     },
   ])
 );
+// Rename Compressed Ixs (matches PLock Ixs + is more intuitive
+// since the "default" standard definitely isn't compressed (yet)) 
+
+kinobi.update(
+  k.updateInstructionsVisitor({
+    buy: {
+      name: "buyCompressed"
+    },
+    closeExpiredBid: {
+      name: "closeExpiredBidCompressed"
+    },
+    closeExpiredListing: {
+      name: "closeExpiredListingCompressed"
+    },
+    delist: {
+      name: "delistCompressed"
+    },
+    list: {
+      name: "listCompressed"
+    },
+    takeBidFullMeta:{
+      name: "takeBidCompressedFullMeta"
+    },
+    takeBidMetaHash: {
+      name: "takeBidCompressedMetaHash"
+    }
+  })
+)
+
+// Rename owner => ownerAddress, rentPayer => owner
+// to clarify that rentPayer has to be the signer
+// and owner(ownerAddress) can be defaulted to
+// the address of the rentPayer
+kinobi.update(
+  k.updateInstructionsVisitor({
+    listCompressed: {
+      accounts: {
+        owner: {
+          name: "ownerAddress"
+        },
+        rentPayer: {
+          name: "owner"
+        }
+      }
+    }
+  })
+)
 
 // Set default account values accross multiple instructions.
 kinobi.update(
@@ -44,6 +91,21 @@ kinobi.update(
       account: "feeVault",
       ignoreIfOptional: true,
       defaultValue: k.pdaValueNode("feeVault"),
+    },
+    {
+      account: "tcomp",
+      ignoreIfOptional: true,
+      defaultValue: k.pdaValueNode("feeVault")
+    },
+    {
+      account: "treeAuthority",
+      ignoreIfOptional: true,
+      defaultValue: k.resolverValueNode("resolveTreeAuthorityPda", {
+        dependsOn: [
+          k.accountValueNode("merkleTree"),
+          k.accountValueNode("bubblegumProgram")
+        ],
+      }),
     },
     // default programs
     {
@@ -118,6 +180,157 @@ kinobi.update(
         "wnsDistributionProgram"
       ),
     },
+    {
+      account: "logWrapper",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV",
+        "logWrapper"
+      ),
+    },
+    {
+      account: "compressionProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK",
+        "compressionProgram"
+      ),
+    },
+    {
+      account: "bubblegumProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
+        "bubblegumProgram"
+      ),
+    },
+    {
+      account: "tcompProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.programIdValueNode(),
+    },
+    {
+      account: "tensorswapProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
+        "tensorswapProgram"
+      )
+    }
+  ])
+);
+
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    // selects all instruction nodes if instructionNode.name
+    // contains "Compressed" or "compressed" and adds proof/creators/canopyDepth
+    // as extraArguments and adds to remainingAccounts via resolvers 
+    // except: delistCompressed and listCompressed don't accept creators as input / remainingAccounts
+    // 
+    // lil bit hacky, TBD whether we want to keep it like this or specify
+    // all ixs that need those remaining accounts explicitly (would be cleaner?)
+    {
+      select: "[instructionNode]",
+      transform: (node) => {
+        if(
+          !'name' in node || 
+          (!node.name.includes("Compressed") && !node.name.includes("compressed")) ||
+          (node.name === "delistCompressed" || node.name === "listCompressed")
+        ){
+          return node;
+        }
+        k.assertIsNode(node, "instructionNode");
+        return {
+          ...node,
+          extraArguments: [
+            k.instructionArgumentNode({
+              name: "creators",
+              type: k.arrayTypeNode(k.tupleTypeNode([k.publicKeyTypeNode(), k.numberTypeNode('u16')])),
+              docs: ["creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ]"],
+              defaultValue: k.arrayValueNode([]),
+              defaultValueStrategy: 'optional'
+            }),
+            k.instructionArgumentNode({
+              name: "proof",
+              type: k.arrayTypeNode(k.publicKeyTypeNode()),
+              docs: ["proof path, can be shortened if canopyDepth of merkle tree is also specified"],
+              defaultValue: k.arrayValueNode([]),
+              defaultValueStrategy: 'optional'
+            }),
+            k.instructionArgumentNode({
+              name: "canopyDepth",
+              type: k.numberTypeNode('u8'),
+              docs: ["canopy depth of merkle tree, reduces proofPath length if specified"],
+              defaultValue: k.numberValueNode(0),
+              defaultValueStrategy: 'optional'
+            })
+          ],
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(k.resolverValueNode("resolveCreatorPath", {
+              dependsOn: [
+                k.argumentValueNode("creators"),
+              ]
+            }),
+            {
+              isOptional: true,
+            }
+          ),
+            k.instructionRemainingAccountsNode(k.resolverValueNode("resolveProofPath", {
+              dependsOn: [
+                k.argumentValueNode("proof"),
+                k.argumentValueNode("canopyDepth")
+              ]
+            }), 
+            {
+              isOptional: true
+            })
+          ],
+        }
+      }
+    },
+    // special cases delistCompressed + listCompressed as mentioned in comment above
+    {
+      select: "[instructionNode]",
+      transform: (node) => {
+        if(
+          node.name !== "delistCompressed" &&
+          node.name !== "listCompressed"
+        ){
+          return node;
+        }
+        k.assertIsNode(node, "instructionNode");
+        return {
+          ...node,
+          extraArguments: [
+            k.instructionArgumentNode({
+              name: "proof",
+              type: k.arrayTypeNode(k.publicKeyTypeNode()),
+              docs: ["proof path, can be shortened if canopyDepth of merkle tree is also specified"],
+              defaultValue: k.arrayValueNode([]),
+              defaultValueStrategy: 'optional'
+            }),
+            k.instructionArgumentNode({
+              name: "canopyDepth",
+              type: k.numberTypeNode('u8'),
+              docs: ["canopy depth of merkle tree, reduces proofPath length if specified"],
+              defaultValue: k.numberValueNode(0),
+              defaultValueStrategy: 'optional'
+            })
+          ],
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(k.resolverValueNode("resolveProofPath", {
+              dependsOn: [
+                k.argumentValueNode("proof"),
+                k.argumentValueNode("canopyDepth")
+              ]
+            }), 
+            {
+              isOptional: true
+            })
+          ],
+        }
+      }
+    },
   ])
 );
 
@@ -130,6 +343,86 @@ kinobi.update(
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
+  })
+);
+
+// Update instructions.
+kinobi.update(
+  k.updateInstructionsVisitor({
+    // compressed 
+    buyCompressed: {
+      accounts: {
+        buyer: {
+          defaultValue: k.accountValueNode("payer")
+        },
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        optionalRoyaltyPct: {
+          defaultValue: k.numberValueNode(100)
+        },
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        },
+      }
+    },
+    delistCompressed: {
+      accounts: {
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        },
+      }
+    },
+    listCompressed: {
+      accounts: {
+        ownerAddress: {
+          defaultValue: k.accountValueNode("owner")
+        },
+        delegate: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        }
+      },
+    },
+    takeBidCompressedFullMeta: {
+      accounts: {
+        seller: {
+          isSigner: true
+        },
+        delegate: {
+          isSigner: true,
+          defaultValue: k.accountValueNode("seller")
+        },
+        cosigner: {
+          defaultValue: k.accountValueNode("seller")
+        },
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        },
+        marginAccount: {
+          defaultValue: k.accountValueNode("tensorswapProgram")
+        }
+      },
+      arguments: {
+        optionalRoyaltyPct: {
+          defaultValue: k.numberValueNode(100)
+        },
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        }
+      }
+    }
   })
 );
 
@@ -159,6 +452,8 @@ kinobi.update(
       },
       transform: (node) => {
         k.assertIsNode(node, ["instructionNode", "instructionArgumentNode"]);
+        // prevents overriding existing default values (e.g. optionalRoyaltyPct for cNFTs)
+        if(!!node.defaultValue) return node;
         return {
           ...node,
           defaultValueStrategy: "optional",
@@ -187,6 +482,7 @@ kinobi.accept(
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
+      "resolveTreeAuthorityPda"
     ],
   })
 );

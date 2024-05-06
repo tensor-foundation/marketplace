@@ -5,14 +5,22 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::generated::types::TCollection;
+use crate::generated::types::TTokenProgramVersion;
+use crate::generated::types::TTokenStandard;
+use crate::generated::types::TUses;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct Buy {
+pub struct TakeBidCompressedFullMeta {
     pub tcomp: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
+
+    pub seller: solana_program::pubkey::Pubkey,
+
+    pub delegate: solana_program::pubkey::Pubkey,
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
 
@@ -26,11 +34,9 @@ pub struct Buy {
 
     pub tcomp_program: solana_program::pubkey::Pubkey,
 
-    pub list_state: solana_program::pubkey::Pubkey,
+    pub tensorswap_program: solana_program::pubkey::Pubkey,
 
-    pub buyer: solana_program::pubkey::Pubkey,
-
-    pub payer: solana_program::pubkey::Pubkey,
+    pub bid_state: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
 
@@ -38,29 +44,43 @@ pub struct Buy {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
+    pub margin_account: solana_program::pubkey::Pubkey,
+
+    pub whitelist: solana_program::pubkey::Pubkey,
+
+    pub cosigner: solana_program::pubkey::Pubkey,
+
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl Buy {
+impl TakeBidCompressedFullMeta {
     pub fn instruction(
         &self,
-        args: BuyInstructionArgs,
+        args: TakeBidCompressedFullMetaInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: BuyInstructionArgs,
+        args: TakeBidCompressedFullMetaInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.tcomp, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.seller,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.delegate,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.merkle_tree,
@@ -86,15 +106,13 @@ impl Buy {
             self.tcomp_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.tensorswap_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.buyer, false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.bid_state,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, false,
@@ -122,11 +140,25 @@ impl Buy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
+            self.margin_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.whitelist,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.cosigner,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_dest,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = BuyInstructionData::new().try_to_vec().unwrap();
+        let mut data = TakeBidCompressedFullMetaInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -139,81 +171,107 @@ impl Buy {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct BuyInstructionData {
+pub struct TakeBidCompressedFullMetaInstructionData {
     discriminator: [u8; 8],
 }
 
-impl BuyInstructionData {
-    fn new() -> Self {
+impl TakeBidCompressedFullMetaInstructionData {
+    pub fn new() -> Self {
         Self {
-            discriminator: [102, 6, 61, 18, 1, 218, 235, 234],
+            discriminator: [242, 194, 203, 225, 234, 53, 10, 96],
         }
     }
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BuyInstructionArgs {
+pub struct TakeBidCompressedFullMetaInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
-    pub meta_hash: [u8; 32],
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+    pub seller_fee_basis_points: u16,
+    pub primary_sale_happened: bool,
+    pub is_mutable: bool,
+    pub edition_nonce: Option<u8>,
+    pub token_standard: Option<TTokenStandard>,
+    pub collection: Option<TCollection>,
+    pub uses: Option<TUses>,
+    pub token_program_version: TTokenProgramVersion,
     pub creator_shares: Vec<u8>,
     pub creator_verified: Vec<bool>,
-    pub seller_fee_basis_points: u16,
-    pub max_amount: u64,
+    pub min_amount: u64,
     pub optional_royalty_pct: Option<u16>,
 }
 
-/// Instruction builder for `Buy`.
+/// Instruction builder for `TakeBidCompressedFullMeta`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` tcomp
 ///   1. `[]` tree_authority
-///   2. `[writable]` merkle_tree
-///   3. `[]` log_wrapper
-///   4. `[]` compression_program
-///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[]` bubblegum_program
-///   7. `[]` tcomp_program
-///   8. `[writable]` list_state
-///   9. `[]` buyer
-///   10. `[writable, signer]` payer
-///   11. `[writable]` owner
-///   12. `[writable, optional]` taker_broker
-///   13. `[writable, optional]` maker_broker
-///   14. `[writable]` rent_dest
+///   2. `[writable, signer]` seller
+///   3. `[signer]` delegate
+///   4. `[writable]` merkle_tree
+///   5. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
+///   6. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
+///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   8. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
+///   9. `[]` tcomp_program
+///   10. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
+///   11. `[writable]` bid_state
+///   12. `[writable]` owner
+///   13. `[writable, optional]` taker_broker
+///   14. `[writable, optional]` maker_broker
+///   15. `[writable]` margin_account
+///   16. `[]` whitelist
+///   17. `[signer]` cosigner
+///   18. `[writable]` rent_dest
 #[derive(Default)]
-pub struct BuyBuilder {
+pub struct TakeBidCompressedFullMetaBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
+    seller: Option<solana_program::pubkey::Pubkey>,
+    delegate: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
     tcomp_program: Option<solana_program::pubkey::Pubkey>,
-    list_state: Option<solana_program::pubkey::Pubkey>,
-    buyer: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    tensorswap_program: Option<solana_program::pubkey::Pubkey>,
+    bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
+    margin_account: Option<solana_program::pubkey::Pubkey>,
+    whitelist: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     rent_dest: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
-    meta_hash: Option<[u8; 32]>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
+    seller_fee_basis_points: Option<u16>,
+    primary_sale_happened: Option<bool>,
+    is_mutable: Option<bool>,
+    edition_nonce: Option<u8>,
+    token_standard: Option<TTokenStandard>,
+    collection: Option<TCollection>,
+    uses: Option<TUses>,
+    token_program_version: Option<TTokenProgramVersion>,
     creator_shares: Option<Vec<u8>>,
     creator_verified: Option<Vec<bool>>,
-    seller_fee_basis_points: Option<u16>,
-    max_amount: Option<u64>,
+    min_amount: Option<u64>,
     optional_royalty_pct: Option<u16>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl BuyBuilder {
+impl TakeBidCompressedFullMetaBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -228,15 +286,27 @@ impl BuyBuilder {
         self
     }
     #[inline(always)]
+    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller = Some(seller);
+        self
+    }
+    #[inline(always)]
+    pub fn delegate(&mut self, delegate: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.delegate = Some(delegate);
+        self
+    }
+    #[inline(always)]
     pub fn merkle_tree(&mut self, merkle_tree: solana_program::pubkey::Pubkey) -> &mut Self {
         self.merkle_tree = Some(merkle_tree);
         self
     }
+    /// `[optional account, default to 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV']`
     #[inline(always)]
     pub fn log_wrapper(&mut self, log_wrapper: solana_program::pubkey::Pubkey) -> &mut Self {
         self.log_wrapper = Some(log_wrapper);
         self
     }
+    /// `[optional account, default to 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK']`
     #[inline(always)]
     pub fn compression_program(
         &mut self,
@@ -251,6 +321,7 @@ impl BuyBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY']`
     #[inline(always)]
     pub fn bubblegum_program(
         &mut self,
@@ -264,19 +335,18 @@ impl BuyBuilder {
         self.tcomp_program = Some(tcomp_program);
         self
     }
+    /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
-    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_state = Some(list_state);
+    pub fn tensorswap_program(
+        &mut self,
+        tensorswap_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.tensorswap_program = Some(tensorswap_program);
         self
     }
     #[inline(always)]
-    pub fn buyer(&mut self, buyer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.buyer = Some(buyer);
-        self
-    }
-    #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn bid_state(&mut self, bid_state: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.bid_state = Some(bid_state);
         self
     }
     #[inline(always)]
@@ -303,6 +373,21 @@ impl BuyBuilder {
         self
     }
     #[inline(always)]
+    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.margin_account = Some(margin_account);
+        self
+    }
+    #[inline(always)]
+    pub fn whitelist(&mut self, whitelist: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.whitelist = Some(whitelist);
+        self
+    }
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.cosigner = Some(cosigner);
+        self
+    }
+    #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
         self
@@ -323,8 +408,65 @@ impl BuyBuilder {
         self
     }
     #[inline(always)]
-    pub fn meta_hash(&mut self, meta_hash: [u8; 32]) -> &mut Self {
-        self.meta_hash = Some(meta_hash);
+    pub fn name(&mut self, name: String) -> &mut Self {
+        self.name = Some(name);
+        self
+    }
+    #[inline(always)]
+    pub fn symbol(&mut self, symbol: String) -> &mut Self {
+        self.symbol = Some(symbol);
+        self
+    }
+    #[inline(always)]
+    pub fn uri(&mut self, uri: String) -> &mut Self {
+        self.uri = Some(uri);
+        self
+    }
+    #[inline(always)]
+    pub fn seller_fee_basis_points(&mut self, seller_fee_basis_points: u16) -> &mut Self {
+        self.seller_fee_basis_points = Some(seller_fee_basis_points);
+        self
+    }
+    #[inline(always)]
+    pub fn primary_sale_happened(&mut self, primary_sale_happened: bool) -> &mut Self {
+        self.primary_sale_happened = Some(primary_sale_happened);
+        self
+    }
+    #[inline(always)]
+    pub fn is_mutable(&mut self, is_mutable: bool) -> &mut Self {
+        self.is_mutable = Some(is_mutable);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn edition_nonce(&mut self, edition_nonce: u8) -> &mut Self {
+        self.edition_nonce = Some(edition_nonce);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn token_standard(&mut self, token_standard: TTokenStandard) -> &mut Self {
+        self.token_standard = Some(token_standard);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn collection(&mut self, collection: TCollection) -> &mut Self {
+        self.collection = Some(collection);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn uses(&mut self, uses: TUses) -> &mut Self {
+        self.uses = Some(uses);
+        self
+    }
+    #[inline(always)]
+    pub fn token_program_version(
+        &mut self,
+        token_program_version: TTokenProgramVersion,
+    ) -> &mut Self {
+        self.token_program_version = Some(token_program_version);
         self
     }
     #[inline(always)]
@@ -338,13 +480,8 @@ impl BuyBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller_fee_basis_points(&mut self, seller_fee_basis_points: u16) -> &mut Self {
-        self.seller_fee_basis_points = Some(seller_fee_basis_points);
-        self
-    }
-    #[inline(always)]
-    pub fn max_amount(&mut self, max_amount: u64) -> &mut Self {
-        self.max_amount = Some(max_amount);
+    pub fn min_amount(&mut self, min_amount: u64) -> &mut Self {
+        self.min_amount = Some(min_amount);
         self
     }
     /// `[optional argument]`
@@ -373,34 +510,61 @@ impl BuyBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = Buy {
+        let accounts = TakeBidCompressedFullMeta {
             tcomp: self.tcomp.expect("tcomp is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
+            seller: self.seller.expect("seller is not set"),
+            delegate: self.delegate.expect("delegate is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
-            log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
-            compression_program: self
-                .compression_program
-                .expect("compression_program is not set"),
+            log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
+                "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
+            )),
+            compression_program: self.compression_program.unwrap_or(solana_program::pubkey!(
+                "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            bubblegum_program: self
-                .bubblegum_program
-                .expect("bubblegum_program is not set"),
+            bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
+                "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+            )),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
-            buyer: self.buyer.expect("buyer is not set"),
-            payer: self.payer.expect("payer is not set"),
+            tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
+                "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+            )),
+            bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
+            margin_account: self.margin_account.expect("margin_account is not set"),
+            whitelist: self.whitelist.expect("whitelist is not set"),
+            cosigner: self.cosigner.expect("cosigner is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
-        let args = BuyInstructionArgs {
+        let args = TakeBidCompressedFullMetaInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
-            meta_hash: self.meta_hash.clone().expect("meta_hash is not set"),
+            name: self.name.clone().expect("name is not set"),
+            symbol: self.symbol.clone().expect("symbol is not set"),
+            uri: self.uri.clone().expect("uri is not set"),
+            seller_fee_basis_points: self
+                .seller_fee_basis_points
+                .clone()
+                .expect("seller_fee_basis_points is not set"),
+            primary_sale_happened: self
+                .primary_sale_happened
+                .clone()
+                .expect("primary_sale_happened is not set"),
+            is_mutable: self.is_mutable.clone().expect("is_mutable is not set"),
+            edition_nonce: self.edition_nonce.clone(),
+            token_standard: self.token_standard.clone(),
+            collection: self.collection.clone(),
+            uses: self.uses.clone(),
+            token_program_version: self
+                .token_program_version
+                .clone()
+                .expect("token_program_version is not set"),
             creator_shares: self
                 .creator_shares
                 .clone()
@@ -409,11 +573,7 @@ impl BuyBuilder {
                 .creator_verified
                 .clone()
                 .expect("creator_verified is not set"),
-            seller_fee_basis_points: self
-                .seller_fee_basis_points
-                .clone()
-                .expect("seller_fee_basis_points is not set"),
-            max_amount: self.max_amount.clone().expect("max_amount is not set"),
+            min_amount: self.min_amount.clone().expect("min_amount is not set"),
             optional_royalty_pct: self.optional_royalty_pct.clone(),
         };
 
@@ -421,11 +581,15 @@ impl BuyBuilder {
     }
 }
 
-/// `buy` CPI accounts.
-pub struct BuyCpiAccounts<'a, 'b> {
+/// `take_bid_compressed_full_meta` CPI accounts.
+pub struct TakeBidCompressedFullMetaCpiAccounts<'a, 'b> {
     pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -439,11 +603,9 @@ pub struct BuyCpiAccounts<'a, 'b> {
 
     pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+    pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -451,11 +613,17 @@ pub struct BuyCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
+    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `buy` CPI instruction.
-pub struct BuyCpi<'a, 'b> {
+/// `take_bid_compressed_full_meta` CPI instruction.
+pub struct TakeBidCompressedFullMetaCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -463,6 +631,10 @@ pub struct BuyCpi<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub log_wrapper: &'b solana_program::account_info::AccountInfo<'a>,
@@ -475,11 +647,9 @@ pub struct BuyCpi<'a, 'b> {
 
     pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+    pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -487,33 +657,43 @@ pub struct BuyCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
+    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: BuyInstructionArgs,
+    pub __args: TakeBidCompressedFullMetaInstructionArgs,
 }
 
-impl<'a, 'b> BuyCpi<'a, 'b> {
+impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: BuyCpiAccounts<'a, 'b>,
-        args: BuyInstructionArgs,
+        accounts: TakeBidCompressedFullMetaCpiAccounts<'a, 'b>,
+        args: TakeBidCompressedFullMetaInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             tcomp: accounts.tcomp,
             tree_authority: accounts.tree_authority,
+            seller: accounts.seller,
+            delegate: accounts.delegate,
             merkle_tree: accounts.merkle_tree,
             log_wrapper: accounts.log_wrapper,
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
             tcomp_program: accounts.tcomp_program,
-            list_state: accounts.list_state,
-            buyer: accounts.buyer,
-            payer: accounts.payer,
+            tensorswap_program: accounts.tensorswap_program,
+            bid_state: accounts.bid_state,
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
+            margin_account: accounts.margin_account,
+            whitelist: accounts.whitelist,
+            cosigner: accounts.cosigner,
             rent_dest: accounts.rent_dest,
             __args: args,
         }
@@ -551,7 +731,7 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.tcomp.key,
             false,
@@ -559,6 +739,14 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.tree_authority.key,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.seller.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.delegate.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.merkle_tree.key,
@@ -584,17 +772,13 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             *self.tcomp_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
-            false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.buyer.key,
+            *self.tensorswap_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
+            *self.bid_state.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner.key,
@@ -623,6 +807,18 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.margin_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.whitelist.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.cosigner.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_dest.key,
             false,
         ));
@@ -633,7 +829,9 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = BuyInstructionData::new().try_to_vec().unwrap();
+        let mut data = TakeBidCompressedFullMetaInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -642,19 +840,20 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(15 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tcomp.clone());
         account_infos.push(self.tree_authority.clone());
+        account_infos.push(self.seller.clone());
+        account_infos.push(self.delegate.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
         account_infos.push(self.tcomp_program.clone());
-        account_infos.push(self.list_state.clone());
-        account_infos.push(self.buyer.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.tensorswap_program.clone());
+        account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
         if let Some(taker_broker) = self.taker_broker {
             account_infos.push(taker_broker.clone());
@@ -662,6 +861,9 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
+        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.whitelist.clone());
+        account_infos.push(self.cosigner.clone());
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
@@ -675,56 +877,73 @@ impl<'a, 'b> BuyCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `Buy` via CPI.
+/// Instruction builder for `TakeBidCompressedFullMeta` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` tcomp
 ///   1. `[]` tree_authority
-///   2. `[writable]` merkle_tree
-///   3. `[]` log_wrapper
-///   4. `[]` compression_program
-///   5. `[]` system_program
-///   6. `[]` bubblegum_program
-///   7. `[]` tcomp_program
-///   8. `[writable]` list_state
-///   9. `[]` buyer
-///   10. `[writable, signer]` payer
-///   11. `[writable]` owner
-///   12. `[writable, optional]` taker_broker
-///   13. `[writable, optional]` maker_broker
-///   14. `[writable]` rent_dest
-pub struct BuyCpiBuilder<'a, 'b> {
-    instruction: Box<BuyCpiBuilderInstruction<'a, 'b>>,
+///   2. `[writable, signer]` seller
+///   3. `[signer]` delegate
+///   4. `[writable]` merkle_tree
+///   5. `[]` log_wrapper
+///   6. `[]` compression_program
+///   7. `[]` system_program
+///   8. `[]` bubblegum_program
+///   9. `[]` tcomp_program
+///   10. `[]` tensorswap_program
+///   11. `[writable]` bid_state
+///   12. `[writable]` owner
+///   13. `[writable, optional]` taker_broker
+///   14. `[writable, optional]` maker_broker
+///   15. `[writable]` margin_account
+///   16. `[]` whitelist
+///   17. `[signer]` cosigner
+///   18. `[writable]` rent_dest
+pub struct TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
+    instruction: Box<TakeBidCompressedFullMetaCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
+impl<'a, 'b> TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(BuyCpiBuilderInstruction {
+        let instruction = Box::new(TakeBidCompressedFullMetaCpiBuilderInstruction {
             __program: program,
             tcomp: None,
             tree_authority: None,
+            seller: None,
+            delegate: None,
             merkle_tree: None,
             log_wrapper: None,
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
             tcomp_program: None,
-            list_state: None,
-            buyer: None,
-            payer: None,
+            tensorswap_program: None,
+            bid_state: None,
             owner: None,
             taker_broker: None,
             maker_broker: None,
+            margin_account: None,
+            whitelist: None,
+            cosigner: None,
             rent_dest: None,
             nonce: None,
             index: None,
             root: None,
-            meta_hash: None,
+            name: None,
+            symbol: None,
+            uri: None,
+            seller_fee_basis_points: None,
+            primary_sale_happened: None,
+            is_mutable: None,
+            edition_nonce: None,
+            token_standard: None,
+            collection: None,
+            uses: None,
+            token_program_version: None,
             creator_shares: None,
             creator_verified: None,
-            seller_fee_basis_points: None,
-            max_amount: None,
+            min_amount: None,
             optional_royalty_pct: None,
             __remaining_accounts: Vec::new(),
         });
@@ -741,6 +960,22 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.tree_authority = Some(tree_authority);
+        self
+    }
+    #[inline(always)]
+    pub fn seller(
+        &mut self,
+        seller: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.seller = Some(seller);
+        self
+    }
+    #[inline(always)]
+    pub fn delegate(
+        &mut self,
+        delegate: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -792,21 +1027,19 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn list_state(
+    pub fn tensorswap_program(
         &mut self,
-        list_state: &'b solana_program::account_info::AccountInfo<'a>,
+        tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_state = Some(list_state);
+        self.instruction.tensorswap_program = Some(tensorswap_program);
         self
     }
     #[inline(always)]
-    pub fn buyer(&mut self, buyer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.buyer = Some(buyer);
-        self
-    }
-    #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn bid_state(
+        &mut self,
+        bid_state: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.bid_state = Some(bid_state);
         self
     }
     #[inline(always)]
@@ -833,6 +1066,30 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn margin_account(
+        &mut self,
+        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.margin_account = Some(margin_account);
+        self
+    }
+    #[inline(always)]
+    pub fn whitelist(
+        &mut self,
+        whitelist: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.whitelist = Some(whitelist);
+        self
+    }
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.cosigner = Some(cosigner);
+        self
+    }
+    #[inline(always)]
     pub fn rent_dest(
         &mut self,
         rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
@@ -856,8 +1113,65 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn meta_hash(&mut self, meta_hash: [u8; 32]) -> &mut Self {
-        self.instruction.meta_hash = Some(meta_hash);
+    pub fn name(&mut self, name: String) -> &mut Self {
+        self.instruction.name = Some(name);
+        self
+    }
+    #[inline(always)]
+    pub fn symbol(&mut self, symbol: String) -> &mut Self {
+        self.instruction.symbol = Some(symbol);
+        self
+    }
+    #[inline(always)]
+    pub fn uri(&mut self, uri: String) -> &mut Self {
+        self.instruction.uri = Some(uri);
+        self
+    }
+    #[inline(always)]
+    pub fn seller_fee_basis_points(&mut self, seller_fee_basis_points: u16) -> &mut Self {
+        self.instruction.seller_fee_basis_points = Some(seller_fee_basis_points);
+        self
+    }
+    #[inline(always)]
+    pub fn primary_sale_happened(&mut self, primary_sale_happened: bool) -> &mut Self {
+        self.instruction.primary_sale_happened = Some(primary_sale_happened);
+        self
+    }
+    #[inline(always)]
+    pub fn is_mutable(&mut self, is_mutable: bool) -> &mut Self {
+        self.instruction.is_mutable = Some(is_mutable);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn edition_nonce(&mut self, edition_nonce: u8) -> &mut Self {
+        self.instruction.edition_nonce = Some(edition_nonce);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn token_standard(&mut self, token_standard: TTokenStandard) -> &mut Self {
+        self.instruction.token_standard = Some(token_standard);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn collection(&mut self, collection: TCollection) -> &mut Self {
+        self.instruction.collection = Some(collection);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn uses(&mut self, uses: TUses) -> &mut Self {
+        self.instruction.uses = Some(uses);
+        self
+    }
+    #[inline(always)]
+    pub fn token_program_version(
+        &mut self,
+        token_program_version: TTokenProgramVersion,
+    ) -> &mut Self {
+        self.instruction.token_program_version = Some(token_program_version);
         self
     }
     #[inline(always)]
@@ -871,13 +1185,8 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn seller_fee_basis_points(&mut self, seller_fee_basis_points: u16) -> &mut Self {
-        self.instruction.seller_fee_basis_points = Some(seller_fee_basis_points);
-        self
-    }
-    #[inline(always)]
-    pub fn max_amount(&mut self, max_amount: u64) -> &mut Self {
-        self.instruction.max_amount = Some(max_amount);
+    pub fn min_amount(&mut self, min_amount: u64) -> &mut Self {
+        self.instruction.min_amount = Some(min_amount);
         self
     }
     /// `[optional argument]`
@@ -927,15 +1236,37 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = BuyInstructionArgs {
+        let args = TakeBidCompressedFullMetaInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
-            meta_hash: self
+            name: self.instruction.name.clone().expect("name is not set"),
+            symbol: self.instruction.symbol.clone().expect("symbol is not set"),
+            uri: self.instruction.uri.clone().expect("uri is not set"),
+            seller_fee_basis_points: self
                 .instruction
-                .meta_hash
+                .seller_fee_basis_points
                 .clone()
-                .expect("meta_hash is not set"),
+                .expect("seller_fee_basis_points is not set"),
+            primary_sale_happened: self
+                .instruction
+                .primary_sale_happened
+                .clone()
+                .expect("primary_sale_happened is not set"),
+            is_mutable: self
+                .instruction
+                .is_mutable
+                .clone()
+                .expect("is_mutable is not set"),
+            edition_nonce: self.instruction.edition_nonce.clone(),
+            token_standard: self.instruction.token_standard.clone(),
+            collection: self.instruction.collection.clone(),
+            uses: self.instruction.uses.clone(),
+            token_program_version: self
+                .instruction
+                .token_program_version
+                .clone()
+                .expect("token_program_version is not set"),
             creator_shares: self
                 .instruction
                 .creator_shares
@@ -946,19 +1277,14 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
                 .creator_verified
                 .clone()
                 .expect("creator_verified is not set"),
-            seller_fee_basis_points: self
+            min_amount: self
                 .instruction
-                .seller_fee_basis_points
+                .min_amount
                 .clone()
-                .expect("seller_fee_basis_points is not set"),
-            max_amount: self
-                .instruction
-                .max_amount
-                .clone()
-                .expect("max_amount is not set"),
+                .expect("min_amount is not set"),
             optional_royalty_pct: self.instruction.optional_royalty_pct.clone(),
         };
-        let instruction = BuyCpi {
+        let instruction = TakeBidCompressedFullMetaCpi {
             __program: self.instruction.__program,
 
             tcomp: self.instruction.tcomp.expect("tcomp is not set"),
@@ -967,6 +1293,10 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
                 .instruction
                 .tree_authority
                 .expect("tree_authority is not set"),
+
+            seller: self.instruction.seller.expect("seller is not set"),
+
+            delegate: self.instruction.delegate.expect("delegate is not set"),
 
             merkle_tree: self
                 .instruction
@@ -998,17 +1328,27 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
                 .tcomp_program
                 .expect("tcomp_program is not set"),
 
-            list_state: self.instruction.list_state.expect("list_state is not set"),
+            tensorswap_program: self
+                .instruction
+                .tensorswap_program
+                .expect("tensorswap_program is not set"),
 
-            buyer: self.instruction.buyer.expect("buyer is not set"),
-
-            payer: self.instruction.payer.expect("payer is not set"),
+            bid_state: self.instruction.bid_state.expect("bid_state is not set"),
 
             owner: self.instruction.owner.expect("owner is not set"),
 
             taker_broker: self.instruction.taker_broker,
 
             maker_broker: self.instruction.maker_broker,
+
+            margin_account: self
+                .instruction
+                .margin_account
+                .expect("margin_account is not set"),
+
+            whitelist: self.instruction.whitelist.expect("whitelist is not set"),
+
+            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,
@@ -1020,31 +1360,44 @@ impl<'a, 'b> BuyCpiBuilder<'a, 'b> {
     }
 }
 
-struct BuyCpiBuilderInstruction<'a, 'b> {
+struct TakeBidCompressedFullMetaCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
-    meta_hash: Option<[u8; 32]>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
+    seller_fee_basis_points: Option<u16>,
+    primary_sale_happened: Option<bool>,
+    is_mutable: Option<bool>,
+    edition_nonce: Option<u8>,
+    token_standard: Option<TTokenStandard>,
+    collection: Option<TCollection>,
+    uses: Option<TUses>,
+    token_program_version: Option<TTokenProgramVersion>,
     creator_shares: Option<Vec<u8>>,
     creator_verified: Option<Vec<bool>>,
-    seller_fee_basis_points: Option<u16>,
-    max_amount: Option<u64>,
+    min_amount: Option<u64>,
     optional_royalty_pct: Option<u16>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
