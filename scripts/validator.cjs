@@ -21,6 +21,7 @@ module.exports = {
         programId: "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq",
         deployPath: getBinaryFile("cpitest.so"),
       },
+      // external programs
       {
         label: "Metaplex Token Auth Rules",
         programId: "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",

@@ -52,7 +52,9 @@ export type TakeBidWnsInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -63,7 +65,9 @@ export type TakeBidWnsInstruction<
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TAccountApproveAccount extends string | IAccountMeta<string> = string,
   TAccountDistribution extends string | IAccountMeta<string> = string,
-  TAccountWnsProgram extends string | IAccountMeta<string> = string,
+  TAccountWnsProgram extends
+    | string
+    | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
   TAccountDistributionProgram extends string | IAccountMeta<string> = string,
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -224,7 +228,7 @@ export type TakeBidWnsInput<
   nftMint: Address<TAccountNftMint>;
   ownerAtaAcc: Address<TAccountOwnerAtaAcc>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   tcompProgram: Address<TAccountTcompProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
@@ -234,7 +238,7 @@ export type TakeBidWnsInput<
   rentDest: Address<TAccountRentDest>;
   approveAccount: Address<TAccountApproveAccount>;
   distribution: Address<TAccountDistribution>;
-  wnsProgram: Address<TAccountWnsProgram>;
+  wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
@@ -371,9 +375,17 @@ export function getTakeBidWnsInstruction<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.wnsProgram.value) {
+    accounts.wnsProgram.value =
+      'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

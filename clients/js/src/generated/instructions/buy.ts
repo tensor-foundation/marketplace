@@ -33,6 +33,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -143,7 +144,7 @@ export type BuyInstructionDataArgs = {
   creatorVerified: Array<boolean>;
   sellerFeeBasisPoints: number;
   maxAmount: number | bigint;
-  optionalRoyaltyPct: OptionOrNullable<number>;
+  optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
 export function getBuyInstructionDataEncoder(): Encoder<BuyInstructionDataArgs> {
@@ -160,7 +161,11 @@ export function getBuyInstructionDataEncoder(): Encoder<BuyInstructionDataArgs> 
       ['maxAmount', getU64Encoder()],
       ['optionalRoyaltyPct', getOptionEncoder(getU16Encoder())],
     ]),
-    (value) => ({ ...value, discriminator: [102, 6, 61, 18, 1, 218, 235, 234] })
+    (value) => ({
+      ...value,
+      discriminator: [102, 6, 61, 18, 1, 218, 235, 234],
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+    })
   );
 }
 
@@ -229,7 +234,7 @@ export type BuyInput<
   creatorVerified: BuyInstructionDataArgs['creatorVerified'];
   sellerFeeBasisPoints: BuyInstructionDataArgs['sellerFeeBasisPoints'];
   maxAmount: BuyInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct: BuyInstructionDataArgs['optionalRoyaltyPct'];
+  optionalRoyaltyPct?: BuyInstructionDataArgs['optionalRoyaltyPct'];
 };
 
 export function getBuyInstruction<

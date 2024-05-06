@@ -1,4 +1,4 @@
-use mpl_core::instructions::TransferV1CpiBuilder;
+use metaplex_core::instructions::TransferV1CpiBuilder;
 use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
 
 use crate::*;
@@ -88,6 +88,8 @@ pub fn process_list_core<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
+    // seriallizes the account data
+    list_state.exit(ctx.program_id)?;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

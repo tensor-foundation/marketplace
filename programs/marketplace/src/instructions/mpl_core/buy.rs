@@ -1,5 +1,5 @@
 use anchor_lang::solana_program::{program::invoke, system_instruction};
-use mpl_core::{instructions::TransferV1CpiBuilder, types::Royalties};
+use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,

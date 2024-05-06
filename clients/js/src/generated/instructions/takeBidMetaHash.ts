@@ -33,6 +33,7 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
+  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -159,7 +160,7 @@ export type TakeBidMetaHashInstructionDataArgs = {
   creatorVerified: Array<boolean>;
   sellerFeeBasisPoints: number;
   minAmount: number | bigint;
-  optionalRoyaltyPct: OptionOrNullable<number>;
+  optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
 export function getTakeBidMetaHashInstructionDataEncoder(): Encoder<TakeBidMetaHashInstructionDataArgs> {
@@ -179,6 +180,7 @@ export function getTakeBidMetaHashInstructionDataEncoder(): Encoder<TakeBidMetaH
     (value) => ({
       ...value,
       discriminator: [85, 227, 202, 70, 45, 215, 10, 193],
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
     })
   );
 }
@@ -256,7 +258,7 @@ export type TakeBidMetaHashInput<
   creatorVerified: TakeBidMetaHashInstructionDataArgs['creatorVerified'];
   sellerFeeBasisPoints: TakeBidMetaHashInstructionDataArgs['sellerFeeBasisPoints'];
   minAmount: TakeBidMetaHashInstructionDataArgs['minAmount'];
-  optionalRoyaltyPct: TakeBidMetaHashInstructionDataArgs['optionalRoyaltyPct'];
+  optionalRoyaltyPct?: TakeBidMetaHashInstructionDataArgs['optionalRoyaltyPct'];
 };
 
 export function getTakeBidMetaHashInstruction<

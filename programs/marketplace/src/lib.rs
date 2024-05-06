@@ -45,7 +45,7 @@ declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 pub mod marketplace_program {
     use super::*;
 
-    // --------------------------------------- admin
+    // --------------------------------------- Admin
 
     // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
     pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
@@ -59,98 +59,7 @@ pub mod marketplace_program {
         instructions::withdraw_fees::process_withdraw_fees(ctx, amount)
     }
 
-    // --------------------------------------- listings
-
-    pub fn buy<'info>(
-        ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
-        nonce: u64,
-        index: u32,
-        root: [u8; 32],
-        meta_hash: [u8; 32],
-        creator_shares: Vec<u8>,
-        creator_verified: Vec<bool>,
-        seller_fee_basis_points: u16,
-        max_amount: u64,
-        optional_royalty_pct: Option<u16>,
-    ) -> Result<()> {
-        instructions::buy::process_buy(
-            ctx,
-            nonce,
-            index,
-            root,
-            meta_hash,
-            creator_shares,
-            creator_verified,
-            seller_fee_basis_points,
-            max_amount,
-            optional_royalty_pct,
-        )
-    }
-
-    pub fn buy_spl<'info>(
-        ctx: Context<'_, '_, '_, 'info, BuySpl<'info>>,
-        nonce: u64,
-        index: u32,
-        root: [u8; 32],
-        meta_hash: [u8; 32],
-        creator_shares: Vec<u8>,
-        creator_verified: Vec<bool>,
-        seller_fee_basis_points: u16,
-        max_amount: u64,
-        optional_royalty_pct: Option<u16>,
-    ) -> Result<()> {
-        instructions::buy_spl::process_buy_spl(
-            ctx,
-            nonce,
-            index,
-            root,
-            meta_hash,
-            creator_shares,
-            creator_verified,
-            seller_fee_basis_points,
-            max_amount,
-            optional_royalty_pct,
-        )
-    }
-
-    pub fn list<'info>(
-        ctx: Context<'_, '_, '_, 'info, List<'info>>,
-        nonce: u64,
-        index: u32,
-        root: [u8; 32],
-        data_hash: [u8; 32],
-        creator_hash: [u8; 32],
-        amount: u64,
-        expire_in_sec: Option<u64>,
-        currency: Option<Pubkey>,
-        private_taker: Option<Pubkey>,
-        maker_broker: Option<Pubkey>,
-    ) -> Result<()> {
-        instructions::list::process_list(
-            ctx,
-            nonce,
-            index,
-            root,
-            data_hash,
-            creator_hash,
-            amount,
-            expire_in_sec,
-            currency,
-            private_taker,
-            maker_broker,
-        )
-    }
-
-    pub fn delist<'info>(
-        ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
-        nonce: u64,
-        index: u32,
-        root: [u8; 32],
-        data_hash: [u8; 32],
-        creator_hash: [u8; 32],
-    ) -> Result<()> {
-        instructions::delist::process_delist(ctx, nonce, index, root, data_hash, creator_hash)
-    }
+    // --------------------------------------- Listings
 
     pub fn edit<'info>(
         ctx: Context<'_, '_, '_, 'info, Edit<'info>>,
@@ -170,7 +79,7 @@ pub mod marketplace_program {
         )
     }
 
-    // --------------------------------------- bids
+    // --------------------------------------- Bids
 
     pub fn bid<'info>(
         ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
@@ -212,6 +121,60 @@ pub mod marketplace_program {
         instructions::close_expired_bid::process_close_expired_bid(ctx)
     }
 
+    // --------------------------------------- Compressed (Bubblegum)
+
+    pub fn buy<'info>(
+        ctx: Context<'_, '_, '_, 'info, Buy<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::compressed::process_buy(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            max_amount,
+            optional_royalty_pct,
+        )
+    }
+
+    pub fn buy_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuySpl<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        meta_hash: [u8; 32],
+        creator_shares: Vec<u8>,
+        creator_verified: Vec<bool>,
+        seller_fee_basis_points: u16,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+    ) -> Result<()> {
+        instructions::compressed::process_buy_spl(
+            ctx,
+            nonce,
+            index,
+            root,
+            meta_hash,
+            creator_shares,
+            creator_verified,
+            seller_fee_basis_points,
+            max_amount,
+            optional_royalty_pct,
+        )
+    }
+
     pub fn close_expired_listing<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListing<'info>>,
         nonce: u64,
@@ -220,7 +183,7 @@ pub mod marketplace_program {
         data_hash: [u8; 32],
         creator_hash: [u8; 32],
     ) -> Result<()> {
-        instructions::close_expired_listing::process_close_expired_listing(
+        instructions::compressed::process_close_expired_listing(
             ctx,
             nonce,
             index,
@@ -228,6 +191,45 @@ pub mod marketplace_program {
             data_hash,
             creator_hash,
         )
+    }
+
+    pub fn list<'info>(
+        ctx: Context<'_, '_, '_, 'info, List<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::compressed::process_list(
+            ctx,
+            nonce,
+            index,
+            root,
+            data_hash,
+            creator_hash,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
+
+    pub fn delist<'info>(
+        ctx: Context<'_, '_, '_, 'info, Delist<'info>>,
+        nonce: u64,
+        index: u32,
+        root: [u8; 32],
+        data_hash: [u8; 32],
+        creator_hash: [u8; 32],
+    ) -> Result<()> {
+        instructions::compressed::process_delist(ctx, nonce, index, root, data_hash, creator_hash)
     }
 
     pub fn take_bid_meta_hash<'info>(
@@ -242,7 +244,7 @@ pub mod marketplace_program {
         min_amount: u64,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::take_bid_compressed::handler_meta_hash(
+        instructions::compressed::handler_meta_hash(
             ctx,
             nonce,
             index,
@@ -265,7 +267,7 @@ pub mod marketplace_program {
         min_amount: u64,
         optional_royalty_pct: Option<u16>,
     ) -> Result<()> {
-        instructions::take_bid_compressed::handler_full_meta(
+        instructions::compressed::handler_full_meta(
             ctx,
             nonce,
             index,
@@ -276,6 +278,56 @@ pub mod marketplace_program {
         )
     }
 
+    // --------------------------------------- Legacy (Token Metadata NFT/pNFT)
+
+    pub fn buy_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyLegacy<'info>>,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_buy_legacy(
+            ctx,
+            max_amount,
+            optional_royalty_pct,
+            authorization_data,
+        )
+    }
+
+    pub fn close_expired_listing_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingLegacy<'info>>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_close_expired_listing_legacy(ctx, authorization_data)
+    }
+
+    pub fn delist_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, DelistLegacy<'info>>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_delist_legacy(ctx, authorization_data)
+    }
+
+    pub fn list_legacy<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListLegacy<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_list_legacy(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+            authorization_data,
+        )
+    }
+
     pub fn take_bid_legacy<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBidLegacy<'info>>,
         min_amount: u64,
@@ -283,7 +335,7 @@ pub mod marketplace_program {
         rules_acc_present: bool,
         authorization_data: Option<AuthorizationDataLocal>,
     ) -> Result<()> {
-        instructions::take_bid_legacy::process_take_bid_legacy(
+        instructions::legacy::take_bid::process_take_bid_legacy(
             ctx,
             min_amount,
             optional_royalty_pct,
@@ -292,41 +344,111 @@ pub mod marketplace_program {
         )
     }
 
-    //------------------- Token Extensions (SPL Token-2022)
+    // --------------------------------------- Token Extensions (SPL Token-2022)
+
+    pub fn buy_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyT22<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::token22::process_buy_t22(ctx, max_amount)
+    }
+
+    pub fn close_expired_listing_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingT22<'info>>,
+    ) -> Result<()> {
+        instructions::token22::process_close_expired_listing_t22(ctx)
+    }
+
+    pub fn delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info>>) -> Result<()> {
+        instructions::token22::process_delist_t22(ctx)
+    }
+
+    pub fn list_t22<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListT22<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::token22::process_list_t22(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
 
     pub fn take_bid_t22<'info>(
         ctx: Context<'_, '_, '_, 'info, TakeBidT22<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_t22::process_take_bid_t22(ctx, min_amount)
+        instructions::token22::process_take_bid_t22(ctx, min_amount)
     }
 
-    //------------------- WNS
+    // --------------------------------------- WNS
+
+    pub fn buy_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyWns<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::wns::process_buy_wns(ctx, max_amount)
+    }
+
+    pub fn close_expired_listing_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, CloseExpiredListingWns<'info>>,
+    ) -> Result<()> {
+        instructions::wns::process_close_expired_listing_wns(ctx)
+    }
+
+    pub fn delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info>>) -> Result<()> {
+        instructions::wns::process_delist_wns(ctx)
+    }
+
+    pub fn list_wns<'info>(
+        ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
+        amount: u64,
+        expire_in_sec: Option<u64>,
+        currency: Option<Pubkey>,
+        private_taker: Option<Pubkey>,
+        maker_broker: Option<Pubkey>,
+    ) -> Result<()> {
+        instructions::wns::process_list_wns(
+            ctx,
+            amount,
+            expire_in_sec,
+            currency,
+            private_taker,
+            maker_broker,
+        )
+    }
 
     pub fn take_bid_wns<'info>(
         ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_wns::process_take_bid_wns(ctx, min_amount)
+        instructions::wns::process_take_bid_wns(ctx, min_amount)
     }
 
-    //------------------- Metaplex Core
+    // --------------------------------------- Metaplex Core
 
     pub fn buy_core<'info>(
         ctx: Context<'_, '_, '_, 'info, BuyCore<'info>>,
         max_amount: u64,
     ) -> Result<()> {
-        instructions::buy_core::process_buy_core(ctx, max_amount)
+        instructions::mpl_core::process_buy_core(ctx, max_amount)
     }
 
     pub fn close_expired_listing_core<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
     ) -> Result<()> {
-        instructions::close_expired_listing_core::process_close_expired_listing_core(ctx)
+        instructions::mpl_core::process_close_expired_listing_core(ctx)
     }
 
     pub fn delist_core<'info>(ctx: Context<'_, '_, '_, 'info, DelistCore<'info>>) -> Result<()> {
-        instructions::delist_core::process_delist_core(ctx)
+        instructions::mpl_core::process_delist_core(ctx)
     }
 
     pub fn list_core<'info>(
@@ -337,7 +459,7 @@ pub mod marketplace_program {
         private_taker: Option<Pubkey>,
         maker_broker: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::list_core::process_list_core(
+        instructions::mpl_core::process_list_core(
             ctx,
             amount,
             expire_in_sec,
@@ -351,6 +473,6 @@ pub mod marketplace_program {
         ctx: Context<'_, '_, '_, 'info, TakeBidCore<'info>>,
         min_amount: u64,
     ) -> Result<()> {
-        instructions::take_bid_core::process_take_bid_core(ctx, min_amount)
+        instructions::mpl_core::process_take_bid_core(ctx, min_amount)
     }
 }
