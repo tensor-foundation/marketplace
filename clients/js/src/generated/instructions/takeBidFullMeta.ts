@@ -47,6 +47,7 @@ import {
   WritableAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { findFeeVaultPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 import {
@@ -70,7 +71,7 @@ import {
 
 export type TakeBidFullMetaInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
@@ -96,9 +97,9 @@ export type TakeBidFullMetaInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -282,8 +283,8 @@ export function getTakeBidFullMetaInstructionDataCodec(): Codec<
   );
 }
 
-export type TakeBidFullMetaInput<
-  TAccountTcomp extends string = string,
+export type TakeBidFullMetaAsyncInput<
+  TAccountFeeVault extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountSeller extends string = string,
   TAccountDelegate extends string = string,
@@ -303,7 +304,237 @@ export type TakeBidFullMetaInput<
   TAccountCosigner extends string = string,
   TAccountRentDest extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault?: Address<TAccountFeeVault>;
+  treeAuthority: Address<TAccountTreeAuthority>;
+  seller: Address<TAccountSeller>;
+  delegate: Address<TAccountDelegate>;
+  merkleTree: Address<TAccountMerkleTree>;
+  logWrapper: Address<TAccountLogWrapper>;
+  compressionProgram: Address<TAccountCompressionProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  bubblegumProgram: Address<TAccountBubblegumProgram>;
+  tcompProgram: Address<TAccountTcompProgram>;
+  tensorswapProgram: Address<TAccountTensorswapProgram>;
+  bidState: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  marginAccount: Address<TAccountMarginAccount>;
+  whitelist: Address<TAccountWhitelist>;
+  cosigner: TransactionSigner<TAccountCosigner>;
+  rentDest: Address<TAccountRentDest>;
+  nonce: TakeBidFullMetaInstructionDataArgs['nonce'];
+  index: TakeBidFullMetaInstructionDataArgs['index'];
+  root: TakeBidFullMetaInstructionDataArgs['root'];
+  name: TakeBidFullMetaInstructionDataArgs['name'];
+  symbol: TakeBidFullMetaInstructionDataArgs['symbol'];
+  uri: TakeBidFullMetaInstructionDataArgs['uri'];
+  sellerFeeBasisPoints: TakeBidFullMetaInstructionDataArgs['sellerFeeBasisPoints'];
+  primarySaleHappened: TakeBidFullMetaInstructionDataArgs['primarySaleHappened'];
+  isMutable: TakeBidFullMetaInstructionDataArgs['isMutable'];
+  editionNonce: TakeBidFullMetaInstructionDataArgs['editionNonce'];
+  tokenStandard: TakeBidFullMetaInstructionDataArgs['tokenStandard'];
+  collection: TakeBidFullMetaInstructionDataArgs['collection'];
+  uses: TakeBidFullMetaInstructionDataArgs['uses'];
+  tokenProgramVersion: TakeBidFullMetaInstructionDataArgs['tokenProgramVersion'];
+  creatorShares: TakeBidFullMetaInstructionDataArgs['creatorShares'];
+  creatorVerified: TakeBidFullMetaInstructionDataArgs['creatorVerified'];
+  minAmount: TakeBidFullMetaInstructionDataArgs['minAmount'];
+  optionalRoyaltyPct?: TakeBidFullMetaInstructionDataArgs['optionalRoyaltyPct'];
+};
+
+export async function getTakeBidFullMetaInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountTreeAuthority extends string,
+  TAccountSeller extends string,
+  TAccountDelegate extends string,
+  TAccountMerkleTree extends string,
+  TAccountLogWrapper extends string,
+  TAccountCompressionProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountBubblegumProgram extends string,
+  TAccountTcompProgram extends string,
+  TAccountTensorswapProgram extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountMarginAccount extends string,
+  TAccountWhitelist extends string,
+  TAccountCosigner extends string,
+  TAccountRentDest extends string,
+>(
+  input: TakeBidFullMetaAsyncInput<
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >
+): Promise<
+  TakeBidFullMetaInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
+    seller: { value: input.seller ?? null, isWritable: true },
+    delegate: { value: input.delegate ?? null, isWritable: false },
+    merkleTree: { value: input.merkleTree ?? null, isWritable: true },
+    logWrapper: { value: input.logWrapper ?? null, isWritable: false },
+    compressionProgram: {
+      value: input.compressionProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    bubblegumProgram: {
+      value: input.bubblegumProgram ?? null,
+      isWritable: false,
+    },
+    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    tensorswapProgram: {
+      value: input.tensorswapProgram ?? null,
+      isWritable: false,
+    },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    rentDest: { value: input.rentDest ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault.value = await findFeeVaultPda();
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.treeAuthority),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.delegate),
+      getAccountMeta(accounts.merkleTree),
+      getAccountMeta(accounts.logWrapper),
+      getAccountMeta(accounts.compressionProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.bubblegumProgram),
+      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.tensorswapProgram),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.rentDest),
+    ],
+    programAddress,
+    data: getTakeBidFullMetaInstructionDataEncoder().encode(
+      args as TakeBidFullMetaInstructionDataArgs
+    ),
+  } as TakeBidFullMetaInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountSeller,
+    TAccountDelegate,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountTcompProgram,
+    TAccountTensorswapProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountCosigner,
+    TAccountRentDest
+  >;
+
+  return instruction;
+}
+
+export type TakeBidFullMetaInput<
+  TAccountFeeVault extends string = string,
+  TAccountTreeAuthority extends string = string,
+  TAccountSeller extends string = string,
+  TAccountDelegate extends string = string,
+  TAccountMerkleTree extends string = string,
+  TAccountLogWrapper extends string = string,
+  TAccountCompressionProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountBubblegumProgram extends string = string,
+  TAccountTcompProgram extends string = string,
+  TAccountTensorswapProgram extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMarginAccount extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountRentDest extends string = string,
+> = {
+  feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
   seller: Address<TAccountSeller>;
   delegate: Address<TAccountDelegate>;
@@ -343,7 +574,7 @@ export type TakeBidFullMetaInput<
 };
 
 export function getTakeBidFullMetaInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountTreeAuthority extends string,
   TAccountSeller extends string,
   TAccountDelegate extends string,
@@ -364,7 +595,7 @@ export function getTakeBidFullMetaInstruction<
   TAccountRentDest extends string,
 >(
   input: TakeBidFullMetaInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -386,7 +617,7 @@ export function getTakeBidFullMetaInstruction<
   >
 ): TakeBidFullMetaInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountTreeAuthority,
   TAccountSeller,
   TAccountDelegate,
@@ -411,7 +642,7 @@ export function getTakeBidFullMetaInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     seller: { value: input.seller ?? null, isWritable: true },
     delegate: { value: input.delegate ?? null, isWritable: false },
@@ -457,7 +688,7 @@ export function getTakeBidFullMetaInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.delegate),
@@ -483,7 +714,7 @@ export function getTakeBidFullMetaInstruction<
     ),
   } as TakeBidFullMetaInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -513,7 +744,7 @@ export type ParsedTakeBidFullMetaInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     treeAuthority: TAccountMetas[1];
     seller: TAccountMetas[2];
     delegate: TAccountMetas[3];
@@ -563,7 +794,7 @@ export function parseTakeBidFullMetaInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       treeAuthority: getNextAccount(),
       seller: getNextAccount(),
       delegate: getNextAccount(),

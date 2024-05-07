@@ -14,7 +14,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct TakeBidFullMeta {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
@@ -68,7 +68,8 @@ impl TakeBidFullMeta {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
@@ -208,7 +209,7 @@ pub struct TakeBidFullMetaInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` seller
 ///   3. `[]` delegate
@@ -229,7 +230,7 @@ pub struct TakeBidFullMetaInstructionArgs {
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidFullMetaBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
     delegate: Option<solana_program::pubkey::Pubkey>,
@@ -274,8 +275,8 @@ impl TakeBidFullMetaBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -505,7 +506,7 @@ impl TakeBidFullMetaBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = TakeBidFullMeta {
-            tcomp: self.tcomp.expect("tcomp is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             seller: self.seller.expect("seller is not set"),
             delegate: self.delegate.expect("delegate is not set"),
@@ -575,7 +576,7 @@ impl TakeBidFullMetaBuilder {
 
 /// `take_bid_full_meta` CPI accounts.
 pub struct TakeBidFullMetaCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -619,7 +620,7 @@ pub struct TakeBidFullMetaCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -668,7 +669,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             tree_authority: accounts.tree_authority,
             seller: accounts.seller,
             delegate: accounts.delegate,
@@ -725,7 +726,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -832,7 +833,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.seller.clone());
         account_infos.push(self.delegate.clone());
@@ -871,7 +872,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` seller
 ///   3. `[]` delegate
@@ -898,7 +899,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TakeBidFullMetaCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             tree_authority: None,
             seller: None,
             delegate: None,
@@ -940,8 +941,11 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -1277,7 +1281,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
         let instruction = TakeBidFullMetaCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             tree_authority: self
                 .instruction
@@ -1352,7 +1356,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
 
 struct TakeBidFullMetaCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,

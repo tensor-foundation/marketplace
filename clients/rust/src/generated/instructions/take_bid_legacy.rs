@@ -11,7 +11,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct TakeBidLegacy {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub seller: solana_program::pubkey::Pubkey,
 
@@ -85,7 +85,8 @@ impl TakeBidLegacy {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.seller,
@@ -251,7 +252,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -282,7 +283,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   28. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidLegacyBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -323,8 +324,8 @@ impl TakeBidLegacyBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -547,7 +548,7 @@ impl TakeBidLegacyBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts =
             TakeBidLegacy {
-                tcomp: self.tcomp.expect("tcomp is not set"),
+                fee_vault: self.fee_vault.expect("fee_vault is not set"),
                 seller: self.seller.expect("seller is not set"),
                 bid_state: self.bid_state.expect("bid_state is not set"),
                 owner: self.owner.expect("owner is not set"),
@@ -611,7 +612,7 @@ impl TakeBidLegacyBuilder {
 
 /// `take_bid_legacy` CPI accounts.
 pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -675,7 +676,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -744,7 +745,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             seller: accounts.seller,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
@@ -811,7 +812,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -958,7 +959,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(29 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.seller.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
@@ -1007,7 +1008,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -1044,7 +1045,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TakeBidLegacyCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             seller: None,
             bid_state: None,
             owner: None,
@@ -1082,8 +1083,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -1391,7 +1395,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         let instruction = TakeBidLegacyCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             seller: self.instruction.seller.expect("seller is not set"),
 
@@ -1507,7 +1511,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
 struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

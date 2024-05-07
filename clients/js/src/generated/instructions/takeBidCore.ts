@@ -33,12 +33,13 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { findFeeVaultPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TakeBidCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -66,9 +67,9 @@ export type TakeBidCoreInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountSeller extends string
         ? WritableSignerAccount<TAccountSeller> &
             IAccountSignerMeta<TAccountSeller>
@@ -160,8 +161,8 @@ export function getTakeBidCoreInstructionDataCodec(): Codec<
   );
 }
 
-export type TakeBidCoreInput<
-  TAccountTcomp extends string = string,
+export type TakeBidCoreAsyncInput<
+  TAccountFeeVault extends string = string,
   TAccountSeller extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
@@ -179,7 +180,207 @@ export type TakeBidCoreInput<
   TAccountMintProof extends string = string,
   TAccountRentDest extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault?: Address<TAccountFeeVault>;
+  seller: TransactionSigner<TAccountSeller>;
+  bidState: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  marginAccount: Address<TAccountMarginAccount>;
+  whitelist: Address<TAccountWhitelist>;
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  escrowProgram: Address<TAccountEscrowProgram>;
+  cosigner: TransactionSigner<TAccountCosigner>;
+  /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
+  mintProof: Address<TAccountMintProof>;
+  rentDest: Address<TAccountRentDest>;
+  minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
+};
+
+export async function getTakeBidCoreInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountSeller extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountMarginAccount extends string,
+  TAccountWhitelist extends string,
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountEscrowProgram extends string,
+  TAccountCosigner extends string,
+  TAccountMintProof extends string,
+  TAccountRentDest extends string,
+>(
+  input: TakeBidCoreAsyncInput<
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDest
+  >
+): Promise<
+  TakeBidCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDest
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    seller: { value: input.seller ?? null, isWritable: true },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    mintProof: { value: input.mintProof ?? null, isWritable: false },
+    rentDest: { value: input.rentDest ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault.value = await findFeeVaultPda();
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.escrowProgram),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.mintProof),
+      getAccountMeta(accounts.rentDest),
+    ],
+    programAddress,
+    data: getTakeBidCoreInstructionDataEncoder().encode(
+      args as TakeBidCoreInstructionDataArgs
+    ),
+  } as TakeBidCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMarginAccount,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDest
+  >;
+
+  return instruction;
+}
+
+export type TakeBidCoreInput<
+  TAccountFeeVault extends string = string,
+  TAccountSeller extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMarginAccount extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountEscrowProgram extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountMintProof extends string = string,
+  TAccountRentDest extends string = string,
+> = {
+  feeVault: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
@@ -201,7 +402,7 @@ export type TakeBidCoreInput<
 };
 
 export function getTakeBidCoreInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountSeller extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
@@ -220,7 +421,7 @@ export function getTakeBidCoreInstruction<
   TAccountRentDest extends string,
 >(
   input: TakeBidCoreInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
@@ -240,7 +441,7 @@ export function getTakeBidCoreInstruction<
   >
 ): TakeBidCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountSeller,
   TAccountBidState,
   TAccountOwner,
@@ -263,7 +464,7 @@ export function getTakeBidCoreInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     seller: { value: input.seller ?? null, isWritable: true },
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -309,7 +510,7 @@ export function getTakeBidCoreInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
@@ -333,7 +534,7 @@ export function getTakeBidCoreInstruction<
     ),
   } as TakeBidCoreInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
@@ -361,7 +562,7 @@ export type ParsedTakeBidCoreInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     seller: TAccountMetas[1];
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
@@ -410,7 +611,7 @@ export function parseTakeBidCoreInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       seller: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),
