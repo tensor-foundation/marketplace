@@ -22,7 +22,7 @@ import {
   ParsedBuyT22Instruction,
   ParsedBuyWnsInstruction,
   ParsedCancelBidInstruction,
-  ParsedCloseExpiredBidCompressedInstruction,
+  ParsedCloseExpiredBidInstruction,
   ParsedCloseExpiredListingCompressedInstruction,
   ParsedCloseExpiredListingCoreInstruction,
   ParsedCloseExpiredListingLegacyInstruction,
@@ -96,7 +96,7 @@ export enum TensorMarketplaceInstruction {
   Edit,
   Bid,
   CancelBid,
-  CloseExpiredBidCompressed,
+  CloseExpiredBid,
   BuyCompressed,
   BuySpl,
   CloseExpiredListingCompressed,
@@ -149,7 +149,7 @@ export function identifyTensorMarketplaceInstruction(
     return TensorMarketplaceInstruction.CancelBid;
   }
   if (memcmp(data, new Uint8Array([83, 20, 105, 67, 248, 68, 104, 190]), 0)) {
-    return TensorMarketplaceInstruction.CloseExpiredBidCompressed;
+    return TensorMarketplaceInstruction.CloseExpiredBid;
   }
   if (memcmp(data, new Uint8Array([102, 6, 61, 18, 1, 218, 235, 234]), 0)) {
     return TensorMarketplaceInstruction.BuyCompressed;
@@ -256,8 +256,8 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.CancelBid;
     } & ParsedCancelBidInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.CloseExpiredBidCompressed;
-    } & ParsedCloseExpiredBidCompressedInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.CloseExpiredBid;
+    } & ParsedCloseExpiredBidInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.BuyCompressed;
     } & ParsedBuyCompressedInstruction<TProgram>)

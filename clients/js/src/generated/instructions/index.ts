@@ -14,7 +14,7 @@ export * from './buySpl';
 export * from './buyT22';
 export * from './buyWns';
 export * from './cancelBid';
-export * from './closeExpiredBidCompressed';
+export * from './closeExpiredBid';
 export * from './closeExpiredListingCompressed';
 export * from './closeExpiredListingCore';
 export * from './closeExpiredListingLegacy';

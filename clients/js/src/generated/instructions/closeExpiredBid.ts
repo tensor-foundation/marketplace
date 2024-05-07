@@ -28,11 +28,10 @@ import {
   ReadonlyAccount,
   WritableAccount,
 } from '@solana/instructions';
-import { resolveCreatorPath, resolveProofPath } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type CloseExpiredBidCompressedInstruction<
+export type CloseExpiredBidInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -67,13 +66,11 @@ export type CloseExpiredBidCompressedInstruction<
     ]
   >;
 
-export type CloseExpiredBidCompressedInstructionData = {
-  discriminator: Array<number>;
-};
+export type CloseExpiredBidInstructionData = { discriminator: Array<number> };
 
-export type CloseExpiredBidCompressedInstructionDataArgs = {};
+export type CloseExpiredBidInstructionDataArgs = {};
 
-export function getCloseExpiredBidCompressedInstructionDataEncoder(): Encoder<CloseExpiredBidCompressedInstructionDataArgs> {
+export function getCloseExpiredBidInstructionDataEncoder(): Encoder<CloseExpiredBidInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
@@ -85,32 +82,23 @@ export function getCloseExpiredBidCompressedInstructionDataEncoder(): Encoder<Cl
   );
 }
 
-export function getCloseExpiredBidCompressedInstructionDataDecoder(): Decoder<CloseExpiredBidCompressedInstructionData> {
+export function getCloseExpiredBidInstructionDataDecoder(): Decoder<CloseExpiredBidInstructionData> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
   ]);
 }
 
-export function getCloseExpiredBidCompressedInstructionDataCodec(): Codec<
-  CloseExpiredBidCompressedInstructionDataArgs,
-  CloseExpiredBidCompressedInstructionData
+export function getCloseExpiredBidInstructionDataCodec(): Codec<
+  CloseExpiredBidInstructionDataArgs,
+  CloseExpiredBidInstructionData
 > {
   return combineCodec(
-    getCloseExpiredBidCompressedInstructionDataEncoder(),
-    getCloseExpiredBidCompressedInstructionDataDecoder()
+    getCloseExpiredBidInstructionDataEncoder(),
+    getCloseExpiredBidInstructionDataDecoder()
   );
 }
 
-export type CloseExpiredBidCompressedInstructionExtraArgs = {
-  /** creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ] */
-  creators?: Array<[Address, number]>;
-  /** proof path, can be shortened if canopyDepth of merkle tree is also specified */
-  proof?: Array<Address>;
-  /** canopy depth of merkle tree, reduces proofPath length if specified */
-  canopyDepth?: number;
-};
-
-export type CloseExpiredBidCompressedInput<
+export type CloseExpiredBidInput<
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
@@ -122,26 +110,23 @@ export type CloseExpiredBidCompressedInput<
   systemProgram?: Address<TAccountSystemProgram>;
   tcompProgram?: Address<TAccountTcompProgram>;
   rentDest: Address<TAccountRentDest>;
-  creators?: CloseExpiredBidCompressedInstructionExtraArgs['creators'];
-  proof?: CloseExpiredBidCompressedInstructionExtraArgs['proof'];
-  canopyDepth?: CloseExpiredBidCompressedInstructionExtraArgs['canopyDepth'];
 };
 
-export function getCloseExpiredBidCompressedInstruction<
+export function getCloseExpiredBidInstruction<
   TAccountBidState extends string,
   TAccountOwner extends string,
   TAccountSystemProgram extends string,
   TAccountTcompProgram extends string,
   TAccountRentDest extends string,
 >(
-  input: CloseExpiredBidCompressedInput<
+  input: CloseExpiredBidInput<
     TAccountBidState,
     TAccountOwner,
     TAccountSystemProgram,
     TAccountTcompProgram,
     TAccountRentDest
   >
-): CloseExpiredBidCompressedInstruction<
+): CloseExpiredBidInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountBidState,
   TAccountOwner,
@@ -165,12 +150,6 @@ export function getCloseExpiredBidCompressedInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
-  // Resolver scope.
-  const resolverScope = { programAddress, accounts, args };
-
   // Resolve default values.
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -180,21 +159,6 @@ export function getCloseExpiredBidCompressedInstruction<
     accounts.tcompProgram.value = programAddress;
     accounts.tcompProgram.isWritable = false;
   }
-  if (!args.creators) {
-    args.creators = [];
-  }
-  if (!args.proof) {
-    args.proof = [];
-  }
-  if (!args.canopyDepth) {
-    args.canopyDepth = 0;
-  }
-
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = [
-    ...resolveCreatorPath(resolverScope),
-    ...resolveProofPath(resolverScope),
-  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -204,11 +168,10 @@ export function getCloseExpiredBidCompressedInstruction<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.tcompProgram),
       getAccountMeta(accounts.rentDest),
-      ...remainingAccounts,
     ],
     programAddress,
-    data: getCloseExpiredBidCompressedInstructionDataEncoder().encode({}),
-  } as CloseExpiredBidCompressedInstruction<
+    data: getCloseExpiredBidInstructionDataEncoder().encode({}),
+  } as CloseExpiredBidInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountBidState,
     TAccountOwner,
@@ -220,7 +183,7 @@ export function getCloseExpiredBidCompressedInstruction<
   return instruction;
 }
 
-export type ParsedCloseExpiredBidCompressedInstruction<
+export type ParsedCloseExpiredBidInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -232,17 +195,17 @@ export type ParsedCloseExpiredBidCompressedInstruction<
     tcompProgram: TAccountMetas[3];
     rentDest: TAccountMetas[4];
   };
-  data: CloseExpiredBidCompressedInstructionData;
+  data: CloseExpiredBidInstructionData;
 };
 
-export function parseCloseExpiredBidCompressedInstruction<
+export function parseCloseExpiredBidInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedCloseExpiredBidCompressedInstruction<TProgram, TAccountMetas> {
+): ParsedCloseExpiredBidInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -262,8 +225,6 @@ export function parseCloseExpiredBidCompressedInstruction<
       tcompProgram: getNextAccount(),
       rentDest: getNextAccount(),
     },
-    data: getCloseExpiredBidCompressedInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getCloseExpiredBidInstructionDataDecoder().decode(instruction.data),
   };
 }

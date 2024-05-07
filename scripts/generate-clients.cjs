@@ -43,9 +43,6 @@ kinobi.update(
     buy: {
       name: "buyCompressed"
     },
-    closeExpiredBid: {
-      name: "closeExpiredBidCompressed"
-    },
     closeExpiredListing: {
       name: "closeExpiredListingCompressed"
     },
