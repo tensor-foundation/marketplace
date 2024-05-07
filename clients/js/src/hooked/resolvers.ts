@@ -193,14 +193,26 @@ export const resolveTreeAuthorityPda = async ({
   };
 };
 
+// satisfy linter
+type ArgsWithOptionalCreatorsField = {
+  creators?: [Address, number][] | undefined;
+  [key: string]: unknown;
+};
+type ArgsWithOptionalProofAndCanopyDepth = {
+  proof?: Address[] | undefined;
+  canopyDepth?: number | undefined;
+  [key: string]: unknown;
+};
+
 export const resolveCreatorPath = ({
   args,
 }: {
   programAddress: Address;
   accounts: Record<string, ResolvedAccount>;
-  args: any;
+  args: ArgsWithOptionalCreatorsField;
 }): IAccountMeta[] => {
-  return args.creators.map(([address, share]: [Address, number]) => ({
+  const creators = args.creators ?? [];
+  return creators.map(([address, share]: [Address, number]) => ({
     address,
     role: +(share > 0),
   }));
@@ -211,12 +223,12 @@ export const resolveProofPath = ({
 }: {
   programAddress: Address;
   accounts: Record<string, ResolvedAccount>;
-  args: any;
+  args: ArgsWithOptionalProofAndCanopyDepth;
 }): IAccountMeta[] => {
-  return args.proof
-    .slice(0, args.proof.length - args.canopyDepth)
-    .map((address: Address) => ({
-      address,
-      role: 0,
-    }));
+  const proof = args.proof ?? [];
+  const canopyDepth = args.canopyDepth ?? 0;
+  return proof.slice(0, proof.length - canopyDepth).map((address: Address) => ({
+    address,
+    role: 0,
+  }));
 };

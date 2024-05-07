@@ -181,7 +181,7 @@ export async function findTreeAuthorityPda(
   const {
     programAddress = 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>,
   } = config;
-  return getProgramDerivedAddress({
+  return await getProgramDerivedAddress({
     programAddress,
     seeds: [getAddressEncoder().encode(seeds.merkleTree)],
   });
