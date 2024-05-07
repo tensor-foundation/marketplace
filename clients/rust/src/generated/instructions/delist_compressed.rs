@@ -98,12 +98,12 @@ impl DelistCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct DelistCompressedInstructionData {
+struct DelistCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl DelistCompressedInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [55, 136, 205, 107, 107, 173, 4, 31],
         }

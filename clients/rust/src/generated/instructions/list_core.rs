@@ -91,12 +91,12 @@ impl ListCore {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct ListCoreInstructionData {
+struct ListCoreInstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListCoreInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [173, 76, 167, 125, 118, 71, 1, 153],
         }

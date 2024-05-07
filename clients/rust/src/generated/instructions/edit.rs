@@ -57,12 +57,12 @@ impl Edit {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct EditInstructionData {
+struct EditInstructionData {
     discriminator: [u8; 8],
 }
 
 impl EditInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [15, 183, 33, 86, 87, 28, 151, 145],
         }

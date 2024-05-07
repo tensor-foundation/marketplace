@@ -171,12 +171,12 @@ impl TakeBidCompressedFullMeta {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct TakeBidCompressedFullMetaInstructionData {
+struct TakeBidCompressedFullMetaInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidCompressedFullMetaInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [242, 194, 203, 225, 234, 53, 10, 96],
         }

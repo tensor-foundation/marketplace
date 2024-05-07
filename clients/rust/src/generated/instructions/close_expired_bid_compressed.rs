@@ -64,12 +64,12 @@ impl CloseExpiredBidCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CloseExpiredBidCompressedInstructionData {
+struct CloseExpiredBidCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl CloseExpiredBidCompressedInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [83, 20, 105, 67, 248, 68, 104, 190],
         }

@@ -98,12 +98,12 @@ impl CloseExpiredListingT22 {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CloseExpiredListingT22InstructionData {
+struct CloseExpiredListingT22InstructionData {
     discriminator: [u8; 8],
 }
 
 impl CloseExpiredListingT22InstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [69, 2, 190, 122, 144, 119, 122, 220],
         }

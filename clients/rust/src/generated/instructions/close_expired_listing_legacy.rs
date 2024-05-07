@@ -181,12 +181,12 @@ impl CloseExpiredListingLegacy {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CloseExpiredListingLegacyInstructionData {
+struct CloseExpiredListingLegacyInstructionData {
     discriminator: [u8; 8],
 }
 
 impl CloseExpiredListingLegacyInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [56, 16, 96, 188, 55, 68, 250, 58],
         }

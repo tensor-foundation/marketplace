@@ -97,12 +97,12 @@ impl ListT22 {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct ListT22InstructionData {
+struct ListT22InstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListT22InstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [9, 117, 93, 230, 221, 4, 199, 212],
         }

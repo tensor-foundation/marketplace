@@ -158,12 +158,12 @@ impl TakeBidCore {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct TakeBidCoreInstructionData {
+struct TakeBidCoreInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidCoreInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [250, 41, 248, 20, 61, 161, 27, 141],
         }

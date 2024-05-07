@@ -226,12 +226,12 @@ impl TakeBidLegacy {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct TakeBidLegacyInstructionData {
+struct TakeBidLegacyInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidLegacyInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [188, 35, 116, 108, 0, 233, 237, 201],
         }

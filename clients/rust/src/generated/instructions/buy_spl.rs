@@ -207,12 +207,12 @@ impl BuySpl {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct BuySplInstructionData {
+struct BuySplInstructionData {
     discriminator: [u8; 8],
 }
 
 impl BuySplInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [65, 136, 254, 255, 59, 130, 234, 174],
         }

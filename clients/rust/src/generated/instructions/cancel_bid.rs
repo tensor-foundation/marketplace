@@ -62,12 +62,12 @@ impl CancelBid {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CancelBidInstructionData {
+struct CancelBidInstructionData {
     discriminator: [u8; 8],
 }
 
 impl CancelBidInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [40, 243, 190, 217, 208, 253, 86, 206],
         }

@@ -83,12 +83,12 @@ impl Bid {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct BidInstructionData {
+struct BidInstructionData {
     discriminator: [u8; 8],
 }
 
 impl BidInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [199, 56, 85, 38, 146, 243, 37, 158],
         }

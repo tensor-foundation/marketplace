@@ -167,12 +167,12 @@ impl TakeBidCompressedMetaHash {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct TakeBidCompressedMetaHashInstructionData {
+struct TakeBidCompressedMetaHashInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidCompressedMetaHashInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [85, 227, 202, 70, 45, 215, 10, 193],
         }

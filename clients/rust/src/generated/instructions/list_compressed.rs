@@ -105,12 +105,12 @@ impl ListCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct ListCompressedInstructionData {
+struct ListCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListCompressedInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [54, 174, 193, 67, 17, 41, 132, 38],
         }

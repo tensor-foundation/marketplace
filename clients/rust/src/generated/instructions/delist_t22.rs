@@ -96,12 +96,12 @@ impl DelistT22 {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct DelistT22InstructionData {
+struct DelistT22InstructionData {
     discriminator: [u8; 8],
 }
 
 impl DelistT22InstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [216, 72, 73, 18, 204, 82, 123, 26],
         }

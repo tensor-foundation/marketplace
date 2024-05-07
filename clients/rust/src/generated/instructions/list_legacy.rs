@@ -174,12 +174,12 @@ impl ListLegacy {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct ListLegacyInstructionData {
+struct ListLegacyInstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListLegacyInstructionData {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             discriminator: [6, 110, 255, 18, 16, 36, 8, 30],
         }
