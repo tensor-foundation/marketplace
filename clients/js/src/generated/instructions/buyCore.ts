@@ -178,6 +178,7 @@ export type BuyCoreAsyncInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
 };
 
@@ -195,6 +196,7 @@ export async function getBuyCoreInstructionAsync<
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyCoreAsyncInput<
     TAccountFeeVault,
@@ -209,7 +211,8 @@ export async function getBuyCoreInstructionAsync<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountCosigner
   >
 ): Promise<
   BuyCoreInstruction<
@@ -226,7 +229,8 @@ export async function getBuyCoreInstructionAsync<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -250,6 +254,7 @@ export async function getBuyCoreInstructionAsync<
       isWritable: false,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -292,6 +297,7 @@ export async function getBuyCoreInstructionAsync<
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyCoreInstructionDataEncoder().encode(
@@ -311,7 +317,8 @@ export async function getBuyCoreInstructionAsync<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -331,6 +338,7 @@ export type BuyCoreInput<
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   listState: Address<TAccountListState>;

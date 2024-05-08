@@ -3,17 +3,17 @@ import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  PublicKey
 } from "@solana/web3.js";
 import {
   nameToBuffer,
   test_utils,
   TokenStandard,
-  waitMS,
+  waitMS
 } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { Field, MakeEvent, TakeEvent, MAKER_BROKER_PCT, Target } from "../src";
+import { Field, MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
 import { initCollection, makeMintTwoAta, makeNTraders } from "./account";
 import {
   ACC_NOT_INIT_ERR,
@@ -30,23 +30,18 @@ import {
   makeCNftMeta,
   makeProofWhitelist,
   mintCNft,
-  tcompSdk,
-  TEST_CONN_PAYER,
-  testBid,
+  tcompSdk, testBid,
   testCancelCloseBid,
   testInitUpdateMintProof,
   testTakeBid,
-  testTakeBidLegacy,
-  verifyCNftCreator,
-  wlSdk,
-  withLamports,
+  testTakeBidLegacy, TEST_CONN_PAYER, verifyCNftCreator, withLamports, wlSdk
 } from "./shared";
 import {
   makeFvcWhitelist,
   makeVocWhitelist,
   testDepositIntoMargin,
   testMakeMargin,
-  testWithdrawFromMargin,
+  testWithdrawFromMargin
 } from "./tswap";
 
 // Enables rejectedWith.
@@ -804,7 +799,7 @@ describe("tcomp bids", () => {
 
     it("margin buy: works (VOC bid)", async () => {
       //this is the smallest canopy that fits
-      let canopyDepth = 7;
+      let canopyDepth = 8;
       const {
         merkleTree,
         traderA,

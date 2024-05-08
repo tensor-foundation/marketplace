@@ -233,9 +233,9 @@ export type TakeBidWnsAsyncInput<
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
   rentDest: Address<TAccountRentDest>;
@@ -262,7 +262,7 @@ export async function getTakeBidWnsInstructionAsync<
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTensorswapProgram extends string,
   TAccountCosigner extends string,
   TAccountMintProof extends string,
@@ -288,7 +288,7 @@ export async function getTakeBidWnsInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTensorswapProgram,
     TAccountCosigner,
     TAccountMintProof,
@@ -316,7 +316,7 @@ export async function getTakeBidWnsInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTensorswapProgram,
     TAccountCosigner,
     TAccountMintProof,
@@ -350,7 +350,10 @@ export async function getTakeBidWnsInstructionAsync<
       isWritable: false,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     tensorswapProgram: {
       value: input.tensorswapProgram ?? null,
       isWritable: false,
@@ -391,6 +394,10 @@ export async function getTakeBidWnsInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
@@ -413,7 +420,7 @@ export async function getTakeBidWnsInstructionAsync<
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.tensorswapProgram),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
@@ -444,7 +451,7 @@ export async function getTakeBidWnsInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTensorswapProgram,
     TAccountCosigner,
     TAccountMintProof,
@@ -474,7 +481,7 @@ export type TakeBidWnsInput<
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTensorswapProgram extends string = string,
   TAccountCosigner extends string = string,
   TAccountMintProof extends string = string,

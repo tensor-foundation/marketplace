@@ -1,6 +1,7 @@
 use mpl_bubblegum::types::Creator;
 use tensor_toolbox::{
-    make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+    fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num, transfer_cnft, CnftArgs, DataHashArgs,
+    MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;
@@ -14,9 +15,10 @@ pub struct TakeBidCompressed<'info> {
         mut,
         seeds = [
             b"fee_vault",
-            // Use the last byte of the bid_state as the fee shard number
+            // Use the last byte of the mint as the fee shard number
             shard_num!(bid_state),
         ],
+        seeds::program = TFEE_PROGRAM_ID,
         bump
     )]
     pub fee_vault: UncheckedAccount<'info>,

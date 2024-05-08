@@ -3,8 +3,10 @@ use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
+    fees::ID as TFEE_PROGRAM_ID,
     metaplex_core::{validate_asset, MetaplexCore},
-    transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
+    shard_num, transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc,
+    FromExternal,
 };
 
 use crate::*;
@@ -21,6 +23,7 @@ pub struct BuyCore<'info> {
             // Use the last byte of the mint as the fee shard number
             shard_num!(list_state),
         ],
+        seeds::program = TFEE_PROGRAM_ID,
         bump
     )]
     pub fee_vault: UncheckedAccount<'info>,

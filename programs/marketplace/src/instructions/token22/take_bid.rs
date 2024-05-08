@@ -6,13 +6,12 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_toolbox::token_2022::validate_mint;
+use tensor_toolbox::{fees::ID as TFEE_PROGRAM_ID, shard_num, token_2022::validate_mint};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
-    shard_num,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
@@ -27,6 +26,7 @@ pub struct TakeBidT22<'info> {
             // Use the last byte of the mint as the fee shard number
             shard_num!(bid_state),
         ],
+        seeds::program = TFEE_PROGRAM_ID,
         bump
     )]
     pub fee_vault: UncheckedAccount<'info>,

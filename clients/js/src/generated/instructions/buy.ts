@@ -228,7 +228,7 @@ export type BuyAsyncInput<
   compressionProgram: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   buyer: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
@@ -236,6 +236,7 @@ export type BuyAsyncInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDest: Address<TAccountRentDest>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuyInstructionDataArgs['nonce'];
   index: BuyInstructionDataArgs['index'];
   root: BuyInstructionDataArgs['root'];
@@ -255,7 +256,7 @@ export async function getBuyInstructionAsync<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountListState extends string,
   TAccountBuyer extends string,
   TAccountPayer extends string,
@@ -263,6 +264,7 @@ export async function getBuyInstructionAsync<
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
   TAccountRentDest extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyAsyncInput<
     TAccountFeeVault,
@@ -272,14 +274,15 @@ export async function getBuyInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest
+    TAccountRentDest,
+    TAccountCosigner
   >
 ): Promise<
   BuyInstruction<
@@ -291,14 +294,15 @@ export async function getBuyInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest
+    TAccountRentDest,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -319,7 +323,10 @@ export async function getBuyInstructionAsync<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     listState: { value: input.listState ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
@@ -327,6 +334,7 @@ export async function getBuyInstructionAsync<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -344,6 +352,10 @@ export async function getBuyInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -355,7 +367,7 @@ export async function getBuyInstructionAsync<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.payer),
@@ -363,6 +375,7 @@ export async function getBuyInstructionAsync<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyInstructionDataEncoder().encode(args as BuyInstructionDataArgs),
@@ -375,14 +388,15 @@ export async function getBuyInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest
+    TAccountRentDest,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -396,7 +410,7 @@ export type BuyInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountListState extends string = string,
   TAccountBuyer extends string = string,
   TAccountPayer extends string = string,
@@ -404,6 +418,7 @@ export type BuyInput<
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountRentDest extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;

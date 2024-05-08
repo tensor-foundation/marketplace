@@ -4,14 +4,17 @@ use anchor_spl::{
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::token_metadata::{assert_decode_metadata, transfer, TransferArgs};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
     pnft_adapter::*,
-    shard_num,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
     CURRENT_TCOMP_VERSION,
@@ -27,6 +30,7 @@ pub struct TakeBidLegacy<'info> {
             // Use the last byte of the mint as the fee shard number
             shard_num!(bid_state),
         ],
+        seeds::program = TFEE_PROGRAM_ID,
         bump
     )]
     pub fee_vault: UncheckedAccount<'info>,
@@ -269,7 +273,7 @@ pub fn process_take_bid_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.pnft_shared.instructions,
+            sysvar_instructions: Some(&ctx.accounts.pnft_shared.instructions),
             source_token_record: Some(&ctx.accounts.owner_token_record),
             destination_token_record: Some(&ctx.accounts.temp_escrow_token_record),
             authorization_rules_program: Some(
@@ -277,7 +281,7 @@ pub fn process_take_bid_legacy<'info>(
             ),
             authorization_rules: auth_rules,
             authorization_data: authorization_data.clone().map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.pnft_shared.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
         },
         None,
@@ -300,7 +304,7 @@ pub fn process_take_bid_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.pnft_shared.instructions,
+            sysvar_instructions: Some(&ctx.accounts.pnft_shared.instructions),
             source_token_record: Some(&ctx.accounts.temp_escrow_token_record),
             destination_token_record: Some(&ctx.accounts.dest_token_record),
             authorization_rules_program: Some(
@@ -308,7 +312,7 @@ pub fn process_take_bid_legacy<'info>(
             ),
             authorization_rules: auth_rules,
             authorization_data: authorization_data.map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.pnft_shared.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
         },
         Some(seeds),

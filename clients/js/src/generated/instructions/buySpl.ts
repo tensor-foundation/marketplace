@@ -279,7 +279,7 @@ export type BuySplAsyncInput<
   compressionProgram: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
@@ -295,6 +295,7 @@ export type BuySplAsyncInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDest: Address<TAccountRentDest>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -315,7 +316,7 @@ export async function getBuySplInstructionAsync<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountListState extends string,
@@ -331,6 +332,7 @@ export async function getBuySplInstructionAsync<
   TAccountMakerBrokerAta extends string,
   TAccountRentDest extends string,
   TAccountRentPayer extends string,
+  TAccountCosigner extends string,
 >(
   input: BuySplAsyncInput<
     TAccountFeeVault,
@@ -341,7 +343,7 @@ export async function getBuySplInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
@@ -356,7 +358,8 @@ export async function getBuySplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >
 ): Promise<
   BuySplInstruction<
@@ -369,7 +372,7 @@ export async function getBuySplInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
@@ -384,7 +387,8 @@ export async function getBuySplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -406,7 +410,10 @@ export async function getBuySplInstructionAsync<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -425,6 +432,7 @@ export async function getBuySplInstructionAsync<
     makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -441,6 +449,10 @@ export async function getBuySplInstructionAsync<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -462,7 +474,7 @@ export async function getBuySplInstructionAsync<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.listState),
@@ -478,6 +490,7 @@ export async function getBuySplInstructionAsync<
       getAccountMeta(accounts.makerBrokerAta),
       getAccountMeta(accounts.rentDest),
       getAccountMeta(accounts.rentPayer),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuySplInstructionDataEncoder().encode(
@@ -493,7 +506,7 @@ export async function getBuySplInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
@@ -508,7 +521,8 @@ export async function getBuySplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -523,7 +537,7 @@ export type BuySplInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountListState extends string = string,
@@ -539,6 +553,7 @@ export type BuySplInput<
   TAccountMakerBrokerAta extends string = string,
   TAccountRentDest extends string = string,
   TAccountRentPayer extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   feeVaultAta: Address<TAccountFeeVaultAta>;

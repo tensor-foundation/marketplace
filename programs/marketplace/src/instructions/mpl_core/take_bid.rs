@@ -5,14 +5,17 @@ use metaplex_core::{
     types::{Royalties, UpdateAuthority},
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    metaplex_core::{validate_asset, MetaplexCore},
+    shard_num,
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram,
-    shard_num,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
@@ -27,6 +30,7 @@ pub struct TakeBidCore<'info> {
             // Use the last byte of the mint as the fee shard number
             shard_num!(bid_state),
         ],
+        seeds::program = TFEE_PROGRAM_ID,
         bump
     )]
     pub fee_vault: UncheckedAccount<'info>,
