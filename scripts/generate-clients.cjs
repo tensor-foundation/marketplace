@@ -174,7 +174,7 @@ kinobi.update(
   k.bottomUpTransformerVisitor([
     {
       select:
-        "[accountNode]listState.[structTypeNode].[structFieldTypeNode]rentPayer",
+        "[structTypeNode].[structFieldTypeNode]rentPayer",
       transform: (node) => {
         k.assertIsNode(node, "structFieldTypeNode");
         return {
@@ -185,7 +185,7 @@ kinobi.update(
     },
     {
       select:
-        "[accountNode]listState.[structTypeNode].[structFieldTypeNode]cosigner",
+        "[structTypeNode].[structFieldTypeNode]cosigner",
       transform: (node) => {
         k.assertIsNode(node, "structFieldTypeNode");
         return {

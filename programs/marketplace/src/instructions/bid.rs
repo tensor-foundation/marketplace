@@ -1,5 +1,5 @@
 use crate::*;
-use tensor_toolbox::transfer_lamports_from_pda;
+use tensor_toolbox::{transfer_lamports_from_pda, NullableOption};
 use tensorswap::instructions::assert_decode_margin_account;
 
 #[derive(Accounts)]
@@ -18,12 +18,8 @@ pub struct Bid<'info> {
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin_account: UncheckedAccount<'info>,
-    // owner or cosigner
-    #[cfg_attr(
-        not(feature = "testing"),
-        account(constraint = cosigner.key() == owner.key() || cosigner.key() == Pubkey::from_str("2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH").unwrap()),
-    )]
-    pub cosigner: Signer<'info>,
+    // cosigner
+    pub cosigner: Option<Signer<'info>>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
 }
@@ -80,7 +76,7 @@ pub fn process_bid<'info>(
 
     // only set rent_payer when initializing
     if bid_state.version == 0 {
-        bid_state.rent_payer = ctx.accounts.rent_payer.key();
+        bid_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
     }
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [ctx.bumps.bid_state];
@@ -113,8 +109,11 @@ pub fn process_bid<'info>(
         // SECURITY RISK: do NOT store the cosigner if it's the owner's signer key
         // otherwise on editing bids a trait bid will be made a normal bid. \
         // our api uses a bidTx ix when editing bids.
-        if ctx.accounts.cosigner.key() != ctx.accounts.owner.key() {
-            bid_state.cosigner = ctx.accounts.cosigner.key();
+        match &ctx.accounts.cosigner {
+            Some(cosigner) if cosigner.key() != ctx.accounts.owner.key() => {
+                bid_state.cosigner = NullableOption::new(cosigner.key());
+            }
+            _ => (),
         }
 
         // Basically both must be present or None

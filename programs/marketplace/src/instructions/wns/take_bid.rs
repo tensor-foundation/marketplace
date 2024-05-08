@@ -85,11 +85,8 @@ pub struct WnsTakeBid<'info> {
 
     pub tensorswap_program: Program<'info, EscrowProgram>,
 
-    // seller or cosigner
-    #[account(
-        constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @ TcompError::BadCosigner
-    )]
-    pub cosigner: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
 
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     /// CHECK: assert_decode_mint_proof
@@ -123,24 +120,35 @@ pub struct WnsTakeBid<'info> {
 impl<'info> Validate<'info> for WnsTakeBid<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
+
         require!(
             bid_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::BidExpired
         );
+
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = bid_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
 
         Ok(())
     }

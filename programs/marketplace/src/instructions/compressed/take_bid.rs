@@ -51,9 +51,8 @@ pub struct TakeBidCompressed<'info> {
     pub margin_account: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
-    // seller or cosigner
-    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
-    pub cosigner: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
@@ -67,14 +66,17 @@ pub struct TakeBidCompressed<'info> {
 impl<'info> Validate<'info> for TakeBidCompressed<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
+
         require!(
             bid_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::BidExpired
         );
+
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
@@ -86,6 +88,14 @@ impl<'info> Validate<'info> for TakeBidCompressed<'info> {
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = bid_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
