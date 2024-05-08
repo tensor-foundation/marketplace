@@ -42,7 +42,9 @@ export type DelistCoreInstruction<
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -68,9 +70,9 @@ export type DelistCoreInstruction<
       TAccountMplCoreProgram extends string
         ? ReadonlyAccount<TAccountMplCoreProgram>
         : TAccountMplCoreProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -117,7 +119,7 @@ export type DelistCoreInput<
   TAccountOwner extends string = string,
   TAccountListState extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountRentDest extends string = string,
 > = {
@@ -126,7 +128,7 @@ export type DelistCoreInput<
   owner: TransactionSigner<TAccountOwner>;
   listState: Address<TAccountListState>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   rentDest: TransactionSigner<TAccountRentDest>;
 };
@@ -137,7 +139,7 @@ export function getDelistCoreInstruction<
   TAccountOwner extends string,
   TAccountListState extends string,
   TAccountMplCoreProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
   TAccountRentDest extends string,
 >(
@@ -147,7 +149,7 @@ export function getDelistCoreInstruction<
     TAccountOwner,
     TAccountListState,
     TAccountMplCoreProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram,
     TAccountRentDest
   >
@@ -158,7 +160,7 @@ export function getDelistCoreInstruction<
   TAccountOwner,
   TAccountListState,
   TAccountMplCoreProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountSystemProgram,
   TAccountRentDest
 > {
@@ -172,7 +174,10 @@ export function getDelistCoreInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
@@ -185,6 +190,10 @@ export function getDelistCoreInstruction<
   if (!accounts.mplCoreProgram.value) {
     accounts.mplCoreProgram.value =
       'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -199,7 +208,7 @@ export function getDelistCoreInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mplCoreProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.rentDest),
     ],
@@ -212,7 +221,7 @@ export function getDelistCoreInstruction<
     TAccountOwner,
     TAccountListState,
     TAccountMplCoreProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountSystemProgram,
     TAccountRentDest
   >;
@@ -231,7 +240,7 @@ export type ParsedDelistCoreInstruction<
     owner: TAccountMetas[2];
     listState: TAccountMetas[3];
     mplCoreProgram: TAccountMetas[4];
-    tcompProgram: TAccountMetas[5];
+    marketplaceProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
     rentDest: TAccountMetas[7];
   };
@@ -270,7 +279,7 @@ export function parseDelistCoreInstruction<
       owner: getNextAccount(),
       listState: getNextAccount(),
       mplCoreProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       rentDest: getNextAccount(),
     },

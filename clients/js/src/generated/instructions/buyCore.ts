@@ -28,6 +28,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -57,6 +58,7 @@ export type BuyCoreInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -102,6 +104,10 @@ export type BuyCoreInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -157,6 +163,7 @@ export type BuyCoreAsyncInput<
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
   listState: Address<TAccountListState>;
@@ -338,6 +345,7 @@ export type BuyCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
 };
 
@@ -355,6 +363,7 @@ export function getBuyCoreInstruction<
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyCoreInput<
     TAccountFeeVault,
@@ -369,7 +378,8 @@ export function getBuyCoreInstruction<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountCosigner
   >
 ): BuyCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -385,7 +395,8 @@ export function getBuyCoreInstruction<
   TAccountRentDest,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
-  TAccountSystemProgram
+  TAccountSystemProgram,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -408,6 +419,7 @@ export function getBuyCoreInstruction<
       isWritable: false,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -447,6 +459,7 @@ export function getBuyCoreInstruction<
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyCoreInstructionDataEncoder().encode(
@@ -466,7 +479,8 @@ export function getBuyCoreInstruction<
     TAccountRentDest,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -491,6 +505,7 @@ export type ParsedBuyCoreInstruction<
     mplCoreProgram: TAccountMetas[10];
     marketplaceProgram: TAccountMetas[11];
     systemProgram: TAccountMetas[12];
+    cosigner?: TAccountMetas[13] | undefined;
   };
   data: BuyCoreInstructionData;
 };
@@ -503,7 +518,7 @@ export function parseBuyCoreInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyCoreInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 14) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -535,6 +550,7 @@ export function parseBuyCoreInstruction<
       mplCoreProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getBuyCoreInstructionDataDecoder().decode(instruction.data),
   };

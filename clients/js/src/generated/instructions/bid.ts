@@ -62,7 +62,9 @@ export type BidInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
@@ -76,9 +78,9 @@ export type BidInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountBidState extends string
         ? WritableAccount<TAccountBidState>
         : TAccountBidState,
@@ -186,7 +188,7 @@ export function getBidInstructionDataCodec(): Codec<
 
 export type BidInput<
   TAccountSystemProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
   TAccountMarginAccount extends string = string,
@@ -194,11 +196,11 @@ export type BidInput<
   TAccountRentPayer extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   bidState: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
   marginAccount: Address<TAccountMarginAccount>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   bidId: BidInstructionDataArgs['bidId'];
   target: BidInstructionDataArgs['target'];
@@ -215,7 +217,7 @@ export type BidInput<
 
 export function getBidInstruction<
   TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
   TAccountMarginAccount extends string,
@@ -224,7 +226,7 @@ export function getBidInstruction<
 >(
   input: BidInput<
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountBidState,
     TAccountOwner,
     TAccountMarginAccount,
@@ -234,7 +236,7 @@ export function getBidInstruction<
 ): BidInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountSystemProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountBidState,
   TAccountOwner,
   TAccountMarginAccount,
@@ -247,7 +249,10 @@ export function getBidInstruction<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
@@ -267,12 +272,16 @@ export function getBidInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.marginAccount),
@@ -284,7 +293,7 @@ export function getBidInstruction<
   } as BidInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountBidState,
     TAccountOwner,
     TAccountMarginAccount,
@@ -302,11 +311,11 @@ export type ParsedBidInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     systemProgram: TAccountMetas[0];
-    tcompProgram: TAccountMetas[1];
+    marketplaceProgram: TAccountMetas[1];
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
     marginAccount: TAccountMetas[4];
-    cosigner: TAccountMetas[5];
+    cosigner?: TAccountMetas[5] | undefined;
     rentPayer: TAccountMetas[6];
   };
   data: BidInstructionData;
@@ -330,15 +339,21 @@ export function parseBidInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       systemProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),
       marginAccount: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       rentPayer: getNextAccount(),
     },
     data: getBidInstructionDataDecoder().decode(instruction.data),

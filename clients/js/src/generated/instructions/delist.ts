@@ -51,7 +51,9 @@ export type DelistInstruction<
   TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -83,9 +85,9 @@ export type DelistInstruction<
         ? ReadonlySignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
@@ -157,7 +159,7 @@ export type DelistInput<
   TAccountBubblegumProgram extends string = string,
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountRentDest extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
@@ -168,7 +170,7 @@ export type DelistInput<
   bubblegumProgram: Address<TAccountBubblegumProgram>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDest: Address<TAccountRentDest>;
   nonce: DelistInstructionDataArgs['nonce'];
   index: DelistInstructionDataArgs['index'];
@@ -186,7 +188,7 @@ export function getDelistInstruction<
   TAccountBubblegumProgram extends string,
   TAccountListState extends string,
   TAccountOwner extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountRentDest extends string,
 >(
   input: DelistInput<
@@ -198,7 +200,7 @@ export function getDelistInstruction<
     TAccountBubblegumProgram,
     TAccountListState,
     TAccountOwner,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountRentDest
   >
 ): DelistInstruction<
@@ -211,7 +213,7 @@ export function getDelistInstruction<
   TAccountBubblegumProgram,
   TAccountListState,
   TAccountOwner,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountRentDest
 > {
   // Program address.
@@ -233,7 +235,10 @@ export function getDelistInstruction<
     },
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -249,6 +254,10 @@ export function getDelistInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -261,7 +270,7 @@ export function getDelistInstruction<
       getAccountMeta(accounts.bubblegumProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.rentDest),
     ],
     programAddress,
@@ -278,7 +287,7 @@ export function getDelistInstruction<
     TAccountBubblegumProgram,
     TAccountListState,
     TAccountOwner,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountRentDest
   >;
 
@@ -299,7 +308,7 @@ export type ParsedDelistInstruction<
     bubblegumProgram: TAccountMetas[5];
     listState: TAccountMetas[6];
     owner: TAccountMetas[7];
-    tcompProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[8];
     rentDest: TAccountMetas[9];
   };
   data: DelistInstructionData;
@@ -334,7 +343,7 @@ export function parseDelistInstruction<
       bubblegumProgram: getNextAccount(),
       listState: getNextAccount(),
       owner: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       rentDest: getNextAccount(),
     },
     data: getDelistInstructionDataDecoder().decode(instruction.data),

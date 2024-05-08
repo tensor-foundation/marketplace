@@ -13,7 +13,7 @@ pub struct Edit<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
     pub owner: Signer<'info>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 }
 
 pub fn process_edit<'info>(
@@ -63,7 +63,7 @@ pub fn process_edit<'info>(
             private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

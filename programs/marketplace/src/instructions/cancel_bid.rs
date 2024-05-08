@@ -15,7 +15,7 @@ pub struct CancelBid<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
@@ -44,7 +44,7 @@ pub fn process_cancel_bid(ctx: Context<CancelBid>) -> Result<()> {
                 None
             },
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::Bid(&ctx.accounts.bid_state),
     )?;
 

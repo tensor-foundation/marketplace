@@ -21,14 +21,21 @@ pub struct Buy<'info> {
 
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
+
     pub log_wrapper: Program<'info, Noop>,
+
     pub compression_program: Program<'info, SplAccountCompression>,
+
     pub system_program: Program<'info, System>,
+
     pub bubblegum_program: Program<'info, Bubblegum>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+
     #[account(mut, close = rent_dest,
         seeds=[
             b"list_state".as_ref(),
@@ -39,25 +46,34 @@ pub struct Buy<'info> {
         constraint = list_state.currency.is_none() @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
     /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
     pub buyer: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
+
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
     /// CHECK: has_one = owner on list_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
+
     /// CHECK: none, can be anything
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
+
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
+
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_dest: UncheckedAccount<'info>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -66,24 +82,36 @@ pub struct Buy<'info> {
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -215,7 +243,7 @@ pub fn process_buy<'info>(
             currency,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

@@ -62,7 +62,9 @@ export type BuySplInstruction<
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -82,6 +84,7 @@ export type BuySplInstruction<
   TAccountMakerBrokerAta extends string | IAccountMeta<string> = string,
   TAccountRentDest extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -111,9 +114,9 @@ export type BuySplInstruction<
       TAccountBubblegumProgram extends string
         ? ReadonlyAccount<TAccountBubblegumProgram>
         : TAccountBubblegumProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -161,6 +164,10 @@ export type BuySplInstruction<
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -246,7 +253,7 @@ export type BuySplAsyncInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountListState extends string = string,
@@ -262,6 +269,7 @@ export type BuySplAsyncInput<
   TAccountMakerBrokerAta extends string = string,
   TAccountRentDest extends string = string,
   TAccountRentPayer extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
   feeVaultAta: Address<TAccountFeeVaultAta>;
@@ -540,7 +548,7 @@ export type BuySplInput<
   compressionProgram: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
@@ -556,6 +564,7 @@ export type BuySplInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDest: Address<TAccountRentDest>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -576,7 +585,7 @@ export function getBuySplInstruction<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountListState extends string,
@@ -592,6 +601,7 @@ export function getBuySplInstruction<
   TAccountMakerBrokerAta extends string,
   TAccountRentDest extends string,
   TAccountRentPayer extends string,
+  TAccountCosigner extends string,
 >(
   input: BuySplInput<
     TAccountFeeVault,
@@ -602,7 +612,7 @@ export function getBuySplInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
@@ -617,7 +627,8 @@ export function getBuySplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >
 ): BuySplInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -629,7 +640,7 @@ export function getBuySplInstruction<
   TAccountCompressionProgram,
   TAccountSystemProgram,
   TAccountBubblegumProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountListState,
@@ -644,7 +655,8 @@ export function getBuySplInstruction<
   TAccountMakerBroker,
   TAccountMakerBrokerAta,
   TAccountRentDest,
-  TAccountRentPayer
+  TAccountRentPayer,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -665,7 +677,10 @@ export function getBuySplInstruction<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -684,6 +699,7 @@ export function getBuySplInstruction<
     makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -697,6 +713,10 @@ export function getBuySplInstruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -718,7 +738,7 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.listState),
@@ -734,6 +754,7 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.makerBrokerAta),
       getAccountMeta(accounts.rentDest),
       getAccountMeta(accounts.rentPayer),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuySplInstructionDataEncoder().encode(
@@ -749,7 +770,7 @@ export function getBuySplInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
@@ -764,7 +785,8 @@ export function getBuySplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
     TAccountRentDest,
-    TAccountRentPayer
+    TAccountRentPayer,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -784,7 +806,7 @@ export type ParsedBuySplInstruction<
     compressionProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
     bubblegumProgram: TAccountMetas[7];
-    tcompProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[8];
     tokenProgram: TAccountMetas[9];
     associatedTokenProgram: TAccountMetas[10];
     listState: TAccountMetas[11];
@@ -800,6 +822,7 @@ export type ParsedBuySplInstruction<
     makerBrokerAta?: TAccountMetas[21] | undefined;
     rentDest: TAccountMetas[22];
     rentPayer: TAccountMetas[23];
+    cosigner?: TAccountMetas[24] | undefined;
   };
   data: BuySplInstructionData;
 };
@@ -812,7 +835,7 @@ export function parseBuySplInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuySplInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 24) {
+  if (instruction.accounts.length < 25) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -839,7 +862,7 @@ export function parseBuySplInstruction<
       compressionProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       bubblegumProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       listState: getNextAccount(),
@@ -855,6 +878,7 @@ export function parseBuySplInstruction<
       makerBrokerAta: getNextOptionalAccount(),
       rentDest: getNextAccount(),
       rentPayer: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getBuySplInstructionDataDecoder().decode(instruction.data),
   };

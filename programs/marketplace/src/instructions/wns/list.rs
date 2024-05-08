@@ -4,9 +4,12 @@ use anchor_spl::{
     token_2022::{close_account, CloseAccount, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
-use tensor_toolbox::token_2022::{
-    transfer::transfer_checked,
-    wns::{approve, validate_mint, ApproveAccounts},
+use tensor_toolbox::{
+    token_2022::{
+        transfer::transfer_checked,
+        wns::{approve, validate_mint, ApproveAccounts},
+    },
+    NullableOption,
 };
 
 use crate::{
@@ -74,6 +77,8 @@ pub struct ListWns<'info> {
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_wns<'info>(
@@ -155,7 +160,8 @@ pub fn process_list_wns<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

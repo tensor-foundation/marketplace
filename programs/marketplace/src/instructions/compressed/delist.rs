@@ -24,7 +24,7 @@ pub struct Delist<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
     pub owner: Signer<'info>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
@@ -79,7 +79,7 @@ pub fn process_delist<'info>(
             private_taker: list_state.private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

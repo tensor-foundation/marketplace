@@ -47,6 +47,12 @@ import {
   getU8Encoder,
   mapEncoder,
 } from '@solana/codecs';
+import {
+  NullableAddress,
+  NullableAddressArgs,
+  getNullableAddressDecoder,
+  getNullableAddressEncoder,
+} from '../../hooked';
 import { ListStateSeeds, findListStatePda } from '../pdas';
 
 export type ListState<TAddress extends string = string> = Account<
@@ -70,9 +76,10 @@ export type ListStateAccountData = {
   expiry: bigint;
   privateTaker: Option<Address>;
   makerBroker: Option<Address>;
-  /** owner is the rent payer when this is PublicKey::default */
-  rentPayer: Address;
-  reserved: Uint8Array;
+  /** owner is the rent payer when this is `None` */
+  rentPayer: NullableAddress;
+  /** cosigner */
+  cosigner: NullableAddress;
   reserved1: Uint8Array;
 };
 
@@ -86,9 +93,10 @@ export type ListStateAccountDataArgs = {
   expiry: number | bigint;
   privateTaker: OptionOrNullable<Address>;
   makerBroker: OptionOrNullable<Address>;
-  /** owner is the rent payer when this is PublicKey::default */
-  rentPayer: Address;
-  reserved: Uint8Array;
+  /** owner is the rent payer when this is `None` */
+  rentPayer: NullableAddressArgs;
+  /** cosigner */
+  cosigner: NullableAddressArgs;
   reserved1: Uint8Array;
 };
 
@@ -105,8 +113,8 @@ export function getListStateAccountDataEncoder(): Encoder<ListStateAccountDataAr
       ['expiry', getI64Encoder()],
       ['privateTaker', getOptionEncoder(getAddressEncoder())],
       ['makerBroker', getOptionEncoder(getAddressEncoder())],
-      ['rentPayer', getAddressEncoder()],
-      ['reserved', getBytesEncoder({ size: 32 })],
+      ['rentPayer', getNullableAddressEncoder()],
+      ['cosigner', getNullableAddressEncoder()],
       ['reserved1', getBytesEncoder({ size: 64 })],
     ]),
     (value) => ({
@@ -128,8 +136,8 @@ export function getListStateAccountDataDecoder(): Decoder<ListStateAccountData> 
     ['expiry', getI64Decoder()],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['makerBroker', getOptionDecoder(getAddressDecoder())],
-    ['rentPayer', getAddressDecoder()],
-    ['reserved', getBytesDecoder({ size: 32 })],
+    ['rentPayer', getNullableAddressDecoder()],
+    ['cosigner', getNullableAddressDecoder()],
     ['reserved1', getBytesDecoder({ size: 64 })],
   ]);
 }

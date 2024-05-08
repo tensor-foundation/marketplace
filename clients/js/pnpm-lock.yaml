@@ -1,5 +1,6 @@
 lockfileVersion: '9.0'
 
+<<<<<<< HEAD
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
@@ -81,6 +82,83 @@ importers:
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
+=======
+dependencies:
+  '@solana/accounts':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/addresses':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/codecs':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/errors':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2
+  '@solana/instructions':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2
+  '@solana/programs':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2
+  '@solana/signers':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/web3.js':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+
+devDependencies:
+  '@ava/typescript':
+    specifier: ^4.1.0
+    version: 4.1.0
+  '@solana-program/compute-budget':
+    specifier: 0.2.0
+    version: 0.2.0(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/eslint-config-solana':
+    specifier: ^3.0.3
+    version: 3.0.3(@typescript-eslint/eslint-plugin@6.21.0)(@typescript-eslint/parser@6.21.0)(eslint-plugin-jest@27.9.0)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-simple-import-sort@10.0.0)(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.2.0)(eslint@8.57.0)(typescript@5.4.2)
+  '@solana/webcrypto-ed25519-polyfill':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2
+  '@tensor-foundation/test-helpers':
+    specifier: 0.0.1-alpha.3
+    version: 0.0.1-alpha.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+  '@tensor-foundation/toolkit-token-metadata':
+    specifier: 0.0.1-alpha.3
+    version: 0.0.1-alpha.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+  '@typescript-eslint/eslint-plugin':
+    specifier: ^6.21.0
+    version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.0)(typescript@5.4.2)
+  '@typescript-eslint/parser':
+    specifier: ^6.21.0
+    version: 6.21.0(eslint@8.57.0)(typescript@5.4.2)
+  ava:
+    specifier: ^6.1.2
+    version: 6.1.2(@ava/typescript@4.1.0)
+  eslint:
+    specifier: ^8.57.0
+    version: 8.57.0
+  prettier:
+    specifier: ^3.2.5
+    version: 3.2.5
+  rimraf:
+    specifier: ^5.0.5
+    version: 5.0.5
+  tsup:
+    specifier: ^8.0.2
+    version: 8.0.2(typescript@5.4.2)
+  typedoc:
+    specifier: ^0.25.12
+    version: 0.25.12(typescript@5.4.2)
+  typedoc-plugin-missing-exports:
+    specifier: ^2.2.0
+    version: 2.2.0(typedoc@0.25.12)
+  typescript:
+    specifier: ^5.4.2
+    version: 5.4.2
+>>>>>>> main
 
 packages:
 
@@ -2266,7 +2344,12 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
+<<<<<<< HEAD
   '@solana/rpc-parsed-types@2.0.0-preview.2': {}
+=======
+  /@solana/rpc-parsed-types@2.0.0-preview.2:
+    resolution: {integrity: sha512-tk4CORNgle2/Jz/8UUqiZa+JQA+6Sebp46sHx6Y2mohLZ0WdsMq1GMpwANyK2LGJpYGzCnOgyGbJltP8ksiPog==}
+>>>>>>> main
 
   '@solana/rpc-spec-types@2.0.0-preview.2': {}
 
@@ -2323,7 +2406,11 @@ snapshots:
     dependencies:
       '@solana/errors': 2.0.0-preview.2
       '@solana/rpc-spec': 2.0.0-preview.2
+<<<<<<< HEAD
       undici-types: 6.15.0
+=======
+      undici-types: 6.14.0
+>>>>>>> main
 
   '@solana/rpc-types@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)':
     dependencies:
@@ -3070,7 +3157,12 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
+<<<<<<< HEAD
   fast-stable-stringify@1.0.0: {}
+=======
+  /fast-stable-stringify@1.0.0:
+    resolution: {integrity: sha512-wpYMUmFu5f00Sm0cj2pfivpmawLZ0NKdviQ4w9zJeR8JVtOpOxHmLaJuj0vxvGqMJQWyP/COUkF75/57OKyRag==}
+>>>>>>> main
 
   fastestsmallesttextencoderdecoder@1.0.22: {}
 
@@ -3769,7 +3861,12 @@ snapshots:
 
   typescript@5.4.5: {}
 
+<<<<<<< HEAD
   undici-types@6.15.0: {}
+=======
+  /undici-types@6.14.0:
+    resolution: {integrity: sha512-q9cSMXCmf1wgG4+8jEy9dhuinxP5yS2/n3+bcXO4Q4RwRYy9CdP/HRfGCpI0MHykuPGeBH/40C1PA7dIIBRzbQ==}
+>>>>>>> main
 
   unicorn-magic@0.1.0: {}
 
@@ -3827,7 +3924,21 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 4.1.0
 
+<<<<<<< HEAD
   ws@8.16.0: {}
+=======
+  /ws@8.16.0:
+    resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+>>>>>>> main
 
   y18n@5.0.8: {}
 

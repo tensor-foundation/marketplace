@@ -22,7 +22,7 @@ pub mod cpitest {
             marketplace_program::cpi::accounts::Edit {
                 owner: ctx.accounts.owner.to_account_info(),
                 list_state: ctx.accounts.list_state.to_account_info(),
-                tcomp_program: ctx.accounts.marketplace_program.to_account_info(),
+                marketplace_program: ctx.accounts.marketplace_program.to_account_info(),
             },
         );
 

@@ -31,7 +31,7 @@ pub struct DelistCore<'info> {
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
 
@@ -75,7 +75,7 @@ pub fn process_delist_core<'info>(
             private_taker: list_state.private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
