@@ -32,7 +32,7 @@ pub struct TakeBidFullMeta {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub tensorswap_program: solana_program::pubkey::Pubkey,
 
@@ -48,7 +48,7 @@ pub struct TakeBidFullMeta {
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
@@ -103,7 +103,7 @@ impl TakeBidFullMeta {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -147,10 +147,16 @@ impl TakeBidFullMeta {
             self.whitelist,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_dest,
             false,
@@ -217,7 +223,7 @@ pub struct TakeBidFullMetaInstructionArgs {
 ///   6. `[]` compression_program
 ///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   8. `[]` bubblegum_program
-///   9. `[]` tcomp_program
+///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   10. `[]` tensorswap_program
 ///   11. `[writable]` bid_state
 ///   12. `[writable]` owner
@@ -225,7 +231,7 @@ pub struct TakeBidFullMetaInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidFullMetaBuilder {
@@ -238,7 +244,7 @@ pub struct TakeBidFullMetaBuilder {
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     tensorswap_program: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -325,9 +331,13 @@ impl TakeBidFullMetaBuilder {
         self.bubblegum_program = Some(bubblegum_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -376,9 +386,10 @@ impl TakeBidFullMetaBuilder {
         self.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -520,7 +531,9 @@ impl TakeBidFullMetaBuilder {
             bubblegum_program: self
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             tensorswap_program: self
                 .tensorswap_program
                 .expect("tensorswap_program is not set"),
@@ -530,7 +543,7 @@ impl TakeBidFullMetaBuilder {
             maker_broker: self.maker_broker,
             margin_account: self.margin_account.expect("margin_account is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
+            cosigner: self.cosigner,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = TakeBidFullMetaInstructionArgs {
@@ -593,7 +606,7 @@ pub struct TakeBidFullMetaCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -609,7 +622,7 @@ pub struct TakeBidFullMetaCpiAccounts<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -637,7 +650,7 @@ pub struct TakeBidFullMetaCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -653,7 +666,7 @@ pub struct TakeBidFullMetaCpi<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -677,7 +690,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             tensorswap_program: accounts.tensorswap_program,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
@@ -761,7 +774,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -806,10 +819,17 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
             *self.whitelist.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_dest.key,
             false,
@@ -841,7 +861,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tensorswap_program.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
@@ -853,7 +873,9 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
         }
         account_infos.push(self.margin_account.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
@@ -880,7 +902,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
 ///   6. `[]` compression_program
 ///   7. `[]` system_program
 ///   8. `[]` bubblegum_program
-///   9. `[]` tcomp_program
+///   9. `[]` marketplace_program
 ///   10. `[]` tensorswap_program
 ///   11. `[writable]` bid_state
 ///   12. `[writable]` owner
@@ -888,7 +910,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 pub struct TakeBidFullMetaCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidFullMetaCpiBuilderInstruction<'a, 'b>>,
@@ -907,7 +929,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             tensorswap_program: None,
             bid_state: None,
             owner: None,
@@ -1009,11 +1031,11 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -1071,12 +1093,13 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
         self.instruction.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1313,10 +1336,10 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             tensorswap_program: self
                 .instruction
@@ -1338,7 +1361,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,
@@ -1361,7 +1384,7 @@ struct TakeBidFullMetaCpiBuilderInstruction<'a, 'b> {
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

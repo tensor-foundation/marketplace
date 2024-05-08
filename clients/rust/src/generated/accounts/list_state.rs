@@ -5,6 +5,7 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::hooked::NullableAddress;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -30,13 +31,10 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is PublicKey::default
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub rent_payer: Pubkey,
-    pub reserved: [u8; 32],
+    /// owner is the rent payer when this is `None`
+    pub rent_payer: NullableAddress,
+    /// cosigner
+    pub cosigner: NullableAddress,
     #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
     pub reserved1: [u8; 64],
 }

@@ -1,5 +1,8 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::{
+    metaplex_core::{validate_asset, MetaplexCore},
+    NullableOption,
+};
 
 use crate::*;
 
@@ -29,13 +32,15 @@ pub struct ListCore<'info> {
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
-    pub tcomp_program: Program<'info, MarketplaceProgram>,
+    pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
 
     //separate payer so that a program can list with owner being a PDA
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_core<'info>(
@@ -87,7 +92,8 @@ pub fn process_list_core<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 
@@ -106,7 +112,7 @@ pub fn process_list_core<'info>(
             private_taker,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

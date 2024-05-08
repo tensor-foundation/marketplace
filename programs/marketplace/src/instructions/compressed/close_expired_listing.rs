@@ -15,7 +15,7 @@ pub struct CloseExpiredListing<'info> {
     /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
     pub owner: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -80,7 +80,7 @@ pub fn process_close_expired_listing<'info>(
             private_taker: list_state.private_taker,
             asset_id: Some(list_state.asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 

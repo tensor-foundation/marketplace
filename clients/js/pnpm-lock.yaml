@@ -10,6 +10,9 @@ dependencies:
   '@solana/codecs':
     specifier: 2.0.0-preview.2
     version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/errors':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2
   '@solana/instructions':
     specifier: 2.0.0-preview.2
     version: 2.0.0-preview.2
@@ -19,6 +22,9 @@ dependencies:
   '@solana/signers':
     specifier: 2.0.0-preview.2
     version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+  '@solana/web3.js':
+    specifier: 2.0.0-preview.2
+    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
 
 devDependencies:
   '@ava/typescript':
@@ -27,15 +33,9 @@ devDependencies:
   '@solana-program/compute-budget':
     specifier: 0.2.0
     version: 0.2.0(fastestsmallesttextencoderdecoder@1.0.22)
-  '@solana/errors':
-    specifier: 2.0.0-preview.2
-    version: 2.0.0-preview.2
   '@solana/eslint-config-solana':
     specifier: ^3.0.3
     version: 3.0.3(@typescript-eslint/eslint-plugin@6.21.0)(@typescript-eslint/parser@6.21.0)(eslint-plugin-jest@27.9.0)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-simple-import-sort@10.0.0)(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.2.0)(eslint@8.57.0)(typescript@5.4.2)
-  '@solana/web3.js':
-    specifier: 2.0.0-preview.2
-    version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
   '@solana/webcrypto-ed25519-polyfill':
     specifier: 2.0.0-preview.2
     version: 2.0.0-preview.2
@@ -740,11 +740,9 @@ packages:
       '@solana/transactions': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
-    dev: true
 
   /@solana/rpc-parsed-types@2.0.0-preview.2:
     resolution: {integrity: sha512-tk4CORNgle2/Jz/8UUqiZa+JQA+6Sebp46sHx6Y2mohLZ0WdsMq1GMpwANyK2LGJpYGzCnOgyGbJltP8ksiPog==}
-    dev: true
 
   /@solana/rpc-spec-types@2.0.0-preview.2:
     resolution: {integrity: sha512-rrVkp+eK6RK4vaS2/M1HSlF3b+/qWAKIw3+SoGTB2zMlvFGiM6lMjurCd8J6+7FdGHoEK3jb2zigH2w9KNw0pg==}
@@ -766,14 +764,12 @@ packages:
       '@solana/transactions': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
-    dev: true
 
   /@solana/rpc-subscriptions-spec@2.0.0-preview.2:
     resolution: {integrity: sha512-Ml2/jqv6qqNvpNfanKUt8213Yx7nxDJ+M1v7bFp0FEURcMV4xjTH5vyZNsLehxV23/xHpjLZ6+Z6MuKQuyRwrw==}
     dependencies:
       '@solana/errors': 2.0.0-preview.2
       '@solana/rpc-spec-types': 2.0.0-preview.2
-    dev: true
 
   /@solana/rpc-subscriptions-transport-websocket@2.0.0-preview.2(ws@8.16.0):
     resolution: {integrity: sha512-z2blkgdBGqB4SZ4cY+Jg4DpUVCKw3dcFWa6/TiE+/VS2yInxqaL92621zWhDlXl2aXrZCHpCnZPZWttcNJwQ/g==}
@@ -783,7 +779,6 @@ packages:
       '@solana/errors': 2.0.0-preview.2
       '@solana/rpc-subscriptions-spec': 2.0.0-preview.2
       ws: 8.16.0
-    dev: true
 
   /@solana/rpc-subscriptions@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0):
     resolution: {integrity: sha512-dhn0y62oeREYvGE9m2K9F5ozlvfM77NgJM/hbfM/PADYbRcoYvRHAmTrHotR9O2eDmpWamE3fU3StdIAq7Z0Zg==}
@@ -799,7 +794,6 @@ packages:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
       - ws
-    dev: true
 
   /@solana/rpc-transformers@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22):
     resolution: {integrity: sha512-XoD092QgfpgexZ5bWBw34kWpbHuzWZ//lqUNY5BHGJ2t2BJYN1+vkkVWVzHrUwNinO3VRLfFFn/aAvQ7bUqH2g==}
@@ -809,7 +803,6 @@ packages:
       '@solana/rpc-types': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
-    dev: true
 
   /@solana/rpc-transport-http@2.0.0-preview.2:
     resolution: {integrity: sha512-42E/iyA059/vO8bJkQPmAphdobBa8XRToQV30vgATJoEdfuHQOv5HCx+XhDs1ChzRyq0CYKB0jF1RAO4oACogA==}
@@ -817,7 +810,6 @@ packages:
       '@solana/errors': 2.0.0-preview.2
       '@solana/rpc-spec': 2.0.0-preview.2
       undici-types: 6.14.0
-    dev: true
 
   /@solana/rpc-types@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22):
     resolution: {integrity: sha512-IYEfi8xjn8eeSMWml1/Ak3gD4ZuV4FDmLeP7+X+MXChFenBneW/9sSO6+Ccf1GBkUwnjAxNXmyoeJ9J3vqaQlQ==}
@@ -842,7 +834,6 @@ packages:
       fast-stable-stringify: 1.0.0
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
-    dev: true
 
   /@solana/signers@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22):
     resolution: {integrity: sha512-tZliRe8Q5UNPmmK3tw5LYzPBaswA0WGUk2wl8ba0LSTiiOQLIWfypQAsQegsKb04aSl1KbKLsuFTA4REkyZwcA==}
@@ -869,7 +860,6 @@ packages:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
       - ws
-    dev: true
 
   /@solana/transactions@2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22):
     resolution: {integrity: sha512-Zs+1iQ8ipqZp4JJAMIALxgISoglyuE4+2EPdVjOC6TNbClPslZFSYBqeYMavQrxCyZlZQHFb5NJNjRKST2L/xg==}
@@ -906,7 +896,6 @@ packages:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
       - ws
-    dev: true
 
   /@solana/webcrypto-ed25519-polyfill@2.0.0-preview.2:
     resolution: {integrity: sha512-WDe2kYmWk6vs80GVqKE/1JOnQEp2fHK92Mq88FlDW70BMMXhKaZRVG+MPiK3BvKDqegcEfQaw39XqdI3DH5bDQ==}
@@ -1978,7 +1967,6 @@ packages:
 
   /fast-stable-stringify@1.0.0:
     resolution: {integrity: sha512-wpYMUmFu5f00Sm0cj2pfivpmawLZ0NKdviQ4w9zJeR8JVtOpOxHmLaJuj0vxvGqMJQWyP/COUkF75/57OKyRag==}
-    dev: true
 
   /fastestsmallesttextencoderdecoder@1.0.22:
     resolution: {integrity: sha512-Pb8d48e+oIuY4MaM64Cd7OW1gt4nxCHs7/ddPPZ/Ic3sg8yVGM7O9wDvZ7us6ScaUupzM+pfBolwtYhN1IxBIw==}
@@ -3269,7 +3257,6 @@ packages:
 
   /undici-types@6.14.0:
     resolution: {integrity: sha512-q9cSMXCmf1wgG4+8jEy9dhuinxP5yS2/n3+bcXO4Q4RwRYy9CdP/HRfGCpI0MHykuPGeBH/40C1PA7dIIBRzbQ==}
-    dev: true
 
   /unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
@@ -3377,7 +3364,6 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-    dev: true
 
   /y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}

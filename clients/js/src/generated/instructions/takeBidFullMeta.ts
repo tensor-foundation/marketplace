@@ -81,7 +81,9 @@ export type TakeBidFullMetaInstruction<
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends string | IAccountMeta<string> = string,
+  TAccountMarketplaceProgram extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -123,9 +125,9 @@ export type TakeBidFullMetaInstruction<
       TAccountBubblegumProgram extends string
         ? ReadonlyAccount<TAccountBubblegumProgram>
         : TAccountBubblegumProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountTensorswapProgram extends string
         ? ReadonlyAccount<TAccountTensorswapProgram>
         : TAccountTensorswapProgram,
@@ -292,7 +294,7 @@ export type TakeBidFullMetaInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTensorswapProgram extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
@@ -312,7 +314,7 @@ export type TakeBidFullMetaInput<
   compressionProgram: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram: Address<TAccountBubblegumProgram>;
-  tcompProgram: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
@@ -320,7 +322,7 @@ export type TakeBidFullMetaInput<
   makerBroker?: Address<TAccountMakerBroker>;
   marginAccount: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   rentDest: Address<TAccountRentDest>;
   nonce: TakeBidFullMetaInstructionDataArgs['nonce'];
   index: TakeBidFullMetaInstructionDataArgs['index'];
@@ -352,7 +354,7 @@ export function getTakeBidFullMetaInstruction<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTensorswapProgram extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
@@ -373,7 +375,7 @@ export function getTakeBidFullMetaInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTensorswapProgram,
     TAccountBidState,
     TAccountOwner,
@@ -395,7 +397,7 @@ export function getTakeBidFullMetaInstruction<
   TAccountCompressionProgram,
   TAccountSystemProgram,
   TAccountBubblegumProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountTensorswapProgram,
   TAccountBidState,
   TAccountOwner,
@@ -426,7 +428,10 @@ export function getTakeBidFullMetaInstruction<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     tensorswapProgram: {
       value: input.tensorswapProgram ?? null,
       isWritable: false,
@@ -453,6 +458,10 @@ export function getTakeBidFullMetaInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -466,7 +475,7 @@ export function getTakeBidFullMetaInstruction<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.tensorswapProgram),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
@@ -492,7 +501,7 @@ export function getTakeBidFullMetaInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTensorswapProgram,
     TAccountBidState,
     TAccountOwner,
@@ -522,7 +531,7 @@ export type ParsedTakeBidFullMetaInstruction<
     compressionProgram: TAccountMetas[6];
     systemProgram: TAccountMetas[7];
     bubblegumProgram: TAccountMetas[8];
-    tcompProgram: TAccountMetas[9];
+    marketplaceProgram: TAccountMetas[9];
     tensorswapProgram: TAccountMetas[10];
     bidState: TAccountMetas[11];
     owner: TAccountMetas[12];
@@ -530,7 +539,7 @@ export type ParsedTakeBidFullMetaInstruction<
     makerBroker?: TAccountMetas[14] | undefined;
     marginAccount: TAccountMetas[15];
     whitelist: TAccountMetas[16];
-    cosigner: TAccountMetas[17];
+    cosigner?: TAccountMetas[17] | undefined;
     rentDest: TAccountMetas[18];
   };
   data: TakeBidFullMetaInstructionData;
@@ -572,7 +581,7 @@ export function parseTakeBidFullMetaInstruction<
       compressionProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       bubblegumProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       tensorswapProgram: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),
@@ -580,7 +589,7 @@ export function parseTakeBidFullMetaInstruction<
       makerBroker: getNextOptionalAccount(),
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       rentDest: getNextAccount(),
     },
     data: getTakeBidFullMetaInstructionDataDecoder().decode(instruction.data),

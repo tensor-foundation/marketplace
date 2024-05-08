@@ -528,7 +528,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         delegate,
@@ -590,7 +590,7 @@ export class TCompSDK {
       .accounts({
         owner,
         listState,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
       });
 
     const ixs = prependComputeIxs(
@@ -651,7 +651,7 @@ export class TCompSDK {
     const builder = this.program.methods
       .delist(nonce, index, root, [...dataHash], [...creatorsHash])
       .accounts({
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -760,7 +760,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         buyer,
@@ -885,7 +885,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         buyer,
@@ -982,7 +982,7 @@ export class TCompSDK {
       .accounts({
         owner,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         bidState,
         marginAccount: margin ?? owner,
         cosigner: cosigner ?? owner,
@@ -1021,7 +1021,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.cancelBid().accounts({
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       systemProgram: SystemProgram.programId,
@@ -1060,7 +1060,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.closeExpiredBid().accounts({
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -1126,7 +1126,7 @@ export class TCompSDK {
     const builder = this.program.methods
       .closeExpiredListing(nonce, index, root, [...dataHash], [...creatorsHash])
       .accounts({
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -1244,7 +1244,7 @@ export class TCompSDK {
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       merkleTree,
       treeAuthority,
       seller,
@@ -1435,7 +1435,7 @@ export class TCompSDK {
         tokenProgram,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
         mintProof: mintProofPda,
@@ -1563,7 +1563,7 @@ export class TCompSDK {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       cosigner: cosigner ?? seller,
       mintProof: mintProofPda,
@@ -1654,7 +1654,7 @@ export class TCompSDK {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       cosigner: cosigner ?? seller,
       mintProof: mintProofPda,
@@ -1746,7 +1746,7 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
         mintProof: mintProofPda,
@@ -1813,7 +1813,7 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         owner,
         listState,
         payer: payer ?? owner,
@@ -1854,7 +1854,7 @@ export class TCompSDK {
       asset,
       collection,
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       systemProgram: SystemProgram.programId,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
@@ -1918,7 +1918,7 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         buyer,
         payer: payer ?? buyer,
         owner,
@@ -1977,7 +1977,7 @@ export class TCompSDK {
       asset,
       collection,
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       systemProgram: SystemProgram.programId,
       owner,
       listState,

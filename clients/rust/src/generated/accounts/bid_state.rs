@@ -7,6 +7,7 @@
 
 use crate::generated::types::Field;
 use crate::generated::types::Target;
+use crate::hooked::NullableAddress;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -45,17 +46,9 @@ pub struct BidState {
     pub maker_broker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub cosigner: Pubkey,
-    /// owner is the rent payer when this is PublicKey::default
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub rent_payer: Pubkey,
+    pub cosigner: NullableAddress,
+    /// owner is the rent payer when this is `None`
+    pub rent_payer: NullableAddress,
     pub reserved: [u8; 8],
     pub reserved1: [u8; 16],
     pub reserved2: [u8; 32],

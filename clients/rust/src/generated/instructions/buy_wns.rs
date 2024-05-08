@@ -49,6 +49,8 @@ pub struct BuyWns {
     pub wns_distribution_program: solana_program::pubkey::Pubkey,
 
     pub extra_metas: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl BuyWns {
@@ -64,7 +66,7 @@ impl BuyWns {
         args: BuyWnsInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(20 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(21 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.fee_vault,
             false,
@@ -155,6 +157,16 @@ impl BuyWns {
             self.extra_metas,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = BuyWnsInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -211,6 +223,7 @@ pub struct BuyWnsInstructionArgs {
 ///   17. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
 ///   18. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   19. `[]` extra_metas
+///   20. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuyWnsBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -233,6 +246,7 @@ pub struct BuyWnsBuilder {
     wns_program: Option<solana_program::pubkey::Pubkey>,
     wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     max_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -367,6 +381,12 @@ impl BuyWnsBuilder {
         self.extra_metas = Some(extra_metas);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn max_amount(&mut self, max_amount: u64) -> &mut Self {
         self.max_amount = Some(max_amount);
@@ -425,6 +445,7 @@ impl BuyWnsBuilder {
                 solana_program::pubkey!("diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"),
             ),
             extra_metas: self.extra_metas.expect("extra_metas is not set"),
+            cosigner: self.cosigner,
         };
         let args = BuyWnsInstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
@@ -475,6 +496,8 @@ pub struct BuyWnsCpiAccounts<'a, 'b> {
     pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `buy_wns` CPI instruction.
@@ -521,6 +544,8 @@ pub struct BuyWnsCpi<'a, 'b> {
     pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: BuyWnsInstructionArgs,
 }
@@ -553,6 +578,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             wns_program: accounts.wns_program,
             wns_distribution_program: accounts.wns_distribution_program,
             extra_metas: accounts.extra_metas,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -589,7 +615,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(20 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(21 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.fee_vault.key,
             false,
@@ -684,6 +710,17 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             *self.extra_metas.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -700,7 +737,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(20 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(21 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.buyer.clone());
@@ -726,6 +763,9 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
         account_infos.push(self.wns_program.clone());
         account_infos.push(self.wns_distribution_program.clone());
         account_infos.push(self.extra_metas.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -762,6 +802,7 @@ impl<'a, 'b> BuyWnsCpi<'a, 'b> {
 ///   17. `[]` wns_program
 ///   18. `[]` wns_distribution_program
 ///   19. `[]` extra_metas
+///   20. `[signer, optional]` cosigner
 pub struct BuyWnsCpiBuilder<'a, 'b> {
     instruction: Box<BuyWnsCpiBuilderInstruction<'a, 'b>>,
 }
@@ -790,6 +831,7 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
             wns_program: None,
             wns_distribution_program: None,
             extra_metas: None,
+            cosigner: None,
             max_amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -945,6 +987,15 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
         self.instruction.extra_metas = Some(extra_metas);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn max_amount(&mut self, max_amount: u64) -> &mut Self {
         self.instruction.max_amount = Some(max_amount);
@@ -1067,6 +1118,8 @@ impl<'a, 'b> BuyWnsCpiBuilder<'a, 'b> {
                 .instruction
                 .extra_metas
                 .expect("extra_metas is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1098,6 +1151,7 @@ struct BuyWnsCpiBuilderInstruction<'a, 'b> {
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     max_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

@@ -28,6 +28,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -83,6 +84,7 @@ export type BuyWnsInstruction<
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -149,6 +151,10 @@ export type BuyWnsInstruction<
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -216,6 +222,7 @@ export type BuyWnsAsyncInput<
   TAccountWnsProgram extends string = string,
   TAccountWnsDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
@@ -237,6 +244,7 @@ export type BuyWnsAsyncInput<
   wnsProgram?: Address<TAccountWnsProgram>;
   wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
@@ -263,6 +271,7 @@ export async function getBuyWnsInstructionAsync<
   TAccountWnsProgram extends string,
   TAccountWnsDistributionProgram extends string,
   TAccountExtraMetas extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyWnsAsyncInput<
     TAccountFeeVault,
@@ -284,7 +293,8 @@ export async function getBuyWnsInstructionAsync<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
-    TAccountExtraMetas
+    TAccountExtraMetas,
+    TAccountCosigner
   >
 ): Promise<
   BuyWnsInstruction<
@@ -308,7 +318,8 @@ export async function getBuyWnsInstructionAsync<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
-    TAccountExtraMetas
+    TAccountExtraMetas,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -345,6 +356,7 @@ export async function getBuyWnsInstructionAsync<
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -456,6 +468,7 @@ export async function getBuyWnsInstructionAsync<
       getAccountMeta(accounts.wnsProgram),
       getAccountMeta(accounts.wnsDistributionProgram),
       getAccountMeta(accounts.extraMetas),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(
@@ -482,7 +495,8 @@ export async function getBuyWnsInstructionAsync<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
-    TAccountExtraMetas
+    TAccountExtraMetas,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -509,6 +523,7 @@ export type BuyWnsInput<
   TAccountWnsProgram extends string = string,
   TAccountWnsDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
@@ -530,6 +545,7 @@ export type BuyWnsInput<
   wnsProgram?: Address<TAccountWnsProgram>;
   wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
@@ -556,6 +572,7 @@ export function getBuyWnsInstruction<
   TAccountWnsProgram extends string,
   TAccountWnsDistributionProgram extends string,
   TAccountExtraMetas extends string,
+  TAccountCosigner extends string,
 >(
   input: BuyWnsInput<
     TAccountFeeVault,
@@ -577,7 +594,8 @@ export function getBuyWnsInstruction<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
-    TAccountExtraMetas
+    TAccountExtraMetas,
+    TAccountCosigner
   >
 ): BuyWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -600,7 +618,8 @@ export function getBuyWnsInstruction<
   TAccountDistribution,
   TAccountWnsProgram,
   TAccountWnsDistributionProgram,
-  TAccountExtraMetas
+  TAccountExtraMetas,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -636,6 +655,7 @@ export function getBuyWnsInstruction<
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -706,6 +726,7 @@ export function getBuyWnsInstruction<
       getAccountMeta(accounts.wnsProgram),
       getAccountMeta(accounts.wnsDistributionProgram),
       getAccountMeta(accounts.extraMetas),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(
@@ -732,7 +753,8 @@ export function getBuyWnsInstruction<
     TAccountDistribution,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
-    TAccountExtraMetas
+    TAccountExtraMetas,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -764,6 +786,7 @@ export type ParsedBuyWnsInstruction<
     wnsProgram: TAccountMetas[17];
     wnsDistributionProgram: TAccountMetas[18];
     extraMetas: TAccountMetas[19];
+    cosigner?: TAccountMetas[20] | undefined;
   };
   data: BuyWnsInstructionData;
 };
@@ -776,7 +799,7 @@ export function parseBuyWnsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyWnsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 20) {
+  if (instruction.accounts.length < 21) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -815,6 +838,7 @@ export function parseBuyWnsInstruction<
       wnsProgram: getNextAccount(),
       wnsDistributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getBuyWnsInstructionDataDecoder().decode(instruction.data),
   };
