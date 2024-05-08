@@ -193,7 +193,7 @@ export type TakeBidCoreInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   escrowProgram: Address<TAccountEscrowProgram>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
   rentDest: Address<TAccountRentDest>;
@@ -375,7 +375,7 @@ export type ParsedTakeBidCoreInstruction<
     systemProgram: TAccountMetas[11];
     marketplaceProgram: TAccountMetas[12];
     escrowProgram: TAccountMetas[13];
-    cosigner: TAccountMetas[14];
+    cosigner?: TAccountMetas[14] | undefined;
     /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
     mintProof: TAccountMetas[15];
     rentDest: TAccountMetas[16];
@@ -424,7 +424,7 @@ export function parseTakeBidCoreInstruction<
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       escrowProgram: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       mintProof: getNextAccount(),
       rentDest: getNextAccount(),
     },

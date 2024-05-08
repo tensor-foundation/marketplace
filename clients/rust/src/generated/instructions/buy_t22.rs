@@ -32,8 +32,6 @@ pub struct BuyT22 {
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<solana_program::pubkey::Pubkey>,
-
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -41,6 +39,8 @@ pub struct BuyT22 {
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl BuyT22 {
@@ -111,16 +111,6 @@ impl BuyT22 {
             self.rent_destination,
             false,
         ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
@@ -137,6 +127,16 @@ impl BuyT22 {
             self.system_program,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = BuyT22InstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -184,11 +184,11 @@ pub struct BuyT22InstructionArgs {
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
-///   11. `[signer, optional]` cosigner
-///   12. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   13. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   15. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   13. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   15. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuyT22Builder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -202,11 +202,11 @@ pub struct BuyT22Builder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     max_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -281,12 +281,6 @@ impl BuyT22Builder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.cosigner = cosigner;
-        self
-    }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -315,6 +309,12 @@ impl BuyT22Builder {
     #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -354,7 +354,6 @@ impl BuyT22Builder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
-            cosigner: self.cosigner,
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -367,6 +366,7 @@ impl BuyT22Builder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            cosigner: self.cosigner,
         };
         let args = BuyT22InstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
@@ -400,8 +400,6 @@ pub struct BuyT22CpiAccounts<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -409,6 +407,8 @@ pub struct BuyT22CpiAccounts<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `buy_t22` CPI instruction.
@@ -438,8 +438,6 @@ pub struct BuyT22Cpi<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -447,6 +445,8 @@ pub struct BuyT22Cpi<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: BuyT22InstructionArgs,
 }
@@ -470,11 +470,11 @@ impl<'a, 'b> BuyT22Cpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_destination: accounts.rent_destination,
-            cosigner: accounts.cosigner,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -570,17 +570,6 @@ impl<'a, 'b> BuyT22Cpi<'a, 'b> {
             *self.rent_destination.key,
             false,
         ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *cosigner.key,
-                true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
@@ -597,6 +586,17 @@ impl<'a, 'b> BuyT22Cpi<'a, 'b> {
             *self.system_program.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -630,13 +630,13 @@ impl<'a, 'b> BuyT22Cpi<'a, 'b> {
             account_infos.push(maker_broker.clone());
         }
         account_infos.push(self.rent_destination.clone());
-        if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.clone());
-        }
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -664,11 +664,11 @@ impl<'a, 'b> BuyT22Cpi<'a, 'b> {
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
-///   11. `[signer, optional]` cosigner
-///   12. `[]` token_program
-///   13. `[]` associated_token_program
-///   14. `[]` marketplace_program
-///   15. `[]` system_program
+///   11. `[]` token_program
+///   12. `[]` associated_token_program
+///   13. `[]` marketplace_program
+///   14. `[]` system_program
+///   15. `[signer, optional]` cosigner
 pub struct BuyT22CpiBuilder<'a, 'b> {
     instruction: Box<BuyT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -688,11 +688,11 @@ impl<'a, 'b> BuyT22CpiBuilder<'a, 'b> {
             taker_broker: None,
             maker_broker: None,
             rent_destination: None,
-            cosigner: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
             system_program: None,
+            cosigner: None,
             max_amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -776,15 +776,6 @@ impl<'a, 'b> BuyT22CpiBuilder<'a, 'b> {
         self.instruction.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn cosigner(
-        &mut self,
-        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.cosigner = cosigner;
-        self
-    }
     #[inline(always)]
     pub fn token_program(
         &mut self,
@@ -815,6 +806,15 @@ impl<'a, 'b> BuyT22CpiBuilder<'a, 'b> {
         system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -898,8 +898,6 @@ impl<'a, 'b> BuyT22CpiBuilder<'a, 'b> {
                 .rent_destination
                 .expect("rent_destination is not set"),
 
-            cosigner: self.instruction.cosigner,
-
             token_program: self
                 .instruction
                 .token_program
@@ -919,6 +917,8 @@ impl<'a, 'b> BuyT22CpiBuilder<'a, 'b> {
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -941,11 +941,11 @@ struct BuyT22CpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     max_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

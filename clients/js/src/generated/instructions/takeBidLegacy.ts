@@ -306,7 +306,7 @@ export type TakeBidLegacyInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
   rentDest: Address<TAccountRentDest>;
@@ -606,7 +606,7 @@ export type ParsedTakeBidLegacyInstruction<
     systemProgram: TAccountMetas[23];
     marketplaceProgram: TAccountMetas[24];
     tensorswapProgram: TAccountMetas[25];
-    cosigner: TAccountMetas[26];
+    cosigner?: TAccountMetas[26] | undefined;
     /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
     mintProof: TAccountMetas[27];
     rentDest: TAccountMetas[28];
@@ -667,7 +667,7 @@ export function parseTakeBidLegacyInstruction<
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       tensorswapProgram: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       mintProof: getNextAccount(),
       rentDest: getNextAccount(),
     },

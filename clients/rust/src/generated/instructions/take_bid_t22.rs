@@ -42,7 +42,7 @@ pub struct TakeBidT22 {
 
     pub tensorswap_program: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: solana_program::pubkey::Pubkey,
 
@@ -139,10 +139,16 @@ impl TakeBidT22 {
             self.tensorswap_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint_proof,
             false,
@@ -203,7 +209,7 @@ pub struct TakeBidT22InstructionArgs {
 ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   15. `[]` tensorswap_program
-///   16. `[signer]` cosigner
+///   16. `[signer, optional]` cosigner
 ///   17. `[]` mint_proof
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
@@ -336,9 +342,10 @@ impl TakeBidT22Builder {
         self.tensorswap_program = Some(tensorswap_program);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -404,7 +411,7 @@ impl TakeBidT22Builder {
             tensorswap_program: self
                 .tensorswap_program
                 .expect("tensorswap_program is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
+            cosigner: self.cosigner,
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
@@ -450,7 +457,7 @@ pub struct TakeBidT22CpiAccounts<'a, 'b> {
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -494,7 +501,7 @@ pub struct TakeBidT22Cpi<'a, 'b> {
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -645,10 +652,17 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             *self.tensorswap_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint_proof.key,
             false,
@@ -695,7 +709,9 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
         account_infos.push(self.system_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tensorswap_program.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.mint_proof.clone());
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
@@ -730,7 +746,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
 ///   13. `[]` system_program
 ///   14. `[]` marketplace_program
 ///   15. `[]` tensorswap_program
-///   16. `[signer]` cosigner
+///   16. `[signer, optional]` cosigner
 ///   17. `[]` mint_proof
 ///   18. `[writable]` rent_dest
 pub struct TakeBidT22CpiBuilder<'a, 'b> {
@@ -889,12 +905,13 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         self.instruction.tensorswap_program = Some(tensorswap_program);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -1026,7 +1043,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
                 .tensorswap_program
                 .expect("tensorswap_program is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             mint_proof: self.instruction.mint_proof.expect("mint_proof is not set"),
 

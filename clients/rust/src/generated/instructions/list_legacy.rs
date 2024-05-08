@@ -24,8 +24,6 @@ pub struct ListLegacy {
 
     pub payer: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<solana_program::pubkey::Pubkey>,
-
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -49,6 +47,8 @@ pub struct ListLegacy {
     pub token_metadata_program: solana_program::pubkey::Pubkey,
 
     pub sysvar_instructions: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ListLegacy {
@@ -86,16 +86,6 @@ impl ListLegacy {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
@@ -172,6 +162,16 @@ impl ListLegacy {
             self.sysvar_instructions,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ListLegacyInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -219,19 +219,19 @@ pub struct ListLegacyInstructionArgs {
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
-///   6. `[signer, optional]` cosigner
-///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   11. `[writable]` metadata
-///   12. `[]` edition
-///   13. `[writable, optional]` owner_token_record
-///   14. `[writable, optional]` list_token_record
-///   15. `[optional]` authorization_rules
-///   16. `[optional]` authorization_rules_program
-///   17. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
-///   18. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
+///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[writable]` metadata
+///   11. `[]` edition
+///   12. `[writable, optional]` owner_token_record
+///   13. `[writable, optional]` list_token_record
+///   14. `[optional]` authorization_rules
+///   15. `[optional]` authorization_rules_program
+///   16. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
+///   17. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
+///   18. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct ListLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -240,7 +240,6 @@ pub struct ListLegacyBuilder {
     list_ata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -253,6 +252,7 @@ pub struct ListLegacyBuilder {
     authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
     token_metadata_program: Option<solana_program::pubkey::Pubkey>,
     sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -294,12 +294,6 @@ impl ListLegacyBuilder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
-        self
-    }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.cosigner = cosigner;
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -396,6 +390,12 @@ impl ListLegacyBuilder {
         self.sysvar_instructions = Some(sysvar_instructions);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.amount = Some(amount);
@@ -459,7 +459,6 @@ impl ListLegacyBuilder {
                 list_ata: self.list_ata.expect("list_ata is not set"),
                 mint: self.mint.expect("mint is not set"),
                 payer: self.payer.expect("payer is not set"),
-                cosigner: self.cosigner,
                 token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
                 )),
@@ -484,6 +483,7 @@ impl ListLegacyBuilder {
                 sysvar_instructions: self.sysvar_instructions.unwrap_or(solana_program::pubkey!(
                     "Sysvar1nstructions1111111111111111111111111"
                 )),
+                cosigner: self.cosigner,
             };
         let args = ListLegacyInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -512,8 +512,6 @@ pub struct ListLegacyCpiAccounts<'a, 'b> {
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -537,6 +535,8 @@ pub struct ListLegacyCpiAccounts<'a, 'b> {
     pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list_legacy` CPI instruction.
@@ -556,8 +556,6 @@ pub struct ListLegacyCpi<'a, 'b> {
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -581,6 +579,8 @@ pub struct ListLegacyCpi<'a, 'b> {
     pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListLegacyInstructionArgs,
 }
@@ -599,7 +599,6 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             list_ata: accounts.list_ata,
             mint: accounts.mint,
             payer: accounts.payer,
-            cosigner: accounts.cosigner,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
@@ -612,6 +611,7 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             authorization_rules_program: accounts.authorization_rules_program,
             token_metadata_program: accounts.token_metadata_program,
             sysvar_instructions: accounts.sysvar_instructions,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -673,17 +673,6 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             *self.payer.key,
             true,
         ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *cosigner.key,
-                true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
@@ -760,6 +749,17 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
             *self.sysvar_instructions.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -784,9 +784,6 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
         account_infos.push(self.list_ata.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.payer.clone());
-        if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.clone());
-        }
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -807,6 +804,9 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
         }
         account_infos.push(self.token_metadata_program.clone());
         account_infos.push(self.sysvar_instructions.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -829,19 +829,19 @@ impl<'a, 'b> ListLegacyCpi<'a, 'b> {
 ///   3. `[writable]` list_ata
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
-///   6. `[signer, optional]` cosigner
-///   7. `[]` token_program
-///   8. `[]` associated_token_program
-///   9. `[]` marketplace_program
-///   10. `[]` system_program
-///   11. `[writable]` metadata
-///   12. `[]` edition
-///   13. `[writable, optional]` owner_token_record
-///   14. `[writable, optional]` list_token_record
-///   15. `[optional]` authorization_rules
-///   16. `[optional]` authorization_rules_program
-///   17. `[]` token_metadata_program
-///   18. `[]` sysvar_instructions
+///   6. `[]` token_program
+///   7. `[]` associated_token_program
+///   8. `[]` marketplace_program
+///   9. `[]` system_program
+///   10. `[writable]` metadata
+///   11. `[]` edition
+///   12. `[writable, optional]` owner_token_record
+///   13. `[writable, optional]` list_token_record
+///   14. `[optional]` authorization_rules
+///   15. `[optional]` authorization_rules_program
+///   16. `[]` token_metadata_program
+///   17. `[]` sysvar_instructions
+///   18. `[signer, optional]` cosigner
 pub struct ListLegacyCpiBuilder<'a, 'b> {
     instruction: Box<ListLegacyCpiBuilderInstruction<'a, 'b>>,
 }
@@ -856,7 +856,6 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
             list_ata: None,
             mint: None,
             payer: None,
-            cosigner: None,
             token_program: None,
             associated_token_program: None,
             marketplace_program: None,
@@ -869,6 +868,7 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
             authorization_rules_program: None,
             token_metadata_program: None,
             sysvar_instructions: None,
+            cosigner: None,
             amount: None,
             expire_in_sec: None,
             currency: None,
@@ -916,15 +916,6 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
-        self
-    }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn cosigner(
-        &mut self,
-        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1027,6 +1018,15 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
         self.instruction.sysvar_instructions = Some(sysvar_instructions);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.instruction.amount = Some(amount);
@@ -1126,8 +1126,6 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
-            cosigner: self.instruction.cosigner,
-
             token_program: self
                 .instruction
                 .token_program
@@ -1169,6 +1167,8 @@ impl<'a, 'b> ListLegacyCpiBuilder<'a, 'b> {
                 .instruction
                 .sysvar_instructions
                 .expect("sysvar_instructions is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1186,7 +1186,6 @@ struct ListLegacyCpiBuilderInstruction<'a, 'b> {
     list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1199,6 +1198,7 @@ struct ListLegacyCpiBuilderInstruction<'a, 'b> {
     authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,

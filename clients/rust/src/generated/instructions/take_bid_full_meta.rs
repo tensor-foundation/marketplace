@@ -48,7 +48,7 @@ pub struct TakeBidFullMeta {
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
@@ -147,10 +147,16 @@ impl TakeBidFullMeta {
             self.whitelist,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_dest,
             false,
@@ -225,7 +231,7 @@ pub struct TakeBidFullMetaInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidFullMetaBuilder {
@@ -380,9 +386,10 @@ impl TakeBidFullMetaBuilder {
         self.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -536,7 +543,7 @@ impl TakeBidFullMetaBuilder {
             maker_broker: self.maker_broker,
             margin_account: self.margin_account.expect("margin_account is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
+            cosigner: self.cosigner,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = TakeBidFullMetaInstructionArgs {
@@ -615,7 +622,7 @@ pub struct TakeBidFullMetaCpiAccounts<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -659,7 +666,7 @@ pub struct TakeBidFullMetaCpi<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -812,10 +819,17 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
             *self.whitelist.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_dest.key,
             false,
@@ -859,7 +873,9 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
         }
         account_infos.push(self.margin_account.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
@@ -894,7 +910,7 @@ impl<'a, 'b> TakeBidFullMetaCpi<'a, 'b> {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 pub struct TakeBidFullMetaCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidFullMetaCpiBuilderInstruction<'a, 'b>>,
@@ -1077,12 +1093,13 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
         self.instruction.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1344,7 +1361,7 @@ impl<'a, 'b> TakeBidFullMetaCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,

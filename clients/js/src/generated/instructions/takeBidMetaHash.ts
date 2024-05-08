@@ -250,7 +250,7 @@ export type TakeBidMetaHashInput<
   makerBroker?: Address<TAccountMakerBroker>;
   marginAccount: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   rentDest: Address<TAccountRentDest>;
   nonce: TakeBidMetaHashInstructionDataArgs['nonce'];
   index: TakeBidMetaHashInstructionDataArgs['index'];
@@ -458,7 +458,7 @@ export type ParsedTakeBidMetaHashInstruction<
     makerBroker?: TAccountMetas[14] | undefined;
     marginAccount: TAccountMetas[15];
     whitelist: TAccountMetas[16];
-    cosigner: TAccountMetas[17];
+    cosigner?: TAccountMetas[17] | undefined;
     rentDest: TAccountMetas[18];
   };
   data: TakeBidMetaHashInstructionData;
@@ -508,7 +508,7 @@ export function parseTakeBidMetaHashInstruction<
       makerBroker: getNextOptionalAccount(),
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       rentDest: getNextAccount(),
     },
     data: getTakeBidMetaHashInstructionDataDecoder().decode(instruction.data),

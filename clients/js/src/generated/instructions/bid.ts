@@ -200,7 +200,7 @@ export type BidInput<
   bidState: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
   marginAccount: Address<TAccountMarginAccount>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   bidId: BidInstructionDataArgs['bidId'];
   target: BidInstructionDataArgs['target'];
@@ -315,7 +315,7 @@ export type ParsedBidInstruction<
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
     marginAccount: TAccountMetas[4];
-    cosigner: TAccountMetas[5];
+    cosigner?: TAccountMetas[5] | undefined;
     rentPayer: TAccountMetas[6];
   };
   data: BidInstructionData;
@@ -339,6 +339,12 @@ export function parseBidInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -347,7 +353,7 @@ export function parseBidInstruction<
       bidState: getNextAccount(),
       owner: getNextAccount(),
       marginAccount: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       rentPayer: getNextAccount(),
     },
     data: getBidInstructionDataDecoder().decode(instruction.data),

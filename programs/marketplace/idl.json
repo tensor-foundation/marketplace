@@ -181,7 +181,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "rentPayer",
@@ -1049,7 +1050,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "rentDest",
@@ -1203,7 +1205,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "rentDest",
@@ -1308,12 +1311,6 @@
           "isSigner": false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1376,6 +1373,12 @@
           "name": "sysvarInstructions",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1661,12 +1664,6 @@
           "isSigner": true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1729,6 +1726,12 @@
           "name": "sysvarInstructions",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1916,7 +1919,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "mintProof",
@@ -2018,12 +2022,6 @@
           "isSigner": false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2042,6 +2040,12 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -2207,12 +2211,6 @@
           "isSigner": true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2231,6 +2229,12 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -2352,7 +2356,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "mintProof",
@@ -2436,12 +2441,6 @@
           "isSigner": false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2485,6 +2484,12 @@
           "name": "extraMetas",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -2700,12 +2705,6 @@
           "isSigner": true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2749,6 +2748,12 @@
           "name": "extraMetas",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -2870,7 +2875,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "mintProof",
@@ -2975,12 +2981,6 @@
           "isSigner": false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -2994,6 +2994,12 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -3122,17 +3128,6 @@
           "isSigner": true
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -3146,6 +3141,17 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -3258,7 +3264,8 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "isOptional": true
         },
         {
           "name": "mintProof",
@@ -3464,14 +3471,18 @@
           },
           {
             "name": "cosigner",
-            "type": "publicKey"
+            "type": {
+              "defined": "NullableOption<Pubkey>"
+            }
           },
           {
             "name": "rentPayer",
             "docs": [
-              "owner is the rent payer when this is PublicKey::default"
+              "owner is the rent payer when this is `None`"
             ],
-            "type": "publicKey"
+            "type": {
+              "defined": "NullableOption<Pubkey>"
+            }
           },
           {
             "name": "reserved",

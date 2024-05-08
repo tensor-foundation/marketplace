@@ -207,7 +207,7 @@ export type TakeBidT22Input<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   tensorswapProgram: Address<TAccountTensorswapProgram>;
-  cosigner: TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
   rentDest: Address<TAccountRentDest>;
@@ -413,7 +413,7 @@ export type ParsedTakeBidT22Instruction<
     systemProgram: TAccountMetas[13];
     marketplaceProgram: TAccountMetas[14];
     tensorswapProgram: TAccountMetas[15];
-    cosigner: TAccountMetas[16];
+    cosigner?: TAccountMetas[16] | undefined;
     /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
     mintProof: TAccountMetas[17];
     rentDest: TAccountMetas[18];
@@ -464,7 +464,7 @@ export function parseTakeBidT22Instruction<
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       tensorswapProgram: getNextAccount(),
-      cosigner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
       mintProof: getNextAccount(),
       rentDest: getNextAccount(),
     },

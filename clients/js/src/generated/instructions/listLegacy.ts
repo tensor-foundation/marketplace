@@ -75,7 +75,6 @@ export type ListLegacyInstruction<
   TAccountListAta extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -102,6 +101,7 @@ export type ListLegacyInstruction<
   TAccountSysvarInstructions extends
     | string
     | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -127,10 +127,6 @@ export type ListLegacyInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
-        : TAccountCosigner,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -167,6 +163,10 @@ export type ListLegacyInstruction<
       TAccountSysvarInstructions extends string
         ? ReadonlyAccount<TAccountSysvarInstructions>
         : TAccountSysvarInstructions,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -249,7 +249,6 @@ export type ListLegacyAsyncInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
-  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -262,6 +261,7 @@ export type ListLegacyAsyncInput<
   TAccountAuthorizationRulesProgram extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
   ownerAta?: Address<TAccountOwnerAta>;
@@ -269,7 +269,6 @@ export type ListLegacyAsyncInput<
   listAta?: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -282,6 +281,7 @@ export type ListLegacyAsyncInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListLegacyInstructionDataArgs['amount'];
   expireInSec?: ListLegacyInstructionDataArgs['expireInSec'];
   currency?: ListLegacyInstructionDataArgs['currency'];
@@ -298,7 +298,6 @@ export async function getListLegacyInstructionAsync<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
-  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -311,6 +310,7 @@ export async function getListLegacyInstructionAsync<
   TAccountAuthorizationRulesProgram extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
+  TAccountCosigner extends string,
 >(
   input: ListLegacyAsyncInput<
     TAccountOwner,
@@ -319,7 +319,6 @@ export async function getListLegacyInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
-    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -331,7 +330,8 @@ export async function getListLegacyInstructionAsync<
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
-    TAccountSysvarInstructions
+    TAccountSysvarInstructions,
+    TAccountCosigner
   >
 ): Promise<
   ListLegacyInstruction<
@@ -342,7 +342,6 @@ export async function getListLegacyInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
-    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -354,7 +353,8 @@ export async function getListLegacyInstructionAsync<
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
-    TAccountSysvarInstructions
+    TAccountSysvarInstructions,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -368,7 +368,6 @@ export async function getListLegacyInstructionAsync<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
-    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -402,6 +401,7 @@ export async function getListLegacyInstructionAsync<
       value: input.sysvarInstructions ?? null,
       isWritable: false,
     },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -502,7 +502,6 @@ export async function getListLegacyInstructionAsync<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -515,6 +514,7 @@ export async function getListLegacyInstructionAsync<
       getAccountMeta(accounts.authorizationRulesProgram),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getListLegacyInstructionDataEncoder().encode(
@@ -528,7 +528,6 @@ export async function getListLegacyInstructionAsync<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
-    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -540,7 +539,8 @@ export async function getListLegacyInstructionAsync<
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
-    TAccountSysvarInstructions
+    TAccountSysvarInstructions,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -553,7 +553,6 @@ export type ListLegacyInput<
   TAccountListAta extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
-  TAccountCosigner extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -566,6 +565,7 @@ export type ListLegacyInput<
   TAccountAuthorizationRulesProgram extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
   ownerAta: Address<TAccountOwnerAta>;
@@ -573,7 +573,6 @@ export type ListLegacyInput<
   listAta: Address<TAccountListAta>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -586,6 +585,7 @@ export type ListLegacyInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListLegacyInstructionDataArgs['amount'];
   expireInSec?: ListLegacyInstructionDataArgs['expireInSec'];
   currency?: ListLegacyInstructionDataArgs['currency'];
@@ -602,7 +602,6 @@ export function getListLegacyInstruction<
   TAccountListAta extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
-  TAccountCosigner extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -615,6 +614,7 @@ export function getListLegacyInstruction<
   TAccountAuthorizationRulesProgram extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
+  TAccountCosigner extends string,
 >(
   input: ListLegacyInput<
     TAccountOwner,
@@ -623,7 +623,6 @@ export function getListLegacyInstruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
-    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -635,7 +634,8 @@ export function getListLegacyInstruction<
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
-    TAccountSysvarInstructions
+    TAccountSysvarInstructions,
+    TAccountCosigner
   >
 ): ListLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -645,7 +645,6 @@ export function getListLegacyInstruction<
   TAccountListAta,
   TAccountMint,
   TAccountPayer,
-  TAccountCosigner,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -657,7 +656,8 @@ export function getListLegacyInstruction<
   TAccountAuthorizationRules,
   TAccountAuthorizationRulesProgram,
   TAccountTokenMetadataProgram,
-  TAccountSysvarInstructions
+  TAccountSysvarInstructions,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -670,7 +670,6 @@ export function getListLegacyInstruction<
     listAta: { value: input.listAta ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
-    cosigner: { value: input.cosigner ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -704,6 +703,7 @@ export function getListLegacyInstruction<
       value: input.sysvarInstructions ?? null,
       isWritable: false,
     },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -760,7 +760,6 @@ export function getListLegacyInstruction<
       getAccountMeta(accounts.listAta),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -773,6 +772,7 @@ export function getListLegacyInstruction<
       getAccountMeta(accounts.authorizationRulesProgram),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
+      getAccountMeta(accounts.cosigner),
     ],
     programAddress,
     data: getListLegacyInstructionDataEncoder().encode(
@@ -786,7 +786,6 @@ export function getListLegacyInstruction<
     TAccountListAta,
     TAccountMint,
     TAccountPayer,
-    TAccountCosigner,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -798,7 +797,8 @@ export function getListLegacyInstruction<
     TAccountAuthorizationRules,
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
-    TAccountSysvarInstructions
+    TAccountSysvarInstructions,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -816,19 +816,19 @@ export type ParsedListLegacyInstruction<
     listAta: TAccountMetas[3];
     mint: TAccountMetas[4];
     payer: TAccountMetas[5];
-    cosigner?: TAccountMetas[6] | undefined;
-    tokenProgram: TAccountMetas[7];
-    associatedTokenProgram: TAccountMetas[8];
-    marketplaceProgram: TAccountMetas[9];
-    systemProgram: TAccountMetas[10];
-    metadata: TAccountMetas[11];
-    edition: TAccountMetas[12];
-    ownerTokenRecord?: TAccountMetas[13] | undefined;
-    listTokenRecord?: TAccountMetas[14] | undefined;
-    authorizationRules?: TAccountMetas[15] | undefined;
-    authorizationRulesProgram?: TAccountMetas[16] | undefined;
-    tokenMetadataProgram: TAccountMetas[17];
-    sysvarInstructions: TAccountMetas[18];
+    tokenProgram: TAccountMetas[6];
+    associatedTokenProgram: TAccountMetas[7];
+    marketplaceProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
+    metadata: TAccountMetas[10];
+    edition: TAccountMetas[11];
+    ownerTokenRecord?: TAccountMetas[12] | undefined;
+    listTokenRecord?: TAccountMetas[13] | undefined;
+    authorizationRules?: TAccountMetas[14] | undefined;
+    authorizationRulesProgram?: TAccountMetas[15] | undefined;
+    tokenMetadataProgram: TAccountMetas[16];
+    sysvarInstructions: TAccountMetas[17];
+    cosigner?: TAccountMetas[18] | undefined;
   };
   data: ListLegacyInstructionData;
 };
@@ -866,7 +866,6 @@ export function parseListLegacyInstruction<
       listAta: getNextAccount(),
       mint: getNextAccount(),
       payer: getNextAccount(),
-      cosigner: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
@@ -879,6 +878,7 @@ export function parseListLegacyInstruction<
       authorizationRulesProgram: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
       sysvarInstructions: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getListLegacyInstructionDataDecoder().decode(instruction.data),
   };

@@ -23,7 +23,7 @@ pub struct Bid {
 
     pub margin_account: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_payer: solana_program::pubkey::Pubkey,
 }
@@ -61,10 +61,16 @@ impl Bid {
             self.margin_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_payer,
             true,
@@ -120,7 +126,7 @@ pub struct BidInstructionArgs {
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
 ///   4. `[writable]` margin_account
-///   5. `[signer]` cosigner
+///   5. `[signer, optional]` cosigner
 ///   6. `[writable, signer]` rent_payer
 #[derive(Default)]
 pub struct BidBuilder {
@@ -179,9 +185,10 @@ impl BidBuilder {
         self.margin_account = Some(margin_account);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -280,7 +287,7 @@ impl BidBuilder {
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
             margin_account: self.margin_account.expect("margin_account is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
+            cosigner: self.cosigner,
             rent_payer: self.rent_payer.expect("rent_payer is not set"),
         };
         let args = BidInstructionArgs {
@@ -313,7 +320,7 @@ pub struct BidCpiAccounts<'a, 'b> {
 
     pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -333,7 +340,7 @@ pub struct BidCpi<'a, 'b> {
 
     pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -412,10 +419,17 @@ impl<'a, 'b> BidCpi<'a, 'b> {
             *self.margin_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_payer.key,
             true,
@@ -443,7 +457,9 @@ impl<'a, 'b> BidCpi<'a, 'b> {
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.margin_account.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.rent_payer.clone());
         remaining_accounts
             .iter()
@@ -466,7 +482,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
 ///   4. `[writable]` margin_account
-///   5. `[signer]` cosigner
+///   5. `[signer, optional]` cosigner
 ///   6. `[writable, signer]` rent_payer
 pub struct BidCpiBuilder<'a, 'b> {
     instruction: Box<BidCpiBuilderInstruction<'a, 'b>>,
@@ -535,12 +551,13 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
         self.instruction.margin_account = Some(margin_account);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -696,7 +713,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
                 .margin_account
                 .expect("margin_account is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             rent_payer: self.instruction.rent_payer.expect("rent_payer is not set"),
             __args: args,
