@@ -811,11 +811,6 @@ export type Tcomp = {
           "isSigner": true
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -829,6 +824,11 @@ export type Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "cosigner",
@@ -3783,11 +3783,6 @@ export const IDL: Tcomp = {
           "isSigner": true
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "mplCoreProgram",
           "isMut": false,
           "isSigner": false
@@ -3801,6 +3796,11 @@ export const IDL: Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "cosigner",
