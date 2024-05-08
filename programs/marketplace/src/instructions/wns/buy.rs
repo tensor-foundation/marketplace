@@ -79,9 +79,6 @@ pub struct BuyWns<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -107,6 +104,9 @@ pub struct BuyWns<'info> {
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
 }
 
 impl<'info> Validate<'info> for BuyWns<'info> {

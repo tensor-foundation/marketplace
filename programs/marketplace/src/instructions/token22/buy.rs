@@ -75,9 +75,6 @@ pub struct BuyT22<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -85,6 +82,9 @@ pub struct BuyT22<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
 }
 
 impl<'info> Validate<'info> for BuyT22<'info> {

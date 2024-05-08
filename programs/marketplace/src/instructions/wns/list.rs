@@ -52,8 +52,6 @@ pub struct ListWns<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -79,6 +77,8 @@ pub struct ListWns<'info> {
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_wns<'info>(

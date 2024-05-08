@@ -30,17 +30,17 @@ pub struct ListCore<'info> {
     /// CHECK: the token transfer will fail if owner is wrong (signature error)
     pub owner: Signer<'info>,
 
-    //separate payer so that a program can list with owner being a PDA
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
-    pub cosigner: Option<Signer<'info>>,
-
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    //separate payer so that a program can list with owner being a PDA
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_core<'info>(

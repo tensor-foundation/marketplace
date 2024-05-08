@@ -45,8 +45,6 @@ pub struct ListT22<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -54,6 +52,8 @@ pub struct ListT22<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_t22<'info>(

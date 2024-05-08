@@ -54,8 +54,6 @@ pub struct ListLegacy<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -103,6 +101,8 @@ pub struct ListLegacy<'info> {
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: UncheckedAccount<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_legacy<'info>(

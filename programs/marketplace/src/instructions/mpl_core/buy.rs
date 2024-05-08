@@ -61,14 +61,14 @@ pub struct BuyCore<'info> {
     )]
     pub rent_dest: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
-
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
 }

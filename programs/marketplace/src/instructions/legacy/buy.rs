@@ -80,9 +80,6 @@ pub struct BuyLegacy<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
-
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -130,6 +127,9 @@ pub struct BuyLegacy<'info> {
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: UncheckedAccount<'info>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
     //
