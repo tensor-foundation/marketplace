@@ -51,7 +51,7 @@ import {
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
 } from '../../hooked';
-import { findFeeVaultPda, findListStatePda } from '../pdas';
+import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
@@ -272,7 +272,7 @@ export type BuyLegacyAsyncInput<
   TAccountSysvarInstructions extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault?: Address<TAccountFeeVault>;
+  feeVault: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
   buyerAta?: Address<TAccountBuyerAta>;
   listAta?: Address<TAccountListAta>;
@@ -447,9 +447,6 @@ export async function getBuyLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
-  if (!accounts.feeVault.value) {
-    accounts.feeVault.value = await findFeeVaultPda();
-  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
