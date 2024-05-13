@@ -51,8 +51,8 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BuySplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
-  TAccountTcompAta extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
+  TAccountFeeVaultAta extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends string | IAccountMeta<string> = string,
@@ -89,12 +89,12 @@ export type BuySplInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
-      TAccountTcompAta extends string
-        ? WritableAccount<TAccountTcompAta>
-        : TAccountTcompAta,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
+      TAccountFeeVaultAta extends string
+        ? WritableAccount<TAccountFeeVaultAta>
+        : TAccountFeeVaultAta,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -244,8 +244,8 @@ export function getBuySplInstructionDataCodec(): Codec<
 }
 
 export type BuySplInput<
-  TAccountTcomp extends string = string,
-  TAccountTcompAta extends string = string,
+  TAccountFeeVault extends string = string,
+  TAccountFeeVaultAta extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -270,8 +270,8 @@ export type BuySplInput<
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
-  tcompAta: Address<TAccountTcompAta>;
+  feeVault: Address<TAccountFeeVault>;
+  feeVaultAta: Address<TAccountFeeVaultAta>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper: Address<TAccountLogWrapper>;
@@ -307,8 +307,8 @@ export type BuySplInput<
 };
 
 export function getBuySplInstruction<
-  TAccountTcomp extends string,
-  TAccountTcompAta extends string,
+  TAccountFeeVault extends string,
+  TAccountFeeVaultAta extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -334,8 +334,8 @@ export function getBuySplInstruction<
   TAccountCosigner extends string,
 >(
   input: BuySplInput<
-    TAccountTcomp,
-    TAccountTcompAta,
+    TAccountFeeVault,
+    TAccountFeeVaultAta,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -362,8 +362,8 @@ export function getBuySplInstruction<
   >
 ): BuySplInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
-  TAccountTcompAta,
+  TAccountFeeVault,
+  TAccountFeeVaultAta,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -393,8 +393,8 @@ export function getBuySplInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
-    tcompAta: { value: input.tcompAta ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -460,8 +460,8 @@ export function getBuySplInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
-      getAccountMeta(accounts.tcompAta),
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.feeVaultAta),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -492,8 +492,8 @@ export function getBuySplInstruction<
     ),
   } as BuySplInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
-    TAccountTcompAta,
+    TAccountFeeVault,
+    TAccountFeeVaultAta,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -528,8 +528,8 @@ export type ParsedBuySplInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
-    tcompAta: TAccountMetas[1];
+    feeVault: TAccountMetas[0];
+    feeVaultAta: TAccountMetas[1];
     treeAuthority: TAccountMetas[2];
     merkleTree: TAccountMetas[3];
     logWrapper: TAccountMetas[4];
@@ -584,8 +584,8 @@ export function parseBuySplInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
-      tcompAta: getNextAccount(),
+      feeVault: getNextAccount(),
+      feeVaultAta: getNextAccount(),
       treeAuthority: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),

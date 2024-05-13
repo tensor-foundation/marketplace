@@ -319,7 +319,7 @@
       "name": "buy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -459,12 +459,12 @@
       "name": "buySpl",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "tcompAta",
+          "name": "feeVaultAta",
           "isMut": true,
           "isSigner": false
         },
@@ -961,7 +961,7 @@
       "name": "takeBidMetaHash",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1116,7 +1116,7 @@
       "name": "takeBidFullMeta",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1777,7 +1777,7 @@
       "name": "takeBidLegacy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -2272,7 +2272,7 @@
       "name": "takeBidT22",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -2791,7 +2791,7 @@
       "name": "takeBidWns",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -2928,7 +2928,7 @@
       "name": "buyCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -3189,7 +3189,7 @@
       "name": "takeBidCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },

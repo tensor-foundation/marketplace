@@ -51,7 +51,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BuyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends string | IAccountMeta<string> = string,
@@ -76,9 +76,9 @@ export type BuyInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -203,7 +203,7 @@ export function getBuyInstructionDataCodec(): Codec<
 }
 
 export type BuyInput<
-  TAccountTcomp extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -220,7 +220,7 @@ export type BuyInput<
   TAccountRentDest extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper: Address<TAccountLogWrapper>;
@@ -248,7 +248,7 @@ export type BuyInput<
 };
 
 export function getBuyInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -266,7 +266,7 @@ export function getBuyInstruction<
   TAccountCosigner extends string,
 >(
   input: BuyInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -285,7 +285,7 @@ export function getBuyInstruction<
   >
 ): BuyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -307,7 +307,7 @@ export function getBuyInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -354,7 +354,7 @@ export function getBuyInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -375,7 +375,7 @@ export function getBuyInstruction<
     data: getBuyInstructionDataEncoder().encode(args as BuyInstructionDataArgs),
   } as BuyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -402,7 +402,7 @@ export type ParsedBuyInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     treeAuthority: TAccountMetas[1];
     merkleTree: TAccountMetas[2];
     logWrapper: TAccountMetas[3];
@@ -449,7 +449,7 @@ export function parseBuyInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       treeAuthority: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),

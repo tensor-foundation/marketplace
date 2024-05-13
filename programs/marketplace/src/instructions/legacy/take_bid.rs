@@ -4,7 +4,11 @@ use anchor_spl::{
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::token_metadata::{assert_decode_metadata, transfer, TransferArgs};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
@@ -18,10 +22,18 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
     #[account(mut)]
     pub seller: Signer<'info>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
@@ -261,7 +273,7 @@ pub fn process_take_bid_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.pnft_shared.instructions,
+            sysvar_instructions: Some(&ctx.accounts.pnft_shared.instructions),
             source_token_record: Some(&ctx.accounts.owner_token_record),
             destination_token_record: Some(&ctx.accounts.temp_escrow_token_record),
             authorization_rules_program: Some(
@@ -269,7 +281,7 @@ pub fn process_take_bid_legacy<'info>(
             ),
             authorization_rules: auth_rules,
             authorization_data: authorization_data.clone().map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.pnft_shared.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
         },
         None,
@@ -292,7 +304,7 @@ pub fn process_take_bid_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.pnft_shared.instructions,
+            sysvar_instructions: Some(&ctx.accounts.pnft_shared.instructions),
             source_token_record: Some(&ctx.accounts.temp_escrow_token_record),
             destination_token_record: Some(&ctx.accounts.dest_token_record),
             authorization_rules_program: Some(
@@ -300,7 +312,7 @@ pub fn process_take_bid_legacy<'info>(
             ),
             authorization_rules: auth_rules,
             authorization_data: authorization_data.map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.pnft_shared.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
         },
         Some(seeds),
@@ -317,7 +329,7 @@ pub fn process_take_bid_legacy<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id: mint,
         token_standard: metadata.token_standard,
         creators: creators

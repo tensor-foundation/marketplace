@@ -50,7 +50,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TakeBidMetaHashInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
@@ -78,9 +78,9 @@ export type TakeBidMetaHashInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -213,7 +213,7 @@ export function getTakeBidMetaHashInstructionDataCodec(): Codec<
 }
 
 export type TakeBidMetaHashInput<
-  TAccountTcomp extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountSeller extends string = string,
   TAccountDelegate extends string = string,
@@ -233,7 +233,7 @@ export type TakeBidMetaHashInput<
   TAccountCosigner extends string = string,
   TAccountRentDest extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
   seller: Address<TAccountSeller>;
   delegate: Address<TAccountDelegate>;
@@ -264,7 +264,7 @@ export type TakeBidMetaHashInput<
 };
 
 export function getTakeBidMetaHashInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountTreeAuthority extends string,
   TAccountSeller extends string,
   TAccountDelegate extends string,
@@ -285,7 +285,7 @@ export function getTakeBidMetaHashInstruction<
   TAccountRentDest extends string,
 >(
   input: TakeBidMetaHashInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -307,7 +307,7 @@ export function getTakeBidMetaHashInstruction<
   >
 ): TakeBidMetaHashInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountTreeAuthority,
   TAccountSeller,
   TAccountDelegate,
@@ -332,7 +332,7 @@ export function getTakeBidMetaHashInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     seller: { value: input.seller ?? null, isWritable: true },
     delegate: { value: input.delegate ?? null, isWritable: false },
@@ -385,7 +385,7 @@ export function getTakeBidMetaHashInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.delegate),
@@ -411,7 +411,7 @@ export function getTakeBidMetaHashInstruction<
     ),
   } as TakeBidMetaHashInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -441,7 +441,7 @@ export type ParsedTakeBidMetaHashInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     treeAuthority: TAccountMetas[1];
     seller: TAccountMetas[2];
     delegate: TAccountMetas[3];
@@ -491,7 +491,7 @@ export function parseTakeBidMetaHashInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       treeAuthority: getNextAccount(),
       seller: getNextAccount(),
       delegate: getNextAccount(),

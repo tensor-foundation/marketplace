@@ -5,7 +5,11 @@ use metaplex_core::{
     types::{Royalties, UpdateAuthority},
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    metaplex_core::{validate_asset, MetaplexCore},
+    shard_num,
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
@@ -18,10 +22,18 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidCore<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -246,7 +258,7 @@ pub fn process_take_bid_core<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
         token_standard: Some(token_standard),
         creators: creators.into_iter().map(Into::into).collect(),

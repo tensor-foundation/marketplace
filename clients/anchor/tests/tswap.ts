@@ -7,7 +7,7 @@ import {
   getLamports,
   swapSdk,
   TEST_PROVIDER,
-  wlSdk,
+  wlSdk
 } from "./shared";
 
 export const testMakeMargin = async ({ owner }: { owner: Keypair }) => {
@@ -111,6 +111,8 @@ export const testInitWLAuthority = async () => {
     newCosigner: TEST_PROVIDER.publicKey,
     newOwner: tlistOwner.publicKey,
   });
+
+  const wlAuth = PublicKey.findProgramAddressSync([], new PublicKey("TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW"));
 
   await buildAndSendTx({ ixs, extraSigners: [tlistOwner] });
 

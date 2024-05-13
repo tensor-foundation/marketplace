@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct BuyCore {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -54,7 +54,8 @@ impl BuyCore {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_state,
@@ -166,7 +167,7 @@ pub struct BuyCoreInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable]` list_state
 ///   2. `[writable]` asset
 ///   3. `[optional]` collection
@@ -182,7 +183,7 @@ pub struct BuyCoreInstructionArgs {
 ///   13. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuyCoreBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     asset: Option<solana_program::pubkey::Pubkey>,
     collection: Option<solana_program::pubkey::Pubkey>,
@@ -205,8 +206,8 @@ impl BuyCoreBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -319,7 +320,7 @@ impl BuyCoreBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = BuyCore {
-            tcomp: self.tcomp.expect("tcomp is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
             list_state: self.list_state.expect("list_state is not set"),
             asset: self.asset.expect("asset is not set"),
             collection: self.collection,
@@ -350,7 +351,7 @@ impl BuyCoreBuilder {
 
 /// `buy_core` CPI accounts.
 pub struct BuyCoreCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -384,7 +385,7 @@ pub struct BuyCoreCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -423,7 +424,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             list_state: accounts.list_state,
             asset: accounts.asset,
             collection: accounts.collection,
@@ -475,7 +476,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -576,7 +577,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(14 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.asset.clone());
         if let Some(collection) = self.collection {
@@ -614,7 +615,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable]` list_state
 ///   2. `[writable]` asset
 ///   3. `[optional]` collection
@@ -636,7 +637,7 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(BuyCoreCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             list_state: None,
             asset: None,
             collection: None,
@@ -656,8 +657,11 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -812,7 +816,7 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
         let instruction = BuyCoreCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
@@ -859,7 +863,7 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
 
 struct BuyCoreCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,

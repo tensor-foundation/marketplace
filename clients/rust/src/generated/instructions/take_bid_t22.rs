@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct TakeBidT22 {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub seller: solana_program::pubkey::Pubkey,
 
@@ -64,7 +64,8 @@ impl TakeBidT22 {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.seller,
@@ -193,7 +194,7 @@ pub struct TakeBidT22InstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -214,7 +215,7 @@ pub struct TakeBidT22InstructionArgs {
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidT22Builder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -242,8 +243,8 @@ impl TakeBidT22Builder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -385,7 +386,7 @@ impl TakeBidT22Builder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = TakeBidT22 {
-            tcomp: self.tcomp.expect("tcomp is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
             seller: self.seller.expect("seller is not set"),
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
@@ -425,7 +426,7 @@ impl TakeBidT22Builder {
 
 /// `take_bid_t22` CPI accounts.
 pub struct TakeBidT22CpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -469,7 +470,7 @@ pub struct TakeBidT22Cpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -518,7 +519,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             seller: accounts.seller,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
@@ -575,7 +576,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -689,7 +690,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.seller.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
@@ -730,7 +731,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -757,7 +758,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TakeBidT22CpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             seller: None,
             bid_state: None,
             owner: None,
@@ -782,8 +783,11 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -987,7 +991,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         let instruction = TakeBidT22Cpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             seller: self.instruction.seller.expect("seller is not set"),
 
@@ -1059,7 +1063,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
 
 struct TakeBidT22CpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

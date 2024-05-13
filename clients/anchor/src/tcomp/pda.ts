@@ -2,8 +2,21 @@ import { PublicKey } from "@solana/web3.js";
 import { BUBBLEGUM_PROGRAM_ID } from "@tensor-hq/tensor-common";
 import { TCOMP_ADDR } from "./constants";
 
+const FEES_PROGRAM_ID = new PublicKey("TFEEgwDP6nn1s8mMX2tTNPPz8j2VomkphLUmyxKm17A");
+
 export const findTCompPda = ({ program }: { program?: PublicKey }) => {
   return PublicKey.findProgramAddressSync([], program ?? TCOMP_ADDR);
+};
+
+export const findFeeVaultPda = ({
+  program = FEES_PROGRAM_ID,
+  stateAccount,
+}: {
+  program?: PublicKey;
+  stateAccount: PublicKey;
+}) => {
+  const shard = stateAccount.toBytes().slice(31);
+  return PublicKey.findProgramAddressSync([Buffer.from("fee_vault"), shard], program)[0];
 };
 
 export const findBidStatePda = ({

@@ -3,8 +3,10 @@ use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
+    fees::ID as TFEE_PROGRAM_ID,
     metaplex_core::{validate_asset, MetaplexCore},
-    transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
+    shard_num, transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc,
+    FromExternal,
 };
 
 use crate::*;
@@ -13,10 +15,18 @@ use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut, close = rent_dest,
         seeds=[
@@ -210,13 +220,13 @@ pub fn process_buy_core<'info, 'b>(
 
     // Pay fees
     ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+        .transfer_lamports(&ctx.accounts.fee_vault.to_account_info(), tcomp_fee)?;
 
     ctx.accounts.transfer_lamports_min_balance(
         &ctx.accounts
             .maker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         maker_broker_fee,
     )?;
@@ -225,7 +235,7 @@ pub fn process_buy_core<'info, 'b>(
         &ctx.accounts
             .taker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         taker_broker_fee,
     )?;

@@ -7,6 +7,8 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
     transfer_lamports, transfer_lamports_checked,
 };
@@ -19,8 +21,17 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyWns<'info> {
-    /// CHECK: seeds (fee account)
-    #[account(mut, seeds=[], bump)]
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address

@@ -16,7 +16,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub rent_dest: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
     pub taker_broker: &'a Option<UncheckedAccount<'info>>,
-    pub tcomp: &'a AccountInfo<'info>,
+    pub fee_vault: &'a AccountInfo<'info>,
     pub asset_id: Pubkey,
     pub token_standard: Option<TokenStandard>,
     pub creators: Vec<TCreator>,
@@ -38,7 +38,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         rent_dest,
         maker_broker,
         taker_broker,
-        tcomp,
+        fee_vault,
         asset_id,
         token_standard,
         creators,
@@ -129,17 +129,17 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     }
 
     // Pay fees
-    transfer_lamports_from_pda(bid_state.deref().as_ref(), tcomp, tcomp_fee)?;
+    transfer_lamports_from_pda(bid_state.deref().as_ref(), fee_vault, tcomp_fee)?;
 
     transfer_lamports_from_pda_min_balance(
         bid_state.deref().as_ref(),
-        maker_broker.as_deref().unwrap_or(tcomp),
+        maker_broker.as_deref().unwrap_or(fee_vault),
         maker_broker_fee,
     )?;
 
     transfer_lamports_from_pda_min_balance(
         bid_state.deref().as_ref(),
-        taker_broker.as_deref().unwrap_or(tcomp),
+        taker_broker.as_deref().unwrap_or(fee_vault),
         taker_broker_fee,
     )?;
 
