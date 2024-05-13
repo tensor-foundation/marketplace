@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct TakeBidMetaHash {
+pub struct TakeBidCompressedMetaHash {
     pub tcomp: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
@@ -49,17 +49,17 @@ pub struct TakeBidMetaHash {
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl TakeBidMetaHash {
+impl TakeBidCompressedMetaHash {
     pub fn instruction(
         &self,
-        args: TakeBidMetaHashInstructionArgs,
+        args: TakeBidCompressedMetaHashInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: TakeBidMetaHashInstructionArgs,
+        args: TakeBidCompressedMetaHashInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
@@ -152,7 +152,9 @@ impl TakeBidMetaHash {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = TakeBidMetaHashInstructionData::new().try_to_vec().unwrap();
+        let mut data = TakeBidCompressedMetaHashInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -165,11 +167,11 @@ impl TakeBidMetaHash {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct TakeBidMetaHashInstructionData {
+struct TakeBidCompressedMetaHashInstructionData {
     discriminator: [u8; 8],
 }
 
-impl TakeBidMetaHashInstructionData {
+impl TakeBidCompressedMetaHashInstructionData {
     fn new() -> Self {
         Self {
             discriminator: [85, 227, 202, 70, 45, 215, 10, 193],
@@ -179,7 +181,7 @@ impl TakeBidMetaHashInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TakeBidMetaHashInstructionArgs {
+pub struct TakeBidCompressedMetaHashInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
@@ -191,7 +193,7 @@ pub struct TakeBidMetaHashInstructionArgs {
     pub optional_royalty_pct: Option<u16>,
 }
 
-/// Instruction builder for `TakeBidMetaHash`.
+/// Instruction builder for `TakeBidCompressedMetaHash`.
 ///
 /// ### Accounts:
 ///
@@ -200,12 +202,12 @@ pub struct TakeBidMetaHashInstructionArgs {
 ///   2. `[writable]` seller
 ///   3. `[]` delegate
 ///   4. `[writable]` merkle_tree
-///   5. `[]` log_wrapper
-///   6. `[]` compression_program
+///   5. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
+///   6. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
 ///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   8. `[]` bubblegum_program
+///   8. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
 ///   9. `[]` tcomp_program
-///   10. `[]` tensorswap_program
+///   10. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   11. `[writable]` bid_state
 ///   12. `[writable]` owner
 ///   13. `[writable, optional]` taker_broker
@@ -215,7 +217,7 @@ pub struct TakeBidMetaHashInstructionArgs {
 ///   17. `[signer]` cosigner
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
-pub struct TakeBidMetaHashBuilder {
+pub struct TakeBidCompressedMetaHashBuilder {
     tcomp: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
@@ -247,7 +249,7 @@ pub struct TakeBidMetaHashBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl TakeBidMetaHashBuilder {
+impl TakeBidCompressedMetaHashBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -276,11 +278,13 @@ impl TakeBidMetaHashBuilder {
         self.merkle_tree = Some(merkle_tree);
         self
     }
+    /// `[optional account, default to 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV']`
     #[inline(always)]
     pub fn log_wrapper(&mut self, log_wrapper: solana_program::pubkey::Pubkey) -> &mut Self {
         self.log_wrapper = Some(log_wrapper);
         self
     }
+    /// `[optional account, default to 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK']`
     #[inline(always)]
     pub fn compression_program(
         &mut self,
@@ -295,6 +299,7 @@ impl TakeBidMetaHashBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY']`
     #[inline(always)]
     pub fn bubblegum_program(
         &mut self,
@@ -308,6 +313,7 @@ impl TakeBidMetaHashBuilder {
         self.tcomp_program = Some(tcomp_program);
         self
     }
+    /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
     pub fn tensorswap_program(
         &mut self,
@@ -430,26 +436,28 @@ impl TakeBidMetaHashBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = TakeBidMetaHash {
+        let accounts = TakeBidCompressedMetaHash {
             tcomp: self.tcomp.expect("tcomp is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             seller: self.seller.expect("seller is not set"),
             delegate: self.delegate.expect("delegate is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
-            log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
-            compression_program: self
-                .compression_program
-                .expect("compression_program is not set"),
+            log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
+                "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
+            )),
+            compression_program: self.compression_program.unwrap_or(solana_program::pubkey!(
+                "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            bubblegum_program: self
-                .bubblegum_program
-                .expect("bubblegum_program is not set"),
+            bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
+                "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+            )),
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-            tensorswap_program: self
-                .tensorswap_program
-                .expect("tensorswap_program is not set"),
+            tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
+                "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+            )),
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
@@ -459,7 +467,7 @@ impl TakeBidMetaHashBuilder {
             cosigner: self.cosigner.expect("cosigner is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
-        let args = TakeBidMetaHashInstructionArgs {
+        let args = TakeBidCompressedMetaHashInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
@@ -484,8 +492,8 @@ impl TakeBidMetaHashBuilder {
     }
 }
 
-/// `take_bid_meta_hash` CPI accounts.
-pub struct TakeBidMetaHashCpiAccounts<'a, 'b> {
+/// `take_bid_compressed_meta_hash` CPI accounts.
+pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
     pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -525,8 +533,8 @@ pub struct TakeBidMetaHashCpiAccounts<'a, 'b> {
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `take_bid_meta_hash` CPI instruction.
-pub struct TakeBidMetaHashCpi<'a, 'b> {
+/// `take_bid_compressed_meta_hash` CPI instruction.
+pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -568,14 +576,14 @@ pub struct TakeBidMetaHashCpi<'a, 'b> {
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: TakeBidMetaHashInstructionArgs,
+    pub __args: TakeBidCompressedMetaHashInstructionArgs,
 }
 
-impl<'a, 'b> TakeBidMetaHashCpi<'a, 'b> {
+impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: TakeBidMetaHashCpiAccounts<'a, 'b>,
-        args: TakeBidMetaHashInstructionArgs,
+        accounts: TakeBidCompressedMetaHashCpiAccounts<'a, 'b>,
+        args: TakeBidCompressedMetaHashInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -732,7 +740,9 @@ impl<'a, 'b> TakeBidMetaHashCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = TakeBidMetaHashInstructionData::new().try_to_vec().unwrap();
+        let mut data = TakeBidCompressedMetaHashInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -778,7 +788,7 @@ impl<'a, 'b> TakeBidMetaHashCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `TakeBidMetaHash` via CPI.
+/// Instruction builder for `TakeBidCompressedMetaHash` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -801,13 +811,13 @@ impl<'a, 'b> TakeBidMetaHashCpi<'a, 'b> {
 ///   16. `[]` whitelist
 ///   17. `[signer]` cosigner
 ///   18. `[writable]` rent_dest
-pub struct TakeBidMetaHashCpiBuilder<'a, 'b> {
-    instruction: Box<TakeBidMetaHashCpiBuilderInstruction<'a, 'b>>,
+pub struct TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
+    instruction: Box<TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> TakeBidMetaHashCpiBuilder<'a, 'b> {
+impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(TakeBidMetaHashCpiBuilderInstruction {
+        let instruction = Box::new(TakeBidCompressedMetaHashCpiBuilderInstruction {
             __program: program,
             tcomp: None,
             tree_authority: None,
@@ -1076,7 +1086,7 @@ impl<'a, 'b> TakeBidMetaHashCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = TakeBidMetaHashInstructionArgs {
+        let args = TakeBidCompressedMetaHashInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
@@ -1107,7 +1117,7 @@ impl<'a, 'b> TakeBidMetaHashCpiBuilder<'a, 'b> {
                 .expect("min_amount is not set"),
             optional_royalty_pct: self.instruction.optional_royalty_pct.clone(),
         };
-        let instruction = TakeBidMetaHashCpi {
+        let instruction = TakeBidCompressedMetaHashCpi {
             __program: self.instruction.__program,
 
             tcomp: self.instruction.tcomp.expect("tcomp is not set"),
@@ -1183,7 +1193,7 @@ impl<'a, 'b> TakeBidMetaHashCpiBuilder<'a, 'b> {
     }
 }
 
-struct TakeBidMetaHashCpiBuilderInstruction<'a, 'b> {
+struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,

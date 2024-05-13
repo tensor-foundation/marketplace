@@ -6,10 +6,12 @@ import {
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
+  findTreeAuthorityPda,
   findWnsApprovePda,
   findWnsDistributionPda,
 } from './pdas';
 import { TokenStandard } from './types';
+import { IAccountMeta } from '@solana/instructions';
 
 export const resolveMetadata = async ({
   accounts,
@@ -174,4 +176,59 @@ export const resolveWnsExtraAccountMetasPda = async ({
       { programAddress: expectAddress(accounts.wnsProgram?.value) }
     ),
   };
+};
+
+export const resolveTreeAuthorityPda = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findTreeAuthorityPda(
+      {
+        merkleTree: expectAddress(accounts.merkleTree?.value),
+      },
+      { programAddress: expectAddress(accounts.bubblegumProgram?.value) }
+    ),
+  };
+};
+
+// satisfy linter
+type ArgsWithOptionalCreatorsField = {
+  creators?: [Address, number][] | undefined;
+  [key: string]: unknown;
+};
+type ArgsWithOptionalProofAndCanopyDepth = {
+  proof?: Address[] | undefined;
+  canopyDepth?: number | undefined;
+  [key: string]: unknown;
+};
+
+export const resolveCreatorPath = ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: ArgsWithOptionalCreatorsField;
+}): IAccountMeta[] => {
+  const creators = args.creators ?? [];
+  return creators.map(([address, share]: [Address, number]) => ({
+    address,
+    role: +(share > 0),
+  }));
+};
+
+export const resolveProofPath = ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: ArgsWithOptionalProofAndCanopyDepth;
+}): IAccountMeta[] => {
+  const proof = args.proof ?? [];
+  const canopyDepth = args.canopyDepth ?? 0;
+  return proof.slice(0, proof.length - canopyDepth).map((address: Address) => ({
+    address,
+    role: 0,
+  }));
 };

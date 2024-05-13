@@ -276,7 +276,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   22. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   23. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   24. `[]` tcomp_program
-///   25. `[]` tensorswap_program
+///   25. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   26. `[signer]` cosigner
 ///   27. `[]` mint_proof
 ///   28. `[writable]` rent_dest
@@ -479,6 +479,7 @@ impl TakeBidLegacyBuilder {
         self.tcomp_program = Some(tcomp_program);
         self
     }
+    /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
     pub fn tensorswap_program(
         &mut self,
@@ -588,9 +589,9 @@ impl TakeBidLegacyBuilder {
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
                 tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
-                tensorswap_program: self
-                    .tensorswap_program
-                    .expect("tensorswap_program is not set"),
+                tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
+                    "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+                )),
                 cosigner: self.cosigner.expect("cosigner is not set"),
                 mint_proof: self.mint_proof.expect("mint_proof is not set"),
                 rent_dest: self.rent_dest.expect("rent_dest is not set"),

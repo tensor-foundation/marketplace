@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct CloseExpiredListing {
+pub struct CloseExpiredListingCompressed {
     pub list_state: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
@@ -31,17 +31,17 @@ pub struct CloseExpiredListing {
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl CloseExpiredListing {
+impl CloseExpiredListingCompressed {
     pub fn instruction(
         &self,
-        args: CloseExpiredListingInstructionArgs,
+        args: CloseExpiredListingCompressedInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: CloseExpiredListingInstructionArgs,
+        args: CloseExpiredListingCompressedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
@@ -85,7 +85,7 @@ impl CloseExpiredListing {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = CloseExpiredListingInstructionData::new()
+        let mut data = CloseExpiredListingCompressedInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -100,11 +100,11 @@ impl CloseExpiredListing {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct CloseExpiredListingInstructionData {
+struct CloseExpiredListingCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
-impl CloseExpiredListingInstructionData {
+impl CloseExpiredListingCompressedInstructionData {
     fn new() -> Self {
         Self {
             discriminator: [150, 70, 13, 135, 9, 204, 75, 4],
@@ -114,7 +114,7 @@ impl CloseExpiredListingInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CloseExpiredListingInstructionArgs {
+pub struct CloseExpiredListingCompressedInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
@@ -122,7 +122,7 @@ pub struct CloseExpiredListingInstructionArgs {
     pub creator_hash: [u8; 32],
 }
 
-/// Instruction builder for `CloseExpiredListing`.
+/// Instruction builder for `CloseExpiredListingCompressed`.
 ///
 /// ### Accounts:
 ///
@@ -132,12 +132,12 @@ pub struct CloseExpiredListingInstructionArgs {
 ///   3. `[]` tcomp_program
 ///   4. `[]` tree_authority
 ///   5. `[writable]` merkle_tree
-///   6. `[]` log_wrapper
-///   7. `[]` compression_program
-///   8. `[]` bubblegum_program
+///   6. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
+///   7. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
+///   8. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
 ///   9. `[writable]` rent_dest
 #[derive(Default)]
-pub struct CloseExpiredListingBuilder {
+pub struct CloseExpiredListingCompressedBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -156,7 +156,7 @@ pub struct CloseExpiredListingBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CloseExpiredListingBuilder {
+impl CloseExpiredListingCompressedBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -191,11 +191,13 @@ impl CloseExpiredListingBuilder {
         self.merkle_tree = Some(merkle_tree);
         self
     }
+    /// `[optional account, default to 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV']`
     #[inline(always)]
     pub fn log_wrapper(&mut self, log_wrapper: solana_program::pubkey::Pubkey) -> &mut Self {
         self.log_wrapper = Some(log_wrapper);
         self
     }
+    /// `[optional account, default to 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK']`
     #[inline(always)]
     pub fn compression_program(
         &mut self,
@@ -204,6 +206,7 @@ impl CloseExpiredListingBuilder {
         self.compression_program = Some(compression_program);
         self
     }
+    /// `[optional account, default to 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY']`
     #[inline(always)]
     pub fn bubblegum_program(
         &mut self,
@@ -262,7 +265,7 @@ impl CloseExpiredListingBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CloseExpiredListing {
+        let accounts = CloseExpiredListingCompressed {
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
             system_program: self
@@ -271,16 +274,18 @@ impl CloseExpiredListingBuilder {
             tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
-            log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
-            compression_program: self
-                .compression_program
-                .expect("compression_program is not set"),
-            bubblegum_program: self
-                .bubblegum_program
-                .expect("bubblegum_program is not set"),
+            log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
+                "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
+            )),
+            compression_program: self.compression_program.unwrap_or(solana_program::pubkey!(
+                "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
+            )),
+            bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
+                "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+            )),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
-        let args = CloseExpiredListingInstructionArgs {
+        let args = CloseExpiredListingCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
@@ -292,8 +297,8 @@ impl CloseExpiredListingBuilder {
     }
 }
 
-/// `close_expired_listing` CPI accounts.
-pub struct CloseExpiredListingCpiAccounts<'a, 'b> {
+/// `close_expired_listing_compressed` CPI accounts.
+pub struct CloseExpiredListingCompressedCpiAccounts<'a, 'b> {
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
@@ -315,8 +320,8 @@ pub struct CloseExpiredListingCpiAccounts<'a, 'b> {
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `close_expired_listing` CPI instruction.
-pub struct CloseExpiredListingCpi<'a, 'b> {
+/// `close_expired_listing_compressed` CPI instruction.
+pub struct CloseExpiredListingCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -340,14 +345,14 @@ pub struct CloseExpiredListingCpi<'a, 'b> {
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: CloseExpiredListingInstructionArgs,
+    pub __args: CloseExpiredListingCompressedInstructionArgs,
 }
 
-impl<'a, 'b> CloseExpiredListingCpi<'a, 'b> {
+impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CloseExpiredListingCpiAccounts<'a, 'b>,
-        args: CloseExpiredListingInstructionArgs,
+        accounts: CloseExpiredListingCompressedCpiAccounts<'a, 'b>,
+        args: CloseExpiredListingCompressedInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -445,7 +450,7 @@ impl<'a, 'b> CloseExpiredListingCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = CloseExpiredListingInstructionData::new()
+        let mut data = CloseExpiredListingCompressedInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
@@ -480,7 +485,7 @@ impl<'a, 'b> CloseExpiredListingCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CloseExpiredListing` via CPI.
+/// Instruction builder for `CloseExpiredListingCompressed` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -494,13 +499,13 @@ impl<'a, 'b> CloseExpiredListingCpi<'a, 'b> {
 ///   7. `[]` compression_program
 ///   8. `[]` bubblegum_program
 ///   9. `[writable]` rent_dest
-pub struct CloseExpiredListingCpiBuilder<'a, 'b> {
-    instruction: Box<CloseExpiredListingCpiBuilderInstruction<'a, 'b>>,
+pub struct CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
+    instruction: Box<CloseExpiredListingCompressedCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CloseExpiredListingCpiBuilder<'a, 'b> {
+impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CloseExpiredListingCpiBuilderInstruction {
+        let instruction = Box::new(CloseExpiredListingCompressedCpiBuilderInstruction {
             __program: program,
             list_state: None,
             owner: None,
@@ -664,7 +669,7 @@ impl<'a, 'b> CloseExpiredListingCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = CloseExpiredListingInstructionArgs {
+        let args = CloseExpiredListingCompressedInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
@@ -679,7 +684,7 @@ impl<'a, 'b> CloseExpiredListingCpiBuilder<'a, 'b> {
                 .clone()
                 .expect("creator_hash is not set"),
         };
-        let instruction = CloseExpiredListingCpi {
+        let instruction = CloseExpiredListingCompressedCpi {
             __program: self.instruction.__program,
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
@@ -731,7 +736,7 @@ impl<'a, 'b> CloseExpiredListingCpiBuilder<'a, 'b> {
     }
 }
 
-struct CloseExpiredListingCpiBuilderInstruction<'a, 'b> {
+struct CloseExpiredListingCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

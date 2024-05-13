@@ -33,6 +33,7 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { findFeeVaultPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
@@ -110,6 +111,107 @@ export function getWithdrawFeesInstructionDataCodec(): Codec<
     getWithdrawFeesInstructionDataEncoder(),
     getWithdrawFeesInstructionDataDecoder()
   );
+}
+
+export type WithdrawFeesAsyncInput<
+  TAccountTswap extends string = string,
+  TAccountTcomp extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountOwner extends string = string,
+  TAccountDestination extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  tswap: Address<TAccountTswap>;
+  tcomp?: Address<TAccountTcomp>;
+  /** We ask also for a signature just to make sure this wallet can actually sign things */
+  cosigner: TransactionSigner<TAccountCosigner>;
+  owner: TransactionSigner<TAccountOwner>;
+  destination: Address<TAccountDestination>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  amount: WithdrawFeesInstructionDataArgs['amount'];
+};
+
+export async function getWithdrawFeesInstructionAsync<
+  TAccountTswap extends string,
+  TAccountTcomp extends string,
+  TAccountCosigner extends string,
+  TAccountOwner extends string,
+  TAccountDestination extends string,
+  TAccountSystemProgram extends string,
+>(
+  input: WithdrawFeesAsyncInput<
+    TAccountTswap,
+    TAccountTcomp,
+    TAccountCosigner,
+    TAccountOwner,
+    TAccountDestination,
+    TAccountSystemProgram
+  >
+): Promise<
+  WithdrawFeesInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountTswap,
+    TAccountTcomp,
+    TAccountCosigner,
+    TAccountOwner,
+    TAccountDestination,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    tswap: { value: input.tswap ?? null, isWritable: true },
+    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: true },
+    destination: { value: input.destination ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.tcomp.value) {
+    accounts.tcomp.value = await findFeeVaultPda();
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.tswap),
+      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.destination),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getWithdrawFeesInstructionDataEncoder().encode(
+      args as WithdrawFeesInstructionDataArgs
+    ),
+  } as WithdrawFeesInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountTswap,
+    TAccountTcomp,
+    TAccountCosigner,
+    TAccountOwner,
+    TAccountDestination,
+    TAccountSystemProgram
+  >;
+
+  return instruction;
 }
 
 export type WithdrawFeesInput<
