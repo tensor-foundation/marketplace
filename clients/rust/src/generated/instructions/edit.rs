@@ -15,7 +15,7 @@ pub struct Edit {
 
     pub owner: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 }
 
 impl Edit {
@@ -40,7 +40,7 @@ impl Edit {
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -57,12 +57,12 @@ impl Edit {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct EditInstructionData {
+pub struct EditInstructionData {
     discriminator: [u8; 8],
 }
 
 impl EditInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [15, 183, 33, 86, 87, 28, 151, 145],
         }
@@ -85,12 +85,12 @@ pub struct EditInstructionArgs {
 ///
 ///   0. `[writable]` list_state
 ///   1. `[signer]` owner
-///   2. `[]` tcomp_program
+///   2. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Default)]
 pub struct EditBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -113,9 +113,13 @@ impl EditBuilder {
         self.owner = Some(owner);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -170,7 +174,9 @@ impl EditBuilder {
         let accounts = Edit {
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
         };
         let args = EditInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -190,7 +196,7 @@ pub struct EditCpiAccounts<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `edit` CPI instruction.
@@ -202,7 +208,7 @@ pub struct EditCpi<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: EditInstructionArgs,
 }
@@ -217,7 +223,7 @@ impl<'a, 'b> EditCpi<'a, 'b> {
             __program: program,
             list_state: accounts.list_state,
             owner: accounts.owner,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             __args: args,
         }
     }
@@ -264,7 +270,7 @@ impl<'a, 'b> EditCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -287,7 +293,7 @@ impl<'a, 'b> EditCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -306,7 +312,7 @@ impl<'a, 'b> EditCpi<'a, 'b> {
 ///
 ///   0. `[writable]` list_state
 ///   1. `[signer]` owner
-///   2. `[]` tcomp_program
+///   2. `[]` marketplace_program
 pub struct EditCpiBuilder<'a, 'b> {
     instruction: Box<EditCpiBuilderInstruction<'a, 'b>>,
 }
@@ -317,7 +323,7 @@ impl<'a, 'b> EditCpiBuilder<'a, 'b> {
             __program: program,
             list_state: None,
             owner: None,
-            tcomp_program: None,
+            marketplace_program: None,
             amount: None,
             expire_in_sec: None,
             currency: None,
@@ -341,11 +347,11 @@ impl<'a, 'b> EditCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -432,10 +438,10 @@ impl<'a, 'b> EditCpiBuilder<'a, 'b> {
 
             owner: self.instruction.owner.expect("owner is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -449,7 +455,7 @@ struct EditCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,

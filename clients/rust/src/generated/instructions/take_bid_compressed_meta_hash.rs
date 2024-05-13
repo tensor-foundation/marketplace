@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct TakeBidCompressedMetaHash {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
@@ -28,7 +28,7 @@ pub struct TakeBidCompressedMetaHash {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub tensorswap_program: solana_program::pubkey::Pubkey,
 
@@ -44,7 +44,7 @@ pub struct TakeBidCompressedMetaHash {
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
@@ -64,7 +64,8 @@ impl TakeBidCompressedMetaHash {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
@@ -99,7 +100,7 @@ impl TakeBidCompressedMetaHash {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -143,10 +144,16 @@ impl TakeBidCompressedMetaHash {
             self.whitelist,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_dest,
             false,
@@ -167,12 +174,12 @@ impl TakeBidCompressedMetaHash {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct TakeBidCompressedMetaHashInstructionData {
+pub struct TakeBidCompressedMetaHashInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidCompressedMetaHashInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [85, 227, 202, 70, 45, 215, 10, 193],
         }
@@ -197,7 +204,7 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` seller
 ///   3. `[]` delegate
@@ -206,7 +213,7 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///   6. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
 ///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   8. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
-///   9. `[]` tcomp_program
+///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   10. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   11. `[writable]` bid_state
 ///   12. `[writable]` owner
@@ -214,11 +221,11 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidCompressedMetaHashBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
     delegate: Option<solana_program::pubkey::Pubkey>,
@@ -227,7 +234,7 @@ pub struct TakeBidCompressedMetaHashBuilder {
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     tensorswap_program: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -254,8 +261,8 @@ impl TakeBidCompressedMetaHashBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -308,9 +315,13 @@ impl TakeBidCompressedMetaHashBuilder {
         self.bubblegum_program = Some(bubblegum_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
@@ -360,9 +371,10 @@ impl TakeBidCompressedMetaHashBuilder {
         self.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -437,7 +449,7 @@ impl TakeBidCompressedMetaHashBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = TakeBidCompressedMetaHash {
-            tcomp: self.tcomp.expect("tcomp is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             seller: self.seller.expect("seller is not set"),
             delegate: self.delegate.expect("delegate is not set"),
@@ -454,7 +466,9 @@ impl TakeBidCompressedMetaHashBuilder {
             bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
                 "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
             )),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
                 "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
             )),
@@ -464,7 +478,7 @@ impl TakeBidCompressedMetaHashBuilder {
             maker_broker: self.maker_broker,
             margin_account: self.margin_account.expect("margin_account is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
-            cosigner: self.cosigner.expect("cosigner is not set"),
+            cosigner: self.cosigner,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = TakeBidCompressedMetaHashInstructionArgs {
@@ -494,7 +508,7 @@ impl TakeBidCompressedMetaHashBuilder {
 
 /// `take_bid_compressed_meta_hash` CPI accounts.
 pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -512,7 +526,7 @@ pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -528,7 +542,7 @@ pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -538,7 +552,7 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -556,7 +570,7 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -572,7 +586,7 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -587,7 +601,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             tree_authority: accounts.tree_authority,
             seller: accounts.seller,
             delegate: accounts.delegate,
@@ -596,7 +610,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             tensorswap_program: accounts.tensorswap_program,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
@@ -644,7 +658,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(19 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -680,7 +694,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -725,10 +739,17 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             *self.whitelist.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_dest.key,
             false,
@@ -753,7 +774,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.seller.clone());
         account_infos.push(self.delegate.clone());
@@ -762,7 +783,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tensorswap_program.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
@@ -774,7 +795,9 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         }
         account_infos.push(self.margin_account.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
@@ -792,7 +815,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` seller
 ///   3. `[]` delegate
@@ -801,7 +824,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///   6. `[]` compression_program
 ///   7. `[]` system_program
 ///   8. `[]` bubblegum_program
-///   9. `[]` tcomp_program
+///   9. `[]` marketplace_program
 ///   10. `[]` tensorswap_program
 ///   11. `[writable]` bid_state
 ///   12. `[writable]` owner
@@ -809,7 +832,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
-///   17. `[signer]` cosigner
+///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_dest
 pub struct TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b>>,
@@ -819,7 +842,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TakeBidCompressedMetaHashCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             tree_authority: None,
             seller: None,
             delegate: None,
@@ -828,7 +851,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             tensorswap_program: None,
             bid_state: None,
             owner: None,
@@ -852,8 +875,11 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -921,11 +947,11 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -983,12 +1009,13 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         self.instruction.whitelist = Some(whitelist);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -1120,7 +1147,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         let instruction = TakeBidCompressedMetaHashCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             tree_authority: self
                 .instruction
@@ -1156,10 +1183,10 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             tensorswap_program: self
                 .instruction
@@ -1181,7 +1208,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,
@@ -1195,7 +1222,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
 
 struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1204,7 +1231,7 @@ struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

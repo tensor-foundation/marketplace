@@ -41,6 +41,7 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -72,11 +73,12 @@ export type ListCompressedInstruction<
   TAccountBubblegumProgram extends
     | string
     | IAccountMeta<string> = 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY',
-  TAccountTcompProgram extends
+  TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -106,9 +108,9 @@ export type ListCompressedInstruction<
       TAccountBubblegumProgram extends string
         ? ReadonlyAccount<TAccountBubblegumProgram>
         : TAccountBubblegumProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
@@ -116,6 +118,10 @@ export type ListCompressedInstruction<
         ? WritableSignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
+      TAccountCosigner extends string
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
+        : TAccountCosigner,
       ...TRemainingAccounts,
     ]
   >;
@@ -215,9 +221,10 @@ export type ListCompressedAsyncInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   treeAuthority?: Address<TAccountTreeAuthority>;
   ownerAddress?: Address<TAccountOwnerAddress>;
@@ -227,9 +234,10 @@ export type ListCompressedAsyncInput<
   compressionProgram?: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];
@@ -253,9 +261,10 @@ export async function getListCompressedInstructionAsync<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountListState extends string,
   TAccountOwner extends string,
+  TAccountCosigner extends string,
 >(
   input: ListCompressedAsyncInput<
     TAccountTreeAuthority,
@@ -266,9 +275,10 @@ export async function getListCompressedInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner
+    TAccountOwner,
+    TAccountCosigner
   >
 ): Promise<
   ListCompressedInstruction<
@@ -281,9 +291,10 @@ export async function getListCompressedInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner
+    TAccountOwner,
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -305,9 +316,13 @@ export async function getListCompressedInstructionAsync<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -353,9 +368,9 @@ export async function getListCompressedInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
@@ -381,9 +396,10 @@ export async function getListCompressedInstructionAsync<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
     programAddress,
@@ -400,9 +416,10 @@ export async function getListCompressedInstructionAsync<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner
+    TAccountOwner,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -417,9 +434,10 @@ export type ListCompressedInput<
   TAccountCompressionProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
+  TAccountCosigner extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
   ownerAddress?: Address<TAccountOwnerAddress>;
@@ -429,9 +447,10 @@ export type ListCompressedInput<
   compressionProgram?: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];
@@ -455,9 +474,10 @@ export function getListCompressedInstruction<
   TAccountCompressionProgram extends string,
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountListState extends string,
   TAccountOwner extends string,
+  TAccountCosigner extends string,
 >(
   input: ListCompressedInput<
     TAccountTreeAuthority,
@@ -468,9 +488,10 @@ export function getListCompressedInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner
+    TAccountOwner,
+    TAccountCosigner
   >
 ): ListCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -482,9 +503,10 @@ export function getListCompressedInstruction<
   TAccountCompressionProgram,
   TAccountSystemProgram,
   TAccountBubblegumProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountListState,
-  TAccountOwner
+  TAccountOwner,
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -505,9 +527,13 @@ export function getListCompressedInstruction<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -547,9 +573,9 @@ export function getListCompressedInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
@@ -575,9 +601,10 @@ export function getListCompressedInstruction<
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
     programAddress,
@@ -594,9 +621,10 @@ export function getListCompressedInstruction<
     TAccountCompressionProgram,
     TAccountSystemProgram,
     TAccountBubblegumProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner
+    TAccountOwner,
+    TAccountCosigner
   >;
 
   return instruction;
@@ -616,9 +644,10 @@ export type ParsedListCompressedInstruction<
     compressionProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
     bubblegumProgram: TAccountMetas[7];
-    tcompProgram: TAccountMetas[8];
+    marketplaceProgram: TAccountMetas[8];
     listState: TAccountMetas[9];
     owner: TAccountMetas[10];
+    cosigner?: TAccountMetas[11] | undefined;
   };
   data: ListCompressedInstructionData;
 };
@@ -631,7 +660,7 @@ export function parseListCompressedInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedListCompressedInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 11) {
+  if (instruction.accounts.length < 12) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -640,6 +669,12 @@ export function parseListCompressedInstruction<
     const accountMeta = instruction.accounts![accountIndex]!;
     accountIndex += 1;
     return accountMeta;
+  };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TENSOR_MARKETPLACE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -652,9 +687,10 @@ export function parseListCompressedInstruction<
       compressionProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       bubblegumProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       listState: getNextAccount(),
       owner: getNextAccount(),
+      cosigner: getNextOptionalAccount(),
     },
     data: getListCompressedInstructionDataDecoder().decode(instruction.data),
   };

@@ -5,24 +5,26 @@ import {
   EventParser,
   Instruction,
   Program,
-  Provider,
+  Provider
 } from "@coral-xyz/anchor";
 import {
   MetadataArgs,
   TokenProgramVersion,
   TokenStandard,
-  UseMethod,
+  UseMethod
 } from "@metaplex-foundation/mpl-bubblegum";
+import { MPL_CORE_PROGRAM_ID } from "@metaplex-foundation/mpl-core";
 import { Creator, Uses } from "@metaplex-foundation/mpl-token-metadata";
+import { toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  SPL_NOOP_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getExtraAccountMetaAddress,
   TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -31,7 +33,7 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   TransactionInstruction,
-  TransactionResponse,
+  TransactionResponse
 } from "@solana/web3.js";
 import {
   AcctDiscHexMap,
@@ -56,17 +58,13 @@ import {
   TMETA_PROGRAM_ID,
   TSWAP_COSIGNER,
   TSWAP_OWNER,
-  TSWAP_PROGRAM_ID,
+  TSWAP_PROGRAM_ID
 } from "@tensor-hq/tensor-common";
+import { requestAirdrop } from "@tensor-hq/tensor-tests-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
 import bs58 from "bs58";
-import {
-  getApprovalAccount,
-  getDistributionAccount,
-  WNS_DISTRIBUTION_PROGRAM_ID,
-  WNS_PROGRAM_ID,
-} from "../token2022";
+import { getCreators } from "../metaplexCore";
 import {
   AccountSuffix,
   DEFAULT_COMPUTE_UNITS,
@@ -75,32 +73,36 @@ import {
   DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
   findAta,
-  findAtaWithProgramId,
+  findAtaWithProgramId
 } from "../shared";
+import {
+  getApprovalAccount,
+  getDistributionAccount,
+  WNS_DISTRIBUTION_PROGRAM_ID,
+  WNS_PROGRAM_ID
+} from "../token2022";
 import { ParsedAccount } from "../types";
-import { TCOMP_ADDR } from "./constants";
+import { KEEP_ALIVE_RENT, TCOMP_ADDR } from "./constants";
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import {
   IDL as IDL_v0_11_0,
-  Tcomp as TComp_v0_11_0,
+  Tcomp as TComp_v0_11_0
 } from "./idl/tcomp_v0_11_0";
 import {
   IDL as IDL_v0_13_4,
-  Tcomp as Tcomp_v0_13_4,
+  Tcomp as Tcomp_v0_13_4
 } from "./idl/tcomp_v0_13_4";
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
 import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
 import { IDL as IDL_v0_6_0, Tcomp as TComp_v0_6_0 } from "./idl/tcomp_v0_6_0";
 import {
   findBidStatePda,
+  findFeeVaultPda,
   findListStatePda,
   findNftEscrowPda,
   findTCompPda,
-  findTreeAuthorityPda,
+  findTreeAuthorityPda
 } from "./pda";
-import { MPL_CORE_PROGRAM_ID } from "@metaplex-foundation/mpl-core";
-import { getCreators } from "../metaplexCore";
-import { toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 
 // --------------------------------------- idl
 
@@ -212,10 +214,10 @@ export enum Target {
 }
 
 export const castTargetAnchor = (target: TargetAnchor): Target =>
-  ({
-    0: Target.AssetId,
-    1: Target.Whitelist,
-  }[targetU8(target)]);
+({
+  0: Target.AssetId,
+  1: Target.Whitelist,
+}[targetU8(target)]);
 
 export const castTarget = (target: Target): TargetAnchor => {
   switch (target) {
@@ -249,9 +251,9 @@ export enum Field {
 }
 
 export const castFieldAnchor = (target: FieldAnchor): Field =>
-  ({
-    0: Field.Name,
-  }[fieldU8(target)]);
+({
+  0: Field.Name,
+}[fieldU8(target)]);
 
 export const castField = (target: Field): FieldAnchor => {
   switch (target) {
@@ -398,13 +400,21 @@ export type ListStateAnchor = {
 export type TCompPdaAnchor = BidStateAnchor | ListStateAnchor;
 export type TaggedTCompPdaAnchor =
   | {
-      name: "bidState";
-      account: BidStateAnchor;
-    }
+    name: "bidState";
+    account: BidStateAnchor;
+  }
   | {
-      name: "listState";
-      account: ListStateAnchor;
-    };
+    name: "BidState";
+    account: BidStateAnchor;
+  }
+  | {
+    name: "listState";
+    account: ListStateAnchor;
+  }
+  | {
+    name: "ListState";
+    account: ListStateAnchor;
+  };
 
 // --------------------------------------- sdk
 
@@ -528,7 +538,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         delegate,
@@ -590,7 +600,7 @@ export class TCompSDK {
       .accounts({
         owner,
         listState,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
       });
 
     const ixs = prependComputeIxs(
@@ -651,7 +661,7 @@ export class TCompSDK {
     const builder = this.program.methods
       .delist(nonce, index, root, [...dataHash], [...creatorsHash])
       .accounts({
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -728,9 +738,10 @@ export class TCompSDK {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const [tcomp] = findTCompPda({});
     const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
+
+    const feeVault = await findFeeVaultPda({ stateAccount: listState });
 
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
@@ -760,7 +771,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         buyer,
@@ -768,7 +779,7 @@ export class TCompSDK {
         owner,
         rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
         listState,
-        tcomp,
+        feeVault,
         takerBroker,
         makerBroker,
       })
@@ -788,7 +799,6 @@ export class TCompSDK {
       },
       listState,
       treeAuthority,
-      tcomp,
       creators,
       proofPath,
     };
@@ -843,14 +853,16 @@ export class TCompSDK {
     nonce = nonce ?? new BN(index);
 
     const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-    const [tcomp] = findTCompPda({});
+    // const [tcomp] = findTCompPda({});
     const assetId = getLeafAssetId(merkleTree, nonce);
     const [listState] = findListStatePda({ assetId });
     const takerBrokerAta = takerBroker ? findAta(currency, takerBroker) : null;
     const makerBrokerAta = makerBroker ? findAta(currency, makerBroker) : null;
-    const tcompAta = findAta(currency, tcomp);
     const payerSource = findAta(currency, payer ?? buyer);
     const ownerDest = findAta(currency, owner);
+
+    const feeVault = await findFeeVaultPda({ stateAccount: listState });
+    const feeVaultAta = findAta(currency, feeVault);
 
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
@@ -885,7 +897,7 @@ export class TCompSDK {
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         merkleTree,
         treeAuthority,
         buyer,
@@ -896,8 +908,8 @@ export class TCompSDK {
         rentPayer: rentPayer ?? payer ?? buyer,
         rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
         listState,
-        tcomp,
-        tcompAta,
+        feeVault,
+        feeVaultAta,
         currency,
         takerBroker,
         takerBrokerAta,
@@ -920,7 +932,6 @@ export class TCompSDK {
       },
       listState,
       treeAuthority,
-      tcomp,
       creators,
       proofPath,
     };
@@ -982,7 +993,7 @@ export class TCompSDK {
       .accounts({
         owner,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         bidState,
         marginAccount: margin ?? owner,
         cosigner: cosigner ?? owner,
@@ -1021,7 +1032,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.cancelBid().accounts({
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       systemProgram: SystemProgram.programId,
@@ -1060,7 +1071,7 @@ export class TCompSDK {
     const [bidState] = findBidStatePda({ bidId, owner });
 
     const builder = this.program.methods.closeExpiredBid().accounts({
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
@@ -1126,7 +1137,7 @@ export class TCompSDK {
     const builder = this.program.methods
       .closeExpiredListing(nonce, index, root, [...dataHash], [...creatorsHash])
       .accounts({
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         logWrapper: SPL_NOOP_PROGRAM_ID,
         compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -1184,15 +1195,15 @@ export class TCompSDK {
     cosigner = null,
   }: {
     targetData:
-      | {
-          target: "assetIdOrFvcWithoutField";
-          data: {
-            metaHash: Buffer;
-            creators: Creator[];
-            sellerFeeBasisPoints: number;
-          };
-        }
-      | { target: "rest"; data: { metadata: MetadataArgs } };
+    | {
+      target: "assetIdOrFvcWithoutField";
+      data: {
+        metaHash: Buffer;
+        creators: Creator[];
+        sellerFeeBasisPoints: number;
+      };
+    }
+    | { target: "rest"; data: { metadata: MetadataArgs } };
     bidId: PublicKey;
     merkleTree: PublicKey;
     proof: Buffer[];
@@ -1228,6 +1239,8 @@ export class TCompSDK {
     const [tcomp] = findTCompPda({});
     const [bidState] = findBidStatePda({ bidId, owner });
 
+    const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
@@ -1244,14 +1257,14 @@ export class TCompSDK {
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       merkleTree,
       treeAuthority,
       seller,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       bidState,
-      tcomp,
+      feeVault,
       takerBroker,
       makerBroker,
       delegate: delegate,
@@ -1379,6 +1392,8 @@ export class TCompSDK {
       ? findMintProofPDA({ mint: nftMint, whitelist })[0]
       : SystemProgram.programId;
 
+    const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
     //prepare 2 pnft account sets
     const {
       meta: newMeta,
@@ -1407,7 +1422,7 @@ export class TCompSDK {
         authDataSerialized
       )
       .accounts({
-        tcomp,
+        feeVault,
         seller,
         bidState,
         owner,
@@ -1435,7 +1450,7 @@ export class TCompSDK {
         tokenProgram,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
         mintProof: mintProofPda,
@@ -1547,8 +1562,10 @@ export class TCompSDK {
       ? findMintProofPDA({ mint: nftMint, whitelist })[0]
       : SystemProgram.programId;
 
+    const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
     const builder = this.program.methods.takeBidT22(minAmount).accounts({
-      tcomp,
+      feeVault,
       seller,
       bidState,
       owner,
@@ -1563,7 +1580,7 @@ export class TCompSDK {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       cosigner: cosigner ?? seller,
       mintProof: mintProofPda,
@@ -1634,12 +1651,14 @@ export class TCompSDK {
       ? findMintProofPDA({ mint: nftMint, whitelist })[0]
       : SystemProgram.programId;
 
+    const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
     const approveAccount = getApprovalAccount(nftMint);
     const distribution = getDistributionAccount(collectionMint);
     const extraMetas = getExtraAccountMetaAddress(nftMint, WNS_PROGRAM_ID);
 
     const builder = this.program.methods.takeBidWns(minAmount).accounts({
-      tcomp,
+      feeVault,
       seller,
       bidState,
       owner,
@@ -1654,7 +1673,7 @@ export class TCompSDK {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       cosigner: cosigner ?? seller,
       mintProof: mintProofPda,
@@ -1730,10 +1749,12 @@ export class TCompSDK {
       collection
     );
 
+    const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
     const builder = this.program.methods
       .takeBidCore(minAmount)
       .accounts({
-        tcomp,
+        feeVault,
         seller,
         bidState,
         owner,
@@ -1746,7 +1767,7 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
         mintProof: mintProofPda,
@@ -1813,7 +1834,7 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         owner,
         listState,
         payer: payer ?? owner,
@@ -1854,7 +1875,7 @@ export class TCompSDK {
       asset,
       collection,
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       systemProgram: SystemProgram.programId,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
@@ -1905,6 +1926,8 @@ export class TCompSDK {
     const [tcomp] = findTCompPda({});
     const [listState] = findListStatePda({ assetId: asset });
 
+    const feeVault = await findFeeVaultPda({ stateAccount: listState });
+
     const creators = await getCreators(
       this.program.provider.connection,
       asset,
@@ -1918,13 +1941,13 @@ export class TCompSDK {
         collection,
         mplCoreProgram: MPL_CORE_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        tcompProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR,
         buyer,
         payer: payer ?? buyer,
         owner,
         rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
         listState,
-        tcomp,
+        feeVault,
         takerBroker,
         makerBroker,
       })
@@ -1977,7 +2000,7 @@ export class TCompSDK {
       asset,
       collection,
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
       systemProgram: SystemProgram.programId,
       owner,
       listState,

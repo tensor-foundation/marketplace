@@ -5,7 +5,10 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::token_metadata::{transfer, TransferArgs};
+use tensor_toolbox::{
+    token_metadata::{transfer, TransferArgs},
+    NullableOption,
+};
 
 use crate::{
     program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
@@ -98,6 +101,8 @@ pub struct ListLegacy<'info> {
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: UncheckedAccount<'info>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_legacy<'info>(
@@ -124,13 +129,13 @@ pub fn process_list_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.sysvar_instructions,
+            sysvar_instructions: Some(&ctx.accounts.sysvar_instructions),
             source_token_record: ctx.accounts.owner_token_record.as_ref(),
             destination_token_record: ctx.accounts.list_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),
             authorization_data: authorization_data.map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.token_metadata_program),
             delegate: None,
         },
         None,
@@ -159,7 +164,8 @@ pub fn process_list_legacy<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

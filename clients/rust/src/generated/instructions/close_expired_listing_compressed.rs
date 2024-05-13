@@ -16,7 +16,7 @@ pub struct CloseExpiredListingCompressed {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
@@ -57,7 +57,7 @@ impl CloseExpiredListingCompressed {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -100,12 +100,12 @@ impl CloseExpiredListingCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct CloseExpiredListingCompressedInstructionData {
+pub struct CloseExpiredListingCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl CloseExpiredListingCompressedInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [150, 70, 13, 135, 9, 204, 75, 4],
         }
@@ -129,7 +129,7 @@ pub struct CloseExpiredListingCompressedInstructionArgs {
 ///   0. `[writable]` list_state
 ///   1. `[]` owner
 ///   2. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   3. `[]` tcomp_program
+///   3. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   4. `[]` tree_authority
 ///   5. `[writable]` merkle_tree
 ///   6. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
@@ -141,7 +141,7 @@ pub struct CloseExpiredListingCompressedBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
@@ -176,9 +176,13 @@ impl CloseExpiredListingCompressedBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -271,7 +275,9 @@ impl CloseExpiredListingCompressedBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
             log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
@@ -305,7 +311,7 @@ pub struct CloseExpiredListingCompressedCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -331,7 +337,7 @@ pub struct CloseExpiredListingCompressedCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -359,7 +365,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
             list_state: accounts.list_state,
             owner: accounts.owner,
             system_program: accounts.system_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             tree_authority: accounts.tree_authority,
             merkle_tree: accounts.merkle_tree,
             log_wrapper: accounts.log_wrapper,
@@ -416,7 +422,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -466,7 +472,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
@@ -492,7 +498,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
 ///   0. `[writable]` list_state
 ///   1. `[]` owner
 ///   2. `[]` system_program
-///   3. `[]` tcomp_program
+///   3. `[]` marketplace_program
 ///   4. `[]` tree_authority
 ///   5. `[writable]` merkle_tree
 ///   6. `[]` log_wrapper
@@ -510,7 +516,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
             list_state: None,
             owner: None,
             system_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             tree_authority: None,
             merkle_tree: None,
             log_wrapper: None,
@@ -548,11 +554,11 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -696,10 +702,10 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             tree_authority: self
                 .instruction
@@ -741,7 +747,7 @@ struct CloseExpiredListingCompressedCpiBuilderInstruction<'a, 'b> {
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,

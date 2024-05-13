@@ -38,7 +38,7 @@ export const cpiEdit = async ({
     .accounts({
       owner,
       listState,
-      tcompProgram: TCOMP_ADDR,
+      marketplaceProgram: TCOMP_ADDR,
     });
 
   return {

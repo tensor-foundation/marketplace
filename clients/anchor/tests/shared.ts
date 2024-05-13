@@ -17,19 +17,19 @@ import {
   MetadataArgs,
   metadataArgsBeet,
   TokenProgramVersion,
-  TokenStandard,
+  TokenStandard
 } from "@metaplex-foundation/mpl-bubblegum";
 import { mplTokenAuthRules } from "@metaplex-foundation/mpl-token-auth-rules";
 import { keypairIdentity } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   fromWeb3JsKeypair,
-  toWeb3JsPublicKey,
+  toWeb3JsPublicKey
 } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SingleConnectionBroadcaster,
   SolanaProvider,
-  TransactionEnvelope,
+  TransactionEnvelope
 } from "@saberhq/solana-contrib";
 import {
   ConcurrentMerkleTreeAccount,
@@ -38,17 +38,12 @@ import {
   MerkleTree,
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
-  ValidDepthSizePair,
+  ValidDepthSizePair
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  createMint,
-  getMinimumBalanceForRentExemptAccount,
-  TokenAccountNotFoundError,
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  getAccountLen,
-  ExtensionType,
+  createMint, ExtensionType, getAccountLen, getMinimumBalanceForRentExemptAccount,
+  TokenAccountNotFoundError, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
@@ -61,7 +56,7 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   AUTH_PROGRAM_ID,
@@ -73,18 +68,15 @@ import {
   isNullLike,
   MINUTES,
   Overwrite,
-  prependComputeIxs,
-  TSWAP_PROGRAM_ID,
-  test_utils,
-  TMETA_PROGRAM_ID,
-  waitMS,
+  prependComputeIxs, test_utils,
+  TMETA_PROGRAM_ID, TSWAP_PROGRAM_ID, waitMS
 } from "@tensor-hq/tensor-common";
 import { createDefaultRuleSet } from "@tensor-hq/tensor-tests-common";
 import {
   TensorSwapSDK,
   TensorWhitelistSDK,
   TSwapConfigAnchor,
-  TSWAP_TAKER_FEE_BPS,
+  TSWAP_TAKER_FEE_BPS
 } from "@tensor-hq/tensorswap-ts";
 import { fail } from "assert";
 import chai, { expect } from "chai";
@@ -101,6 +93,7 @@ import {
   Field,
   findAta,
   findBidStatePda,
+  findFeeVaultPda,
   findListStatePda,
   findMintAuthorityPda,
   findTCompPda,
@@ -112,7 +105,7 @@ import {
   TCompSDK,
   TCOMP_ADDR,
   TCOMP_DISC_MAP,
-  TCOMP_FEE_BPS,
+  TCOMP_FEE_BPS
 } from "../src";
 import { getCreators } from "../src/metaplexCore";
 import {
@@ -122,7 +115,7 @@ import {
   getTokenBalance,
   initCollection,
   makeNTraders,
-  transferLamports,
+  transferLamports
 } from "./account";
 import { testInitWLAuthority } from "./tswap";
 
@@ -532,46 +525,46 @@ export const mintCNft = async ({
   const mintIx =
     !!metadata.collection && !unverifiedCollection
       ? createMintToCollectionV1Instruction(
-          {
-            merkleTree,
-            treeAuthority,
-            treeDelegate: owner,
-            payer: owner,
-            leafDelegate: receiver,
-            leafOwner: receiver,
-            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-            logWrapper: SPL_NOOP_PROGRAM_ID,
-            bubblegumSigner: bgumSigner,
-            collectionAuthority: treeOwner.publicKey,
-            collectionAuthorityRecordPda: BUBBLEGUM_PROGRAM_ID,
-            collectionMetadata: getMetadata(metadata.collection.key),
-            collectionMint: metadata.collection.key,
-            editionAccount: getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TMETA_PROGRAM_ID,
+        {
+          merkleTree,
+          treeAuthority,
+          treeDelegate: owner,
+          payer: owner,
+          leafDelegate: receiver,
+          leafOwner: receiver,
+          compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+          logWrapper: SPL_NOOP_PROGRAM_ID,
+          bubblegumSigner: bgumSigner,
+          collectionAuthority: treeOwner.publicKey,
+          collectionAuthorityRecordPda: BUBBLEGUM_PROGRAM_ID,
+          collectionMetadata: getMetadata(metadata.collection.key),
+          collectionMint: metadata.collection.key,
+          editionAccount: getMasterEdition(metadata.collection.key),
+          tokenMetadataProgram: TMETA_PROGRAM_ID,
+        },
+        {
+          metadataArgs: {
+            ...metadata,
+            //we have to pass it in as FALSE, it'll be set to TRUE during the ix
+            collection: { key: metadata.collection.key, verified: false },
           },
-          {
-            metadataArgs: {
-              ...metadata,
-              //we have to pass it in as FALSE, it'll be set to TRUE during the ix
-              collection: { key: metadata.collection.key, verified: false },
-            },
-          }
-        )
+        }
+      )
       : createMintV1Instruction(
-          {
-            merkleTree,
-            treeAuthority,
-            treeDelegate: owner,
-            payer: owner,
-            leafDelegate: receiver,
-            leafOwner: receiver,
-            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-            logWrapper: SPL_NOOP_PROGRAM_ID,
-          },
-          {
-            message: metadata,
-          }
-        );
+        {
+          merkleTree,
+          treeAuthority,
+          treeDelegate: owner,
+          payer: owner,
+          leafDelegate: receiver,
+          leafOwner: receiver,
+          compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+          logWrapper: SPL_NOOP_PROGRAM_ID,
+        },
+        {
+          message: metadata,
+        }
+      );
 
   const sig = await buildAndSendTx({
     ixs: [mintIx],
@@ -1531,7 +1524,7 @@ export const testBuy = async ({
   optionalRoyaltyPct = 100,
   programmable = false,
   lookupTableAccount,
-  canopyDepth = 0,
+  canopyDepth = 2,
   payer = buyer,
   rentPayer = payer,
   rentDest = owner,
@@ -1560,8 +1553,6 @@ export const testBuy = async ({
     DEFAULT_DEPTH_SIZE.maxDepth,
     false
   );
-  const [tcomp] = findTCompPda({});
-
   const metaHash = computeMetadataArgsHash(metadata);
 
   const common = {
@@ -1588,8 +1579,8 @@ export const testBuy = async ({
     tx: { ixs },
     listState,
   } = isNullLike(currency)
-    ? await tcompSdk.buy({ ...common })
-    : await tcompSdk.buySpl({
+      ? await tcompSdk.buy({ ...common })
+      : await tcompSdk.buySpl({
         ...common,
         currency,
         rentPayer: rentPayer.publicKey,
@@ -1597,9 +1588,11 @@ export const testBuy = async ({
 
   let sig: string | undefined;
 
+  const feeVault = await findFeeVaultPda({ stateAccount: listState });
+
   await withLamports(
     {
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: owner,
       prevPayerLamports: payer.publicKey,
       prevBuyerLamports: buyer.publicKey,
@@ -1621,16 +1614,16 @@ export const testBuy = async ({
         prevBuyerTokens,
         prevMakerBrokerTokens,
       ] = currency
-        ? await Promise.all([
-            getTokenBalance(findAta(currency, tcomp)),
+          ? await Promise.all([
+            getTokenBalance(findAta(currency, feeVault)),
             getTokenBalance(findAta(currency, owner)),
             getTokenBalance(
               findAta(currency, payer.publicKey ?? buyer.publicKey)
             ),
             getTokenBalance(findAta(currency, buyer.publicKey)),
-            getTokenBalance(findAta(currency, makerBroker ?? tcomp)),
+            getTokenBalance(findAta(currency, makerBroker ?? feeVault)),
           ])
-        : [0, 0, 0, 0, 0];
+          : [0, 0, 0, 0, 0];
       sig = await buildAndSendTx({
         ixs,
         extraSigners: [payer, ...(currency ? [rentPayer] : [])],
@@ -1663,14 +1656,14 @@ export const testBuy = async ({
       //fees paid
       const { tcompFee, brokerFee } = calcFees(amount);
       if (isNullLike(currency)) {
-        const feeAccLamports = await getLamports(tcomp);
+        const feeAccLamports = await getLamports(feeVault);
         expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerLamports = await getLamports(makerBroker);
           expect(brokerLamports! - (prevMakerBroker ?? 0)).eq(brokerFee);
         }
       } else {
-        const feeAccTokens = await getTokenBalance(findAta(currency, tcomp));
+        const feeAccTokens = await getTokenBalance(findAta(currency, feeVault));
         expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(tcompFee);
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(
@@ -1695,10 +1688,10 @@ export const testBuy = async ({
           (programmable
             ? royaltyBps / 1e4
             : !isNullLike(optionalRoyaltyPct)
-            ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
-            : 0) *
-            amount *
-            (1 - skippedCreators / 100)
+              ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
+              : 0) *
+          amount *
+          (1 - skippedCreators / 100)
         );
         for (const c of creators) {
           const cBal = isNullLike(currency)
@@ -2174,9 +2167,7 @@ export const testTakeBid = async ({
     DEFAULT_DEPTH_SIZE.maxDepth,
     false
   );
-  const [tcomp] = findTCompPda({});
-
-  //unfortunately we can no longe rely on the hashed metadata ix since we dont know if it's FVC/VOC on the whitelist
+  //unfortunately we can no longer rely on the hashed metadata ix since we dont know if it's FVC/VOC on the whitelist
   const hashed = target === Target.AssetId;
 
   const {
@@ -2185,9 +2176,9 @@ export const testTakeBid = async ({
   } = await tcompSdk.takeBid({
     targetData: hashed
       ? {
-          target: "assetIdOrFvcWithoutField",
-          data: { ...metadata, metaHash: computeMetadataArgsHash(metadata) },
-        }
+        target: "assetIdOrFvcWithoutField",
+        data: { ...metadata, metaHash: computeMetadataArgsHash(metadata) },
+      }
       : { target: "rest", data: { metadata } },
     bidId,
     proof: proof.proof,
@@ -2210,6 +2201,8 @@ export const testTakeBid = async ({
     cosigner: cosigner?.publicKey,
   });
 
+  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
   let sig;
 
   await withLamports(
@@ -2218,7 +2211,7 @@ export const testTakeBid = async ({
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
     },
     async ({
@@ -2235,7 +2228,7 @@ export const testTakeBid = async ({
         //stuff into a try block in case doesnt exist
         ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
           await tcompSdk.fetchBidState(bidState));
-      } catch {}
+      } catch { }
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
       const commonSigners = [delegateSigns && delegate ? delegate : seller];
@@ -2281,7 +2274,7 @@ export const testTakeBid = async ({
       const royaltyBps = metadata.sellerFeeBasisPoints;
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
+      const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -2304,10 +2297,10 @@ export const testTakeBid = async ({
           (programmable
             ? royaltyBps / 1e4
             : !isNullLike(optionalRoyaltyPct)
-            ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
-            : 0) *
-            amount *
-            (1 - skippedCreators / 100)
+              ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
+              : 0) *
+          amount *
+          (1 - skippedCreators / 100)
         );
 
         for (const c of creators) {
@@ -2395,8 +2388,6 @@ export const testTakeBidLegacy = async ({
   whitelist?: PublicKey | null;
   cosigner?: Keypair;
 }) => {
-  const [tcomp] = findTCompPda({});
-
   const {
     tx: { ixs: takeIxs },
     bidState,
@@ -2419,6 +2410,8 @@ export const testTakeBidLegacy = async ({
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
+  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
   let sig;
 
   await withLamports(
@@ -2427,7 +2420,7 @@ export const testTakeBidLegacy = async ({
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
       prevOwnerAtaLamports: ownerAtaAcc,
     },
@@ -2446,7 +2439,7 @@ export const testTakeBidLegacy = async ({
         //stuff into a try block in case doesnt exist
         ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
           await tcompSdk.fetchBidState(bidState));
-      } catch {}
+      } catch { }
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
       // Seller has nft
@@ -2496,7 +2489,7 @@ export const testTakeBidLegacy = async ({
       const amount = minAmount.toNumber();
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
+      const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -2519,10 +2512,10 @@ export const testTakeBidLegacy = async ({
           (programmable
             ? royaltyBps / 1e4
             : !isNullLike(optionalRoyaltyPct)
-            ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
-            : 0) *
-            amount *
-            (1 - skippedCreators / 100)
+              ? ((royaltyBps / 1e4) * optionalRoyaltyPct) / 100
+              : 0) *
+          amount *
+          (1 - skippedCreators / 100)
         );
 
         for (const c of creators) {
@@ -2542,15 +2535,15 @@ export const testTakeBidLegacy = async ({
       if (!programmable) {
         expect(currSellerLamports! - prevSellerLamports!).eq(
           amount -
-            tcompFee -
-            brokerFee -
-            creatorsFee -
-            // For bidder's ATA rent.
-            (!prevOwnerAtaLamports
-              ? await getMinimumBalanceForRentExemptAccount(
-                  TEST_PROVIDER.connection
-                )
-              : 0)
+          tcompFee -
+          brokerFee -
+          creatorsFee -
+          // For bidder's ATA rent.
+          (!prevOwnerAtaLamports
+            ? await getMinimumBalanceForRentExemptAccount(
+              TEST_PROVIDER.connection
+            )
+            : 0)
         );
       }
 
@@ -2601,8 +2594,6 @@ export const testTakeBidT22 = async ({
   whitelist?: PublicKey | null;
   cosigner?: Keypair;
 }) => {
-  const [tcomp] = findTCompPda({});
-
   const {
     tx: { ixs: takeIxs },
     bidState,
@@ -2623,6 +2614,8 @@ export const testTakeBidT22 = async ({
     cosigner: cosigner?.publicKey,
   });
 
+  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
   let sig;
 
   await withLamports(
@@ -2631,7 +2624,7 @@ export const testTakeBidT22 = async ({
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
       prevOwnerAtaLamports: ownerAtaAcc,
     },
@@ -2650,7 +2643,7 @@ export const testTakeBidT22 = async ({
         //stuff into a try block in case doesnt exist
         ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
           await tcompSdk.fetchBidState(bidState));
-      } catch {}
+      } catch { }
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
       // Seller has nft
@@ -2709,7 +2702,7 @@ export const testTakeBidT22 = async ({
       const amount = minAmount.toNumber();
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
+      const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -2722,14 +2715,14 @@ export const testTakeBidT22 = async ({
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
-          tcompFee -
-          brokerFee -
-          // For bidder's ATA rent.
-          (!prevOwnerAtaLamports
-            ? await getMinimumBalanceForRentExemptAccount(
-                TEST_PROVIDER.connection
-              )
-            : 0)
+        tcompFee -
+        brokerFee -
+        // For bidder's ATA rent.
+        (!prevOwnerAtaLamports
+          ? await getMinimumBalanceForRentExemptAccount(
+            TEST_PROVIDER.connection
+          )
+          : 0)
       );
 
       // Sol escrow should have the NFT cost deducted
@@ -2781,8 +2774,6 @@ export const testTakeBidWns = async ({
   whitelist?: PublicKey | null;
   cosigner?: Keypair;
 }) => {
-  const [tcomp] = findTCompPda({});
-
   const {
     tx: { ixs: takeIxs },
     bidState,
@@ -2804,6 +2795,8 @@ export const testTakeBidWns = async ({
     collectionMint,
   });
 
+  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
   let sig;
 
   await withLamports(
@@ -2812,7 +2805,7 @@ export const testTakeBidWns = async ({
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
       prevOwnerAtaLamports: ownerAtaAcc,
     },
@@ -2831,7 +2824,7 @@ export const testTakeBidWns = async ({
         //stuff into a try block in case doesnt exist
         ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
           await tcompSdk.fetchBidState(bidState));
-      } catch {}
+      } catch { }
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
       // Seller has nft
@@ -2890,7 +2883,7 @@ export const testTakeBidWns = async ({
       const amount = minAmount.toNumber();
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
+      const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -2903,13 +2896,13 @@ export const testTakeBidWns = async ({
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
-          tcompFee -
-          brokerFee -
-          // For bidder's ATA rent.
-          (!prevOwnerAtaLamports
-            ? await getTokenAcctRentForMint(nftMint, TOKEN_2022_PROGRAM_ID)
-            : 0) -
-          (await getApproveRent())
+        tcompFee -
+        brokerFee -
+        // For bidder's ATA rent.
+        (!prevOwnerAtaLamports
+          ? await getTokenAcctRentForMint(nftMint, TOKEN_2022_PROGRAM_ID)
+          : 0) -
+        (await getApproveRent())
       );
 
       // Sol escrow should have the NFT cost deducted
@@ -2961,7 +2954,6 @@ export const testTakeBidCore = async ({
   cosigner?: Keypair;
   royaltyBps?: number;
 }) => {
-  const [tcomp] = findTCompPda({});
   const creators = await getCreators(TEST_CONN_PAYER.conn, asset, collection);
   const creatorsBalance: {
     address: PublicKey;
@@ -2994,6 +2986,8 @@ export const testTakeBidCore = async ({
     collection,
   });
 
+  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+
   let sig;
 
   await withLamports(
@@ -3002,7 +2996,7 @@ export const testTakeBidCore = async ({
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
     },
     async ({
@@ -3019,7 +3013,7 @@ export const testTakeBidCore = async ({
         //stuff into a try block in case doesnt exist
         ({ quantity: prevQuantity, filledQuantity: prevQuantityFilled } =
           await tcompSdk.fetchBidState(bidState));
-      } catch {}
+      } catch { }
       const fullyFilled = prevQuantityFilled + 1 === prevQuantity;
 
       sig = await buildAndSendTx({
@@ -3048,7 +3042,7 @@ export const testTakeBidCore = async ({
       const amount = minAmount.toNumber();
 
       //fees paid
-      const feeAccLamports = await getLamports(tcomp);
+      const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
       expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -3308,7 +3302,6 @@ export const testBuyCore = async ({
   rentDest?: PublicKey;
   royaltyBps?: number;
 }) => {
-  const [tcomp] = findTCompPda({});
   const creators = await getCreators(TEST_CONN_PAYER.conn, asset, collection);
   const creatorsBalance: {
     address: PublicKey;
@@ -3346,14 +3339,16 @@ export const testBuyCore = async ({
     tx: { ixs },
     listState,
   } = isNullLike(currency)
-    ? await tcompSdk.buyCore({ ...common })
-    : fail("SPL buy not implemented yet");
+      ? await tcompSdk.buyCore({ ...common })
+      : fail("SPL buy not implemented yet");
 
   let sig: string | undefined;
 
+  const feeVault = await findFeeVaultPda({ stateAccount: listState });
+
   await withLamports(
     {
-      prevFeeAccLamports: tcomp,
+      prevFeeAccLamports: feeVault,
       prevSellerLamports: owner,
       prevPayerLamports: payer.publicKey,
       prevBuyerLamports: buyer.publicKey,
@@ -3375,16 +3370,16 @@ export const testBuyCore = async ({
         prevBuyerTokens,
         prevMakerBrokerTokens,
       ] = currency
-        ? await Promise.all([
-            getTokenBalance(findAta(currency, tcomp)),
+          ? await Promise.all([
+            getTokenBalance(findAta(currency, feeVault)),
             getTokenBalance(findAta(currency, owner)),
             getTokenBalance(
               findAta(currency, payer.publicKey ?? buyer.publicKey)
             ),
             getTokenBalance(findAta(currency, buyer.publicKey)),
-            getTokenBalance(findAta(currency, makerBroker ?? tcomp)),
+            getTokenBalance(findAta(currency, makerBroker ?? feeVault)),
           ])
-        : [0, 0, 0, 0, 0];
+          : [0, 0, 0, 0, 0];
       sig = await buildAndSendTx({
         ixs,
         extraSigners: [payer],
@@ -3400,14 +3395,14 @@ export const testBuyCore = async ({
       //fees paid
       const { tcompFee, brokerFee } = calcFees(amount);
       if (isNullLike(currency)) {
-        const feeAccLamports = await getLamports(tcomp);
+        const feeAccLamports = await getLamports(feeVault);
         expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerLamports = await getLamports(makerBroker);
           expect(brokerLamports! - (prevMakerBroker ?? 0)).eq(brokerFee);
         }
       } else {
-        const feeAccTokens = await getTokenBalance(findAta(currency, tcomp));
+        const feeAccTokens = await getTokenBalance(findAta(currency, feeVault));
         expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(tcompFee);
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(

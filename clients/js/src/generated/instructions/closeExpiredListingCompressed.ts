@@ -49,7 +49,7 @@ export type CloseExpiredListingCompressedInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends
+  TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
@@ -78,9 +78,9 @@ export type CloseExpiredListingCompressedInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -168,7 +168,7 @@ export type CloseExpiredListingCompressedAsyncInput<
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -179,7 +179,7 @@ export type CloseExpiredListingCompressedAsyncInput<
   listState: Address<TAccountListState>;
   owner: Address<TAccountOwner>;
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -200,7 +200,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
   TAccountListState extends string,
   TAccountOwner extends string,
   TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -212,7 +212,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -226,7 +226,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -243,7 +243,10 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -273,9 +276,9 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
@@ -317,7 +320,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -335,7 +338,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -351,7 +354,7 @@ export type CloseExpiredListingCompressedInput<
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -362,7 +365,7 @@ export type CloseExpiredListingCompressedInput<
   listState: Address<TAccountListState>;
   owner: Address<TAccountOwner>;
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -383,7 +386,7 @@ export function getCloseExpiredListingCompressedInstruction<
   TAccountListState extends string,
   TAccountOwner extends string,
   TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -395,7 +398,7 @@ export function getCloseExpiredListingCompressedInstruction<
     TAccountListState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -408,7 +411,7 @@ export function getCloseExpiredListingCompressedInstruction<
   TAccountListState,
   TAccountOwner,
   TAccountSystemProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -424,7 +427,10 @@ export function getCloseExpiredListingCompressedInstruction<
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -454,9 +460,9 @@ export function getCloseExpiredListingCompressedInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
@@ -492,7 +498,7 @@ export function getCloseExpiredListingCompressedInstruction<
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -510,7 +516,7 @@ export function getCloseExpiredListingCompressedInstruction<
     TAccountListState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -531,7 +537,7 @@ export type ParsedCloseExpiredListingCompressedInstruction<
     listState: TAccountMetas[0];
     owner: TAccountMetas[1];
     systemProgram: TAccountMetas[2];
-    tcompProgram: TAccountMetas[3];
+    marketplaceProgram: TAccountMetas[3];
     treeAuthority: TAccountMetas[4];
     merkleTree: TAccountMetas[5];
     logWrapper: TAccountMetas[6];
@@ -566,7 +572,7 @@ export function parseCloseExpiredListingCompressedInstruction<
       listState: getNextAccount(),
       owner: getNextAccount(),
       systemProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       treeAuthority: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),

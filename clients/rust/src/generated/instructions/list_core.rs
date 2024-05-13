@@ -21,11 +21,13 @@ pub struct ListCore {
 
     pub mpl_core_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
     pub payer: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ListCore {
@@ -41,7 +43,7 @@ impl ListCore {
         args: ListCoreInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.asset, false,
         ));
@@ -67,7 +69,7 @@ impl ListCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -77,6 +79,16 @@ impl ListCore {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ListCoreInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -91,12 +103,12 @@ impl ListCore {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct ListCoreInstructionData {
+pub struct ListCoreInstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListCoreInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [173, 76, 167, 125, 118, 71, 1, 153],
         }
@@ -122,9 +134,10 @@ pub struct ListCoreInstructionArgs {
 ///   2. `[writable]` list_state
 ///   3. `[signer]` owner
 ///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
-///   5. `[]` tcomp_program
+///   5. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   7. `[writable, signer]` payer
+///   8. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct ListCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
@@ -132,9 +145,10 @@ pub struct ListCoreBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -177,9 +191,13 @@ impl ListCoreBuilder {
         self.mpl_core_program = Some(mpl_core_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -191,6 +209,12 @@ impl ListCoreBuilder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -250,11 +274,14 @@ impl ListCoreBuilder {
             mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
                 "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
             )),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             payer: self.payer.expect("payer is not set"),
+            cosigner: self.cosigner,
         };
         let args = ListCoreInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -280,11 +307,13 @@ pub struct ListCoreCpiAccounts<'a, 'b> {
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list_core` CPI instruction.
@@ -302,11 +331,13 @@ pub struct ListCoreCpi<'a, 'b> {
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListCoreInstructionArgs,
 }
@@ -324,9 +355,10 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             list_state: accounts.list_state,
             owner: accounts.owner,
             mpl_core_program: accounts.mpl_core_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
             payer: accounts.payer,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -363,7 +395,7 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.asset.key,
             false,
@@ -392,7 +424,7 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -403,6 +435,17 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             *self.payer.key,
             true,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -419,7 +462,7 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.asset.clone());
         if let Some(collection) = self.collection {
@@ -428,9 +471,12 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.mpl_core_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.payer.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -452,9 +498,10 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
 ///   2. `[writable]` list_state
 ///   3. `[signer]` owner
 ///   4. `[]` mpl_core_program
-///   5. `[]` tcomp_program
+///   5. `[]` marketplace_program
 ///   6. `[]` system_program
 ///   7. `[writable, signer]` payer
+///   8. `[signer, optional]` cosigner
 pub struct ListCoreCpiBuilder<'a, 'b> {
     instruction: Box<ListCoreCpiBuilderInstruction<'a, 'b>>,
 }
@@ -468,9 +515,10 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
             list_state: None,
             owner: None,
             mpl_core_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             system_program: None,
             payer: None,
+            cosigner: None,
             amount: None,
             expire_in_sec: None,
             currency: None,
@@ -516,11 +564,11 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -534,6 +582,15 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -629,10 +686,10 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
                 .mpl_core_program
                 .expect("mpl_core_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             system_program: self
                 .instruction
@@ -640,6 +697,8 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
                 .expect("system_program is not set"),
 
             payer: self.instruction.payer.expect("payer is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -656,9 +715,10 @@ struct ListCoreCpiBuilderInstruction<'a, 'b> {
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,

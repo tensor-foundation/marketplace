@@ -104,7 +104,7 @@ export type Tcomp = {
       "name": "buy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -139,7 +139,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -179,6 +179,12 @@ export type Tcomp = {
           "name": "rentDest",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -238,12 +244,12 @@ export type Tcomp = {
       "name": "buySpl",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "tcompAta",
+          "name": "feeVaultAta",
           "isMut": true,
           "isSigner": false
         },
@@ -278,7 +284,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -360,7 +366,13 @@ export type Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {
@@ -419,7 +431,7 @@ export type Tcomp = {
       "name": "buyCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -477,7 +489,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -485,6 +497,12 @@ export type Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -538,7 +556,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -551,7 +569,14 @@ export type Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+
       ],
       "args": [
         {
@@ -663,7 +688,7 @@ export type Tcomp = {
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -725,7 +750,7 @@ export type Tcomp = {
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -791,7 +816,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -804,6 +829,12 @@ export type Tcomp = {
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -867,7 +898,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -893,7 +924,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1005,7 +1036,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1036,7 +1067,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1067,7 +1098,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1175,7 +1206,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1191,7 +1222,7 @@ export type Tcomp = {
       "name": "takeBidMetaHash",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1236,7 +1267,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1345,7 +1376,7 @@ export type Tcomp = {
       "name": "takeBidFullMeta",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1390,7 +1421,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1482,7 +1513,7 @@ export type Tcomp = {
       "name": "takeBidLegacy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1612,7 +1643,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1669,7 +1700,7 @@ export type Tcomp = {
       "name": "takeBidT22",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1741,7 +1772,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1780,7 +1811,7 @@ export type Tcomp = {
       "name": "takeBidWns",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1852,7 +1883,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1916,7 +1947,7 @@ export type Tcomp = {
       "name": "takeBidCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1979,7 +2010,7 @@ export type Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3046,7 +3077,7 @@ export const IDL: Tcomp = {
       "name": "buy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -3081,7 +3112,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3121,7 +3152,13 @@ export const IDL: Tcomp = {
           "name": "rentDest",
           "isMut": true,
           "isSigner": false
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {
@@ -3180,12 +3217,12 @@ export const IDL: Tcomp = {
       "name": "buySpl",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "tcompAta",
+          "name": "feeVaultAta",
           "isMut": true,
           "isSigner": false
         },
@@ -3220,7 +3257,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3302,7 +3339,13 @@ export const IDL: Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {
@@ -3361,7 +3404,7 @@ export const IDL: Tcomp = {
       "name": "buyCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -3419,7 +3462,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3427,6 +3470,12 @@ export const IDL: Tcomp = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -3480,7 +3529,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3493,7 +3542,13 @@ export const IDL: Tcomp = {
           "name": "rentPayer",
           "isMut": true,
           "isSigner": true
-        }
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
       ],
       "args": [
         {
@@ -3605,7 +3660,7 @@ export const IDL: Tcomp = {
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3667,7 +3722,7 @@ export const IDL: Tcomp = {
           "isSigner": true
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -3733,7 +3788,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3746,6 +3801,12 @@ export const IDL: Tcomp = {
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -3809,7 +3870,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3835,7 +3896,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3947,7 +4008,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3978,7 +4039,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4009,7 +4070,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4117,7 +4178,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4133,7 +4194,7 @@ export const IDL: Tcomp = {
       "name": "takeBidMetaHash",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4178,7 +4239,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4287,7 +4348,7 @@ export const IDL: Tcomp = {
       "name": "takeBidFullMeta",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4332,7 +4393,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4424,7 +4485,7 @@ export const IDL: Tcomp = {
       "name": "takeBidLegacy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4554,7 +4615,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4611,7 +4672,7 @@ export const IDL: Tcomp = {
       "name": "takeBidT22",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4683,7 +4744,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4722,7 +4783,7 @@ export const IDL: Tcomp = {
       "name": "takeBidWns",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4794,7 +4855,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -4858,7 +4919,7 @@ export const IDL: Tcomp = {
       "name": "takeBidCore",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -4921,7 +4982,7 @@ export const IDL: Tcomp = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         },

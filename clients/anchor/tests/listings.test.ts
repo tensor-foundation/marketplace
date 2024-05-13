@@ -3,12 +3,12 @@ import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  PublicKey
 } from "@solana/web3.js";
 import { isNullLike, waitMS } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { MakeEvent, TakeEvent, MAKER_BROKER_PCT, Target } from "../src";
+import { MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
 import { makeNTraders } from "./account";
 import { cpiEdit } from "./cpi_test";
 import {
@@ -26,7 +26,7 @@ import {
   testDelist,
   testEdit,
   testList,
-  TEST_USDC,
+  TEST_USDC
 } from "./shared";
 
 // Enables rejectedWith.
@@ -58,15 +58,15 @@ describe("tcomp listings", () => {
           },
           {
             nrCreators: 1,
-            canopyDepth: 0, // 14 proof length
-          },
-          {
-            nrCreators: 2,
             canopyDepth: 2, // 12 proof length
           },
           {
+            nrCreators: 2,
+            canopyDepth: 4, // 10 proof length
+          },
+          {
             nrCreators: 4,
-            canopyDepth: 6, // 8 proof length
+            canopyDepth: 8, // 6 proof length
           },
         ]) {
           const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =

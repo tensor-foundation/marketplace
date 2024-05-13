@@ -26,7 +26,7 @@ pub struct DelistCompressed {
 
     pub owner: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
 }
@@ -77,7 +77,7 @@ impl DelistCompressed {
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -98,12 +98,12 @@ impl DelistCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct DelistCompressedInstructionData {
+pub struct DelistCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl DelistCompressedInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [55, 136, 205, 107, 107, 173, 4, 31],
         }
@@ -132,7 +132,7 @@ pub struct DelistCompressedInstructionArgs {
 ///   5. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
-///   8. `[]` tcomp_program
+///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[writable]` rent_dest
 #[derive(Default)]
 pub struct DelistCompressedBuilder {
@@ -144,7 +144,7 @@ pub struct DelistCompressedBuilder {
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     rent_dest: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
@@ -208,9 +208,13 @@ impl DelistCompressedBuilder {
         self.owner = Some(owner);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -280,7 +284,9 @@ impl DelistCompressedBuilder {
             )),
             list_state: self.list_state.expect("list_state is not set"),
             owner: self.owner.expect("owner is not set"),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
         let args = DelistCompressedInstructionArgs {
@@ -313,7 +319,7 @@ pub struct DelistCompressedCpiAccounts<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -339,7 +345,7 @@ pub struct DelistCompressedCpi<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -362,7 +368,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
             bubblegum_program: accounts.bubblegum_program,
             list_state: accounts.list_state,
             owner: accounts.owner,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             rent_dest: accounts.rent_dest,
             __args: args,
         }
@@ -434,7 +440,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -467,7 +473,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
         account_infos.push(self.bubblegum_program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
@@ -493,7 +499,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
 ///   5. `[]` bubblegum_program
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
-///   8. `[]` tcomp_program
+///   8. `[]` marketplace_program
 ///   9. `[writable]` rent_dest
 pub struct DelistCompressedCpiBuilder<'a, 'b> {
     instruction: Box<DelistCompressedCpiBuilderInstruction<'a, 'b>>,
@@ -511,7 +517,7 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
             bubblegum_program: None,
             list_state: None,
             owner: None,
-            tcomp_program: None,
+            marketplace_program: None,
             rent_dest: None,
             nonce: None,
             index: None,
@@ -584,11 +590,11 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -717,10 +723,10 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
 
             owner: self.instruction.owner.expect("owner is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,
@@ -742,7 +748,7 @@ struct DelistCompressedCpiBuilderInstruction<'a, 'b> {
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,

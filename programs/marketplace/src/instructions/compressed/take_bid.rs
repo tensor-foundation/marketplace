@@ -1,6 +1,7 @@
 use mpl_bubblegum::types::Creator;
 use tensor_toolbox::{
-    make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+    fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num, transfer_cnft, CnftArgs, DataHashArgs,
+    MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;
@@ -9,10 +10,18 @@ use crate::{take_bid_common::*, *};
 
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
@@ -27,7 +36,7 @@ pub struct TakeBidCompressed<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub tensorswap_program: Program<'info, EscrowProgram>,
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut,
@@ -51,9 +60,8 @@ pub struct TakeBidCompressed<'info> {
     pub margin_account: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
-    // seller or cosigner
-    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
-    pub cosigner: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
         constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
@@ -67,14 +75,17 @@ pub struct TakeBidCompressed<'info> {
 impl<'info> Validate<'info> for TakeBidCompressed<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
+
         require!(
             bid_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::BidExpired
         );
+
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
@@ -86,6 +97,14 @@ impl<'info> Validate<'info> for TakeBidCompressed<'info> {
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = bid_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -137,7 +156,7 @@ impl<'info> TakeBidCompressed<'info> {
             rent_dest: &self.rent_dest,
             maker_broker: &self.maker_broker,
             taker_broker: &self.taker_broker,
-            tcomp: self.tcomp.deref(),
+            fee_vault: self.fee_vault.deref(),
             asset_id,
             token_standard: None,
             creators: creators.into_iter().map(Into::into).collect(),
@@ -145,7 +164,7 @@ impl<'info> TakeBidCompressed<'info> {
             optional_royalty_pct,
             seller_fee_basis_points,
             creator_accounts,
-            tcomp_prog: &self.tcomp_program,
+            tcomp_prog: &self.marketplace_program,
             tswap_prog: &self.tensorswap_program,
             system_prog: &self.system_program,
         })

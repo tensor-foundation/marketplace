@@ -48,7 +48,7 @@ export type EditInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountTcompProgram extends
+  TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -63,9 +63,9 @@ export type EditInstruction<
         ? ReadonlySignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -132,11 +132,11 @@ export function getEditInstructionDataCodec(): Codec<
 export type EditInput<
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
 > = {
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   amount: EditInstructionDataArgs['amount'];
   expireInSec?: EditInstructionDataArgs['expireInSec'];
   currency?: EditInstructionDataArgs['currency'];
@@ -147,14 +147,14 @@ export type EditInput<
 export function getEditInstruction<
   TAccountListState extends string,
   TAccountOwner extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
 >(
-  input: EditInput<TAccountListState, TAccountOwner, TAccountTcompProgram>
+  input: EditInput<TAccountListState, TAccountOwner, TAccountMarketplaceProgram>
 ): EditInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountListState,
   TAccountOwner,
-  TAccountTcompProgram
+  TAccountMarketplaceProgram
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -163,7 +163,10 @@ export function getEditInstruction<
   const originalAccounts = {
     listState: { value: input.listState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -174,9 +177,9 @@ export function getEditInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -184,7 +187,7 @@ export function getEditInstruction<
     accounts: [
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
     ],
     programAddress,
     data: getEditInstructionDataEncoder().encode(
@@ -194,7 +197,7 @@ export function getEditInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountListState,
     TAccountOwner,
-    TAccountTcompProgram
+    TAccountMarketplaceProgram
   >;
 
   return instruction;
@@ -208,7 +211,7 @@ export type ParsedEditInstruction<
   accounts: {
     listState: TAccountMetas[0];
     owner: TAccountMetas[1];
-    tcompProgram: TAccountMetas[2];
+    marketplaceProgram: TAccountMetas[2];
   };
   data: EditInstructionData;
 };
@@ -236,7 +239,7 @@ export function parseEditInstruction<
     accounts: {
       listState: getNextAccount(),
       owner: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
     },
     data: getEditInstructionDataDecoder().decode(instruction.data),
   };

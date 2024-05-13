@@ -11,7 +11,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct TakeBidLegacy {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub seller: solana_program::pubkey::Pubkey,
 
@@ -59,11 +59,11 @@ pub struct TakeBidLegacy {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub tensorswap_program: solana_program::pubkey::Pubkey,
 
-    pub cosigner: solana_program::pubkey::Pubkey,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: solana_program::pubkey::Pubkey,
 
@@ -85,7 +85,8 @@ impl TakeBidLegacy {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.seller,
@@ -193,17 +194,23 @@ impl TakeBidLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tensorswap_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.cosigner,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint_proof,
             false,
@@ -226,12 +233,12 @@ impl TakeBidLegacy {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct TakeBidLegacyInstructionData {
+pub struct TakeBidLegacyInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidLegacyInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [188, 35, 116, 108, 0, 233, 237, 201],
         }
@@ -251,7 +258,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -275,14 +282,14 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   21. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   22. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   23. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   24. `[]` tcomp_program
+///   24. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   25. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
-///   26. `[signer]` cosigner
+///   26. `[signer, optional]` cosigner
 ///   27. `[]` mint_proof
 ///   28. `[writable]` rent_dest
 #[derive(Default)]
 pub struct TakeBidLegacyBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     seller: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -306,7 +313,7 @@ pub struct TakeBidLegacyBuilder {
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     tensorswap_program: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     mint_proof: Option<solana_program::pubkey::Pubkey>,
@@ -323,8 +330,8 @@ impl TakeBidLegacyBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -474,9 +481,13 @@ impl TakeBidLegacyBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
@@ -488,9 +499,10 @@ impl TakeBidLegacyBuilder {
         self.tensorswap_program = Some(tensorswap_program);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.cosigner = Some(cosigner);
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -548,7 +560,7 @@ impl TakeBidLegacyBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts =
             TakeBidLegacy {
-                tcomp: self.tcomp.expect("tcomp is not set"),
+                fee_vault: self.fee_vault.expect("fee_vault is not set"),
                 seller: self.seller.expect("seller is not set"),
                 bid_state: self.bid_state.expect("bid_state is not set"),
                 owner: self.owner.expect("owner is not set"),
@@ -588,11 +600,13 @@ impl TakeBidLegacyBuilder {
                 system_program: self
                     .system_program
                     .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-                tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
                 tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
                     "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
                 )),
-                cosigner: self.cosigner.expect("cosigner is not set"),
+                cosigner: self.cosigner,
                 mint_proof: self.mint_proof.expect("mint_proof is not set"),
                 rent_dest: self.rent_dest.expect("rent_dest is not set"),
             };
@@ -612,7 +626,7 @@ impl TakeBidLegacyBuilder {
 
 /// `take_bid_legacy` CPI accounts.
 pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -660,11 +674,11 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -676,7 +690,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -724,11 +738,11 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -745,7 +759,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             seller: accounts.seller,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
@@ -769,7 +783,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             tensorswap_program: accounts.tensorswap_program,
             cosigner: accounts.cosigner,
             mint_proof: accounts.mint_proof,
@@ -812,7 +826,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -922,17 +936,24 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.tensorswap_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.cosigner.key,
-            true,
-        ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint_proof.key,
             false,
@@ -959,7 +980,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(29 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.seller.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
@@ -987,9 +1008,11 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.tensorswap_program.clone());
-        account_infos.push(self.cosigner.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         account_infos.push(self.mint_proof.clone());
         account_infos.push(self.rent_dest.clone());
         remaining_accounts
@@ -1008,7 +1031,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[writable, signer]` seller
 ///   2. `[writable]` bid_state
 ///   3. `[writable]` owner
@@ -1032,9 +1055,9 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   21. `[]` token_program
 ///   22. `[]` associated_token_program
 ///   23. `[]` system_program
-///   24. `[]` tcomp_program
+///   24. `[]` marketplace_program
 ///   25. `[]` tensorswap_program
-///   26. `[signer]` cosigner
+///   26. `[signer, optional]` cosigner
 ///   27. `[]` mint_proof
 ///   28. `[writable]` rent_dest
 pub struct TakeBidLegacyCpiBuilder<'a, 'b> {
@@ -1045,7 +1068,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TakeBidLegacyCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             seller: None,
             bid_state: None,
             owner: None,
@@ -1069,7 +1092,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             token_program: None,
             associated_token_program: None,
             system_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             tensorswap_program: None,
             cosigner: None,
             mint_proof: None,
@@ -1083,8 +1106,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -1272,11 +1298,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -1287,12 +1313,13 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self.instruction.tensorswap_program = Some(tensorswap_program);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn cosigner(
         &mut self,
-        cosigner: &'b solana_program::account_info::AccountInfo<'a>,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.cosigner = Some(cosigner);
+        self.instruction.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -1392,7 +1419,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         let instruction = TakeBidLegacyCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             seller: self.instruction.seller.expect("seller is not set"),
 
@@ -1482,17 +1509,17 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             tensorswap_program: self
                 .instruction
                 .tensorswap_program
                 .expect("tensorswap_program is not set"),
 
-            cosigner: self.instruction.cosigner.expect("cosigner is not set"),
+            cosigner: self.instruction.cosigner,
 
             mint_proof: self.instruction.mint_proof.expect("mint_proof is not set"),
 
@@ -1508,7 +1535,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
 struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1532,7 +1559,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint_proof: Option<&'b solana_program::account_info::AccountInfo<'a>>,

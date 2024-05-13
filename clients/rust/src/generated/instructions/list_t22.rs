@@ -30,6 +30,8 @@ pub struct ListT22 {
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ListT22 {
@@ -45,7 +47,7 @@ impl ListT22 {
         args: ListT22InstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, true,
         ));
@@ -83,6 +85,16 @@ impl ListT22 {
             self.system_program,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ListT22InstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -97,12 +109,12 @@ impl ListT22 {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct ListT22InstructionData {
+pub struct ListT22InstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListT22InstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [9, 117, 93, 230, 221, 4, 199, 212],
         }
@@ -133,6 +145,7 @@ pub struct ListT22InstructionArgs {
 ///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct ListT22Builder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -145,6 +158,7 @@ pub struct ListT22Builder {
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -217,6 +231,12 @@ impl ListT22Builder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.amount = Some(amount);
@@ -285,6 +305,7 @@ impl ListT22Builder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            cosigner: self.cosigner,
         };
         let args = ListT22InstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -319,6 +340,8 @@ pub struct ListT22CpiAccounts<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list_t22` CPI instruction.
@@ -345,6 +368,8 @@ pub struct ListT22Cpi<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListT22InstructionArgs,
 }
@@ -367,6 +392,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -403,7 +429,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.owner.key,
             true,
@@ -444,6 +470,17 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             *self.system_program.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -460,7 +497,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ata.clone());
@@ -472,6 +509,9 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -498,6 +538,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
 ///   7. `[]` associated_token_program
 ///   8. `[]` marketplace_program
 ///   9. `[]` system_program
+///   10. `[signer, optional]` cosigner
 pub struct ListT22CpiBuilder<'a, 'b> {
     instruction: Box<ListT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -516,6 +557,7 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
             associated_token_program: None,
             marketplace_program: None,
             system_program: None,
+            cosigner: None,
             amount: None,
             expire_in_sec: None,
             currency: None,
@@ -594,6 +636,15 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
         system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -707,6 +758,8 @@ impl<'a, 'b> ListT22CpiBuilder<'a, 'b> {
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -728,6 +781,7 @@ struct ListT22CpiBuilderInstruction<'a, 'b> {
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,

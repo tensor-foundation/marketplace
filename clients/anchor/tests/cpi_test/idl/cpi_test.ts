@@ -16,7 +16,7 @@ export type CpiTest = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -73,7 +73,7 @@ export const IDL: CpiTest = {
           "isSigner": false
         },
         {
-          "name": "tcompProgram",
+          "name": "marketplaceProgram",
           "isMut": false,
           "isSigner": false
         }

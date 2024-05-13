@@ -3,8 +3,10 @@ use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
+    fees::ID as TFEE_PROGRAM_ID,
     metaplex_core::{validate_asset, MetaplexCore},
-    transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
+    shard_num, transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc,
+    FromExternal,
 };
 
 use crate::*;
@@ -13,10 +15,18 @@ use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut, close = rent_dest,
         seeds=[
@@ -66,6 +76,9 @@ pub struct BuyCore<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -103,24 +116,36 @@ impl<'info> BuyCore<'info> {
 impl<'info> Validate<'info> for BuyCore<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -195,13 +220,13 @@ pub fn process_buy_core<'info, 'b>(
 
     // Pay fees
     ctx.accounts
-        .transfer_lamports(&ctx.accounts.tcomp.to_account_info(), tcomp_fee)?;
+        .transfer_lamports(&ctx.accounts.fee_vault.to_account_info(), tcomp_fee)?;
 
     ctx.accounts.transfer_lamports_min_balance(
         &ctx.accounts
             .maker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         maker_broker_fee,
     )?;
@@ -210,7 +235,7 @@ pub fn process_buy_core<'info, 'b>(
         &ctx.accounts
             .taker_broker
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp)
+            .unwrap_or(&ctx.accounts.fee_vault)
             .to_account_info(),
         taker_broker_fee,
     )?;

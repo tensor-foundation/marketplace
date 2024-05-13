@@ -19,22 +19,6 @@ kinobi.update(
     marketplaceProgram: { name: "tensorMarketplace" },
   })
 );
-
-// Add missing types from the IDL.
-kinobi.update(
-  k.bottomUpTransformerVisitor([
-    {
-      select: "[programNode]tensorMarketplace",
-      transform: (node) => {
-        k.assertIsNode(node, "programNode");
-        return {
-          ...node,
-          pdas: [k.pdaNode("feeVault", [])],
-        };
-      },
-    },
-  ])
-);
 // Rename Compressed Ixs (matches PLock Ixs + is more intuitive
 // since the "default" standard definitely isn't compressed (yet)) 
 
@@ -83,17 +67,7 @@ kinobi.update(
 // Set default account values accross multiple instructions.
 kinobi.update(
   k.setInstructionAccountDefaultValuesVisitor([
-    // default accounts
-    {
-      account: "feeVault",
-      ignoreIfOptional: true,
-      defaultValue: k.pdaValueNode("feeVault"),
-    },
-    {
-      account: "tcomp",
-      ignoreIfOptional: true,
-      defaultValue: k.pdaValueNode("feeVault")
-    },
+    // TODO: set default value for newly added feeVault acc
     {
       account: "treeAuthority",
       ignoreIfOptional: true,
@@ -110,7 +84,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-        "tokenProgram"
+        "tokenProgram",
       ),
     },
     {
@@ -118,7 +92,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-        "associatedTokenProgram"
+        "associatedTokenProgram",
       ),
     },
     {
@@ -126,7 +100,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-        "marketplaceProgram"
+        "marketplaceProgram",
       ),
     },
     {
@@ -134,7 +108,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "11111111111111111111111111111111",
-        "systemProgram"
+        "systemProgram",
       ),
     },
     {
@@ -142,7 +116,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
-        "tokenMetadataProgram"
+        "tokenMetadataProgram",
       ),
     },
     {
@@ -150,7 +124,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-        "authorizationRulesProgram"
+        "authorizationRulesProgram",
       ),
     },
     {
@@ -158,7 +132,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "Sysvar1111111111111111111111111111111111111",
-        "sysvarInstructions"
+        "sysvarInstructions",
       ),
     },
     {
@@ -166,7 +140,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM",
-        "wnsProgram"
+        "wnsProgram",
       ),
     },
     {
@@ -174,7 +148,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
-        "wnsDistributionProgram"
+        "wnsDistributionProgram",
       ),
     },
     {
@@ -340,6 +314,86 @@ kinobi.update(
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
+  }),
+);
+
+// Update instructions.
+kinobi.update(
+  k.updateInstructionsVisitor({
+    // compressed 
+    buyCompressed: {
+      accounts: {
+        buyer: {
+          defaultValue: k.accountValueNode("payer")
+        },
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        optionalRoyaltyPct: {
+          defaultValue: k.numberValueNode(100)
+        },
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        },
+      }
+    },
+    delistCompressed: {
+      accounts: {
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        },
+      }
+    },
+    listCompressed: {
+      accounts: {
+        ownerAddress: {
+          defaultValue: k.accountValueNode("owner")
+        },
+        delegate: {
+          defaultValue: k.accountValueNode("owner")
+        }
+      },
+      arguments: {
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        }
+      },
+    },
+    takeBidCompressedFullMeta: {
+      accounts: {
+        seller: {
+          isSigner: true
+        },
+        delegate: {
+          isSigner: true,
+          defaultValue: k.accountValueNode("seller")
+        },
+        cosigner: {
+          defaultValue: k.accountValueNode("seller")
+        },
+        rentDest: {
+          defaultValue: k.accountValueNode("owner")
+        },
+        marginAccount: {
+          defaultValue: k.accountValueNode("tensorswapProgram")
+        }
+      },
+      arguments: {
+        optionalRoyaltyPct: {
+          defaultValue: k.numberValueNode(100)
+        },
+        nonce: {
+          defaultValue: k.argumentValueNode("index")
+        }
+      }
+    }
   })
 );
 
@@ -458,7 +512,33 @@ kinobi.update(
         };
       },
     },
-  ])
+  ]),
+);
+
+// Add missing types from the IDL.
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    {
+      select: "[structTypeNode].[structFieldTypeNode]rentPayer",
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
+      },
+    },
+    {
+      select: "[structTypeNode].[structFieldTypeNode]cosigner",
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
+      },
+    },
+  ]),
 );
 
 // Render JavaScript.
@@ -481,7 +561,7 @@ kinobi.accept(
       "resolveWnsExtraAccountMetasPda",
       "resolveTreeAuthorityPda"
     ],
-  })
+  }),
 );
 
 // Render Rust.
@@ -491,5 +571,5 @@ kinobi.accept(
   k.renderRustVisitor(rustDir, {
     formatCode: true,
     crateFolder: crateDir,
-  })
+  }),
 );

@@ -8,6 +8,8 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     calc_creators_fee,
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
@@ -21,10 +23,18 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct WnsTakeBid<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -81,15 +91,12 @@ pub struct WnsTakeBid<'info> {
 
     pub system_program: Program<'info, System>,
 
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
     pub tensorswap_program: Program<'info, EscrowProgram>,
 
-    // seller or cosigner
-    #[account(
-        constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @ TcompError::BadCosigner
-    )]
-    pub cosigner: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
 
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     /// CHECK: assert_decode_mint_proof
@@ -123,24 +130,35 @@ pub struct WnsTakeBid<'info> {
 impl<'info> Validate<'info> for WnsTakeBid<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
+
         require!(
             bid_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::BidExpired
         );
+
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = bid_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
 
         Ok(())
     }
@@ -277,7 +295,7 @@ pub fn process_take_bid_wns<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id: mint,
         token_standard: Some(TokenStandard::NonFungible), // <- royalty value was already paid on approve
         creators: vec![], // <- royalty value was already paid on approve
@@ -285,7 +303,7 @@ pub fn process_take_bid_wns<'info>(
         optional_royalty_pct: None,
         seller_fee_basis_points: 0, // <- royalty value was already paid on approve
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.tcomp_program,
+        tcomp_prog: &ctx.accounts.marketplace_program,
         tswap_prog: &ctx.accounts.tensorswap_program,
         system_prog: &ctx.accounts.system_program,
     })

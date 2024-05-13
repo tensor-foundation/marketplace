@@ -5,7 +5,11 @@ use metaplex_core::{
     types::{Royalties, UpdateAuthority},
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    metaplex_core::{validate_asset, MetaplexCore},
+    shard_num,
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
@@ -18,10 +22,18 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidCore<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -69,9 +81,8 @@ pub struct TakeBidCore<'info> {
 
     pub escrow_program: Program<'info, EscrowProgram>,
 
-    // seller or cosigner
-    #[account(constraint = (bid_state.cosigner == Pubkey::default() || bid_state.cosigner == cosigner.key()) @TcompError::BadCosigner)]
-    pub cosigner: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
 
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     /// CHECK: assert_decode_mint_proof
@@ -89,24 +100,35 @@ pub struct TakeBidCore<'info> {
 impl<'info> Validate<'info> for TakeBidCore<'info> {
     fn validate(&self) -> Result<()> {
         let bid_state = &self.bid_state;
+
         require!(
             bid_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             bid_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::BidExpired
         );
+
         if let Some(private_taker) = bid_state.private_taker {
             require!(
                 private_taker == self.seller.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             bid_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = bid_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
 
         Ok(())
     }
@@ -236,7 +258,7 @@ pub fn process_take_bid_core<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
         token_standard: Some(token_standard),
         creators: creators.into_iter().map(Into::into).collect(),

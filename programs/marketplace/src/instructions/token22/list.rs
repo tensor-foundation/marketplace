@@ -4,6 +4,7 @@ use anchor_spl::{
     token_2022::{close_account, transfer_checked, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
+use tensor_toolbox::NullableOption;
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -51,6 +52,8 @@ pub struct ListT22<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     pub system_program: Program<'info, System>,
+
+    pub cosigner: Option<Signer<'info>>,
 }
 
 pub fn process_list_t22<'info>(
@@ -98,7 +101,8 @@ pub fn process_list_t22<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
+    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

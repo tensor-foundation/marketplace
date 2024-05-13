@@ -7,6 +7,8 @@ use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
     FromExternal,
@@ -21,8 +23,17 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyLegacy<'info> {
-    /// CHECK: seeds (fee account)
-    #[account(mut, seeds=[], bump)]
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -127,6 +138,9 @@ pub struct BuyLegacy<'info> {
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: UncheckedAccount<'info>,
+
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
     //
@@ -136,24 +150,36 @@ pub struct BuyLegacy<'info> {
 impl<'info> Validate<'info> for BuyLegacy<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -204,13 +230,13 @@ pub fn process_buy_legacy<'info, 'b>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: &ctx.accounts.sysvar_instructions,
+            sysvar_instructions: Some(&ctx.accounts.sysvar_instructions),
             source_token_record: ctx.accounts.list_token_record.as_ref(),
             destination_token_record: ctx.accounts.buyer_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),
             authorization_data: authorization_data.map(AuthorizationData::from),
-            token_metadata_program: &ctx.accounts.token_metadata_program,
+            token_metadata_program: Some(&ctx.accounts.token_metadata_program),
             delegate: None,
         },
         Some(&[&ctx.accounts.list_state.seeds()]),

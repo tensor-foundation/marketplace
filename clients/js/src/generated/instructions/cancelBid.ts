@@ -40,7 +40,7 @@ export type CancelBidInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTcompProgram extends
+  TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDest extends string | IAccountMeta<string> = string,
@@ -59,9 +59,9 @@ export type CancelBidInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTcompProgram extends string
-        ? ReadonlyAccount<TAccountTcompProgram>
-        : TAccountTcompProgram,
+      TAccountMarketplaceProgram extends string
+        ? ReadonlyAccount<TAccountMarketplaceProgram>
+        : TAccountMarketplaceProgram,
       TAccountRentDest extends string
         ? WritableAccount<TAccountRentDest>
         : TAccountRentDest,
@@ -105,13 +105,13 @@ export type CancelBidInput<
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTcompProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
   TAccountRentDest extends string = string,
 > = {
   bidState: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
   systemProgram?: Address<TAccountSystemProgram>;
-  tcompProgram?: Address<TAccountTcompProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDest: Address<TAccountRentDest>;
 };
 
@@ -119,14 +119,14 @@ export function getCancelBidInstruction<
   TAccountBidState extends string,
   TAccountOwner extends string,
   TAccountSystemProgram extends string,
-  TAccountTcompProgram extends string,
+  TAccountMarketplaceProgram extends string,
   TAccountRentDest extends string,
 >(
   input: CancelBidInput<
     TAccountBidState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountRentDest
   >
 ): CancelBidInstruction<
@@ -134,7 +134,7 @@ export function getCancelBidInstruction<
   TAccountBidState,
   TAccountOwner,
   TAccountSystemProgram,
-  TAccountTcompProgram,
+  TAccountMarketplaceProgram,
   TAccountRentDest
 > {
   // Program address.
@@ -145,7 +145,10 @@ export function getCancelBidInstruction<
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tcompProgram: { value: input.tcompProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
     rentDest: { value: input.rentDest ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -158,9 +161,9 @@ export function getCancelBidInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tcompProgram.value) {
-    accounts.tcompProgram.value = programAddress;
-    accounts.tcompProgram.isWritable = false;
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -169,7 +172,7 @@ export function getCancelBidInstruction<
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tcompProgram),
+      getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.rentDest),
     ],
     programAddress,
@@ -179,7 +182,7 @@ export function getCancelBidInstruction<
     TAccountBidState,
     TAccountOwner,
     TAccountSystemProgram,
-    TAccountTcompProgram,
+    TAccountMarketplaceProgram,
     TAccountRentDest
   >;
 
@@ -195,7 +198,7 @@ export type ParsedCancelBidInstruction<
     bidState: TAccountMetas[0];
     owner: TAccountMetas[1];
     systemProgram: TAccountMetas[2];
-    tcompProgram: TAccountMetas[3];
+    marketplaceProgram: TAccountMetas[3];
     rentDest: TAccountMetas[4];
   };
   data: CancelBidInstructionData;
@@ -225,7 +228,7 @@ export function parseCancelBidInstruction<
       bidState: getNextAccount(),
       owner: getNextAccount(),
       systemProgram: getNextAccount(),
-      tcompProgram: getNextAccount(),
+      marketplaceProgram: getNextAccount(),
       rentDest: getNextAccount(),
     },
     data: getCancelBidInstructionDataDecoder().decode(instruction.data),

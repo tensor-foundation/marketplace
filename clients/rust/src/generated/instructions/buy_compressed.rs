@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct BuyCompressed {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
@@ -24,7 +24,7 @@ pub struct BuyCompressed {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub tcomp_program: solana_program::pubkey::Pubkey,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -39,6 +39,8 @@ pub struct BuyCompressed {
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_dest: solana_program::pubkey::Pubkey,
+
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl BuyCompressed {
@@ -54,9 +56,10 @@ impl BuyCompressed {
         args: BuyCompressedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
@@ -83,7 +86,7 @@ impl BuyCompressed {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tcomp_program,
+            self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -125,6 +128,16 @@ impl BuyCompressed {
             self.rent_dest,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                cosigner, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = BuyCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -139,12 +152,12 @@ impl BuyCompressed {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct BuyCompressedInstructionData {
+pub struct BuyCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
 impl BuyCompressedInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [102, 6, 61, 18, 1, 218, 235, 234],
         }
@@ -169,14 +182,14 @@ pub struct BuyCompressedInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` merkle_tree
 ///   3. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
 ///   4. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   6. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
-///   7. `[]` tcomp_program
+///   7. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` list_state
 ///   9. `[]` buyer
 ///   10. `[writable, signer]` payer
@@ -184,16 +197,17 @@ pub struct BuyCompressedInstructionArgs {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_dest
+///   15. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuyCompressedBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    tcomp_program: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     buyer: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -201,6 +215,7 @@ pub struct BuyCompressedBuilder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_dest: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -218,8 +233,8 @@ impl BuyCompressedBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -262,9 +277,13 @@ impl BuyCompressedBuilder {
         self.bubblegum_program = Some(bubblegum_program);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
-    pub fn tcomp_program(&mut self, tcomp_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_program = Some(tcomp_program);
+    pub fn marketplace_program(
+        &mut self,
+        marketplace_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -308,6 +327,12 @@ impl BuyCompressedBuilder {
     #[inline(always)]
     pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
         self.rent_dest = Some(rent_dest);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -377,7 +402,7 @@ impl BuyCompressedBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = BuyCompressed {
-            tcomp: self.tcomp.expect("tcomp is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
             log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
@@ -392,7 +417,9 @@ impl BuyCompressedBuilder {
             bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
                 "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
             )),
-            tcomp_program: self.tcomp_program.expect("tcomp_program is not set"),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             list_state: self.list_state.expect("list_state is not set"),
             buyer: self.buyer.expect("buyer is not set"),
             payer: self.payer.expect("payer is not set"),
@@ -400,6 +427,7 @@ impl BuyCompressedBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            cosigner: self.cosigner,
         };
         let args = BuyCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -428,7 +456,7 @@ impl BuyCompressedBuilder {
 
 /// `buy_compressed` CPI accounts.
 pub struct BuyCompressedCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -442,7 +470,7 @@ pub struct BuyCompressedCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -457,6 +485,8 @@ pub struct BuyCompressedCpiAccounts<'a, 'b> {
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `buy_compressed` CPI instruction.
@@ -464,7 +494,7 @@ pub struct BuyCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -478,7 +508,7 @@ pub struct BuyCompressedCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -493,6 +523,8 @@ pub struct BuyCompressedCpi<'a, 'b> {
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: BuyCompressedInstructionArgs,
 }
@@ -505,14 +537,14 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
+            fee_vault: accounts.fee_vault,
             tree_authority: accounts.tree_authority,
             merkle_tree: accounts.merkle_tree,
             log_wrapper: accounts.log_wrapper,
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
-            tcomp_program: accounts.tcomp_program,
+            marketplace_program: accounts.marketplace_program,
             list_state: accounts.list_state,
             buyer: accounts.buyer,
             payer: accounts.payer,
@@ -520,6 +552,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
             rent_dest: accounts.rent_dest,
+            cosigner: accounts.cosigner,
             __args: args,
         }
     }
@@ -556,9 +589,9 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -586,7 +619,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tcomp_program.key,
+            *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -631,6 +664,17 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             *self.rent_dest.key,
             false,
         ));
+        if let Some(cosigner) = self.cosigner {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *cosigner.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -647,16 +691,16 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(15 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(16 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
+        account_infos.push(self.fee_vault.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.tcomp_program.clone());
+        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.buyer.clone());
         account_infos.push(self.payer.clone());
@@ -668,6 +712,9 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             account_infos.push(maker_broker.clone());
         }
         account_infos.push(self.rent_dest.clone());
+        if let Some(cosigner) = self.cosigner {
+            account_infos.push(cosigner.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -684,14 +731,14 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
+///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
 ///   2. `[writable]` merkle_tree
 ///   3. `[]` log_wrapper
 ///   4. `[]` compression_program
 ///   5. `[]` system_program
 ///   6. `[]` bubblegum_program
-///   7. `[]` tcomp_program
+///   7. `[]` marketplace_program
 ///   8. `[writable]` list_state
 ///   9. `[]` buyer
 ///   10. `[writable, signer]` payer
@@ -699,6 +746,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_dest
+///   15. `[signer, optional]` cosigner
 pub struct BuyCompressedCpiBuilder<'a, 'b> {
     instruction: Box<BuyCompressedCpiBuilderInstruction<'a, 'b>>,
 }
@@ -707,14 +755,14 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(BuyCompressedCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
+            fee_vault: None,
             tree_authority: None,
             merkle_tree: None,
             log_wrapper: None,
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
-            tcomp_program: None,
+            marketplace_program: None,
             list_state: None,
             buyer: None,
             payer: None,
@@ -722,6 +770,7 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
             taker_broker: None,
             maker_broker: None,
             rent_dest: None,
+            cosigner: None,
             nonce: None,
             index: None,
             root: None,
@@ -736,8 +785,11 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
@@ -789,11 +841,11 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tcomp_program(
+    pub fn marketplace_program(
         &mut self,
-        tcomp_program: &'b solana_program::account_info::AccountInfo<'a>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_program = Some(tcomp_program);
+        self.instruction.marketplace_program = Some(marketplace_program);
         self
     }
     #[inline(always)]
@@ -843,6 +895,15 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_dest = Some(rent_dest);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -966,7 +1027,7 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         let instruction = BuyCompressedCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
             tree_authority: self
                 .instruction
@@ -998,10 +1059,10 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
-            tcomp_program: self
+            marketplace_program: self
                 .instruction
-                .tcomp_program
-                .expect("tcomp_program is not set"),
+                .marketplace_program
+                .expect("marketplace_program is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
@@ -1016,6 +1077,8 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
             maker_broker: self.instruction.maker_broker,
 
             rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+
+            cosigner: self.instruction.cosigner,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1027,14 +1090,14 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
 
 struct BuyCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1042,6 +1105,7 @@ struct BuyCompressedCpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

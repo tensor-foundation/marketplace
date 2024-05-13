@@ -1,3 +1,5 @@
+use tensor_toolbox::NullableOption;
+
 use crate::*;
 
 // (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
@@ -15,9 +17,10 @@ pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/
 pub const MAKER_BROKER_PCT: u16 = 0; // Out of 100
 
 //(!!) sync with sdk.ts:getRentPayer()
-fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
-    if rent_payer != Pubkey::default() {
-        rent_payer
+#[inline(always)]
+fn get_rent_payer(rent_payer: NullableOption<Pubkey>, owner: Pubkey) -> Pubkey {
+    if let Some(rent_payer) = rent_payer.value() {
+        *rent_payer
     } else {
         owner
     }
@@ -39,10 +42,10 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is PublicKey::default
-    pub rent_payer: Pubkey,
-
-    pub _reserved: [u8; 32],
+    /// owner is the rent payer when this is `None`
+    pub rent_payer: NullableOption<Pubkey>,
+    /// cosigner
+    pub cosigner: NullableOption<Pubkey>,
     pub _reserved1: [u8; 64],
 }
 
@@ -101,10 +104,9 @@ pub struct BidState {
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
 
-    // Pubkey::default() = none
-    pub cosigner: Pubkey,
-    /// owner is the rent payer when this is PublicKey::default
-    pub rent_payer: Pubkey,
+    pub cosigner: NullableOption<Pubkey>,
+    /// owner is the rent payer when this is `None`
+    pub rent_payer: NullableOption<Pubkey>,
 
     //borsh not implemented for u8;56
     pub _reserved: [u8; 8],

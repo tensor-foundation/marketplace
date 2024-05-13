@@ -2,24 +2,34 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft, transfer_creators_fee, CnftArgs,
-    CreatorFeeMode, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+    calc_creators_fee, calc_fees, fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num,
+    transfer_cnft, transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, MakeCnftArgs,
+    MetadataSrc, TransferArgs,
 };
 
 use crate::*;
 
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(list_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
+
     #[account(init_if_needed,
         payer = rent_payer,
         associated_token::mint = currency,
-        associated_token::authority = tcomp,
+        associated_token::authority = fee_vault,
     )]
-    pub tcomp_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -29,7 +39,7 @@ pub struct BuySpl<'info> {
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
     pub bubblegum_program: Program<'info, Bubblegum>,
-    pub tcomp_program: Program<'info, crate::program::MarketplaceProgram>,
+    pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(mut, close = rent_dest,
@@ -86,6 +96,8 @@ pub struct BuySpl<'info> {
     pub rent_dest: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
+    // cosigner is checked in validate()
+    pub cosigner: Option<Signer<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. creators atas (1-5)
@@ -95,20 +107,24 @@ pub struct BuySpl<'info> {
 impl<'info> Validate<'info> for BuySpl<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
+
         require!(
             list_state.version == CURRENT_TCOMP_VERSION,
             TcompError::WrongStateVersion
         );
+
         require!(
             list_state.expiry >= Clock::get()?.unix_timestamp,
             TcompError::ListingExpired
         );
+
         if let Some(private_taker) = list_state.private_taker {
             require!(
                 private_taker == self.buyer.key(),
                 TcompError::TakerNotAllowed
             );
         }
+
         require!(
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
@@ -129,6 +145,14 @@ impl<'info> Validate<'info> for BuySpl<'info> {
             (self.taker_broker.is_none() && self.taker_broker_ata.is_none()),
             TcompError::BrokerMismatch
         );
+
+        // check if the cosigner is required
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -270,7 +294,7 @@ pub fn process_buy_spl<'info>(
             currency,
             asset_id: Some(asset_id),
         }),
-        &ctx.accounts.tcomp_program,
+        &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
@@ -278,7 +302,7 @@ pub fn process_buy_spl<'info>(
 
     // Pay fees
     ctx.accounts.transfer_ata(
-        ctx.accounts.tcomp_ata.deref().as_ref(),
+        ctx.accounts.fee_vault_ata.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
         ctx.accounts.currency.decimals,
@@ -288,7 +312,7 @@ pub fn process_buy_spl<'info>(
         ctx.accounts
             .maker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ata)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -300,7 +324,7 @@ pub fn process_buy_spl<'info>(
         ctx.accounts
             .taker_broker_ata
             .as_ref()
-            .unwrap_or(&ctx.accounts.tcomp_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ata)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
