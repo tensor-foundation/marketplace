@@ -28,7 +28,7 @@ import {
   TokenStandard,
 } from '../../src/index.js';
 
-test('it can buy a legacy NFT', async (t) => {
+test('it can buy an NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
 
@@ -94,7 +94,7 @@ test('it can buy a legacy NFT', async (t) => {
   });
 });
 
-test('it can buy a legacy Programmable NFT', async (t) => {
+test('it can buy a Programmable NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
@@ -166,11 +166,15 @@ test('it can buy a legacy Programmable NFT', async (t) => {
   });
 });
 
-test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
+test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
   const { mint } = await createDefaultpNft(client, owner, owner, owner);
+
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
 
   // And we list the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -182,6 +186,7 @@ test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -198,10 +203,6 @@ test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
     maxAmount: 5,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [owner.address],
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   // Then we expect an error.
@@ -224,7 +225,7 @@ test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
   }
 });
 
-test('it can buy a legacy NFT with a cosigner', async (t) => {
+test('it can buy an NFT with a cosigner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
 
@@ -293,7 +294,7 @@ test('it can buy a legacy NFT with a cosigner', async (t) => {
   });
 });
 
-test('it cannot buy a legacy pNFT with a missing cosigner', async (t) => {
+test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
@@ -309,8 +310,13 @@ test('it cannot buy a legacy pNFT with a missing cosigner', async (t) => {
     tokenStandard: TokenStandard.ProgrammableNonFungible,
   });
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -327,10 +333,6 @@ test('it cannot buy a legacy pNFT with a missing cosigner', async (t) => {
     maxAmount: 10,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [owner.address],
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   // Then we expect an error.

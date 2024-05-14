@@ -14,7 +14,7 @@ import {
   getBidInstructionAsync,
 } from '../../src/index.js';
 
-test('it can bid on a legacy NFT', async (t) => {
+test('it can bid on an NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
