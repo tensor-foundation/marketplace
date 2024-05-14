@@ -49,6 +49,7 @@ import {
   resolveEditionFromTokenStandard,
   resolveEscrowAta,
   resolveEscrowTokenRecordFromTokenStandard,
+  resolveFeeVaultPdaFromBidState,
   resolveMetadata,
   resolveOwnerAta,
   resolveOwnerTokenRecordFromTokenStandard,
@@ -307,7 +308,7 @@ export type TakeBidLegacyAsyncInput<
   TAccountMintProof extends string = string,
   TAccountRentDestination extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
   bidState?: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
@@ -522,6 +523,12 @@ export async function getTakeBidLegacyInstructionAsync<
       owner: expectAddress(accounts.owner.value),
     });
   }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
+    };
+  }
   if (!accounts.sharedEscrow.value) {
     accounts.sharedEscrow.value = expectSome(accounts.owner.value);
   }
@@ -579,7 +586,7 @@ export async function getTakeBidLegacyInstructionAsync<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
   if (!accounts.authorizationRulesProgram.value) {
@@ -955,7 +962,7 @@ export function getTakeBidLegacyInstruction<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
   if (!accounts.authorizationRulesProgram.value) {

@@ -53,7 +53,6 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "ava": "^6.1.2",
-    "bs58": "^5.0.0",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
@@ -69,7 +68,8 @@
       "rewritePaths": {
         "test/": "dist/test/"
       }
-    }
+    },
+    "nodeArguments": ["--no-warnings"]
   },
   "packageManager": "pnpm@9.1.0"
 }

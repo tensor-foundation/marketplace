@@ -3,6 +3,7 @@ import { ResolvedAccount, expectAddress } from '../generated';
 import {
   findAssociatedTokenAccountPda,
   findExtraAccountMetasPda,
+  findFeeVaultPda,
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
@@ -196,6 +197,32 @@ export const resolveEscrowAta = async ({
       owner: expectAddress(accounts.bidState?.value),
       mint: expectAddress(accounts.mint?.value),
       tokenProgram: expectAddress(accounts.tokenProgram?.value),
+    }),
+  };
+};
+
+//---- FEE VAULT resolver
+
+export const resolveFeeVaultPdaFromListState = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findFeeVaultPda({
+      address: expectAddress(accounts.listState?.value),
+    }),
+  };
+};
+
+export const resolveFeeVaultPdaFromBidState = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findFeeVaultPda({
+      address: expectAddress(accounts.bidState?.value),
     }),
   };
 };

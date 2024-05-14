@@ -89,7 +89,7 @@ kinobi.update(
           "ProgrammableNonFungible"
         ),
         ifTrue: k.publicKeyValueNode(
-          "Sysvar1111111111111111111111111111111111111",
+          "Sysvar1nstructions1111111111111111111111111",
           "sysvarInstructions"
         ),
       }),
@@ -311,6 +311,8 @@ kinobi.accept(
       "resolveEscrowTokenRecordFromTokenStandard",
       "resolveSellerAta",
       "resolveEscrowAta",
+      "resolveFeeVaultPdaFromListState",
+      "resolveFeeVaultPdaFromBidState",
     ],
   })
 );

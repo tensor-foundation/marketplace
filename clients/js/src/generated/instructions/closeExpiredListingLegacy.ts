@@ -457,7 +457,7 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
 
@@ -717,7 +717,7 @@ export function getCloseExpiredListingLegacyInstruction<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
 

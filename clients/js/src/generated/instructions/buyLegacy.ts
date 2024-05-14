@@ -47,6 +47,7 @@ import {
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
+  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
@@ -270,7 +271,7 @@ export type BuyLegacyAsyncInput<
   TAccountSysvarInstructions extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
   buyerAta?: Address<TAccountBuyerAta>;
   listAta?: Address<TAccountListAta>;
@@ -445,6 +446,17 @@ export async function getBuyLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
@@ -459,11 +471,6 @@ export async function getBuyLegacyInstructionAsync<
       ...accounts.buyerAta,
       ...(await resolveBuyerAta(resolverScope)),
     };
-  }
-  if (!accounts.listState.value) {
-    accounts.listState.value = await findListStatePda({
-      mint: expectAddress(accounts.mint.value),
-    });
   }
   if (!accounts.listAta.value) {
     accounts.listAta = {
@@ -526,7 +533,7 @@ export async function getBuyLegacyInstructionAsync<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
 
@@ -835,7 +842,7 @@ export function getBuyLegacyInstruction<
   if (!accounts.sysvarInstructions.value) {
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
-        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+        'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
   }
 

@@ -13,6 +13,13 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyLegacy: {
           accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromListState", {
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                ],
+              }),
+            },
             buyer: {
               defaultValue: k.accountValueNode("payer"),
             },
@@ -367,6 +374,13 @@ module.exports = function visitor(options) {
         },
         takeBidLegacy: {
           accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromBidState", {
+                dependsOn: [
+                  k.accountValueNode("bidState"),
+                ],
+              }),
+            },
             sharedEscrow: {
               defaultValue: k.accountValueNode("owner"),
             },
