@@ -6,6 +6,9 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+<<<<<<< febo/bid
 export * from './bidState';
 export * from './feeVault';
+=======
+>>>>>>> main
 export * from './listState';

@@ -70,7 +70,7 @@ import {
 
 export type TakeBidFullMetaInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
@@ -98,9 +98,9 @@ export type TakeBidFullMetaInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -285,7 +285,7 @@ export function getTakeBidFullMetaInstructionDataCodec(): Codec<
 }
 
 export type TakeBidFullMetaInput<
-  TAccountTcomp extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountSeller extends string = string,
   TAccountDelegate extends string = string,
@@ -305,7 +305,7 @@ export type TakeBidFullMetaInput<
   TAccountCosigner extends string = string,
   TAccountRentDest extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
   seller: Address<TAccountSeller>;
   delegate: Address<TAccountDelegate>;
@@ -345,7 +345,7 @@ export type TakeBidFullMetaInput<
 };
 
 export function getTakeBidFullMetaInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountTreeAuthority extends string,
   TAccountSeller extends string,
   TAccountDelegate extends string,
@@ -366,7 +366,7 @@ export function getTakeBidFullMetaInstruction<
   TAccountRentDest extends string,
 >(
   input: TakeBidFullMetaInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -388,7 +388,7 @@ export function getTakeBidFullMetaInstruction<
   >
 ): TakeBidFullMetaInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountTreeAuthority,
   TAccountSeller,
   TAccountDelegate,
@@ -413,7 +413,7 @@ export function getTakeBidFullMetaInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     seller: { value: input.seller ?? null, isWritable: true },
     delegate: { value: input.delegate ?? null, isWritable: false },
@@ -466,7 +466,7 @@ export function getTakeBidFullMetaInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.delegate),
@@ -492,7 +492,7 @@ export function getTakeBidFullMetaInstruction<
     ),
   } as TakeBidFullMetaInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountSeller,
     TAccountDelegate,
@@ -522,7 +522,7 @@ export type ParsedTakeBidFullMetaInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     treeAuthority: TAccountMetas[1];
     seller: TAccountMetas[2];
     delegate: TAccountMetas[3];
@@ -572,7 +572,7 @@ export function parseTakeBidFullMetaInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       treeAuthority: getNextAccount(),
       seller: getNextAccount(),
       delegate: getNextAccount(),

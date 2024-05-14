@@ -10,9 +10,9 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct BuySpl {
-    pub tcomp: solana_program::pubkey::Pubkey,
+    pub fee_vault: solana_program::pubkey::Pubkey,
 
-    pub tcomp_ata: solana_program::pubkey::Pubkey,
+    pub fee_vault_ata: solana_program::pubkey::Pubkey,
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
@@ -76,10 +76,11 @@ impl BuySpl {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(25 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp, false,
+            self.fee_vault,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.tcomp_ata,
+            self.fee_vault_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -249,8 +250,8 @@ pub struct BuySplInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
-///   1. `[writable]` tcomp_ata
+///   0. `[writable]` fee_vault
+///   1. `[writable]` fee_vault_ata
 ///   2. `[]` tree_authority
 ///   3. `[writable]` merkle_tree
 ///   4. `[]` log_wrapper
@@ -276,8 +277,8 @@ pub struct BuySplInstructionArgs {
 ///   24. `[signer, optional]` cosigner
 #[derive(Default)]
 pub struct BuySplBuilder {
-    tcomp: Option<solana_program::pubkey::Pubkey>,
-    tcomp_ata: Option<solana_program::pubkey::Pubkey>,
+    fee_vault: Option<solana_program::pubkey::Pubkey>,
+    fee_vault_ata: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
@@ -318,13 +319,13 @@ impl BuySplBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp = Some(tcomp);
+    pub fn fee_vault(&mut self, fee_vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
-    pub fn tcomp_ata(&mut self, tcomp_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.tcomp_ata = Some(tcomp_ata);
+    pub fn fee_vault_ata(&mut self, fee_vault_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.fee_vault_ata = Some(fee_vault_ata);
         self
     }
     #[inline(always)]
@@ -542,8 +543,8 @@ impl BuySplBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = BuySpl {
-            tcomp: self.tcomp.expect("tcomp is not set"),
-            tcomp_ata: self.tcomp_ata.expect("tcomp_ata is not set"),
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
+            fee_vault_ata: self.fee_vault_ata.expect("fee_vault_ata is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
             log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
@@ -607,9 +608,9 @@ impl BuySplBuilder {
 
 /// `buy_spl` CPI accounts.
 pub struct BuySplCpiAccounts<'a, 'b> {
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -663,9 +664,9 @@ pub struct BuySplCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tcomp_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub fee_vault_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -724,8 +725,8 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            tcomp: accounts.tcomp,
-            tcomp_ata: accounts.tcomp_ata,
+            fee_vault: accounts.fee_vault,
+            fee_vault_ata: accounts.fee_vault_ata,
             tree_authority: accounts.tree_authority,
             merkle_tree: accounts.merkle_tree,
             log_wrapper: accounts.log_wrapper,
@@ -787,11 +788,11 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(25 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp.key,
+            *self.fee_vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.tcomp_ata.key,
+            *self.fee_vault_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -939,8 +940,8 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(25 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.tcomp.clone());
-        account_infos.push(self.tcomp_ata.clone());
+        account_infos.push(self.fee_vault.clone());
+        account_infos.push(self.fee_vault_ata.clone());
         account_infos.push(self.tree_authority.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
@@ -990,8 +991,8 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` tcomp
-///   1. `[writable]` tcomp_ata
+///   0. `[writable]` fee_vault
+///   1. `[writable]` fee_vault_ata
 ///   2. `[]` tree_authority
 ///   3. `[writable]` merkle_tree
 ///   4. `[]` log_wrapper
@@ -1023,8 +1024,8 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(BuySplCpiBuilderInstruction {
             __program: program,
-            tcomp: None,
-            tcomp_ata: None,
+            fee_vault: None,
+            fee_vault_ata: None,
             tree_authority: None,
             merkle_tree: None,
             log_wrapper: None,
@@ -1062,16 +1063,19 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn tcomp(&mut self, tcomp: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.tcomp = Some(tcomp);
+    pub fn fee_vault(
+        &mut self,
+        fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.fee_vault = Some(fee_vault);
         self
     }
     #[inline(always)]
-    pub fn tcomp_ata(
+    pub fn fee_vault_ata(
         &mut self,
-        tcomp_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        fee_vault_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tcomp_ata = Some(tcomp_ata);
+        self.instruction.fee_vault_ata = Some(fee_vault_ata);
         self
     }
     #[inline(always)]
@@ -1375,9 +1379,12 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
         let instruction = BuySplCpi {
             __program: self.instruction.__program,
 
-            tcomp: self.instruction.tcomp.expect("tcomp is not set"),
+            fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
 
-            tcomp_ata: self.instruction.tcomp_ata.expect("tcomp_ata is not set"),
+            fee_vault_ata: self
+                .instruction
+                .fee_vault_ata
+                .expect("fee_vault_ata is not set"),
 
             tree_authority: self
                 .instruction
@@ -1465,8 +1472,8 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
 
 struct BuySplCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    tcomp: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tcomp_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    fee_vault_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,

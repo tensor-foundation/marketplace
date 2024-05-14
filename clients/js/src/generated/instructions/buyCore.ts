@@ -38,7 +38,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BuyCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountAsset extends string | IAccountMeta<string> = string,
   TAccountCollection extends string | IAccountMeta<string> = string,
@@ -63,9 +63,9 @@ export type BuyCoreInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
@@ -149,7 +149,7 @@ export function getBuyCoreInstructionDataCodec(): Codec<
 }
 
 export type BuyCoreInput<
-  TAccountTcomp extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountListState extends string = string,
   TAccountAsset extends string = string,
   TAccountCollection extends string = string,
@@ -164,7 +164,7 @@ export type BuyCoreInput<
   TAccountSystemProgram extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault: Address<TAccountFeeVault>;
   listState: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -182,7 +182,7 @@ export type BuyCoreInput<
 };
 
 export function getBuyCoreInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountListState extends string,
   TAccountAsset extends string,
   TAccountCollection extends string,
@@ -198,7 +198,7 @@ export function getBuyCoreInstruction<
   TAccountCosigner extends string,
 >(
   input: BuyCoreInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountListState,
     TAccountAsset,
     TAccountCollection,
@@ -215,7 +215,7 @@ export function getBuyCoreInstruction<
   >
 ): BuyCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountListState,
   TAccountAsset,
   TAccountCollection,
@@ -235,7 +235,7 @@ export function getBuyCoreInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     asset: { value: input.asset ?? null, isWritable: true },
     collection: { value: input.collection ?? null, isWritable: false },
@@ -278,7 +278,7 @@ export function getBuyCoreInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.asset),
       getAccountMeta(accounts.collection),
@@ -299,7 +299,7 @@ export function getBuyCoreInstruction<
     ),
   } as BuyCoreInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountListState,
     TAccountAsset,
     TAccountCollection,
@@ -324,7 +324,7 @@ export type ParsedBuyCoreInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     listState: TAccountMetas[1];
     asset: TAccountMetas[2];
     collection?: TAccountMetas[3] | undefined;
@@ -369,7 +369,7 @@ export function parseBuyCoreInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       listState: getNextAccount(),
       asset: getNextAccount(),
       collection: getNextOptionalAccount(),

@@ -38,7 +38,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TakeBidCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -68,9 +68,9 @@ export type TakeBidCoreInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountSeller extends string
         ? WritableSignerAccount<TAccountSeller> &
             IAccountSignerMeta<TAccountSeller>
@@ -163,7 +163,7 @@ export function getTakeBidCoreInstructionDataCodec(): Codec<
 }
 
 export type TakeBidCoreInput<
-  TAccountTcomp extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountSeller extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
@@ -181,7 +181,7 @@ export type TakeBidCoreInput<
   TAccountMintProof extends string = string,
   TAccountRentDest extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
@@ -203,7 +203,7 @@ export type TakeBidCoreInput<
 };
 
 export function getTakeBidCoreInstruction<
-  TAccountTcomp extends string,
+  TAccountFeeVault extends string,
   TAccountSeller extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
@@ -222,7 +222,7 @@ export function getTakeBidCoreInstruction<
   TAccountRentDest extends string,
 >(
   input: TakeBidCoreInput<
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
@@ -242,7 +242,7 @@ export function getTakeBidCoreInstruction<
   >
 ): TakeBidCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
+  TAccountFeeVault,
   TAccountSeller,
   TAccountBidState,
   TAccountOwner,
@@ -265,7 +265,7 @@ export function getTakeBidCoreInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     seller: { value: input.seller ?? null, isWritable: true },
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -315,7 +315,7 @@ export function getTakeBidCoreInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
@@ -339,7 +339,7 @@ export function getTakeBidCoreInstruction<
     ),
   } as TakeBidCoreInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
@@ -367,7 +367,7 @@ export type ParsedTakeBidCoreInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     seller: TAccountMetas[1];
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
@@ -416,7 +416,7 @@ export function parseTakeBidCoreInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       seller: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),

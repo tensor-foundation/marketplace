@@ -6,7 +6,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_toolbox::token_2022::validate_mint;
+use tensor_toolbox::{fees::ID as TFEE_PROGRAM_ID, shard_num, token_2022::validate_mint};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
@@ -18,10 +18,18 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidT22<'info> {
-    // Acts purely as a fee account
-    /// CHECK: seeds
-    #[account(mut, seeds=[], bump)]
-    pub tcomp: UncheckedAccount<'info>,
+    /// CHECK: Seeds checked here, account has no state.
+    #[account(
+        mut,
+        seeds = [
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(bid_state),
+        ],
+        seeds::program = TFEE_PROGRAM_ID,
+        bump
+    )]
+    pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -224,7 +232,7 @@ pub fn process_take_bid_t22<'info>(
         rent_dest: &ctx.accounts.rent_dest,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
-        tcomp: &ctx.accounts.tcomp.to_account_info(),
+        fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id: mint,
         token_standard: Some(TokenStandard::NonFungible),
         creators: vec![],

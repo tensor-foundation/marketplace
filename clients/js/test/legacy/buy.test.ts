@@ -21,12 +21,13 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  TensorMarketplaceProgramErrorCode,
-  TokenStandard,
   findListStatePda,
   getBuyLegacyInstructionAsync,
   getListLegacyInstructionAsync,
+  TensorMarketplaceProgramErrorCode,
+  TokenStandard,
 } from '../../src/index.js';
+import { findFeeVaultPda } from '../_common.js';
 
 test('it can buy a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -51,11 +52,14 @@ test('it can buy a legacy NFT', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
+  const [feeVault] = await findFeeVaultPda(listing);
+
   // When a buyer buys the NFT.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
+    feeVault,
     mint,
     maxAmount: 2,
     creators: [owner.address],
@@ -117,11 +121,14 @@ test('it can buy a legacy Programmable NFT', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
+  const [feeVault] = await findFeeVaultPda(listing);
+
   // When a buyer buys the NFT.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
+    feeVault,
     mint,
     maxAmount: 1,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
@@ -189,11 +196,14 @@ test('it cannot buy a legacy pNFT with a lower amount', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
+  const [feeVault] = await findFeeVaultPda(listing);
+
   // When a buyer tries to buy the NFT with a lower amount.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
+    feeVault,
     mint,
     maxAmount: 5,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
@@ -249,11 +259,14 @@ test('it can buy a legacy NFT with a cosigner', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
+  const [feeVault] = await findFeeVaultPda(listing);
+
   // When a buyer buys the NFT.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
+    feeVault,
     mint,
     maxAmount: 2,
     cosigner,
@@ -318,11 +331,14 @@ test('it cannot buy a legacy pNFT with a missing cosigner', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
+  const [feeVault] = await findFeeVaultPda(listing);
+
   // When a buyer tries to buy the NFT with a lower amount.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
+    feeVault,
     mint,
     maxAmount: 10,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
