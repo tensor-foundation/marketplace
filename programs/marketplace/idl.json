@@ -174,7 +174,7 @@
           "isSigner": true
         },
         {
-          "name": "marginAccount",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -277,7 +277,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -308,7 +308,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1777,7 +1777,7 @@
       "name": "takeBidLegacy",
       "accounts": [
         {
-          "name": "tcomp",
+          "name": "feeVault",
           "isMut": true,
           "isSigner": false
         },
@@ -1809,49 +1809,52 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "whitelist",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
-          "name": "nftSellerAcc",
+          "name": "sellerAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftMint",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "nftMetadata",
+          "name": "metadata",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "ownerAtaAcc",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftEdition",
+          "name": "edition",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "sellerTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "ownerTokenRecord",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "destTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "pnftShared",
@@ -1862,19 +1865,20 @@
               "isSigner": false
             },
             {
-              "name": "instructions",
+              "name": "sysvarInstructions",
               "isMut": false,
               "isSigner": false
             },
             {
               "name": "authorizationRulesProgram",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             }
           ]
         },
         {
-          "name": "nftEscrow",
+          "name": "escrowAta",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -1882,14 +1886,16 @@
           ]
         },
         {
-          "name": "tempEscrowTokenRecord",
+          "name": "escrowTokenRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
-          "name": "authRules",
+          "name": "authorizationRules",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -1912,7 +1918,7 @@
           "isSigner": false
         },
         {
-          "name": "tensorswapProgram",
+          "name": "escrowProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1926,12 +1932,13 @@
           "name": "mintProof",
           "isMut": false,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }

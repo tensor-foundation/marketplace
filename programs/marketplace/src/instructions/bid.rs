@@ -17,7 +17,7 @@ pub struct Bid<'info> {
     pub owner: Signer<'info>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin_account: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
     // cosigner
     pub cosigner: Option<Signer<'info>>,
     #[account(mut)]
@@ -183,7 +183,7 @@ pub fn process_bid<'info>(
 
     //transfer lamports
     let margin_account_result =
-        assert_decode_margin_account(&ctx.accounts.margin_account, &ctx.accounts.owner);
+        assert_decode_margin_account(&ctx.accounts.shared_escrow, &ctx.accounts.owner);
 
     let deposit_amount = unwrap_int!(amount.checked_mul(remaining_quantity as u64));
 
@@ -196,7 +196,7 @@ pub fn process_bid<'info>(
                 TcompError::BadMargin
             );
             let bid_state = &mut ctx.accounts.bid_state;
-            bid_state.margin = Some(ctx.accounts.margin_account.key());
+            bid_state.margin = Some(ctx.accounts.shared_escrow.key());
             //transfer any existing balance back to user (this is in case they're editing an existing non-marginated bid)
             if bid_balance > 0 {
                 transfer_lamports_from_pda(

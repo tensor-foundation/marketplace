@@ -4,23 +4,28 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct CancelBid<'info> {
-    #[account(mut,
+    #[account(
+        mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
-        close = rent_dest,
+        close = rent_destination,
         has_one = owner,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
+
     /// CHECK: stored on bid_state
     #[account(mut)]
     pub owner: Signer<'info>,
+
     pub system_program: Program<'info, System>,
+
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 }
 
 pub fn process_cancel_bid(ctx: Context<CancelBid>) -> Result<()> {
