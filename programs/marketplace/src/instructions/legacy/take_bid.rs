@@ -205,7 +205,7 @@ pub fn process_take_bid_legacy<'info>(
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
     // TODO: unused, remove on a breaking change
-    _rules_acc_present: bool,
+    rules_acc_present: bool,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
@@ -280,6 +280,15 @@ pub fn process_take_bid_legacy<'info>(
     // transfer nft directly to owner (ATA)
     // has to go before any transfer_lamports, o/w we get `sum of account balances before and after instruction do not match`
 
+    // NOTE: This is used to support "legacy" anchor clients that set the
+    // authorization rules to system program address and `rules_acc_present == false`
+    // when there is no rule set
+    let authorization_rules = if rules_acc_present {
+        ctx.accounts.authorization_rules.as_ref()
+    } else {
+        None
+    };
+
     //STEP 1/2: SEND TO ESCROW
     transfer(
         TransferArgs {
@@ -302,7 +311,7 @@ pub fn process_take_bid_legacy<'info>(
                 .pnft_shared
                 .authorization_rules_program
                 .as_ref(),
-            authorization_rules: ctx.accounts.authorization_rules.as_ref(),
+            authorization_rules,
             authorization_data: authorization_data.clone().map(AuthorizationData::from),
             token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
@@ -335,7 +344,7 @@ pub fn process_take_bid_legacy<'info>(
                 .pnft_shared
                 .authorization_rules_program
                 .as_ref(),
-            authorization_rules: ctx.accounts.authorization_rules.as_ref(),
+            authorization_rules,
             authorization_data: authorization_data.map(AuthorizationData::from),
             token_metadata_program: Some(&ctx.accounts.pnft_shared.token_metadata_program),
             delegate: None,
