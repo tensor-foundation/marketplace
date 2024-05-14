@@ -295,7 +295,7 @@ pub fn process_take_bid_legacy<'info>(
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
             sysvar_instructions: ctx.accounts.pnft_shared.sysvar_instructions.as_ref(),
-            source_token_record: ctx.accounts.owner_token_record.as_ref(),
+            source_token_record: ctx.accounts.seller_token_record.as_ref(),
             destination_token_record: ctx.accounts.escrow_token_record.as_ref(),
             authorization_rules_program: ctx
                 .accounts
