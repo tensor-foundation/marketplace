@@ -1387,7 +1387,7 @@ export class TCompSDK {
     const ownerAtaAcc = findAta(nftMint, owner);
     const nftMetadata = findMetadataPda(nftMint)[0];
     const [bidState] = findBidStatePda({ bidId, owner });
-    const [escrowPda] = findAta(nftMint, bidState);
+    const escrowPda = findAta(nftMint, bidState);
     const mintProofPda = whitelist
       ? findMintProofPDA({ mint: nftMint, whitelist })[0]
       : SystemProgram.programId;
