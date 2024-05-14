@@ -41,7 +41,8 @@
     "@solana/instructions": "2.0.0-preview.2",
     "@solana/programs": "2.0.0-preview.2",
     "@solana/signers": "2.0.0-preview.2",
-    "@solana/web3.js": "2.0.0-preview.2"
+    "@solana/web3.js": "2.0.0-preview.2",
+    "@tensor-foundation/resolvers": "0.0.4"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",

@@ -47,11 +47,11 @@ import {
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
-  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
-} from '../../hooked';
+} from '@tensor-foundation/resolvers';
+import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -534,6 +534,11 @@ export async function getBuyLegacyInstructionAsync<
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
         'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    } else {
+      if (args.tokenStandard === TokenStandard.ProgrammableNonFungibleEdition) {
+        accounts.sysvarInstructions.value =
+          'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+      }
     }
   }
 
@@ -843,6 +848,11 @@ export function getBuyLegacyInstruction<
     if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
       accounts.sysvarInstructions.value =
         'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    } else {
+      if (args.tokenStandard === TokenStandard.ProgrammableNonFungibleEdition) {
+        accounts.sysvarInstructions.value =
+          'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+      }
     }
   }
 

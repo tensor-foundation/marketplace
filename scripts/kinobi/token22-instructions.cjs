@@ -21,6 +21,7 @@ module.exports = function visitor(options) {
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -30,6 +31,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -50,6 +52,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -59,6 +62,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -79,6 +83,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -88,6 +93,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -105,6 +111,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -114,6 +121,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),

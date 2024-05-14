@@ -4,6 +4,7 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -17,7 +18,6 @@ import {
 import test from 'ava';
 import {
   ListState,
-  TokenStandard,
   fetchListStateFromSeeds,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';

@@ -32,6 +32,9 @@ importers:
       '@solana/web3.js':
         specifier: 2.0.0-preview.2
         version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+      '@tensor-foundation/resolvers':
+        specifier: 0.0.4
+        version: 0.0.4(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
     devDependencies:
       '@ava/typescript':
         specifier: ^4.1.0
@@ -505,6 +508,9 @@ packages:
 
   '@solana/webcrypto-ed25519-polyfill@2.0.0-preview.2':
     resolution: {integrity: sha512-WDe2kYmWk6vs80GVqKE/1JOnQEp2fHK92Mq88FlDW70BMMXhKaZRVG+MPiK3BvKDqegcEfQaw39XqdI3DH5bDQ==}
+
+  '@tensor-foundation/resolvers@0.0.4':
+    resolution: {integrity: sha512-QPtltBYaX+pI5L+ZyLmuzo0GYlYm1f31Lg0Ym1NFaUwpXnDTVzNH4gHpPxBUeh3Jy2ta8uacxDv9sV3KTgDmiA==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/resolvers/0.0.4/a7343277cda00f4be58d8df6334c3816f84fc786}
 
   '@tensor-foundation/test-helpers@0.0.2':
     resolution: {integrity: sha512-iLIkIcAknFmLD0LPfO59HsPsO0FjglPLy16j2XD6LB4Akp6Ff5YxE3AJLUwmz0ct3qYxKvOyUaAaC/rM46zDQw==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/test-helpers/0.0.2/feb5036985113625d2192948ecf0ca2328d64d9c}
@@ -2408,6 +2414,19 @@ snapshots:
   '@solana/webcrypto-ed25519-polyfill@2.0.0-preview.2':
     dependencies:
       '@noble/ed25519': 2.0.0
+
+  '@tensor-foundation/resolvers@0.0.4(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
+    dependencies:
+      '@solana/accounts': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/addresses': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/codecs': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/instructions': 2.0.0-preview.2
+      '@solana/programs': 2.0.0-preview.2
+      '@solana/signers': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/web3.js': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+    transitivePeerDependencies:
+      - fastestsmallesttextencoderdecoder
+      - ws
 
   '@tensor-foundation/test-helpers@0.0.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
     dependencies:

@@ -16,12 +16,12 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  TokenStandard,
   findListStatePda,
   getDelistLegacyInstructionAsync,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
 import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 
 test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();

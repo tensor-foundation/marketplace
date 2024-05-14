@@ -8,6 +8,7 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -21,11 +22,10 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
+  TensorMarketplaceProgramErrorCode,
   findListStatePda,
   getBuyLegacyInstructionAsync,
   getListLegacyInstructionAsync,
-  TensorMarketplaceProgramErrorCode,
-  TokenStandard,
 } from '../../src/index.js';
 
 test('it can buy an NFT', async (t) => {

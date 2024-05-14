@@ -33,7 +33,7 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveBuyerAta, resolveListAta } from '../../hooked';
+import { resolveBuyerAta, resolveListAta } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

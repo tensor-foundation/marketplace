@@ -36,7 +36,7 @@ import {
   resolveWnsApprovePda,
   resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
-} from '../../hooked';
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

@@ -85,13 +85,24 @@ kinobi.update(
       defaultValue: k.conditionalValueNode({
         condition: k.argumentValueNode("tokenStandard"),
         value: k.enumValueNode(
-          k.definedTypeLinkNode("TokenStandard", "hooked"),
+          k.definedTypeLinkNode("TokenStandard", "resolvers"),
           "ProgrammableNonFungible"
         ),
         ifTrue: k.publicKeyValueNode(
           "Sysvar1nstructions1111111111111111111111111",
           "sysvarInstructions"
         ),
+        ifFalse: k.conditionalValueNode({
+          condition: k.argumentValueNode("tokenStandard"),
+          value: k.enumValueNode(
+            k.definedTypeLinkNode("TokenStandard", "resolvers"),
+            "ProgrammableNonFungibleEdition"
+          ),
+          ifTrue: k.publicKeyValueNode(
+            "Sysvar1nstructions1111111111111111111111111",
+            "sysvarInstructions"
+          ),
+        }),
       }),
     },
     {
@@ -314,6 +325,9 @@ kinobi.accept(
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
     ],
+    dependencyMap: {
+      resolvers: "@tensor-foundation/resolvers",
+    },
   })
 );
 
