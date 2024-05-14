@@ -1883,7 +1883,7 @@
           ]
         },
         {
-          "name": "escrowAta",
+          "name": "bidAta",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -1891,7 +1891,7 @@
           ]
         },
         {
-          "name": "escrowTokenRecord",
+          "name": "bidTokenRecord",
           "isMut": true,
           "isSigner": false,
           "isOptional": true

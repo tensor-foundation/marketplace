@@ -410,8 +410,8 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            escrowAta: {
-              defaultValue: k.resolverValueNode("resolveEscrowAta", {
+            bidAta: {
+              defaultValue: k.resolverValueNode("resolveBidAta", {
                 dependsOn: [
                   k.accountValueNode("bidState"),
                   k.accountValueNode("tokenProgram"),
@@ -464,13 +464,13 @@ module.exports = function visitor(options) {
                 }
               ),
             },
-            escrowTokenRecord: {
+            bidTokenRecord: {
               defaultValue: k.resolverValueNode(
-                "resolveEscrowTokenRecordFromTokenStandard",
+                "resolveBidTokenRecordFromTokenStandard",
                 {
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("escrowAta"),
+                    k.accountValueNode("bidAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 }

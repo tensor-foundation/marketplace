@@ -1445,7 +1445,7 @@ export class TCompSDK {
         },
         nftEscrow: escrowPda,
         tempEscrowTokenRecord: escrowDestTokenRecordPda,
-        authRules: ruleSet ?? SystemProgram.programId,
+        authRules: ruleSet ?? TCOMP_ADDR,
 
         tokenProgram,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,

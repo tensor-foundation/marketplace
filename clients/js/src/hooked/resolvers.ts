@@ -113,7 +113,7 @@ export const resolveBuyerTokenRecordFromTokenStandard = async ({
     : { value: null };
 };
 
-export const resolveEscrowTokenRecordFromTokenStandard = async ({
+export const resolveBidTokenRecordFromTokenStandard = async ({
   accounts,
   args,
 }: {
@@ -187,7 +187,7 @@ export const resolveSellerAta = async ({
   };
 };
 
-export const resolveEscrowAta = async ({
+export const resolveBidAta = async ({
   accounts,
 }: {
   accounts: Record<string, ResolvedAccount>;
