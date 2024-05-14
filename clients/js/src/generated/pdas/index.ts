@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './bidState';
 export * from './feeVault';
 export * from './listState';

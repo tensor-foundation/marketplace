@@ -32,6 +32,7 @@ import {
   none,
 } from '@solana/codecs';
 import {
+  AccountRole,
   IAccountMeta,
   IInstruction,
   IInstructionWithAccounts,
@@ -42,8 +43,26 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import {
+  TokenStandard,
+  TokenStandardArgs,
+  resolveEditionFromTokenStandard,
+  resolveEscrowAta,
+  resolveEscrowTokenRecordFromTokenStandard,
+  resolveMetadata,
+  resolveOwnerAta,
+  resolveOwnerTokenRecordFromTokenStandard,
+  resolveSellerAta,
+  resolveSellerTokenRecordFromTokenStandard,
+} from '../../hooked';
+import { findBidStatePda, findFeeVaultPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+} from '../shared';
 import {
   AuthorizationDataLocal,
   AuthorizationDataLocalArgs,
@@ -53,31 +72,35 @@ import {
 
 export type TakeBidLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountSeller extends string | IAccountMeta<string> = string,
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountNftSellerAcc extends string | IAccountMeta<string> = string,
-  TAccountNftMint extends string | IAccountMeta<string> = string,
-  TAccountNftMetadata extends string | IAccountMeta<string> = string,
-  TAccountOwnerAtaAcc extends string | IAccountMeta<string> = string,
-  TAccountNftEdition extends string | IAccountMeta<string> = string,
+  TAccountSharedEscrow extends string | IAccountMeta<string> = string,
+  TAccountWhitelist extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountSellerAta extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountMetadata extends string | IAccountMeta<string> = string,
+  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountEdition extends string | IAccountMeta<string> = string,
+  TAccountSellerTokenRecord extends string | IAccountMeta<string> = string,
   TAccountOwnerTokenRecord extends string | IAccountMeta<string> = string,
-  TAccountDestTokenRecord extends string | IAccountMeta<string> = string,
   TAccountTokenMetadataProgram extends
     | string
     | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountInstructions extends string | IAccountMeta<string> = string,
+  TAccountSysvarInstructions extends
+    | string
+    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
   TAccountAuthorizationRulesProgram extends
     | string
-    | IAccountMeta<string> = 'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg',
-  TAccountNftEscrow extends string | IAccountMeta<string> = string,
-  TAccountTempEscrowTokenRecord extends string | IAccountMeta<string> = string,
-  TAccountAuthRules extends string | IAccountMeta<string> = string,
+    | IAccountMeta<string> = string,
+  TAccountEscrowAta extends string | IAccountMeta<string> = string,
+  TAccountEscrowTokenRecord extends string | IAccountMeta<string> = string,
+  TAccountAuthorizationRules extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -90,18 +113,20 @@ export type TakeBidLegacyInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTensorswapProgram extends string | IAccountMeta<string> = string,
+  TAccountEscrowProgram extends
+    | string
+    | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountMintProof extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTcomp extends string
-        ? WritableAccount<TAccountTcomp>
-        : TAccountTcomp,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountSeller extends string
         ? WritableSignerAccount<TAccountSeller> &
             IAccountSignerMeta<TAccountSeller>
@@ -118,51 +143,51 @@ export type TakeBidLegacyInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
+      TAccountSharedEscrow extends string
+        ? WritableAccount<TAccountSharedEscrow>
+        : TAccountSharedEscrow,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountNftSellerAcc extends string
-        ? WritableAccount<TAccountNftSellerAcc>
-        : TAccountNftSellerAcc,
-      TAccountNftMint extends string
-        ? ReadonlyAccount<TAccountNftMint>
-        : TAccountNftMint,
-      TAccountNftMetadata extends string
-        ? WritableAccount<TAccountNftMetadata>
-        : TAccountNftMetadata,
-      TAccountOwnerAtaAcc extends string
-        ? WritableAccount<TAccountOwnerAtaAcc>
-        : TAccountOwnerAtaAcc,
-      TAccountNftEdition extends string
-        ? ReadonlyAccount<TAccountNftEdition>
-        : TAccountNftEdition,
+      TAccountSellerAta extends string
+        ? WritableAccount<TAccountSellerAta>
+        : TAccountSellerAta,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
+      TAccountMetadata extends string
+        ? WritableAccount<TAccountMetadata>
+        : TAccountMetadata,
+      TAccountOwnerAta extends string
+        ? WritableAccount<TAccountOwnerAta>
+        : TAccountOwnerAta,
+      TAccountEdition extends string
+        ? ReadonlyAccount<TAccountEdition>
+        : TAccountEdition,
+      TAccountSellerTokenRecord extends string
+        ? WritableAccount<TAccountSellerTokenRecord>
+        : TAccountSellerTokenRecord,
       TAccountOwnerTokenRecord extends string
         ? WritableAccount<TAccountOwnerTokenRecord>
         : TAccountOwnerTokenRecord,
-      TAccountDestTokenRecord extends string
-        ? WritableAccount<TAccountDestTokenRecord>
-        : TAccountDestTokenRecord,
       TAccountTokenMetadataProgram extends string
         ? ReadonlyAccount<TAccountTokenMetadataProgram>
         : TAccountTokenMetadataProgram,
-      TAccountInstructions extends string
-        ? ReadonlyAccount<TAccountInstructions>
-        : TAccountInstructions,
+      TAccountSysvarInstructions extends string
+        ? ReadonlyAccount<TAccountSysvarInstructions>
+        : TAccountSysvarInstructions,
       TAccountAuthorizationRulesProgram extends string
         ? ReadonlyAccount<TAccountAuthorizationRulesProgram>
         : TAccountAuthorizationRulesProgram,
-      TAccountNftEscrow extends string
-        ? WritableAccount<TAccountNftEscrow>
-        : TAccountNftEscrow,
-      TAccountTempEscrowTokenRecord extends string
-        ? WritableAccount<TAccountTempEscrowTokenRecord>
-        : TAccountTempEscrowTokenRecord,
-      TAccountAuthRules extends string
-        ? ReadonlyAccount<TAccountAuthRules>
-        : TAccountAuthRules,
+      TAccountEscrowAta extends string
+        ? WritableAccount<TAccountEscrowAta>
+        : TAccountEscrowAta,
+      TAccountEscrowTokenRecord extends string
+        ? WritableAccount<TAccountEscrowTokenRecord>
+        : TAccountEscrowTokenRecord,
+      TAccountAuthorizationRules extends string
+        ? ReadonlyAccount<TAccountAuthorizationRules>
+        : TAccountAuthorizationRules,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -175,9 +200,9 @@ export type TakeBidLegacyInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountTensorswapProgram extends string
-        ? ReadonlyAccount<TAccountTensorswapProgram>
-        : TAccountTensorswapProgram,
+      TAccountEscrowProgram extends string
+        ? ReadonlyAccount<TAccountEscrowProgram>
+        : TAccountEscrowProgram,
       TAccountCosigner extends string
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
@@ -185,9 +210,9 @@ export type TakeBidLegacyInstruction<
       TAccountMintProof extends string
         ? ReadonlyAccount<TAccountMintProof>
         : TAccountMintProof,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -203,7 +228,7 @@ export type TakeBidLegacyInstructionData = {
 export type TakeBidLegacyInstructionDataArgs = {
   minAmount: number | bigint;
   optionalRoyaltyPct?: OptionOrNullable<number>;
-  rulesAccPresent: boolean;
+  rulesAccPresent?: boolean;
   authorizationData?: OptionOrNullable<AuthorizationDataLocalArgs>;
 };
 
@@ -223,6 +248,7 @@ export function getTakeBidLegacyInstructionDataEncoder(): Encoder<TakeBidLegacyI
       ...value,
       discriminator: [188, 35, 116, 108, 0, 233, 237, 201],
       optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      rulesAccPresent: value.rulesAccPresent ?? false,
       authorizationData: value.authorizationData ?? none(),
     })
   );
@@ -248,206 +274,223 @@ export function getTakeBidLegacyInstructionDataCodec(): Codec<
   );
 }
 
-export type TakeBidLegacyInput<
-  TAccountTcomp extends string = string,
+export type TakeBidLegacyInstructionExtraArgs = {
+  tokenStandard?: TokenStandardArgs;
+};
+
+export type TakeBidLegacyAsyncInput<
+  TAccountFeeVault extends string = string,
   TAccountSeller extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMarginAccount extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
-  TAccountNftSellerAcc extends string = string,
-  TAccountNftMint extends string = string,
-  TAccountNftMetadata extends string = string,
-  TAccountOwnerAtaAcc extends string = string,
-  TAccountNftEdition extends string = string,
+  TAccountSellerAta extends string = string,
+  TAccountMint extends string = string,
+  TAccountMetadata extends string = string,
+  TAccountOwnerAta extends string = string,
+  TAccountEdition extends string = string,
+  TAccountSellerTokenRecord extends string = string,
   TAccountOwnerTokenRecord extends string = string,
-  TAccountDestTokenRecord extends string = string,
   TAccountTokenMetadataProgram extends string = string,
-  TAccountInstructions extends string = string,
+  TAccountSysvarInstructions extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
-  TAccountNftEscrow extends string = string,
-  TAccountTempEscrowTokenRecord extends string = string,
-  TAccountAuthRules extends string = string,
+  TAccountEscrowAta extends string = string,
+  TAccountEscrowTokenRecord extends string = string,
+  TAccountAuthorizationRules extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountTensorswapProgram extends string = string,
+  TAccountEscrowProgram extends string = string,
   TAccountCosigner extends string = string,
   TAccountMintProof extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
-  tcomp: Address<TAccountTcomp>;
+  feeVault?: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
-  bidState: Address<TAccountBidState>;
+  bidState?: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount: Address<TAccountMarginAccount>;
-  whitelist: Address<TAccountWhitelist>;
-  nftSellerAcc: Address<TAccountNftSellerAcc>;
-  nftMint: Address<TAccountNftMint>;
-  nftMetadata: Address<TAccountNftMetadata>;
-  ownerAtaAcc: Address<TAccountOwnerAtaAcc>;
-  nftEdition: Address<TAccountNftEdition>;
-  ownerTokenRecord: Address<TAccountOwnerTokenRecord>;
-  destTokenRecord: Address<TAccountDestTokenRecord>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
+  whitelist?: Address<TAccountWhitelist>;
+  sellerAta?: Address<TAccountSellerAta>;
+  mint: Address<TAccountMint>;
+  metadata?: Address<TAccountMetadata>;
+  ownerAta?: Address<TAccountOwnerAta>;
+  edition?: Address<TAccountEdition>;
+  sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
+  ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
-  instructions: Address<TAccountInstructions>;
+  sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  nftEscrow: Address<TAccountNftEscrow>;
-  tempEscrowTokenRecord: Address<TAccountTempEscrowTokenRecord>;
-  authRules: Address<TAccountAuthRules>;
+  escrowAta?: Address<TAccountEscrowAta>;
+  escrowTokenRecord?: Address<TAccountEscrowTokenRecord>;
+  authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  tensorswapProgram: Address<TAccountTensorswapProgram>;
+  escrowProgram?: Address<TAccountEscrowProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-  mintProof: Address<TAccountMintProof>;
-  rentDest: Address<TAccountRentDest>;
+  mintProof?: Address<TAccountMintProof>;
+  rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidLegacyInstructionDataArgs['minAmount'];
   optionalRoyaltyPct?: TakeBidLegacyInstructionDataArgs['optionalRoyaltyPct'];
-  rulesAccPresent: TakeBidLegacyInstructionDataArgs['rulesAccPresent'];
+  rulesAccPresent?: TakeBidLegacyInstructionDataArgs['rulesAccPresent'];
   authorizationData?: TakeBidLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: TakeBidLegacyInstructionExtraArgs['tokenStandard'];
+  creators?: Array<Address>;
 };
 
-export function getTakeBidLegacyInstruction<
-  TAccountTcomp extends string,
+export async function getTakeBidLegacyInstructionAsync<
+  TAccountFeeVault extends string,
   TAccountSeller extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
-  TAccountNftSellerAcc extends string,
-  TAccountNftMint extends string,
-  TAccountNftMetadata extends string,
-  TAccountOwnerAtaAcc extends string,
-  TAccountNftEdition extends string,
+  TAccountSellerAta extends string,
+  TAccountMint extends string,
+  TAccountMetadata extends string,
+  TAccountOwnerAta extends string,
+  TAccountEdition extends string,
+  TAccountSellerTokenRecord extends string,
   TAccountOwnerTokenRecord extends string,
-  TAccountDestTokenRecord extends string,
   TAccountTokenMetadataProgram extends string,
-  TAccountInstructions extends string,
+  TAccountSysvarInstructions extends string,
   TAccountAuthorizationRulesProgram extends string,
-  TAccountNftEscrow extends string,
-  TAccountTempEscrowTokenRecord extends string,
-  TAccountAuthRules extends string,
+  TAccountEscrowAta extends string,
+  TAccountEscrowTokenRecord extends string,
+  TAccountAuthorizationRules extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountTensorswapProgram extends string,
+  TAccountEscrowProgram extends string,
   TAccountCosigner extends string,
   TAccountMintProof extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
-  input: TakeBidLegacyInput<
-    TAccountTcomp,
+  input: TakeBidLegacyAsyncInput<
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountNftSellerAcc,
-    TAccountNftMint,
-    TAccountNftMetadata,
-    TAccountOwnerAtaAcc,
-    TAccountNftEdition,
+    TAccountSellerAta,
+    TAccountMint,
+    TAccountMetadata,
+    TAccountOwnerAta,
+    TAccountEdition,
+    TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
-    TAccountDestTokenRecord,
     TAccountTokenMetadataProgram,
-    TAccountInstructions,
+    TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountNftEscrow,
-    TAccountTempEscrowTokenRecord,
-    TAccountAuthRules,
+    TAccountEscrowAta,
+    TAccountEscrowTokenRecord,
+    TAccountAuthorizationRules,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountTensorswapProgram,
+    TAccountEscrowProgram,
     TAccountCosigner,
     TAccountMintProof,
-    TAccountRentDest
+    TAccountRentDestination
   >
-): TakeBidLegacyInstruction<
-  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountTcomp,
-  TAccountSeller,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountTakerBroker,
-  TAccountMakerBroker,
-  TAccountMarginAccount,
-  TAccountWhitelist,
-  TAccountNftSellerAcc,
-  TAccountNftMint,
-  TAccountNftMetadata,
-  TAccountOwnerAtaAcc,
-  TAccountNftEdition,
-  TAccountOwnerTokenRecord,
-  TAccountDestTokenRecord,
-  TAccountTokenMetadataProgram,
-  TAccountInstructions,
-  TAccountAuthorizationRulesProgram,
-  TAccountNftEscrow,
-  TAccountTempEscrowTokenRecord,
-  TAccountAuthRules,
-  TAccountTokenProgram,
-  TAccountAssociatedTokenProgram,
-  TAccountSystemProgram,
-  TAccountMarketplaceProgram,
-  TAccountTensorswapProgram,
-  TAccountCosigner,
-  TAccountMintProof,
-  TAccountRentDest
+): Promise<
+  TakeBidLegacyInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountSharedEscrow,
+    TAccountWhitelist,
+    TAccountSellerAta,
+    TAccountMint,
+    TAccountMetadata,
+    TAccountOwnerAta,
+    TAccountEdition,
+    TAccountSellerTokenRecord,
+    TAccountOwnerTokenRecord,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions,
+    TAccountAuthorizationRulesProgram,
+    TAccountEscrowAta,
+    TAccountEscrowTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    tcomp: { value: input.tcomp ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     seller: { value: input.seller ?? null, isWritable: true },
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    nftSellerAcc: { value: input.nftSellerAcc ?? null, isWritable: true },
-    nftMint: { value: input.nftMint ?? null, isWritable: false },
-    nftMetadata: { value: input.nftMetadata ?? null, isWritable: true },
-    ownerAtaAcc: { value: input.ownerAtaAcc ?? null, isWritable: true },
-    nftEdition: { value: input.nftEdition ?? null, isWritable: false },
+    sellerAta: { value: input.sellerAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    metadata: { value: input.metadata ?? null, isWritable: true },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    edition: { value: input.edition ?? null, isWritable: false },
+    sellerTokenRecord: {
+      value: input.sellerTokenRecord ?? null,
+      isWritable: true,
+    },
     ownerTokenRecord: {
       value: input.ownerTokenRecord ?? null,
       isWritable: true,
     },
-    destTokenRecord: { value: input.destTokenRecord ?? null, isWritable: true },
     tokenMetadataProgram: {
       value: input.tokenMetadataProgram ?? null,
       isWritable: false,
     },
-    instructions: { value: input.instructions ?? null, isWritable: false },
+    sysvarInstructions: {
+      value: input.sysvarInstructions ?? null,
+      isWritable: false,
+    },
     authorizationRulesProgram: {
       value: input.authorizationRulesProgram ?? null,
       isWritable: false,
     },
-    nftEscrow: { value: input.nftEscrow ?? null, isWritable: true },
-    tempEscrowTokenRecord: {
-      value: input.tempEscrowTokenRecord ?? null,
+    escrowAta: { value: input.escrowAta ?? null, isWritable: true },
+    escrowTokenRecord: {
+      value: input.escrowTokenRecord ?? null,
       isWritable: true,
     },
-    authRules: { value: input.authRules ?? null, isWritable: false },
+    authorizationRules: {
+      value: input.authorizationRules ?? null,
+      isWritable: false,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -458,13 +501,10 @@ export function getTakeBidLegacyInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    tensorswapProgram: {
-      value: input.tensorswapProgram ?? null,
-      isWritable: false,
-    },
+    escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     mintProof: { value: input.mintProof ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -474,18 +514,94 @@ export function getTakeBidLegacyInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
-  if (!accounts.tokenMetadataProgram.value) {
-    accounts.tokenMetadataProgram.value =
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+  if (!accounts.feeVault.value) {
+    accounts.feeVault.value = await findFeeVaultPda();
   }
-  if (!accounts.authorizationRulesProgram.value) {
-    accounts.authorizationRulesProgram.value =
-      'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
+  if (!accounts.bidState.value) {
+    accounts.bidState.value = await findBidStatePda({
+      bidId: expectAddress(accounts.mint.value),
+      owner: expectAddress(accounts.owner.value),
+    });
+  }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.sellerAta.value) {
+    accounts.sellerAta = {
+      ...accounts.sellerAta,
+      ...(await resolveSellerAta(resolverScope)),
+    };
+  }
+  if (!accounts.metadata.value) {
+    accounts.metadata = {
+      ...accounts.metadata,
+      ...(await resolveMetadata(resolverScope)),
+    };
+  }
+  if (!accounts.ownerAta.value) {
+    accounts.ownerAta = {
+      ...accounts.ownerAta,
+      ...(await resolveOwnerAta(resolverScope)),
+    };
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.NonFungible;
+  }
+  if (!accounts.edition.value) {
+    accounts.edition = {
+      ...accounts.edition,
+      ...(await resolveEditionFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.sellerTokenRecord.value) {
+    accounts.sellerTokenRecord = {
+      ...accounts.sellerTokenRecord,
+      ...(await resolveSellerTokenRecordFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.ownerTokenRecord.value) {
+    accounts.ownerTokenRecord = {
+      ...accounts.ownerTokenRecord,
+      ...(await resolveOwnerTokenRecordFromTokenStandard(resolverScope)),
+    };
+  }
+  if (!accounts.tokenMetadataProgram.value) {
+    accounts.tokenMetadataProgram.value =
+      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+  }
+  if (!accounts.sysvarInstructions.value) {
+    accounts.sysvarInstructions.value =
+      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+  }
+  if (!accounts.authorizationRulesProgram.value) {
+    if (accounts.authorizationRules.value) {
+      accounts.authorizationRulesProgram.value =
+        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
+    }
+  }
+  if (!accounts.escrowAta.value) {
+    accounts.escrowAta = {
+      ...accounts.escrowAta,
+      ...(await resolveEscrowAta(resolverScope)),
+    };
+  }
+  if (!accounts.escrowTokenRecord.value) {
+    accounts.escrowTokenRecord = {
+      ...accounts.escrowTokenRecord,
+      ...(await resolveEscrowTokenRecordFromTokenStandard(resolverScope)),
+    };
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -499,39 +615,52 @@ export function getTakeBidLegacyInstruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
+  if (!accounts.escrowProgram.value) {
+    accounts.escrowProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tcomp),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.seller),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.nftSellerAcc),
-      getAccountMeta(accounts.nftMint),
-      getAccountMeta(accounts.nftMetadata),
-      getAccountMeta(accounts.ownerAtaAcc),
-      getAccountMeta(accounts.nftEdition),
+      getAccountMeta(accounts.sellerAta),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.metadata),
+      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.edition),
+      getAccountMeta(accounts.sellerTokenRecord),
       getAccountMeta(accounts.ownerTokenRecord),
-      getAccountMeta(accounts.destTokenRecord),
       getAccountMeta(accounts.tokenMetadataProgram),
-      getAccountMeta(accounts.instructions),
+      getAccountMeta(accounts.sysvarInstructions),
       getAccountMeta(accounts.authorizationRulesProgram),
-      getAccountMeta(accounts.nftEscrow),
-      getAccountMeta(accounts.tempEscrowTokenRecord),
-      getAccountMeta(accounts.authRules),
+      getAccountMeta(accounts.escrowAta),
+      getAccountMeta(accounts.escrowTokenRecord),
+      getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.tensorswapProgram),
+      getAccountMeta(accounts.escrowProgram),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidLegacyInstructionDataEncoder().encode(
@@ -539,35 +668,397 @@ export function getTakeBidLegacyInstruction<
     ),
   } as TakeBidLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountTcomp,
+    TAccountFeeVault,
     TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountNftSellerAcc,
-    TAccountNftMint,
-    TAccountNftMetadata,
-    TAccountOwnerAtaAcc,
-    TAccountNftEdition,
+    TAccountSellerAta,
+    TAccountMint,
+    TAccountMetadata,
+    TAccountOwnerAta,
+    TAccountEdition,
+    TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
-    TAccountDestTokenRecord,
     TAccountTokenMetadataProgram,
-    TAccountInstructions,
+    TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountNftEscrow,
-    TAccountTempEscrowTokenRecord,
-    TAccountAuthRules,
+    TAccountEscrowAta,
+    TAccountEscrowTokenRecord,
+    TAccountAuthorizationRules,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountTensorswapProgram,
+    TAccountEscrowProgram,
     TAccountCosigner,
     TAccountMintProof,
-    TAccountRentDest
+    TAccountRentDestination
+  >;
+
+  return instruction;
+}
+
+export type TakeBidLegacyInput<
+  TAccountFeeVault extends string = string,
+  TAccountSeller extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountSharedEscrow extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountSellerAta extends string = string,
+  TAccountMint extends string = string,
+  TAccountMetadata extends string = string,
+  TAccountOwnerAta extends string = string,
+  TAccountEdition extends string = string,
+  TAccountSellerTokenRecord extends string = string,
+  TAccountOwnerTokenRecord extends string = string,
+  TAccountTokenMetadataProgram extends string = string,
+  TAccountSysvarInstructions extends string = string,
+  TAccountAuthorizationRulesProgram extends string = string,
+  TAccountEscrowAta extends string = string,
+  TAccountEscrowTokenRecord extends string = string,
+  TAccountAuthorizationRules extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountEscrowProgram extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountMintProof extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  feeVault: Address<TAccountFeeVault>;
+  seller: TransactionSigner<TAccountSeller>;
+  bidState: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
+  whitelist?: Address<TAccountWhitelist>;
+  sellerAta: Address<TAccountSellerAta>;
+  mint: Address<TAccountMint>;
+  metadata: Address<TAccountMetadata>;
+  ownerAta: Address<TAccountOwnerAta>;
+  edition: Address<TAccountEdition>;
+  sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
+  ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
+  tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
+  sysvarInstructions?: Address<TAccountSysvarInstructions>;
+  authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
+  /** Implicitly checked via transfer. Will fail if wrong account */
+  escrowAta: Address<TAccountEscrowAta>;
+  escrowTokenRecord?: Address<TAccountEscrowTokenRecord>;
+  authorizationRules?: Address<TAccountAuthorizationRules>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  escrowProgram?: Address<TAccountEscrowProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
+  mintProof?: Address<TAccountMintProof>;
+  rentDestination?: Address<TAccountRentDestination>;
+  minAmount: TakeBidLegacyInstructionDataArgs['minAmount'];
+  optionalRoyaltyPct?: TakeBidLegacyInstructionDataArgs['optionalRoyaltyPct'];
+  rulesAccPresent?: TakeBidLegacyInstructionDataArgs['rulesAccPresent'];
+  authorizationData?: TakeBidLegacyInstructionDataArgs['authorizationData'];
+  tokenStandard?: TakeBidLegacyInstructionExtraArgs['tokenStandard'];
+  creators?: Array<Address>;
+};
+
+export function getTakeBidLegacyInstruction<
+  TAccountFeeVault extends string,
+  TAccountSeller extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountSharedEscrow extends string,
+  TAccountWhitelist extends string,
+  TAccountSellerAta extends string,
+  TAccountMint extends string,
+  TAccountMetadata extends string,
+  TAccountOwnerAta extends string,
+  TAccountEdition extends string,
+  TAccountSellerTokenRecord extends string,
+  TAccountOwnerTokenRecord extends string,
+  TAccountTokenMetadataProgram extends string,
+  TAccountSysvarInstructions extends string,
+  TAccountAuthorizationRulesProgram extends string,
+  TAccountEscrowAta extends string,
+  TAccountEscrowTokenRecord extends string,
+  TAccountAuthorizationRules extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountEscrowProgram extends string,
+  TAccountCosigner extends string,
+  TAccountMintProof extends string,
+  TAccountRentDestination extends string,
+>(
+  input: TakeBidLegacyInput<
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountSharedEscrow,
+    TAccountWhitelist,
+    TAccountSellerAta,
+    TAccountMint,
+    TAccountMetadata,
+    TAccountOwnerAta,
+    TAccountEdition,
+    TAccountSellerTokenRecord,
+    TAccountOwnerTokenRecord,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions,
+    TAccountAuthorizationRulesProgram,
+    TAccountEscrowAta,
+    TAccountEscrowTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
+): TakeBidLegacyInstruction<
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountFeeVault,
+  TAccountSeller,
+  TAccountBidState,
+  TAccountOwner,
+  TAccountTakerBroker,
+  TAccountMakerBroker,
+  TAccountSharedEscrow,
+  TAccountWhitelist,
+  TAccountSellerAta,
+  TAccountMint,
+  TAccountMetadata,
+  TAccountOwnerAta,
+  TAccountEdition,
+  TAccountSellerTokenRecord,
+  TAccountOwnerTokenRecord,
+  TAccountTokenMetadataProgram,
+  TAccountSysvarInstructions,
+  TAccountAuthorizationRulesProgram,
+  TAccountEscrowAta,
+  TAccountEscrowTokenRecord,
+  TAccountAuthorizationRules,
+  TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
+  TAccountSystemProgram,
+  TAccountMarketplaceProgram,
+  TAccountEscrowProgram,
+  TAccountCosigner,
+  TAccountMintProof,
+  TAccountRentDestination
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    seller: { value: input.seller ?? null, isWritable: true },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    sellerAta: { value: input.sellerAta ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    metadata: { value: input.metadata ?? null, isWritable: true },
+    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    edition: { value: input.edition ?? null, isWritable: false },
+    sellerTokenRecord: {
+      value: input.sellerTokenRecord ?? null,
+      isWritable: true,
+    },
+    ownerTokenRecord: {
+      value: input.ownerTokenRecord ?? null,
+      isWritable: true,
+    },
+    tokenMetadataProgram: {
+      value: input.tokenMetadataProgram ?? null,
+      isWritable: false,
+    },
+    sysvarInstructions: {
+      value: input.sysvarInstructions ?? null,
+      isWritable: false,
+    },
+    authorizationRulesProgram: {
+      value: input.authorizationRulesProgram ?? null,
+      isWritable: false,
+    },
+    escrowAta: { value: input.escrowAta ?? null, isWritable: true },
+    escrowTokenRecord: {
+      value: input.escrowTokenRecord ?? null,
+      isWritable: true,
+    },
+    authorizationRules: {
+      value: input.authorizationRules ?? null,
+      isWritable: false,
+    },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    mintProof: { value: input.mintProof ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.NonFungible;
+  }
+  if (!accounts.tokenMetadataProgram.value) {
+    accounts.tokenMetadataProgram.value =
+      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+  }
+  if (!accounts.sysvarInstructions.value) {
+    accounts.sysvarInstructions.value =
+      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+  }
+  if (!accounts.authorizationRulesProgram.value) {
+    if (accounts.authorizationRules.value) {
+      accounts.authorizationRulesProgram.value =
+        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
+    }
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.escrowProgram.value) {
+    accounts.escrowProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.sharedEscrow),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.sellerAta),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.metadata),
+      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.edition),
+      getAccountMeta(accounts.sellerTokenRecord),
+      getAccountMeta(accounts.ownerTokenRecord),
+      getAccountMeta(accounts.tokenMetadataProgram),
+      getAccountMeta(accounts.sysvarInstructions),
+      getAccountMeta(accounts.authorizationRulesProgram),
+      getAccountMeta(accounts.escrowAta),
+      getAccountMeta(accounts.escrowTokenRecord),
+      getAccountMeta(accounts.authorizationRules),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.escrowProgram),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.mintProof),
+      getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getTakeBidLegacyInstructionDataEncoder().encode(
+      args as TakeBidLegacyInstructionDataArgs
+    ),
+  } as TakeBidLegacyInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountSharedEscrow,
+    TAccountWhitelist,
+    TAccountSellerAta,
+    TAccountMint,
+    TAccountMetadata,
+    TAccountOwnerAta,
+    TAccountEdition,
+    TAccountSellerTokenRecord,
+    TAccountOwnerTokenRecord,
+    TAccountTokenMetadataProgram,
+    TAccountSysvarInstructions,
+    TAccountAuthorizationRulesProgram,
+    TAccountEscrowAta,
+    TAccountEscrowTokenRecord,
+    TAccountAuthorizationRules,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -579,37 +1070,37 @@ export type ParsedTakeBidLegacyInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    tcomp: TAccountMetas[0];
+    feeVault: TAccountMetas[0];
     seller: TAccountMetas[1];
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
     takerBroker?: TAccountMetas[4] | undefined;
     makerBroker?: TAccountMetas[5] | undefined;
-    marginAccount: TAccountMetas[6];
-    whitelist: TAccountMetas[7];
-    nftSellerAcc: TAccountMetas[8];
-    nftMint: TAccountMetas[9];
-    nftMetadata: TAccountMetas[10];
-    ownerAtaAcc: TAccountMetas[11];
-    nftEdition: TAccountMetas[12];
-    ownerTokenRecord: TAccountMetas[13];
-    destTokenRecord: TAccountMetas[14];
+    sharedEscrow: TAccountMetas[6];
+    whitelist?: TAccountMetas[7] | undefined;
+    sellerAta: TAccountMetas[8];
+    mint: TAccountMetas[9];
+    metadata: TAccountMetas[10];
+    ownerAta: TAccountMetas[11];
+    edition: TAccountMetas[12];
+    sellerTokenRecord?: TAccountMetas[13] | undefined;
+    ownerTokenRecord?: TAccountMetas[14] | undefined;
     tokenMetadataProgram: TAccountMetas[15];
-    instructions: TAccountMetas[16];
-    authorizationRulesProgram: TAccountMetas[17];
+    sysvarInstructions: TAccountMetas[16];
+    authorizationRulesProgram?: TAccountMetas[17] | undefined;
     /** Implicitly checked via transfer. Will fail if wrong account */
-    nftEscrow: TAccountMetas[18];
-    tempEscrowTokenRecord: TAccountMetas[19];
-    authRules: TAccountMetas[20];
+    escrowAta: TAccountMetas[18];
+    escrowTokenRecord?: TAccountMetas[19] | undefined;
+    authorizationRules?: TAccountMetas[20] | undefined;
     tokenProgram: TAccountMetas[21];
     associatedTokenProgram: TAccountMetas[22];
     systemProgram: TAccountMetas[23];
     marketplaceProgram: TAccountMetas[24];
-    tensorswapProgram: TAccountMetas[25];
+    escrowProgram: TAccountMetas[25];
     cosigner?: TAccountMetas[26] | undefined;
     /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-    mintProof: TAccountMetas[27];
-    rentDest: TAccountMetas[28];
+    mintProof?: TAccountMetas[27] | undefined;
+    rentDestination: TAccountMetas[28];
   };
   data: TakeBidLegacyInstructionData;
 };
@@ -641,35 +1132,35 @@ export function parseTakeBidLegacyInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tcomp: getNextAccount(),
+      feeVault: getNextAccount(),
       seller: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      marginAccount: getNextAccount(),
-      whitelist: getNextAccount(),
-      nftSellerAcc: getNextAccount(),
-      nftMint: getNextAccount(),
-      nftMetadata: getNextAccount(),
-      ownerAtaAcc: getNextAccount(),
-      nftEdition: getNextAccount(),
-      ownerTokenRecord: getNextAccount(),
-      destTokenRecord: getNextAccount(),
+      sharedEscrow: getNextAccount(),
+      whitelist: getNextOptionalAccount(),
+      sellerAta: getNextAccount(),
+      mint: getNextAccount(),
+      metadata: getNextAccount(),
+      ownerAta: getNextAccount(),
+      edition: getNextAccount(),
+      sellerTokenRecord: getNextOptionalAccount(),
+      ownerTokenRecord: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
-      instructions: getNextAccount(),
-      authorizationRulesProgram: getNextAccount(),
-      nftEscrow: getNextAccount(),
-      tempEscrowTokenRecord: getNextAccount(),
-      authRules: getNextAccount(),
+      sysvarInstructions: getNextAccount(),
+      authorizationRulesProgram: getNextOptionalAccount(),
+      escrowAta: getNextAccount(),
+      escrowTokenRecord: getNextOptionalAccount(),
+      authorizationRules: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      tensorswapProgram: getNextAccount(),
+      escrowProgram: getNextAccount(),
       cosigner: getNextOptionalAccount(),
-      mintProof: getNextAccount(),
-      rentDest: getNextAccount(),
+      mintProof: getNextOptionalAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getTakeBidLegacyInstructionDataDecoder().decode(instruction.data),
   };

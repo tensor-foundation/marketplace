@@ -55,6 +55,38 @@ pub struct BidState {
 }
 
 impl BidState {
+    /// Prefix values used to generate a PDA for this account.
+    ///
+    /// Values are positional and appear in the following order:
+    ///
+    ///   0. `BidState::PREFIX`
+    ///   1. owner (`Pubkey`)
+    ///   2. bid_id (`Pubkey`)
+    pub const PREFIX: &'static [u8] = "bid_state".as_bytes();
+
+    pub fn create_pda(
+        owner: Pubkey,
+        bid_id: Pubkey,
+        bump: u8,
+    ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
+        solana_program::pubkey::Pubkey::create_program_address(
+            &[
+                "bid_state".as_bytes(),
+                owner.as_ref(),
+                bid_id.as_ref(),
+                &[bump],
+            ],
+            &crate::TENSOR_MARKETPLACE_ID,
+        )
+    }
+
+    pub fn find_pda(owner: &Pubkey, bid_id: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
+        solana_program::pubkey::Pubkey::find_program_address(
+            &["bid_state".as_bytes(), owner.as_ref(), bid_id.as_ref()],
+            &crate::TENSOR_MARKETPLACE_ID,
+        )
+    }
+
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
         let mut data = data;

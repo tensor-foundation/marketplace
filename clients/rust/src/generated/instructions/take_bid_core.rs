@@ -199,7 +199,7 @@ pub struct TakeBidCoreInstructionArgs {
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   12. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   13. `[]` escrow_program
+///   13. `[optional]` escrow_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   14. `[signer, optional]` cosigner
 ///   15. `[]` mint_proof
 ///   16. `[writable]` rent_dest
@@ -313,6 +313,7 @@ impl TakeBidCoreBuilder {
         self.marketplace_program = Some(marketplace_program);
         self
     }
+    /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
     pub fn escrow_program(&mut self, escrow_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.escrow_program = Some(escrow_program);
@@ -380,7 +381,9 @@ impl TakeBidCoreBuilder {
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            escrow_program: self.escrow_program.expect("escrow_program is not set"),
+            escrow_program: self.escrow_program.unwrap_or(solana_program::pubkey!(
+                "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+            )),
             cosigner: self.cosigner,
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),

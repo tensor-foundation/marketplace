@@ -71,6 +71,14 @@ kinobi.update(
       ),
     },
     {
+      account: "escrowProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
+        "escrowProgram"
+      ),
+    },
+    {
       account: "systemProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
@@ -130,6 +138,79 @@ kinobi.update(
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
+    bidState: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("bid_state"),
+        k.variablePdaSeedNode("owner", k.publicKeyTypeNode()),
+        k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
+      ],
+    },
+  })
+);
+
+// Update instructions.
+kinobi.update(
+  k.updateInstructionsVisitor({
+    bid: {
+      accounts: {
+        rentPayer: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        sharedEscrow: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          defaultValue: k.argumentValueNode("targetId"),
+        },
+      },
+    },
+    cancelBid: {
+      accounts: {
+        rentDestination: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          type: k.publicKeyTypeNode(),
+          defaultValue: k.publicKeyValueNode(
+            "11111111111111111111111111111111"
+          ),
+        },
+      },
+    },
+    closeExpiredBid: {
+      accounts: {
+        rentDestination: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          type: k.publicKeyTypeNode(),
+          defaultValue: k.publicKeyValueNode(
+            "11111111111111111111111111111111"
+          ),
+        },
+      },
+    },
   })
 );
 
@@ -138,7 +219,7 @@ kinobi.update(legacyInstructions());
 kinobi.update(token22Instructions());
 kinobi.update(wnsInstructions());
 
-// Set more struct default values dynamically.
+// Set struct default values.
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
@@ -150,6 +231,8 @@ kinobi.update(
           "makerBroker",
           "authorizationData",
           "optionalRoyaltyPct",
+          "field",
+          "fieldId",
         ];
         return (
           k.isNode(node, ["instructionNode", "instructionArgumentNode"]) &&
@@ -166,6 +249,32 @@ kinobi.update(
         };
       },
     },
+    {
+      select: "[structFieldTypeNode|instructionArgumentNode]quantity",
+      transform: (node) => {
+        k.assertIsNode(node, [
+          "structFieldTypeNode",
+          "instructionArgumentNode",
+        ]);
+        return {
+          ...node,
+          defaultValue: k.numberValueNode(1),
+        };
+      },
+    },
+    {
+      select: "[structFieldTypeNode|instructionArgumentNode]rulesAccPresent",
+      transform: (node) => {
+        k.assertIsNode(node, [
+          "structFieldTypeNode",
+          "instructionArgumentNode",
+        ]);
+        return {
+          ...node,
+          defaultValue: k.booleanValueNode(false),
+        };
+      },
+    },
   ])
 );
 
@@ -173,8 +282,7 @@ kinobi.update(
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
-      select:
-        "[structTypeNode].[structFieldTypeNode]rentPayer",
+      select: "[structTypeNode].[structFieldTypeNode]rentPayer",
       transform: (node) => {
         k.assertIsNode(node, "structFieldTypeNode");
         return {
@@ -184,8 +292,7 @@ kinobi.update(
       },
     },
     {
-      select:
-        "[structTypeNode].[structFieldTypeNode]cosigner",
+      select: "[structTypeNode].[structFieldTypeNode]cosigner",
       transform: (node) => {
         k.assertIsNode(node, "structFieldTypeNode");
         return {
@@ -194,7 +301,7 @@ kinobi.update(
         };
       },
     },
-  ]),
+  ])
 );
 
 // Render JavaScript.
@@ -215,6 +322,11 @@ kinobi.accept(
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
+      "resolveBidStateFromBidId",
+      "resolveSellerTokenRecordFromTokenStandard",
+      "resolveEscrowTokenRecordFromTokenStandard",
+      "resolveSellerAta",
+      "resolveEscrowAta",
     ],
   })
 );

@@ -28,6 +28,7 @@ import {
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
+  mapEncoder,
 } from '@solana/codecs';
 import {
   Field,
@@ -63,7 +64,7 @@ export type MakeEventArgs = {
   field: OptionOrNullable<FieldArgs>;
   fieldId: OptionOrNullable<Address>;
   amount: number | bigint;
-  quantity: number;
+  quantity?: number;
   currency: OptionOrNullable<Address>;
   expiry: number | bigint;
   privateTaker: OptionOrNullable<Address>;
@@ -71,20 +72,23 @@ export type MakeEventArgs = {
 };
 
 export function getMakeEventEncoder(): Encoder<MakeEventArgs> {
-  return getStructEncoder([
-    ['maker', getAddressEncoder()],
-    ['bidId', getOptionEncoder(getAddressEncoder())],
-    ['target', getTargetEncoder()],
-    ['targetId', getAddressEncoder()],
-    ['field', getOptionEncoder(getFieldEncoder())],
-    ['fieldId', getOptionEncoder(getAddressEncoder())],
-    ['amount', getU64Encoder()],
-    ['quantity', getU32Encoder()],
-    ['currency', getOptionEncoder(getAddressEncoder())],
-    ['expiry', getI64Encoder()],
-    ['privateTaker', getOptionEncoder(getAddressEncoder())],
-    ['assetId', getOptionEncoder(getAddressEncoder())],
-  ]);
+  return mapEncoder(
+    getStructEncoder([
+      ['maker', getAddressEncoder()],
+      ['bidId', getOptionEncoder(getAddressEncoder())],
+      ['target', getTargetEncoder()],
+      ['targetId', getAddressEncoder()],
+      ['field', getOptionEncoder(getFieldEncoder())],
+      ['fieldId', getOptionEncoder(getAddressEncoder())],
+      ['amount', getU64Encoder()],
+      ['quantity', getU32Encoder()],
+      ['currency', getOptionEncoder(getAddressEncoder())],
+      ['expiry', getI64Encoder()],
+      ['privateTaker', getOptionEncoder(getAddressEncoder())],
+      ['assetId', getOptionEncoder(getAddressEncoder())],
+    ]),
+    (value) => ({ ...value, quantity: value.quantity ?? 1 })
+  );
 }
 
 export function getMakeEventDecoder(): Decoder<MakeEvent> {

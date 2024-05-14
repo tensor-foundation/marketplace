@@ -30,8 +30,15 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type CancelBidInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -43,7 +50,7 @@ export type CancelBidInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -62,9 +69,9 @@ export type CancelBidInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -101,41 +108,46 @@ export function getCancelBidInstructionDataCodec(): Codec<
   );
 }
 
-export type CancelBidInput<
+export type CancelBidInstructionExtraArgs = { bidId?: Address };
+
+export type CancelBidAsyncInput<
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
-  bidState: Address<TAccountBidState>;
+  bidState?: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination?: Address<TAccountRentDestination>;
+  bidId?: CancelBidInstructionExtraArgs['bidId'];
 };
 
-export function getCancelBidInstruction<
+export async function getCancelBidInstructionAsync<
   TAccountBidState extends string,
   TAccountOwner extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
-  input: CancelBidInput<
+  input: CancelBidAsyncInput<
     TAccountBidState,
     TAccountOwner,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
-): CancelBidInstruction<
-  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountSystemProgram,
-  TAccountMarketplaceProgram,
-  TAccountRentDest
+): Promise<
+  CancelBidInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
+  >
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -149,14 +161,27 @@ export function getCancelBidInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
+  if (!args.bidId) {
+    args.bidId =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.bidState.value) {
+    accounts.bidState.value = await findBidStatePda({
+      bidId: expectSome(args.bidId),
+      owner: expectAddress(accounts.owner.value),
+    });
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -164,6 +189,11 @@ export function getCancelBidInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -173,7 +203,7 @@ export function getCancelBidInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getCancelBidInstructionDataEncoder().encode({}),
@@ -183,7 +213,108 @@ export function getCancelBidInstruction<
     TAccountOwner,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
+  >;
+
+  return instruction;
+}
+
+export type CancelBidInput<
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  bidState: Address<TAccountBidState>;
+  owner: TransactionSigner<TAccountOwner>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  rentDestination?: Address<TAccountRentDestination>;
+  bidId?: CancelBidInstructionExtraArgs['bidId'];
+};
+
+export function getCancelBidInstruction<
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountRentDestination extends string,
+>(
+  input: CancelBidInput<
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
+  >
+): CancelBidInstruction<
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountBidState,
+  TAccountOwner,
+  TAccountSystemProgram,
+  TAccountMarketplaceProgram,
+  TAccountRentDestination
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!args.bidId) {
+    args.bidId =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.rentDestination),
+    ],
+    programAddress,
+    data: getCancelBidInstructionDataEncoder().encode({}),
+  } as CancelBidInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -199,7 +330,7 @@ export type ParsedCancelBidInstruction<
     owner: TAccountMetas[1];
     systemProgram: TAccountMetas[2];
     marketplaceProgram: TAccountMetas[3];
-    rentDest: TAccountMetas[4];
+    rentDestination: TAccountMetas[4];
   };
   data: CancelBidInstructionData;
 };
@@ -229,7 +360,7 @@ export function parseCancelBidInstruction<
       owner: getNextAccount(),
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getCancelBidInstructionDataDecoder().decode(instruction.data),
   };
