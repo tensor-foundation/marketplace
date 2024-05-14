@@ -43,7 +43,7 @@ pub struct TakeBidLegacy {
 
     pub token_metadata_program: solana_program::pubkey::Pubkey,
 
-    pub sysvar_instructions: solana_program::pubkey::Pubkey,
+    pub sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
 
     pub authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
     /// Implicitly checked via transfer. Will fail if wrong account
@@ -180,10 +180,17 @@ impl TakeBidLegacy {
             self.token_metadata_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.sysvar_instructions,
-            false,
-        ));
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                sysvar_instructions,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         if let Some(authorization_rules_program) = self.authorization_rules_program {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 authorization_rules_program,
@@ -320,7 +327,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
 ///   15. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
-///   16. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
+///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
 ///   18. `[writable]` escrow_ata
 ///   19. `[writable, optional]` escrow_token_record
@@ -476,13 +483,13 @@ impl TakeBidLegacyBuilder {
         self.token_metadata_program = Some(token_metadata_program);
         self
     }
-    /// `[optional account, default to 'Sysvar1nstructions1111111111111111111111111']`
+    /// `[optional account]`
     #[inline(always)]
     pub fn sysvar_instructions(
         &mut self,
-        sysvar_instructions: solana_program::pubkey::Pubkey,
+        sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.sysvar_instructions = Some(sysvar_instructions);
+        self.sysvar_instructions = sysvar_instructions;
         self
     }
     /// `[optional account]`
@@ -638,9 +645,7 @@ impl TakeBidLegacyBuilder {
                 token_metadata_program: self.token_metadata_program.unwrap_or(
                     solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
                 ),
-                sysvar_instructions: self.sysvar_instructions.unwrap_or(solana_program::pubkey!(
-                    "Sysvar1nstructions1111111111111111111111111"
-                )),
+                sysvar_instructions: self.sysvar_instructions,
                 authorization_rules_program: self.authorization_rules_program,
                 escrow_ata: self.escrow_ata.expect("escrow_ata is not set"),
                 escrow_token_record: self.escrow_token_record,
@@ -709,7 +714,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Implicitly checked via transfer. Will fail if wrong account
@@ -773,7 +778,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Implicitly checked via transfer. Will fail if wrong account
@@ -975,10 +980,17 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             *self.token_metadata_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.sysvar_instructions.key,
-            false,
-        ));
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *sysvar_instructions.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         if let Some(authorization_rules_program) = self.authorization_rules_program {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *authorization_rules_program.key,
@@ -1106,7 +1118,9 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             account_infos.push(owner_token_record.clone());
         }
         account_infos.push(self.token_metadata_program.clone());
-        account_infos.push(self.sysvar_instructions.clone());
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            account_infos.push(sysvar_instructions.clone());
+        }
         if let Some(authorization_rules_program) = self.authorization_rules_program {
             account_infos.push(authorization_rules_program.clone());
         }
@@ -1161,7 +1175,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
 ///   15. `[]` token_metadata_program
-///   16. `[]` sysvar_instructions
+///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
 ///   18. `[writable]` escrow_ata
 ///   19. `[writable, optional]` escrow_token_record
@@ -1346,12 +1360,13 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self.instruction.token_metadata_program = Some(token_metadata_program);
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn sysvar_instructions(
         &mut self,
-        sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+        sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.sysvar_instructions = Some(sysvar_instructions);
+        self.instruction.sysvar_instructions = sysvar_instructions;
         self
     }
     /// `[optional account]`
@@ -1572,10 +1587,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
                 .token_metadata_program
                 .expect("token_metadata_program is not set"),
 
-            sysvar_instructions: self
-                .instruction
-                .sysvar_instructions
-                .expect("sysvar_instructions is not set"),
+            sysvar_instructions: self.instruction.sysvar_instructions,
 
             authorization_rules_program: self.instruction.authorization_rules_program,
 

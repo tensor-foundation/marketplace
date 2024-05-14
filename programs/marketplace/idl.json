@@ -1372,7 +1372,8 @@
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "cosigner",
@@ -1502,7 +1503,8 @@
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1616,7 +1618,8 @@
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1725,7 +1728,8 @@
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "cosigner",
@@ -1867,7 +1871,8 @@
             {
               "name": "sysvarInstructions",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             },
             {
               "name": "authorizationRulesProgram",

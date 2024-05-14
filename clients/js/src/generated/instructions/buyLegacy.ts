@@ -103,9 +103,7 @@ export type BuyLegacyInstruction<
   TAccountTokenMetadataProgram extends
     | string
     | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountSysvarInstructions extends
-    | string
-    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -526,8 +524,10 @@ export async function getBuyLegacyInstructionAsync<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
 
   // Remaining accounts.
@@ -833,8 +833,10 @@ export function getBuyLegacyInstruction<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
 
   // Remaining accounts.
@@ -934,7 +936,7 @@ export type ParsedBuyLegacyInstruction<
     authorizationRules?: TAccountMetas[19] | undefined;
     authorizationRulesProgram?: TAccountMetas[20] | undefined;
     tokenMetadataProgram: TAccountMetas[21];
-    sysvarInstructions: TAccountMetas[22];
+    sysvarInstructions?: TAccountMetas[22] | undefined;
     cosigner?: TAccountMetas[23] | undefined;
   };
   data: BuyLegacyInstructionData;
@@ -989,7 +991,7 @@ export function parseBuyLegacyInstruction<
       authorizationRules: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
-      sysvarInstructions: getNextAccount(),
+      sysvarInstructions: getNextOptionalAccount(),
       cosigner: getNextOptionalAccount(),
     },
     data: getBuyLegacyInstructionDataDecoder().decode(instruction.data),

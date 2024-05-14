@@ -93,9 +93,7 @@ export type CloseExpiredListingLegacyInstruction<
   TAccountTokenMetadataProgram extends
     | string
     | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountSysvarInstructions extends
-    | string
-    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -457,8 +455,10 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -715,8 +715,10 @@ export function getCloseExpiredListingLegacyInstruction<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -796,7 +798,7 @@ export type ParsedCloseExpiredListingLegacyInstruction<
     authorizationRules?: TAccountMetas[15] | undefined;
     authorizationRulesProgram?: TAccountMetas[16] | undefined;
     tokenMetadataProgram: TAccountMetas[17];
-    sysvarInstructions: TAccountMetas[18];
+    sysvarInstructions?: TAccountMetas[18] | undefined;
   };
   data: CloseExpiredListingLegacyInstructionData;
 };
@@ -846,7 +848,7 @@ export function parseCloseExpiredListingLegacyInstruction<
       authorizationRules: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
-      sysvarInstructions: getNextAccount(),
+      sysvarInstructions: getNextOptionalAccount(),
     },
     data: getCloseExpiredListingLegacyInstructionDataDecoder().decode(
       instruction.data

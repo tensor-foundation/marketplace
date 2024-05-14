@@ -200,6 +200,8 @@ export const resolveEscrowAta = async ({
   };
 };
 
+//---- WNS resolvers
+
 export const resolveWnsApprovePda = async ({
   accounts,
 }: {

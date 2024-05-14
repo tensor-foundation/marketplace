@@ -55,7 +55,7 @@ import {
   resolveSellerAta,
   resolveSellerTokenRecordFromTokenStandard,
 } from '../../hooked';
-import { findBidStatePda, findFeeVaultPda } from '../pdas';
+import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   ResolvedAccount,
@@ -92,9 +92,7 @@ export type TakeBidLegacyInstruction<
   TAccountTokenMetadataProgram extends
     | string
     | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountSysvarInstructions extends
-    | string
-    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
   TAccountAuthorizationRulesProgram extends
     | string
     | IAccountMeta<string> = string,
@@ -309,7 +307,7 @@ export type TakeBidLegacyAsyncInput<
   TAccountMintProof extends string = string,
   TAccountRentDestination extends string = string,
 > = {
-  feeVault?: Address<TAccountFeeVault>;
+  feeVault: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
   bidState?: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
@@ -518,9 +516,6 @@ export async function getTakeBidLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
-  if (!accounts.feeVault.value) {
-    accounts.feeVault.value = await findFeeVaultPda();
-  }
   if (!accounts.bidState.value) {
     accounts.bidState.value = await findBidStatePda({
       bidId: expectAddress(accounts.mint.value),
@@ -582,8 +577,10 @@ export async function getTakeBidLegacyInstructionAsync<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
   if (!accounts.authorizationRulesProgram.value) {
     if (accounts.authorizationRules.value) {
@@ -956,8 +953,10 @@ export function getTakeBidLegacyInstruction<
       'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    if (args.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+      accounts.sysvarInstructions.value =
+        'Sysvar1111111111111111111111111111111111111' as Address<'Sysvar1111111111111111111111111111111111111'>;
+    }
   }
   if (!accounts.authorizationRulesProgram.value) {
     if (accounts.authorizationRules.value) {
@@ -1086,7 +1085,7 @@ export type ParsedTakeBidLegacyInstruction<
     sellerTokenRecord?: TAccountMetas[13] | undefined;
     ownerTokenRecord?: TAccountMetas[14] | undefined;
     tokenMetadataProgram: TAccountMetas[15];
-    sysvarInstructions: TAccountMetas[16];
+    sysvarInstructions?: TAccountMetas[16] | undefined;
     authorizationRulesProgram?: TAccountMetas[17] | undefined;
     /** Implicitly checked via transfer. Will fail if wrong account */
     escrowAta: TAccountMetas[18];
@@ -1148,7 +1147,7 @@ export function parseTakeBidLegacyInstruction<
       sellerTokenRecord: getNextOptionalAccount(),
       ownerTokenRecord: getNextOptionalAccount(),
       tokenMetadataProgram: getNextAccount(),
-      sysvarInstructions: getNextAccount(),
+      sysvarInstructions: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
       escrowAta: getNextAccount(),
       escrowTokenRecord: getNextOptionalAccount(),

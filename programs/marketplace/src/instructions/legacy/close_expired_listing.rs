@@ -95,7 +95,7 @@ pub struct CloseExpiredListingLegacy<'info> {
 
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
-    pub sysvar_instructions: UncheckedAccount<'info>,
+    pub sysvar_instructions: Option<UncheckedAccount<'info>>,
 }
 
 pub fn process_close_expired_listing_legacy<'info>(
@@ -123,7 +123,7 @@ pub fn process_close_expired_listing_legacy<'info>(
             system_program: &ctx.accounts.system_program,
             spl_token_program: &ctx.accounts.token_program,
             spl_ata_program: &ctx.accounts.associated_token_program,
-            sysvar_instructions: Some(&ctx.accounts.sysvar_instructions),
+            sysvar_instructions: ctx.accounts.sysvar_instructions.as_ref(),
             source_token_record: ctx.accounts.list_token_record.as_ref(),
             destination_token_record: ctx.accounts.owner_token_record.as_ref(),
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
