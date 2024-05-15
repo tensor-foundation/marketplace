@@ -25,22 +25,6 @@ kinobi.update(
   k.setInstructionAccountDefaultValuesVisitor([
     // default programs
     {
-      account: "tokenProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-        "tokenProgram"
-      ),
-    },
-    {
-      account: "associatedTokenProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-        "associatedTokenProgram"
-      ),
-    },
-    {
       account: "marketplaceProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
@@ -65,46 +49,53 @@ kinobi.update(
       ),
     },
     {
-      account: "tokenMetadataProgram",
+      account: "tokenProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
-        "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
-        "tokenMetadataProgram"
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "tokenProgram"
+      ),
+    },
+    {
+      account: "associatedTokenProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+        "associatedTokenProgram"
+      ),
+    },
+    // Legacy
+    {
+      account: "tokenMetadataProgram",
+      defaultValue: k.resolverValueNode(
+        "resolveTokenMetadataProgramFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
       ),
     },
     {
       account: "authorizationRulesProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-        "authorizationRulesProgram"
+      defaultValue: k.resolverValueNode(
+        "resolveAuthorizationRulesProgramFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
       ),
     },
     {
       account: "sysvarInstructions",
-      defaultValue: k.conditionalValueNode({
-        condition: k.argumentValueNode("tokenStandard"),
-        value: k.enumValueNode(
-          k.definedTypeLinkNode("TokenStandard", "resolvers"),
-          "ProgrammableNonFungible"
-        ),
-        ifTrue: k.publicKeyValueNode(
-          "Sysvar1nstructions1111111111111111111111111",
-          "sysvarInstructions"
-        ),
-        ifFalse: k.conditionalValueNode({
-          condition: k.argumentValueNode("tokenStandard"),
-          value: k.enumValueNode(
-            k.definedTypeLinkNode("TokenStandard", "resolvers"),
-            "ProgrammableNonFungibleEdition"
-          ),
-          ifTrue: k.publicKeyValueNode(
-            "Sysvar1nstructions1111111111111111111111111",
-            "sysvarInstructions"
-          ),
-        }),
-      }),
+      defaultValue: k.resolverValueNode(
+        "resolveSysvarInstructionsFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
+      ),
     },
+    // WNS
     {
       account: "wnsProgram",
       ignoreIfOptional: true,

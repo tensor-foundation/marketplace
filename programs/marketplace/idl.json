@@ -1367,7 +1367,8 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
@@ -1498,7 +1499,8 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
@@ -1613,7 +1615,8 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
@@ -1723,7 +1726,8 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
@@ -1866,7 +1870,8 @@
             {
               "name": "tokenMetadataProgram",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             },
             {
               "name": "sysvarInstructions",

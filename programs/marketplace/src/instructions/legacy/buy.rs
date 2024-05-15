@@ -133,7 +133,7 @@ pub struct BuyLegacy<'info> {
 
     /// CHECK: address below
     #[account(address = mpl_token_metadata::ID)]
-    pub token_metadata_program: UncheckedAccount<'info>,
+    pub token_metadata_program: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
@@ -236,7 +236,7 @@ pub fn process_buy_legacy<'info, 'b>(
             authorization_rules_program: ctx.accounts.authorization_rules_program.as_ref(),
             authorization_rules: ctx.accounts.authorization_rules.as_ref(),
             authorization_data: authorization_data.map(AuthorizationData::from),
-            token_metadata_program: Some(&ctx.accounts.token_metadata_program),
+            token_metadata_program: ctx.accounts.token_metadata_program.as_ref(),
             delegate: None,
         },
         Some(&[&ctx.accounts.list_state.seeds()]),

@@ -41,7 +41,7 @@ pub struct TakeBidLegacy {
 
     pub owner_token_record: Option<solana_program::pubkey::Pubkey>,
 
-    pub token_metadata_program: solana_program::pubkey::Pubkey,
+    pub token_metadata_program: Option<solana_program::pubkey::Pubkey>,
 
     pub sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
 
@@ -176,10 +176,17 @@ impl TakeBidLegacy {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.token_metadata_program,
-            false,
-        ));
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                token_metadata_program,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         if let Some(sysvar_instructions) = self.sysvar_instructions {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 sysvar_instructions,
@@ -326,7 +333,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   12. `[]` edition
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
-///   15. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
+///   15. `[optional]` token_metadata_program
 ///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
 ///   18. `[writable]` bid_ata
@@ -474,13 +481,13 @@ impl TakeBidLegacyBuilder {
         self.owner_token_record = owner_token_record;
         self
     }
-    /// `[optional account, default to 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s']`
+    /// `[optional account]`
     #[inline(always)]
     pub fn token_metadata_program(
         &mut self,
-        token_metadata_program: solana_program::pubkey::Pubkey,
+        token_metadata_program: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.token_metadata_program = Some(token_metadata_program);
+        self.token_metadata_program = token_metadata_program;
         self
     }
     /// `[optional account]`
@@ -625,50 +632,47 @@ impl TakeBidLegacyBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts =
-            TakeBidLegacy {
-                fee_vault: self.fee_vault.expect("fee_vault is not set"),
-                seller: self.seller.expect("seller is not set"),
-                bid_state: self.bid_state.expect("bid_state is not set"),
-                owner: self.owner.expect("owner is not set"),
-                taker_broker: self.taker_broker,
-                maker_broker: self.maker_broker,
-                shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
-                whitelist: self.whitelist,
-                seller_ata: self.seller_ata.expect("seller_ata is not set"),
-                mint: self.mint.expect("mint is not set"),
-                metadata: self.metadata.expect("metadata is not set"),
-                owner_ata: self.owner_ata.expect("owner_ata is not set"),
-                edition: self.edition.expect("edition is not set"),
-                seller_token_record: self.seller_token_record,
-                owner_token_record: self.owner_token_record,
-                token_metadata_program: self.token_metadata_program.unwrap_or(
-                    solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
-                ),
-                sysvar_instructions: self.sysvar_instructions,
-                authorization_rules_program: self.authorization_rules_program,
-                bid_ata: self.bid_ata.expect("bid_ata is not set"),
-                bid_token_record: self.bid_token_record,
-                authorization_rules: self.authorization_rules,
-                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-                )),
-                associated_token_program: self.associated_token_program.unwrap_or(
-                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-                ),
-                system_program: self
-                    .system_program
-                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-                )),
-                escrow_program: self.escrow_program.unwrap_or(solana_program::pubkey!(
-                    "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
-                )),
-                cosigner: self.cosigner,
-                mint_proof: self.mint_proof,
-                rent_destination: self.rent_destination.expect("rent_destination is not set"),
-            };
+        let accounts = TakeBidLegacy {
+            fee_vault: self.fee_vault.expect("fee_vault is not set"),
+            seller: self.seller.expect("seller is not set"),
+            bid_state: self.bid_state.expect("bid_state is not set"),
+            owner: self.owner.expect("owner is not set"),
+            taker_broker: self.taker_broker,
+            maker_broker: self.maker_broker,
+            shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
+            whitelist: self.whitelist,
+            seller_ata: self.seller_ata.expect("seller_ata is not set"),
+            mint: self.mint.expect("mint is not set"),
+            metadata: self.metadata.expect("metadata is not set"),
+            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            edition: self.edition.expect("edition is not set"),
+            seller_token_record: self.seller_token_record,
+            owner_token_record: self.owner_token_record,
+            token_metadata_program: self.token_metadata_program,
+            sysvar_instructions: self.sysvar_instructions,
+            authorization_rules_program: self.authorization_rules_program,
+            bid_ata: self.bid_ata.expect("bid_ata is not set"),
+            bid_token_record: self.bid_token_record,
+            authorization_rules: self.authorization_rules,
+            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            )),
+            associated_token_program: self.associated_token_program.unwrap_or(
+                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+            ),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
+            escrow_program: self.escrow_program.unwrap_or(solana_program::pubkey!(
+                "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+            )),
+            cosigner: self.cosigner,
+            mint_proof: self.mint_proof,
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
+        };
         let args = TakeBidLegacyInstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),
             optional_royalty_pct: self.optional_royalty_pct.clone(),
@@ -712,7 +716,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -776,7 +780,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -976,10 +980,17 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.token_metadata_program.key,
-            false,
-        ));
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *token_metadata_program.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         if let Some(sysvar_instructions) = self.sysvar_instructions {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *sysvar_instructions.key,
@@ -1117,7 +1128,9 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         if let Some(owner_token_record) = self.owner_token_record {
             account_infos.push(owner_token_record.clone());
         }
-        account_infos.push(self.token_metadata_program.clone());
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            account_infos.push(token_metadata_program.clone());
+        }
         if let Some(sysvar_instructions) = self.sysvar_instructions {
             account_infos.push(sysvar_instructions.clone());
         }
@@ -1174,7 +1187,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   12. `[]` edition
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
-///   15. `[]` token_metadata_program
+///   15. `[optional]` token_metadata_program
 ///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
 ///   18. `[writable]` bid_ata
@@ -1352,12 +1365,13 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self.instruction.owner_token_record = owner_token_record;
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn token_metadata_program(
         &mut self,
-        token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+        token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.token_metadata_program = Some(token_metadata_program);
+        self.instruction.token_metadata_program = token_metadata_program;
         self
     }
     /// `[optional account]`
@@ -1582,10 +1596,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             owner_token_record: self.instruction.owner_token_record,
 
-            token_metadata_program: self
-                .instruction
-                .token_metadata_program
-                .expect("token_metadata_program is not set"),
+            token_metadata_program: self.instruction.token_metadata_program,
 
             sysvar_instructions: self.instruction.sysvar_instructions,
 

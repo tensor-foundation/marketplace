@@ -91,15 +91,6 @@ module.exports = function visitor(options) {
                 }
               ),
             },
-            authorizationRulesProgram: {
-              defaultValue: k.conditionalValueNode({
-                condition: k.accountValueNode("authorizationRules"),
-                ifTrue: k.publicKeyValueNode(
-                  "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-                  "mplTokenAuthRules"
-                ),
-              }),
-            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -193,15 +184,6 @@ module.exports = function visitor(options) {
                 }
               ),
             },
-            authorizationRulesProgram: {
-              defaultValue: k.conditionalValueNode({
-                condition: k.accountValueNode("authorizationRules"),
-                ifTrue: k.publicKeyValueNode(
-                  "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-                  "mplTokenAuthRules"
-                ),
-              }),
-            },
           },
           arguments: {
             tokenStandard: {
@@ -286,15 +268,6 @@ module.exports = function visitor(options) {
                 }
               ),
             },
-            authorizationRulesProgram: {
-              defaultValue: k.conditionalValueNode({
-                condition: k.accountValueNode("authorizationRules"),
-                ifTrue: k.publicKeyValueNode(
-                  "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-                  "mplTokenAuthRules"
-                ),
-              }),
-            },
           },
           arguments: {
             tokenStandard: {
@@ -375,15 +348,6 @@ module.exports = function visitor(options) {
                   ],
                 }
               ),
-            },
-            authorizationRulesProgram: {
-              defaultValue: k.conditionalValueNode({
-                condition: k.accountValueNode("authorizationRules"),
-                ifTrue: k.publicKeyValueNode(
-                  "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-                  "mplTokenAuthRules"
-                ),
-              }),
             },
           },
           arguments: {
@@ -507,15 +471,6 @@ module.exports = function visitor(options) {
                   ],
                 }
               ),
-            },
-            authorizationRulesProgram: {
-              defaultValue: k.conditionalValueNode({
-                condition: k.accountValueNode("authorizationRules"),
-                ifTrue: k.publicKeyValueNode(
-                  "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-                  "mplTokenAuthRules"
-                ),
-              }),
             },
           },
           remainingAccounts: [

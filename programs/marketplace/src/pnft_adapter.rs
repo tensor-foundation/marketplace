@@ -85,7 +85,7 @@ pub struct ProgNftShared<'info> {
     //can't deserialize directly coz Anchor traits not implemented
     /// CHECK: address below
     #[account(address = mpl_token_metadata::ID)]
-    pub token_metadata_program: UncheckedAccount<'info>,
+    pub token_metadata_program: Option<UncheckedAccount<'info>>,
 
     //sysvar ixs don't deserialize in anchor
     /// CHECK: address below
