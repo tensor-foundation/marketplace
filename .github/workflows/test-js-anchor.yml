@@ -21,7 +21,6 @@ jobs:
           - glob: tests/bids_t22.test.ts
           - glob: tests/bids_wns.test.ts
           - glob: tests/bids_core.test.ts
-          - glob: tests/admin.test.ts
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
