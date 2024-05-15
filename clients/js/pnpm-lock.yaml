@@ -32,6 +32,9 @@ importers:
       '@solana/web3.js':
         specifier: 2.0.0-preview.2
         version: 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+      '@tensor-foundation/resolvers':
+        specifier: 0.0.5
+        version: 0.0.5(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
     devDependencies:
       '@ava/typescript':
         specifier: ^4.1.0
@@ -60,9 +63,6 @@ importers:
       ava:
         specifier: ^6.1.2
         version: 6.1.2(@ava/typescript@4.1.0)
-      bs58:
-        specifier: ^5.0.0
-        version: 5.0.0
       eslint:
         specifier: ^8.57.0
         version: 8.57.0
@@ -509,6 +509,9 @@ packages:
   '@solana/webcrypto-ed25519-polyfill@2.0.0-preview.2':
     resolution: {integrity: sha512-WDe2kYmWk6vs80GVqKE/1JOnQEp2fHK92Mq88FlDW70BMMXhKaZRVG+MPiK3BvKDqegcEfQaw39XqdI3DH5bDQ==}
 
+  '@tensor-foundation/resolvers@0.0.5':
+    resolution: {integrity: sha512-Ps+vsRT9oXQIozWmqZO9SJjjcq5XDi7NVtyU7TZPCRqxE+qHTlnygZhhjVKAO16U8uCF7md3bKCRShYOX9+17Q==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/resolvers/0.0.5/6a6df5d719ef749df7198c47a0cb6aaaffaa2dd3}
+
   '@tensor-foundation/test-helpers@0.0.2':
     resolution: {integrity: sha512-iLIkIcAknFmLD0LPfO59HsPsO0FjglPLy16j2XD6LB4Akp6Ff5YxE3AJLUwmz0ct3qYxKvOyUaAaC/rM46zDQw==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/test-helpers/0.0.2/feb5036985113625d2192948ecf0ca2328d64d9c}
 
@@ -728,9 +731,6 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  base-x@4.0.0:
-    resolution: {integrity: sha512-FuwxlW4H5kh37X/oW59pwTzzTKRzfrrQwhmyspRM7swOEZcHtDZSCt45U6oKgtuFE+WYPblePMVIPR4RZrh/hw==}
-
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
@@ -750,9 +750,6 @@ packages:
   braces@3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
     engines: {node: '>=8'}
-
-  bs58@5.0.0:
-    resolution: {integrity: sha512-r+ihvQJvahgYT50JD05dyJNKlmmSlMoOGwn1lCcEzanPglg7TxYjioQUYehQ9mAR/+hOSd2jRc/Z2y5UxBymvQ==}
 
   bundle-require@4.1.0:
     resolution: {integrity: sha512-FeArRFM+ziGkRViKRnSTbHZc35dgmR9yNog05Kn0+ItI59pOAISGvnnIwW1WgFZQW59IxD9QpJnUPkdIPfZuXg==}
@@ -2418,6 +2415,19 @@ snapshots:
     dependencies:
       '@noble/ed25519': 2.0.0
 
+  '@tensor-foundation/resolvers@0.0.5(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
+    dependencies:
+      '@solana/accounts': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/addresses': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/codecs': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/instructions': 2.0.0-preview.2
+      '@solana/programs': 2.0.0-preview.2
+      '@solana/signers': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
+      '@solana/web3.js': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+    transitivePeerDependencies:
+      - fastestsmallesttextencoderdecoder
+      - ws
+
   '@tensor-foundation/test-helpers@0.0.2(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
     dependencies:
       '@solana/accounts': 2.0.0-preview.2(fastestsmallesttextencoderdecoder@1.0.22)
@@ -2731,8 +2741,6 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  base-x@4.0.0: {}
-
   binary-extensions@2.3.0: {}
 
   bindings@1.5.0:
@@ -2753,10 +2761,6 @@ snapshots:
   braces@3.0.2:
     dependencies:
       fill-range: 7.0.1
-
-  bs58@5.0.0:
-    dependencies:
-      base-x: 4.0.0
 
   bundle-require@4.1.0(esbuild@0.19.12):
     dependencies:

@@ -4,6 +4,7 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -17,12 +18,11 @@ import {
 import test from 'ava';
 import {
   ListState,
-  TokenStandard,
   fetchListStateFromSeeds,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
 
-test('it can list a legacy NFT', async (t) => {
+test('it can list an NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
@@ -55,7 +55,7 @@ test('it can list a legacy NFT', async (t) => {
   });
 });
 
-test('it can list a legacy Programmable NFT', async (t) => {
+test('it can list a Programmable NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an pNFT.
@@ -94,7 +94,7 @@ test('it can list a legacy Programmable NFT', async (t) => {
   });
 });
 
-test('it can list a legacy NFT with a cosigner', async (t) => {
+test('it can list an NFT with a cosigner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
@@ -129,7 +129,7 @@ test('it can list a legacy NFT with a cosigner', async (t) => {
   });
 });
 
-test('it can list a legacy Programmable NFT with a cosigner', async (t) => {
+test('it can list a Programmable NFT with a cosigner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an pNFT.
@@ -143,6 +143,7 @@ test('it can list a legacy Programmable NFT with a cosigner', async (t) => {
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     cosigner,
   });
+
   const computeIx = getSetComputeUnitLimitInstruction({
     units: 300_000,
   });

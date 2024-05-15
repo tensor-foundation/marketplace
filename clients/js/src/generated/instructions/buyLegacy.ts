@@ -44,13 +44,17 @@ import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import {
   TokenStandard,
   TokenStandardArgs,
+  resolveAuthorizationRulesProgramFromTokenStandard,
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
-} from '../../hooked';
+  resolveSysvarInstructionsFromTokenStandard,
+  resolveTokenMetadataProgramFromTokenStandard,
+} from '@tensor-foundation/resolvers';
+import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -100,12 +104,8 @@ export type BuyLegacyInstruction<
   TAccountAuthorizationRulesProgram extends
     | string
     | IAccountMeta<string> = string,
-  TAccountTokenMetadataProgram extends
-    | string
-    | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountSysvarInstructions extends
-    | string
-    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountTokenMetadataProgram extends string | IAccountMeta<string> = string,
+  TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -272,7 +272,7 @@ export type BuyLegacyAsyncInput<
   TAccountSysvarInstructions extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
   buyerAta?: Address<TAccountBuyerAta>;
   listAta?: Address<TAccountListAta>;
@@ -447,6 +447,17 @@ export async function getBuyLegacyInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
@@ -461,11 +472,6 @@ export async function getBuyLegacyInstructionAsync<
       ...accounts.buyerAta,
       ...(await resolveBuyerAta(resolverScope)),
     };
-  }
-  if (!accounts.listState.value) {
-    accounts.listState.value = await findListStatePda({
-      mint: expectAddress(accounts.mint.value),
-    });
   }
   if (!accounts.listAta.value) {
     accounts.listAta = {
@@ -516,18 +522,22 @@ export async function getBuyLegacyInstructionAsync<
     };
   }
   if (!accounts.authorizationRulesProgram.value) {
-    if (accounts.authorizationRules.value) {
-      accounts.authorizationRulesProgram.value =
-        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
-    }
+    accounts.authorizationRulesProgram = {
+      ...accounts.authorizationRulesProgram,
+      ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.tokenMetadataProgram.value) {
-    accounts.tokenMetadataProgram.value =
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+    accounts.tokenMetadataProgram = {
+      ...accounts.tokenMetadataProgram,
+      ...resolveTokenMetadataProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    accounts.sysvarInstructions = {
+      ...accounts.sysvarInstructions,
+      ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
+    };
   }
 
   // Remaining accounts.
@@ -794,6 +804,9 @@ export function getBuyLegacyInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
@@ -823,18 +836,22 @@ export function getBuyLegacyInstruction<
     args.tokenStandard = TokenStandard.NonFungible;
   }
   if (!accounts.authorizationRulesProgram.value) {
-    if (accounts.authorizationRules.value) {
-      accounts.authorizationRulesProgram.value =
-        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
-    }
+    accounts.authorizationRulesProgram = {
+      ...accounts.authorizationRulesProgram,
+      ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.tokenMetadataProgram.value) {
-    accounts.tokenMetadataProgram.value =
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+    accounts.tokenMetadataProgram = {
+      ...accounts.tokenMetadataProgram,
+      ...resolveTokenMetadataProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    accounts.sysvarInstructions = {
+      ...accounts.sysvarInstructions,
+      ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
+    };
   }
 
   // Remaining accounts.
@@ -933,8 +950,8 @@ export type ParsedBuyLegacyInstruction<
     listTokenRecord?: TAccountMetas[18] | undefined;
     authorizationRules?: TAccountMetas[19] | undefined;
     authorizationRulesProgram?: TAccountMetas[20] | undefined;
-    tokenMetadataProgram: TAccountMetas[21];
-    sysvarInstructions: TAccountMetas[22];
+    tokenMetadataProgram?: TAccountMetas[21] | undefined;
+    sysvarInstructions?: TAccountMetas[22] | undefined;
     cosigner?: TAccountMetas[23] | undefined;
   };
   data: BuyLegacyInstructionData;
@@ -988,8 +1005,8 @@ export function parseBuyLegacyInstruction<
       listTokenRecord: getNextOptionalAccount(),
       authorizationRules: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
-      tokenMetadataProgram: getNextAccount(),
-      sysvarInstructions: getNextAccount(),
+      tokenMetadataProgram: getNextOptionalAccount(),
+      sysvarInstructions: getNextOptionalAccount(),
       cosigner: getNextOptionalAccount(),
     },
     data: getBuyLegacyInstructionDataDecoder().decode(instruction.data),

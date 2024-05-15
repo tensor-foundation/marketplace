@@ -44,8 +44,15 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectAddress,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 import {
   Field,
   FieldArgs,
@@ -67,7 +74,7 @@ export type BidInstruction<
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountBidState extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
+  TAccountSharedEscrow extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -88,9 +95,9 @@ export type BidInstruction<
         ? WritableSignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
+      TAccountSharedEscrow extends string
+        ? WritableAccount<TAccountSharedEscrow>
+        : TAccountSharedEscrow,
       TAccountCosigner extends string
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
@@ -122,10 +129,10 @@ export type BidInstructionDataArgs = {
   bidId: Address;
   target: TargetArgs;
   targetId: Address;
-  field: OptionOrNullable<FieldArgs>;
-  fieldId: OptionOrNullable<Address>;
+  field?: OptionOrNullable<FieldArgs>;
+  fieldId?: OptionOrNullable<Address>;
   amount: number | bigint;
-  quantity: number;
+  quantity?: number;
   expireInSec?: OptionOrNullable<number | bigint>;
   currency?: OptionOrNullable<Address>;
   privateTaker?: OptionOrNullable<Address>;
@@ -151,6 +158,9 @@ export function getBidInstructionDataEncoder(): Encoder<BidInstructionDataArgs> 
     (value) => ({
       ...value,
       discriminator: [199, 56, 85, 38, 146, 243, 37, 158],
+      field: value.field ?? none(),
+      fieldId: value.fieldId ?? none(),
+      quantity: value.quantity ?? 1,
       expireInSec: value.expireInSec ?? none(),
       currency: value.currency ?? none(),
       privateTaker: value.privateTaker ?? none(),
@@ -186,62 +196,64 @@ export function getBidInstructionDataCodec(): Codec<
   );
 }
 
-export type BidInput<
+export type BidAsyncInput<
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountBidState extends string = string,
   TAccountOwner extends string = string,
-  TAccountMarginAccount extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountCosigner extends string = string,
   TAccountRentPayer extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  bidState: Address<TAccountBidState>;
+  bidState?: Address<TAccountBidState>;
   owner: TransactionSigner<TAccountOwner>;
-  marginAccount: Address<TAccountMarginAccount>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentPayer: TransactionSigner<TAccountRentPayer>;
-  bidId: BidInstructionDataArgs['bidId'];
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
+  bidId?: BidInstructionDataArgs['bidId'];
   target: BidInstructionDataArgs['target'];
   targetId: BidInstructionDataArgs['targetId'];
-  field: BidInstructionDataArgs['field'];
-  fieldId: BidInstructionDataArgs['fieldId'];
+  field?: BidInstructionDataArgs['field'];
+  fieldId?: BidInstructionDataArgs['fieldId'];
   amount: BidInstructionDataArgs['amount'];
-  quantity: BidInstructionDataArgs['quantity'];
+  quantity?: BidInstructionDataArgs['quantity'];
   expireInSec?: BidInstructionDataArgs['expireInSec'];
   currency?: BidInstructionDataArgs['currency'];
   privateTaker?: BidInstructionDataArgs['privateTaker'];
   makerBroker?: BidInstructionDataArgs['makerBroker'];
 };
 
-export function getBidInstruction<
+export async function getBidInstructionAsync<
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountBidState extends string,
   TAccountOwner extends string,
-  TAccountMarginAccount extends string,
+  TAccountSharedEscrow extends string,
   TAccountCosigner extends string,
   TAccountRentPayer extends string,
 >(
-  input: BidInput<
+  input: BidAsyncInput<
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
     TAccountBidState,
     TAccountOwner,
-    TAccountMarginAccount,
+    TAccountSharedEscrow,
     TAccountCosigner,
     TAccountRentPayer
   >
-): BidInstruction<
-  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountSystemProgram,
-  TAccountMarketplaceProgram,
-  TAccountBidState,
-  TAccountOwner,
-  TAccountMarginAccount,
-  TAccountCosigner,
-  TAccountRentPayer
+): Promise<
+  BidInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSharedEscrow,
+    TAccountCosigner,
+    TAccountRentPayer
+  >
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -255,7 +267,7 @@ export function getBidInstruction<
     },
     bidState: { value: input.bidState ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
-    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
   };
@@ -276,6 +288,23 @@ export function getBidInstruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
+  if (!args.bidId) {
+    args.bidId = expectSome(args.targetId);
+  }
+  if (!accounts.bidState.value) {
+    accounts.bidState.value = await findBidStatePda({
+      bidId: expectSome(args.bidId),
+      owner: expectAddress(accounts.owner.value),
+    });
+  }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer.value = expectSome(accounts.owner.value);
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -284,7 +313,7 @@ export function getBidInstruction<
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.bidState),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentPayer),
     ],
@@ -296,7 +325,136 @@ export function getBidInstruction<
     TAccountMarketplaceProgram,
     TAccountBidState,
     TAccountOwner,
-    TAccountMarginAccount,
+    TAccountSharedEscrow,
+    TAccountCosigner,
+    TAccountRentPayer
+  >;
+
+  return instruction;
+}
+
+export type BidInput<
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountSharedEscrow extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountRentPayer extends string = string,
+> = {
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  bidState: Address<TAccountBidState>;
+  owner: TransactionSigner<TAccountOwner>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
+  bidId?: BidInstructionDataArgs['bidId'];
+  target: BidInstructionDataArgs['target'];
+  targetId: BidInstructionDataArgs['targetId'];
+  field?: BidInstructionDataArgs['field'];
+  fieldId?: BidInstructionDataArgs['fieldId'];
+  amount: BidInstructionDataArgs['amount'];
+  quantity?: BidInstructionDataArgs['quantity'];
+  expireInSec?: BidInstructionDataArgs['expireInSec'];
+  currency?: BidInstructionDataArgs['currency'];
+  privateTaker?: BidInstructionDataArgs['privateTaker'];
+  makerBroker?: BidInstructionDataArgs['makerBroker'];
+};
+
+export function getBidInstruction<
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountSharedEscrow extends string,
+  TAccountCosigner extends string,
+  TAccountRentPayer extends string,
+>(
+  input: BidInput<
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSharedEscrow,
+    TAccountCosigner,
+    TAccountRentPayer
+  >
+): BidInstruction<
+  typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+  TAccountSystemProgram,
+  TAccountMarketplaceProgram,
+  TAccountBidState,
+  TAccountOwner,
+  TAccountSharedEscrow,
+  TAccountCosigner,
+  TAccountRentPayer
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    rentPayer: { value: input.rentPayer ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!args.bidId) {
+    args.bidId = expectSome(args.targetId);
+  }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer.value = expectSome(accounts.owner.value);
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.sharedEscrow),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.rentPayer),
+    ],
+    programAddress,
+    data: getBidInstructionDataEncoder().encode(args as BidInstructionDataArgs),
+  } as BidInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountSharedEscrow,
     TAccountCosigner,
     TAccountRentPayer
   >;
@@ -314,7 +472,7 @@ export type ParsedBidInstruction<
     marketplaceProgram: TAccountMetas[1];
     bidState: TAccountMetas[2];
     owner: TAccountMetas[3];
-    marginAccount: TAccountMetas[4];
+    sharedEscrow: TAccountMetas[4];
     cosigner?: TAccountMetas[5] | undefined;
     rentPayer: TAccountMetas[6];
   };
@@ -352,7 +510,7 @@ export function parseBidInstruction<
       marketplaceProgram: getNextAccount(),
       bidState: getNextAccount(),
       owner: getNextAccount(),
-      marginAccount: getNextAccount(),
+      sharedEscrow: getNextAccount(),
       cosigner: getNextOptionalAccount(),
       rentPayer: getNextAccount(),
     },

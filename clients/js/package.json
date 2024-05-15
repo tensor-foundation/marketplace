@@ -41,7 +41,8 @@
     "@solana/instructions": "2.0.0-preview.2",
     "@solana/programs": "2.0.0-preview.2",
     "@solana/signers": "2.0.0-preview.2",
-    "@solana/web3.js": "2.0.0-preview.2"
+    "@solana/web3.js": "2.0.0-preview.2",
+    "@tensor-foundation/resolvers": "0.0.5"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
@@ -53,7 +54,6 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "ava": "^6.1.2",
-    "bs58": "^5.0.0",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
@@ -69,7 +69,8 @@
       "rewritePaths": {
         "test/": "dist/test/"
       }
-    }
+    },
+    "nodeArguments": ["--no-warnings"]
   },
   "packageManager": "pnpm@9.1.0"
 }

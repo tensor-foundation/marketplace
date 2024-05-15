@@ -45,9 +45,9 @@ pub struct DelistLegacy {
 
     pub authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
 
-    pub token_metadata_program: solana_program::pubkey::Pubkey,
+    pub token_metadata_program: Option<solana_program::pubkey::Pubkey>,
 
-    pub sysvar_instructions: solana_program::pubkey::Pubkey,
+    pub sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl DelistLegacy {
@@ -157,14 +157,28 @@ impl DelistLegacy {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.token_metadata_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.sysvar_instructions,
-            false,
-        ));
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                token_metadata_program,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                sysvar_instructions,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = DelistLegacyInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -218,8 +232,8 @@ pub struct DelistLegacyInstructionArgs {
 ///   14. `[writable, optional]` list_token_record
 ///   15. `[optional]` authorization_rules
 ///   16. `[optional]` authorization_rules_program
-///   17. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
-///   18. `[optional]` sysvar_instructions (default to `Sysvar1nstructions1111111111111111111111111`)
+///   17. `[optional]` token_metadata_program
+///   18. `[optional]` sysvar_instructions
 #[derive(Default)]
 pub struct DelistLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -363,22 +377,22 @@ impl DelistLegacyBuilder {
         self.authorization_rules_program = authorization_rules_program;
         self
     }
-    /// `[optional account, default to 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s']`
+    /// `[optional account]`
     #[inline(always)]
     pub fn token_metadata_program(
         &mut self,
-        token_metadata_program: solana_program::pubkey::Pubkey,
+        token_metadata_program: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.token_metadata_program = Some(token_metadata_program);
+        self.token_metadata_program = token_metadata_program;
         self
     }
-    /// `[optional account, default to 'Sysvar1nstructions1111111111111111111111111']`
+    /// `[optional account]`
     #[inline(always)]
     pub fn sysvar_instructions(
         &mut self,
-        sysvar_instructions: solana_program::pubkey::Pubkey,
+        sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.sysvar_instructions = Some(sysvar_instructions);
+        self.sysvar_instructions = sysvar_instructions;
         self
     }
     /// `[optional argument]`
@@ -407,40 +421,35 @@ impl DelistLegacyBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts =
-            DelistLegacy {
-                owner: self.owner.expect("owner is not set"),
-                owner_ata: self.owner_ata.expect("owner_ata is not set"),
-                list_state: self.list_state.expect("list_state is not set"),
-                list_ata: self.list_ata.expect("list_ata is not set"),
-                mint: self.mint.expect("mint is not set"),
-                rent_destination: self.rent_destination.expect("rent_destination is not set"),
-                payer: self.payer.expect("payer is not set"),
-                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-                )),
-                associated_token_program: self.associated_token_program.unwrap_or(
-                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-                ),
-                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-                )),
-                system_program: self
-                    .system_program
-                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-                metadata: self.metadata.expect("metadata is not set"),
-                edition: self.edition.expect("edition is not set"),
-                owner_token_record: self.owner_token_record,
-                list_token_record: self.list_token_record,
-                authorization_rules: self.authorization_rules,
-                authorization_rules_program: self.authorization_rules_program,
-                token_metadata_program: self.token_metadata_program.unwrap_or(
-                    solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
-                ),
-                sysvar_instructions: self.sysvar_instructions.unwrap_or(solana_program::pubkey!(
-                    "Sysvar1nstructions1111111111111111111111111"
-                )),
-            };
+        let accounts = DelistLegacy {
+            owner: self.owner.expect("owner is not set"),
+            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            list_state: self.list_state.expect("list_state is not set"),
+            list_ata: self.list_ata.expect("list_ata is not set"),
+            mint: self.mint.expect("mint is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
+            payer: self.payer.expect("payer is not set"),
+            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            )),
+            associated_token_program: self.associated_token_program.unwrap_or(
+                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+            ),
+            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            metadata: self.metadata.expect("metadata is not set"),
+            edition: self.edition.expect("edition is not set"),
+            owner_token_record: self.owner_token_record,
+            list_token_record: self.list_token_record,
+            authorization_rules: self.authorization_rules,
+            authorization_rules_program: self.authorization_rules_program,
+            token_metadata_program: self.token_metadata_program,
+            sysvar_instructions: self.sysvar_instructions,
+        };
         let args = DelistLegacyInstructionArgs {
             authorization_data: self.authorization_data.clone(),
         };
@@ -485,9 +494,9 @@ pub struct DelistLegacyCpiAccounts<'a, 'b> {
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `delist_legacy` CPI instruction.
@@ -529,9 +538,9 @@ pub struct DelistLegacyCpi<'a, 'b> {
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: DelistLegacyInstructionArgs,
 }
@@ -696,14 +705,28 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.token_metadata_program.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.sysvar_instructions.key,
-            false,
-        ));
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *token_metadata_program.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *sysvar_instructions.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -747,8 +770,12 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
         if let Some(authorization_rules_program) = self.authorization_rules_program {
             account_infos.push(authorization_rules_program.clone());
         }
-        account_infos.push(self.token_metadata_program.clone());
-        account_infos.push(self.sysvar_instructions.clone());
+        if let Some(token_metadata_program) = self.token_metadata_program {
+            account_infos.push(token_metadata_program.clone());
+        }
+        if let Some(sysvar_instructions) = self.sysvar_instructions {
+            account_infos.push(sysvar_instructions.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -782,8 +809,8 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
 ///   14. `[writable, optional]` list_token_record
 ///   15. `[optional]` authorization_rules
 ///   16. `[optional]` authorization_rules_program
-///   17. `[]` token_metadata_program
-///   18. `[]` sysvar_instructions
+///   17. `[optional]` token_metadata_program
+///   18. `[optional]` sysvar_instructions
 pub struct DelistLegacyCpiBuilder<'a, 'b> {
     instruction: Box<DelistLegacyCpiBuilderInstruction<'a, 'b>>,
 }
@@ -947,20 +974,22 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         self.instruction.authorization_rules_program = authorization_rules_program;
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn token_metadata_program(
         &mut self,
-        token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+        token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.token_metadata_program = Some(token_metadata_program);
+        self.instruction.token_metadata_program = token_metadata_program;
         self
     }
+    /// `[optional account]`
     #[inline(always)]
     pub fn sysvar_instructions(
         &mut self,
-        sysvar_instructions: &'b solana_program::account_info::AccountInfo<'a>,
+        sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.sysvar_instructions = Some(sysvar_instructions);
+        self.instruction.sysvar_instructions = sysvar_instructions;
         self
     }
     /// `[optional argument]`
@@ -1065,15 +1094,9 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
 
             authorization_rules_program: self.instruction.authorization_rules_program,
 
-            token_metadata_program: self
-                .instruction
-                .token_metadata_program
-                .expect("token_metadata_program is not set"),
+            token_metadata_program: self.instruction.token_metadata_program,
 
-            sysvar_instructions: self
-                .instruction
-                .sysvar_instructions
-                .expect("sysvar_instructions is not set"),
+            sysvar_instructions: self.instruction.sysvar_instructions,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(

@@ -85,12 +85,14 @@ pub struct ProgNftShared<'info> {
     //can't deserialize directly coz Anchor traits not implemented
     /// CHECK: address below
     #[account(address = mpl_token_metadata::ID)]
-    pub token_metadata_program: UncheckedAccount<'info>,
+    pub token_metadata_program: Option<UncheckedAccount<'info>>,
+
     //sysvar ixs don't deserialize in anchor
     /// CHECK: address below
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
-    pub instructions: UncheckedAccount<'info>,
+    pub sysvar_instructions: Option<UncheckedAccount<'info>>,
+
     /// CHECK: address below
     #[account(address = tensorswap::instructions::MPL_TOKEN_AUTH_RULES_ID)]
-    pub authorization_rules_program: UncheckedAccount<'info>,
+    pub authorization_rules_program: Option<UncheckedAccount<'info>>,
 }
