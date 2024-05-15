@@ -5,7 +5,10 @@ use anchor_spl::{
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use tensor_toolbox::{
-    calc_fees, token_2022::validate_mint, transfer_lamports, transfer_lamports_checked,
+    calc_creators_fee, calc_fees,
+    token_2022::{validate_mint, RoyaltyInfo},
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
+    FromExternal, TCreator,
 };
 use vipers::Validate;
 
@@ -85,6 +88,8 @@ pub struct BuyT22<'info> {
 
     // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
+    //
+    // ---- [0..n] remaining accounts for royalties transfer hook
 }
 
 impl<'info> Validate<'info> for BuyT22<'info> {
@@ -131,11 +136,12 @@ pub fn process_buy_t22<'info, 'b>(
 ) -> Result<()> {
     // validate mint account
 
-    validate_mint(&ctx.accounts.mint.to_account_info())?;
+    let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
+
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
@@ -149,7 +155,7 @@ pub fn process_buy_t22<'info, 'b>(
 
     // transfer the NFT
 
-    let transfer_cpi = CpiContext::new(
+    let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
             from: ctx.accounts.list_ata.to_account_info(),
@@ -159,6 +165,47 @@ pub fn process_buy_t22<'info, 'b>(
         },
     );
 
+    // this will only add the remaining accounts required by a transfer hook if we
+    // recognize the hook as a royalty one
+    let (creators, creator_accounts, creator_fee) = if let Some(RoyaltyInfo {
+        creators,
+        seller_fee,
+    }) = &royalties
+    {
+        // add remaining accounts to the transfer cpi
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+
+        let mut creator_infos = Vec::with_capacity(creators.len());
+        let mut creator_data = Vec::with_capacity(creators.len());
+        // filter out the creators accounts; the transfer will fail if there
+        // are missing creator accounts – i.e., the creator is on the `creator_data`
+        // but the account is not in the `creator_infos`
+        creators.iter().for_each(|c| {
+            let creator = TCreator {
+                address: c.0,
+                share: c.1,
+                verified: true,
+            };
+
+            if let Some(account) = ctx
+                .remaining_accounts
+                .iter()
+                .find(|account| &creator.address == account.key)
+            {
+                creator_infos.push(account.clone());
+            }
+
+            creator_data.push(creator);
+        });
+
+        // No optional royalties.
+        let creator_fee = calc_creators_fee(*seller_fee, amount, None, Some(100))?;
+
+        (creator_data, creator_infos, creator_fee)
+    } else {
+        (vec![], vec![], 0)
+    };
+
     transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1,
@@ -167,7 +214,6 @@ pub fn process_buy_t22<'info, 'b>(
 
     let asset_id = ctx.accounts.mint.key();
 
-    // NOTE: The event doesn't record
     record_event(
         &TcompEvent::Taker(TakeEvent {
             taker: *ctx.accounts.buyer.key,
@@ -177,11 +223,11 @@ pub fn process_buy_t22<'info, 'b>(
             field: None,
             field_id: None,
             amount,
-            quantity: 0,
+            quantity: 0, //quantity left
             tcomp_fee,
             taker_broker_fee,
             maker_broker_fee,
-            creator_fee: 0, // no royalties on T22
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
             currency,
             asset_id: Some(asset_id),
         }),
@@ -212,6 +258,21 @@ pub fn process_buy_t22<'info, 'b>(
             .to_account_info(),
         taker_broker_fee,
     )?;
+
+    // Pay creators
+    if royalties.is_some() {
+        transfer_creators_fee(
+            &creators,
+            &mut creator_accounts.iter(),
+            creator_fee,
+            &CreatorFeeMode::Sol {
+                from: &FromAcc::External(&FromExternal {
+                    from: &ctx.accounts.payer.to_account_info(),
+                    sys_prog: &ctx.accounts.system_program,
+                }),
+            },
+        )?;
+    }
 
     // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
