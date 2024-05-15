@@ -52,13 +52,6 @@ pub mod marketplace_program {
         instructions::noop::process_noop(ctx)
     }
 
-    pub fn withdraw_fees<'info>(
-        ctx: Context<'_, '_, '_, 'info, WithdrawFees<'info>>,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::withdraw_fees::process_withdraw_fees(ctx, amount)
-    }
-
     // --------------------------------------- Listings
 
     pub fn edit<'info>(
