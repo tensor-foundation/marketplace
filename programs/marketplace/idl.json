@@ -57,50 +57,6 @@
       ]
     },
     {
-      "name": "withdrawFees",
-      "accounts": [
-        {
-          "name": "tswap",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tcomp",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "We ask also for a signature just to make sure this wallet can actually sign things"
-          ]
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
       "name": "edit",
       "accounts": [
         {
