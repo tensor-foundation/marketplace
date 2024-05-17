@@ -8,10 +8,7 @@ import {
   expectAddress,
   isTransactionSigner,
 } from '../generated';
-import {
-  findTreeAuthorityPda,
-  findFeeVaultPda
-} from './pdas';
+import { findTreeAuthorityPda, findFeeVaultPda } from './pdas';
 import { IAccountMeta } from '@solana/instructions';
 import { TransactionSigner } from '@solana/signers';
 

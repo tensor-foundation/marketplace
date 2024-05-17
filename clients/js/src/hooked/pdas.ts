@@ -22,8 +22,8 @@ export async function findTreeAuthorityPda(
   return await getProgramDerivedAddress({
     programAddress,
     seeds: [getAddressEncoder().encode(seeds.merkleTree)],
-})
-};
+  });
+}
 
 // --- FEE VAULT PDA
 
