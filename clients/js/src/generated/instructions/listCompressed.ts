@@ -46,19 +46,18 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveProofPath, resolveTreeAuthorityPda } from '../../hooked';
-import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
-  ResolvedAccount,
-  expectSome,
-  expectTransactionSigner,
-  getAccountMetaFactory,
-} from '../shared';
+  resolveProofPath,
+  resolveRemainingSignerWithOwnerOrDelegate,
+  resolveTreeAuthorityPda,
+} from '../../hooked';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+import { ResolvedAccount, expectSome, getAccountMetaFactory } from '../shared';
 
 export type ListCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
-  TAccountOwnerAddress extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountDelegate extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends
@@ -77,7 +76,7 @@ export type ListCompressedInstruction<
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountRentPayer extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -87,9 +86,9 @@ export type ListCompressedInstruction<
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
-      TAccountOwnerAddress extends string
-        ? ReadonlyAccount<TAccountOwnerAddress>
-        : TAccountOwnerAddress,
+      TAccountOwner extends string
+        ? ReadonlyAccount<TAccountOwner>
+        : TAccountOwner,
       TAccountDelegate extends string
         ? ReadonlyAccount<TAccountDelegate>
         : TAccountDelegate,
@@ -114,10 +113,10 @@ export type ListCompressedInstruction<
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountOwner extends string
-        ? WritableSignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
-        : TAccountOwner,
+      TAccountRentPayer extends string
+        ? WritableSignerAccount<TAccountRentPayer> &
+            IAccountSignerMeta<TAccountRentPayer>
+        : TAccountRentPayer,
       TAccountCosigner extends string
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
@@ -214,7 +213,7 @@ export type ListCompressedInstructionExtraArgs = {
 
 export type ListCompressedAsyncInput<
   TAccountTreeAuthority extends string = string,
-  TAccountOwnerAddress extends string = string,
+  TAccountOwner extends string = string,
   TAccountDelegate extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -223,12 +222,12 @@ export type ListCompressedAsyncInput<
   TAccountBubblegumProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountListState extends string = string,
-  TAccountOwner extends string = string,
+  TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   treeAuthority?: Address<TAccountTreeAuthority>;
-  ownerAddress?: Address<TAccountOwnerAddress>;
-  delegate?: Address<TAccountDelegate>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -236,7 +235,7 @@ export type ListCompressedAsyncInput<
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
@@ -254,7 +253,7 @@ export type ListCompressedAsyncInput<
 
 export async function getListCompressedInstructionAsync<
   TAccountTreeAuthority extends string,
-  TAccountOwnerAddress extends string,
+  TAccountOwner extends string,
   TAccountDelegate extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -263,12 +262,12 @@ export async function getListCompressedInstructionAsync<
   TAccountBubblegumProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountListState extends string,
-  TAccountOwner extends string,
+  TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
   input: ListCompressedAsyncInput<
     TAccountTreeAuthority,
-    TAccountOwnerAddress,
+    TAccountOwner,
     TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -277,15 +276,20 @@ export async function getListCompressedInstructionAsync<
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner,
+    TAccountRentPayer,
     TAccountCosigner
   >
 ): Promise<
   ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    TAccountOwnerAddress,
-    TAccountDelegate,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -293,7 +297,7 @@ export async function getListCompressedInstructionAsync<
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner,
+    TAccountRentPayer,
     TAccountCosigner
   >
 > {
@@ -303,7 +307,7 @@ export async function getListCompressedInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
-    ownerAddress: { value: input.ownerAddress ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -321,7 +325,7 @@ export async function getListCompressedInstructionAsync<
       isWritable: false,
     },
     listState: { value: input.listState ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
+    rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -346,15 +350,8 @@ export async function getListCompressedInstructionAsync<
       ...(await resolveTreeAuthorityPda(resolverScope)),
     };
   }
-  if (!accounts.ownerAddress.value) {
-    accounts.ownerAddress.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
-  }
   if (!accounts.delegate.value) {
-    accounts.delegate.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
+    accounts.delegate.value = expectSome(accounts.owner.value);
   }
   if (!accounts.logWrapper.value) {
     accounts.logWrapper.value =
@@ -371,6 +368,18 @@ export async function getListCompressedInstructionAsync<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer = {
+      ...accounts.rentPayer,
+      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
+    };
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner = {
+      ...accounts.cosigner,
+      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
+    };
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
@@ -389,7 +398,7 @@ export async function getListCompressedInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.treeAuthority),
-      getAccountMeta(accounts.ownerAddress),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.delegate),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -398,7 +407,7 @@ export async function getListCompressedInstructionAsync<
       getAccountMeta(accounts.bubblegumProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
@@ -409,8 +418,13 @@ export async function getListCompressedInstructionAsync<
   } as ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    TAccountOwnerAddress,
-    TAccountDelegate,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -418,7 +432,7 @@ export async function getListCompressedInstructionAsync<
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner,
+    TAccountRentPayer,
     TAccountCosigner
   >;
 
@@ -427,7 +441,7 @@ export async function getListCompressedInstructionAsync<
 
 export type ListCompressedInput<
   TAccountTreeAuthority extends string = string,
-  TAccountOwnerAddress extends string = string,
+  TAccountOwner extends string = string,
   TAccountDelegate extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -436,12 +450,12 @@ export type ListCompressedInput<
   TAccountBubblegumProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountListState extends string = string,
-  TAccountOwner extends string = string,
+  TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
-  ownerAddress?: Address<TAccountOwnerAddress>;
-  delegate?: Address<TAccountDelegate>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -449,7 +463,7 @@ export type ListCompressedInput<
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
@@ -467,7 +481,7 @@ export type ListCompressedInput<
 
 export function getListCompressedInstruction<
   TAccountTreeAuthority extends string,
-  TAccountOwnerAddress extends string,
+  TAccountOwner extends string,
   TAccountDelegate extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -476,12 +490,12 @@ export function getListCompressedInstruction<
   TAccountBubblegumProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountListState extends string,
-  TAccountOwner extends string,
+  TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
   input: ListCompressedInput<
     TAccountTreeAuthority,
-    TAccountOwnerAddress,
+    TAccountOwner,
     TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -490,14 +504,19 @@ export function getListCompressedInstruction<
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner,
+    TAccountRentPayer,
     TAccountCosigner
   >
 ): ListCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority,
-  TAccountOwnerAddress,
-  TAccountDelegate,
+  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+    : TAccountOwner,
+  (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+    ? ReadonlySignerAccount<TAccountDelegate> &
+        IAccountSignerMeta<TAccountDelegate>
+    : TAccountDelegate,
   TAccountMerkleTree,
   TAccountLogWrapper,
   TAccountCompressionProgram,
@@ -505,7 +524,7 @@ export function getListCompressedInstruction<
   TAccountBubblegumProgram,
   TAccountMarketplaceProgram,
   TAccountListState,
-  TAccountOwner,
+  TAccountRentPayer,
   TAccountCosigner
 > {
   // Program address.
@@ -514,7 +533,7 @@ export function getListCompressedInstruction<
   // Original accounts.
   const originalAccounts = {
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
-    ownerAddress: { value: input.ownerAddress ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -532,7 +551,7 @@ export function getListCompressedInstruction<
       isWritable: false,
     },
     listState: { value: input.listState ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
+    rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -551,15 +570,8 @@ export function getListCompressedInstruction<
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
   }
-  if (!accounts.ownerAddress.value) {
-    accounts.ownerAddress.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
-  }
   if (!accounts.delegate.value) {
-    accounts.delegate.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
+    accounts.delegate.value = expectSome(accounts.owner.value);
   }
   if (!accounts.logWrapper.value) {
     accounts.logWrapper.value =
@@ -576,6 +588,18 @@ export function getListCompressedInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer = {
+      ...accounts.rentPayer,
+      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
+    };
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner = {
+      ...accounts.cosigner,
+      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
+    };
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
@@ -594,7 +618,7 @@ export function getListCompressedInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.treeAuthority),
-      getAccountMeta(accounts.ownerAddress),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.delegate),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -603,7 +627,7 @@ export function getListCompressedInstruction<
       getAccountMeta(accounts.bubblegumProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
@@ -614,8 +638,13 @@ export function getListCompressedInstruction<
   } as ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    TAccountOwnerAddress,
-    TAccountDelegate,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -623,7 +652,7 @@ export function getListCompressedInstruction<
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
     TAccountListState,
-    TAccountOwner,
+    TAccountRentPayer,
     TAccountCosigner
   >;
 
@@ -637,7 +666,7 @@ export type ParsedListCompressedInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     treeAuthority: TAccountMetas[0];
-    ownerAddress: TAccountMetas[1];
+    owner: TAccountMetas[1];
     delegate: TAccountMetas[2];
     merkleTree: TAccountMetas[3];
     logWrapper: TAccountMetas[4];
@@ -646,7 +675,7 @@ export type ParsedListCompressedInstruction<
     bubblegumProgram: TAccountMetas[7];
     marketplaceProgram: TAccountMetas[8];
     listState: TAccountMetas[9];
-    owner: TAccountMetas[10];
+    rentPayer: TAccountMetas[10];
     cosigner?: TAccountMetas[11] | undefined;
   };
   data: ListCompressedInstructionData;
@@ -680,7 +709,7 @@ export function parseListCompressedInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       treeAuthority: getNextAccount(),
-      ownerAddress: getNextAccount(),
+      owner: getNextAccount(),
       delegate: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),
@@ -689,7 +718,7 @@ export function parseListCompressedInstruction<
       bubblegumProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       listState: getNextAccount(),
-      owner: getNextAccount(),
+      rentPayer: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },
     data: getListCompressedInstructionDataDecoder().decode(instruction.data),

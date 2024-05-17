@@ -18,9 +18,9 @@ pub struct TakeBidCompressedFullMeta {
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
-    pub seller: solana_program::pubkey::Pubkey,
+    pub seller: (solana_program::pubkey::Pubkey, bool),
 
-    pub delegate: solana_program::pubkey::Pubkey,
+    pub delegate: (solana_program::pubkey::Pubkey, bool),
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
 
@@ -76,12 +76,12 @@ impl TakeBidCompressedFullMeta {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller,
-            true,
+            self.seller.0,
+            self.seller.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.delegate,
-            true,
+            self.delegate.0,
+            self.delegate.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.merkle_tree,
@@ -240,8 +240,8 @@ pub struct TakeBidCompressedFullMetaInstructionArgs {
 pub struct TakeBidCompressedFullMetaBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
-    seller: Option<solana_program::pubkey::Pubkey>,
-    delegate: Option<solana_program::pubkey::Pubkey>,
+    seller: Option<(solana_program::pubkey::Pubkey, bool)>,
+    delegate: Option<(solana_program::pubkey::Pubkey, bool)>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
@@ -293,13 +293,17 @@ impl TakeBidCompressedFullMetaBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.seller = Some(seller);
+    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
+        self.seller = Some((seller, as_signer));
         self
     }
     #[inline(always)]
-    pub fn delegate(&mut self, delegate: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.delegate = Some(delegate);
+    pub fn delegate(
+        &mut self,
+        delegate: solana_program::pubkey::Pubkey,
+        as_signer: bool,
+    ) -> &mut Self {
+        self.delegate = Some((delegate, as_signer));
         self
     }
     #[inline(always)]
@@ -601,9 +605,9 @@ pub struct TakeBidCompressedFullMetaCpiAccounts<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
-    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
+    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -645,9 +649,9 @@ pub struct TakeBidCompressedFullMetaCpi<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
-    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
+    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -755,12 +759,12 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller.key,
-            true,
+            *self.seller.0.key,
+            self.seller.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.delegate.key,
-            true,
+            *self.delegate.0.key,
+            self.delegate.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.merkle_tree.key,
@@ -865,8 +869,8 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.tree_authority.clone());
-        account_infos.push(self.seller.clone());
-        account_infos.push(self.delegate.clone());
+        account_infos.push(self.seller.0.clone());
+        account_infos.push(self.delegate.0.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
@@ -992,16 +996,18 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
     pub fn seller(
         &mut self,
         seller: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.seller = Some(seller);
+        self.instruction.seller = Some((seller, as_signer));
         self
     }
     #[inline(always)]
     pub fn delegate(
         &mut self,
         delegate: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.delegate = Some(delegate);
+        self.instruction.delegate = Some((delegate, as_signer));
         self
     }
     #[inline(always)]
@@ -1391,8 +1397,8 @@ struct TakeBidCompressedFullMetaCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    delegate: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

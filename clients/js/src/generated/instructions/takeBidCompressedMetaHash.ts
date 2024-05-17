@@ -33,7 +33,6 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
-  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -43,15 +42,17 @@ import {
   ReadonlyAccount,
   ReadonlySignerAccount,
   WritableAccount,
+  WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import {
   resolveCreatorPath,
   resolveProofPath,
+  resolveRemainingSignerWithSellerOrDelegate,
   resolveTreeAuthorityPda,
 } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import { ResolvedAccount, expectSome, getAccountMetaFactory } from '../shared';
 
 export type TakeBidCompressedMetaHashInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -195,7 +196,7 @@ export function getTakeBidCompressedMetaHashInstructionDataEncoder(): Encoder<Ta
     (value) => ({
       ...value,
       discriminator: [85, 227, 202, 70, 45, 215, 10, 193],
-      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? 100,
     })
   );
 }
@@ -257,8 +258,8 @@ export type TakeBidCompressedMetaHashAsyncInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller>;
-  delegate: Address<TAccountDelegate>;
+  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -270,11 +271,11 @@ export type TakeBidCompressedMetaHashAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount: Address<TAccountMarginAccount>;
+  marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest: Address<TAccountRentDest>;
-  nonce: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
+  rentDest?: Address<TAccountRentDest>;
+  nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
   metaHash: TakeBidCompressedMetaHashInstructionDataArgs['metaHash'];
@@ -335,8 +336,14 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    TAccountSeller,
-    TAccountDelegate,
+    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
+      ? WritableSignerAccount<TAccountSeller> &
+          IAccountSignerMeta<TAccountSeller>
+      : TAccountSeller,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -413,6 +420,9 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
       ...(await resolveTreeAuthorityPda(resolverScope)),
     };
   }
+  if (!accounts.delegate.value) {
+    accounts.delegate.value = expectSome(accounts.seller.value);
+  }
   if (!accounts.logWrapper.value) {
     accounts.logWrapper.value =
       'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
@@ -432,6 +442,21 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
   if (!accounts.tensorswapProgram.value) {
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.marginAccount.value) {
+    accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner = {
+      ...accounts.cosigner,
+      ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
+    };
+  }
+  if (!accounts.rentDest.value) {
+    accounts.rentDest.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
   }
   if (!args.creators) {
     args.creators = [];
@@ -481,8 +506,14 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    TAccountSeller,
-    TAccountDelegate,
+    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
+      ? WritableSignerAccount<TAccountSeller> &
+          IAccountSignerMeta<TAccountSeller>
+      : TAccountSeller,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -526,8 +557,8 @@ export type TakeBidCompressedMetaHashInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller>;
-  delegate: Address<TAccountDelegate>;
+  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -539,11 +570,11 @@ export type TakeBidCompressedMetaHashInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount: Address<TAccountMarginAccount>;
+  marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest: Address<TAccountRentDest>;
-  nonce: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
+  rentDest?: Address<TAccountRentDest>;
+  nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
   metaHash: TakeBidCompressedMetaHashInstructionDataArgs['metaHash'];
@@ -603,8 +634,13 @@ export function getTakeBidCompressedMetaHashInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountTreeAuthority,
-  TAccountSeller,
-  TAccountDelegate,
+  (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
+    ? WritableSignerAccount<TAccountSeller> & IAccountSignerMeta<TAccountSeller>
+    : TAccountSeller,
+  (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+    ? ReadonlySignerAccount<TAccountDelegate> &
+        IAccountSignerMeta<TAccountDelegate>
+    : TAccountDelegate,
   TAccountMerkleTree,
   TAccountLogWrapper,
   TAccountCompressionProgram,
@@ -674,6 +710,9 @@ export function getTakeBidCompressedMetaHashInstruction<
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
   }
+  if (!accounts.delegate.value) {
+    accounts.delegate.value = expectSome(accounts.seller.value);
+  }
   if (!accounts.logWrapper.value) {
     accounts.logWrapper.value =
       'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
@@ -693,6 +732,21 @@ export function getTakeBidCompressedMetaHashInstruction<
   if (!accounts.tensorswapProgram.value) {
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.marginAccount.value) {
+    accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner = {
+      ...accounts.cosigner,
+      ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
+    };
+  }
+  if (!accounts.rentDest.value) {
+    accounts.rentDest.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
   }
   if (!args.creators) {
     args.creators = [];
@@ -742,8 +796,14 @@ export function getTakeBidCompressedMetaHashInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    TAccountSeller,
-    TAccountDelegate,
+    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
+      ? WritableSignerAccount<TAccountSeller> &
+          IAccountSignerMeta<TAccountSeller>
+      : TAccountSeller,
+    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
+      ? ReadonlySignerAccount<TAccountDelegate> &
+          IAccountSignerMeta<TAccountDelegate>
+      : TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,

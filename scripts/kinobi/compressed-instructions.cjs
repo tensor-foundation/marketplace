@@ -32,24 +32,7 @@ module.exports = function visitor(options) {
         }
       })
     );
-    // Rename owner => ownerAddress, rentPayer => owner
-    // to clarify that rentPayer has to be the signer
-    // and owner(ownerAddress) can be defaulted to
-    // the address of the rentPayer
-    updateRoot(
-      k.updateInstructionsVisitor({
-        listCompressed: {
-          accounts: {
-            owner: {
-              name: "ownerAddress"
-            },
-            rentPayer: {
-              name: "owner"
-            }
-          }
-        }
-      })
-    )
+
     // Update instructions.
     updateRoot(
       k.updateInstructionsVisitor({
@@ -85,11 +68,28 @@ module.exports = function visitor(options) {
         },
         listCompressed: {
           accounts: {
-            ownerAddress: {
-              defaultValue: k.accountValueNode("owner")
+            owner: {
+              isSigner: "either"
             },
             delegate: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
+              isSigner: "either"
+            },
+            rentPayer: {
+              defaultValue: k.resolverValueNode("resolveRemainingSignerWithOwnerOrDelegate", {
+                dependsOn: [
+                  k.accountValueNode("owner"),
+                  k.accountValueNode("delegate")
+                ]
+              })
+            },
+            cosigner: {
+              defaultValue: k.resolverValueNode("resolveRemainingSignerWithOwnerOrDelegate", {
+                dependsOn: [
+                  k.accountValueNode("owner"),
+                  k.accountValueNode("delegate")
+                ]
+              })
             }
           },
           arguments: {
@@ -101,14 +101,52 @@ module.exports = function visitor(options) {
         takeBidCompressedFullMeta: {
           accounts: {
             seller: {
-              isSigner: true
+              isSigner: "either"
             },
             delegate: {
-              isSigner: true,
+              isSigner: "either",
               defaultValue: k.accountValueNode("seller")
             },
             cosigner: {
+              defaultValue: k.resolverValueNode("resolveRemainingSignerWithSellerOrDelegate", {
+                dependsOn: [
+                  k.accountValueNode("seller"),
+                  k.accountValueNode("delegate")
+                ]
+              })
+            },
+            rentDest: {
+              defaultValue: k.accountValueNode("owner")
+            },
+            marginAccount: {
+              defaultValue: k.accountValueNode("tensorswapProgram")
+            }
+          },
+          arguments: {
+            optionalRoyaltyPct: {
+              defaultValue: k.numberValueNode(100)
+            },
+            nonce: {
+              defaultValue: k.argumentValueNode("index")
+            }
+          }
+        },
+        takeBidCompressedMetaHash: {
+          accounts: {
+            seller: {
+              isSigner: "either"
+            },
+            delegate: {
+              isSigner: "either",
               defaultValue: k.accountValueNode("seller")
+            },
+            cosigner: {
+              defaultValue: k.resolverValueNode("resolveRemainingSignerWithSellerOrDelegate", {
+                dependsOn: [
+                  k.accountValueNode("seller"),
+                  k.accountValueNode("delegate")
+                ]
+              })
             },
             rentDest: {
               defaultValue: k.accountValueNode("owner")

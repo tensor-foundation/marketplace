@@ -1,5 +1,13 @@
-import { Address, ProgramDerivedAddress } from '@solana/addresses';
-import { ResolvedAccount, expectAddress } from '../generated';
+import {
+  Address,
+  ProgramDerivedAddress,
+  ProgramDerivedAddressBump,
+} from '@solana/addresses';
+import {
+  ResolvedAccount,
+  expectAddress,
+  isTransactionSigner,
+} from '../generated';
 import {
   findAssociatedTokenAccountPda,
   findExtraAccountMetasPda,
@@ -12,6 +20,7 @@ import {
 } from './pdas';
 import { TokenStandard } from './types';
 import { IAccountMeta } from '@solana/instructions';
+import { TransactionSigner } from '@solana/signers';
 
 export const resolveMetadata = async ({
   accounts,
@@ -231,4 +240,54 @@ export const resolveProofPath = ({
     address,
     role: 0,
   }));
+};
+
+export const resolveRemainingSignerWithOwnerOrDelegate = ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): {
+  value:
+    | Address
+    | readonly [Address<string>, ProgramDerivedAddressBump]
+    | TransactionSigner
+    | null;
+} => {
+  if (!accounts.owner.value || isTransactionSigner(accounts.owner.value)) {
+    return {
+      value: accounts.owner.value,
+    };
+  }
+  if (!accounts.delegate.value || isTransactionSigner(accounts.delegate.value))
+    return {
+      value: accounts.delegate.value,
+    };
+  throw new Error(
+    'Either owner or delegate has to be provided as TransactionSigner.'
+  );
+};
+
+export const resolveRemainingSignerWithSellerOrDelegate = ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): {
+  value:
+    | Address
+    | readonly [Address<string>, ProgramDerivedAddressBump]
+    | TransactionSigner
+    | null;
+} => {
+  if (!accounts.seller.value || isTransactionSigner(accounts.seller.value)) {
+    return {
+      value: accounts.seller.value,
+    };
+  }
+  if (!accounts.delegate.value || isTransactionSigner(accounts.delegate.value))
+    return {
+      value: accounts.delegate.value,
+    };
+  throw new Error(
+    'Either seller or delegate has to be provided as TransactionSigner.'
+  );
 };
