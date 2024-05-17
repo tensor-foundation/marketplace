@@ -37,7 +37,6 @@ pub(crate) mod r#take_bid_legacy;
 pub(crate) mod r#take_bid_t22;
 pub(crate) mod r#take_bid_wns;
 pub(crate) mod r#tcomp_noop;
-pub(crate) mod r#withdraw_fees;
 
 pub use self::r#bid::*;
 pub use self::r#buy_compressed::*;
@@ -71,4 +70,3 @@ pub use self::r#take_bid_legacy::*;
 pub use self::r#take_bid_t22::*;
 pub use self::r#take_bid_wns::*;
 pub use self::r#tcomp_noop::*;
-pub use self::r#withdraw_fees::*;

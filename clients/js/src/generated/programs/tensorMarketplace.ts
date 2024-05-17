@@ -46,7 +46,6 @@ import {
   ParsedTakeBidT22Instruction,
   ParsedTakeBidWnsInstruction,
   ParsedTcompNoopInstruction,
-  ParsedWithdrawFeesInstruction,
 } from '../instructions';
 import { memcmp } from '../shared';
 
@@ -92,7 +91,6 @@ export function identifyTensorMarketplaceAccount(
 
 export enum TensorMarketplaceInstruction {
   TcompNoop,
-  WithdrawFees,
   Edit,
   Bid,
   CancelBid,
@@ -133,11 +131,6 @@ export function identifyTensorMarketplaceInstruction(
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (memcmp(data, new Uint8Array([106, 162, 10, 226, 132, 68, 223, 21]), 0)) {
     return TensorMarketplaceInstruction.TcompNoop;
-  }
-  if (
-    memcmp(data, new Uint8Array([198, 212, 171, 109, 144, 215, 174, 89]), 0)
-  ) {
-    return TensorMarketplaceInstruction.WithdrawFees;
   }
   if (memcmp(data, new Uint8Array([15, 183, 33, 86, 87, 28, 151, 145]), 0)) {
     return TensorMarketplaceInstruction.Edit;
@@ -243,9 +236,6 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.TcompNoop;
     } & ParsedTcompNoopInstruction<TProgram>)
-  | ({
-      instructionType: TensorMarketplaceInstruction.WithdrawFees;
-    } & ParsedWithdrawFeesInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.Edit;
     } & ParsedEditInstruction<TProgram>)

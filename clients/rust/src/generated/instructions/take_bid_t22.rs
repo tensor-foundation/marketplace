@@ -26,11 +26,11 @@ pub struct TakeBidT22 {
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
-    pub nft_seller_acc: solana_program::pubkey::Pubkey,
+    pub seller_ata: solana_program::pubkey::Pubkey,
 
-    pub nft_mint: solana_program::pubkey::Pubkey,
+    pub mint: solana_program::pubkey::Pubkey,
 
-    pub owner_ata_acc: solana_program::pubkey::Pubkey,
+    pub owner_ata: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
@@ -40,13 +40,13 @@ pub struct TakeBidT22 {
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
-    pub tensorswap_program: solana_program::pubkey::Pubkey,
+    pub escrow_program: solana_program::pubkey::Pubkey,
 
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl TakeBidT22 {
@@ -109,15 +109,14 @@ impl TakeBidT22 {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.nft_seller_acc,
+            self.seller_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.nft_mint,
-            false,
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_ata_acc,
+            self.owner_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -137,7 +136,7 @@ impl TakeBidT22 {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.tensorswap_program,
+            self.escrow_program,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -155,7 +154,7 @@ impl TakeBidT22 {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -202,17 +201,17 @@ pub struct TakeBidT22InstructionArgs {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` margin_account
 ///   7. `[]` whitelist
-///   8. `[writable]` nft_seller_acc
-///   9. `[]` nft_mint
-///   10. `[writable]` owner_ata_acc
+///   8. `[writable]` seller_ata
+///   9. `[]` mint
+///   10. `[writable]` owner_ata
 ///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   15. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
+///   15. `[optional]` escrow_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   16. `[signer, optional]` cosigner
 ///   17. `[]` mint_proof
-///   18. `[writable]` rent_dest
+///   18. `[writable]` rent_destination
 #[derive(Default)]
 pub struct TakeBidT22Builder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -223,17 +222,17 @@ pub struct TakeBidT22Builder {
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     margin_account: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
-    nft_seller_acc: Option<solana_program::pubkey::Pubkey>,
-    nft_mint: Option<solana_program::pubkey::Pubkey>,
-    owner_ata_acc: Option<solana_program::pubkey::Pubkey>,
+    seller_ata: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
+    owner_ata: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
-    tensorswap_program: Option<solana_program::pubkey::Pubkey>,
+    escrow_program: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     mint_proof: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     min_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -291,18 +290,18 @@ impl TakeBidT22Builder {
         self
     }
     #[inline(always)]
-    pub fn nft_seller_acc(&mut self, nft_seller_acc: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.nft_seller_acc = Some(nft_seller_acc);
+    pub fn seller_ata(&mut self, seller_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller_ata = Some(seller_ata);
         self
     }
     #[inline(always)]
-    pub fn nft_mint(&mut self, nft_mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.nft_mint = Some(nft_mint);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     #[inline(always)]
-    pub fn owner_ata_acc(&mut self, owner_ata_acc: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_ata_acc = Some(owner_ata_acc);
+    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ata = Some(owner_ata);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -337,11 +336,8 @@ impl TakeBidT22Builder {
     }
     /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
-    pub fn tensorswap_program(
-        &mut self,
-        tensorswap_program: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.tensorswap_program = Some(tensorswap_program);
+    pub fn escrow_program(&mut self, escrow_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.escrow_program = Some(escrow_program);
         self
     }
     /// `[optional account]`
@@ -357,8 +353,11 @@ impl TakeBidT22Builder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -395,9 +394,9 @@ impl TakeBidT22Builder {
             maker_broker: self.maker_broker,
             margin_account: self.margin_account.expect("margin_account is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
-            nft_seller_acc: self.nft_seller_acc.expect("nft_seller_acc is not set"),
-            nft_mint: self.nft_mint.expect("nft_mint is not set"),
-            owner_ata_acc: self.owner_ata_acc.expect("owner_ata_acc is not set"),
+            seller_ata: self.seller_ata.expect("seller_ata is not set"),
+            mint: self.mint.expect("mint is not set"),
+            owner_ata: self.owner_ata.expect("owner_ata is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -410,12 +409,12 @@ impl TakeBidT22Builder {
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
+            escrow_program: self.escrow_program.unwrap_or(solana_program::pubkey!(
                 "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
             )),
             cosigner: self.cosigner,
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = TakeBidT22InstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),
@@ -443,11 +442,11 @@ pub struct TakeBidT22CpiAccounts<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub nft_seller_acc: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata_acc: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -457,13 +456,13 @@ pub struct TakeBidT22CpiAccounts<'a, 'b> {
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub escrow_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `take_bid_t22` CPI instruction.
@@ -487,11 +486,11 @@ pub struct TakeBidT22Cpi<'a, 'b> {
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub nft_seller_acc: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata_acc: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -501,13 +500,13 @@ pub struct TakeBidT22Cpi<'a, 'b> {
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub escrow_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: TakeBidT22InstructionArgs,
 }
@@ -528,17 +527,17 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             maker_broker: accounts.maker_broker,
             margin_account: accounts.margin_account,
             whitelist: accounts.whitelist,
-            nft_seller_acc: accounts.nft_seller_acc,
-            nft_mint: accounts.nft_mint,
-            owner_ata_acc: accounts.owner_ata_acc,
+            seller_ata: accounts.seller_ata,
+            mint: accounts.mint,
+            owner_ata: accounts.owner_ata,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
             marketplace_program: accounts.marketplace_program,
-            tensorswap_program: accounts.tensorswap_program,
+            escrow_program: accounts.escrow_program,
             cosigner: accounts.cosigner,
             mint_proof: accounts.mint_proof,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             __args: args,
         }
     }
@@ -623,15 +622,15 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.nft_seller_acc.key,
+            *self.seller_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.nft_mint.key,
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_ata_acc.key,
+            *self.owner_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -651,7 +650,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.tensorswap_program.key,
+            *self.escrow_program.key,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -670,7 +669,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -703,19 +702,19 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
         }
         account_infos.push(self.margin_account.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.nft_seller_acc.clone());
-        account_infos.push(self.nft_mint.clone());
-        account_infos.push(self.owner_ata_acc.clone());
+        account_infos.push(self.seller_ata.clone());
+        account_infos.push(self.mint.clone());
+        account_infos.push(self.owner_ata.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.marketplace_program.clone());
-        account_infos.push(self.tensorswap_program.clone());
+        account_infos.push(self.escrow_program.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
         }
         account_infos.push(self.mint_proof.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -740,17 +739,17 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` margin_account
 ///   7. `[]` whitelist
-///   8. `[writable]` nft_seller_acc
-///   9. `[]` nft_mint
-///   10. `[writable]` owner_ata_acc
+///   8. `[writable]` seller_ata
+///   9. `[]` mint
+///   10. `[writable]` owner_ata
 ///   11. `[]` token_program
 ///   12. `[]` associated_token_program
 ///   13. `[]` system_program
 ///   14. `[]` marketplace_program
-///   15. `[]` tensorswap_program
+///   15. `[]` escrow_program
 ///   16. `[signer, optional]` cosigner
 ///   17. `[]` mint_proof
-///   18. `[writable]` rent_dest
+///   18. `[writable]` rent_destination
 pub struct TakeBidT22CpiBuilder<'a, 'b> {
     instruction: Box<TakeBidT22CpiBuilderInstruction<'a, 'b>>,
 }
@@ -767,17 +766,17 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
             maker_broker: None,
             margin_account: None,
             whitelist: None,
-            nft_seller_acc: None,
-            nft_mint: None,
-            owner_ata_acc: None,
+            seller_ata: None,
+            mint: None,
+            owner_ata: None,
             token_program: None,
             associated_token_program: None,
             system_program: None,
             marketplace_program: None,
-            tensorswap_program: None,
+            escrow_program: None,
             cosigner: None,
             mint_proof: None,
-            rent_dest: None,
+            rent_destination: None,
             min_amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -847,27 +846,24 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn nft_seller_acc(
+    pub fn seller_ata(
         &mut self,
-        nft_seller_acc: &'b solana_program::account_info::AccountInfo<'a>,
+        seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.nft_seller_acc = Some(nft_seller_acc);
+        self.instruction.seller_ata = Some(seller_ata);
         self
     }
     #[inline(always)]
-    pub fn nft_mint(
-        &mut self,
-        nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.nft_mint = Some(nft_mint);
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     #[inline(always)]
-    pub fn owner_ata_acc(
+    pub fn owner_ata(
         &mut self,
-        owner_ata_acc: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.owner_ata_acc = Some(owner_ata_acc);
+        self.instruction.owner_ata = Some(owner_ata);
         self
     }
     #[inline(always)]
@@ -903,11 +899,11 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn tensorswap_program(
+    pub fn escrow_program(
         &mut self,
-        tensorswap_program: &'b solana_program::account_info::AccountInfo<'a>,
+        escrow_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.tensorswap_program = Some(tensorswap_program);
+        self.instruction.escrow_program = Some(escrow_program);
         self
     }
     /// `[optional account]`
@@ -929,11 +925,11 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -1011,17 +1007,11 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
-            nft_seller_acc: self
-                .instruction
-                .nft_seller_acc
-                .expect("nft_seller_acc is not set"),
+            seller_ata: self.instruction.seller_ata.expect("seller_ata is not set"),
 
-            nft_mint: self.instruction.nft_mint.expect("nft_mint is not set"),
+            mint: self.instruction.mint.expect("mint is not set"),
 
-            owner_ata_acc: self
-                .instruction
-                .owner_ata_acc
-                .expect("owner_ata_acc is not set"),
+            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
 
             token_program: self
                 .instruction
@@ -1043,16 +1033,19 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
                 .marketplace_program
                 .expect("marketplace_program is not set"),
 
-            tensorswap_program: self
+            escrow_program: self
                 .instruction
-                .tensorswap_program
-                .expect("tensorswap_program is not set"),
+                .escrow_program
+                .expect("escrow_program is not set"),
 
             cosigner: self.instruction.cosigner,
 
             mint_proof: self.instruction.mint_proof.expect("mint_proof is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1072,17 +1065,17 @@ struct TakeBidT22CpiBuilderInstruction<'a, 'b> {
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    nft_seller_acc: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    nft_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner_ata_acc: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    tensorswap_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    escrow_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint_proof: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     min_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

@@ -1,12 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{transfer_checked, Mint, Token2022, TokenAccount, TransferChecked},
+    token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
-use tensor_toolbox::{fees::ID as TFEE_PROGRAM_ID, shard_num, token_2022::validate_mint};
+use tensor_toolbox::{
+    fees::ID as TFEE_PROGRAM_ID,
+    shard_num,
+    token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
+    TCreator,
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
@@ -35,7 +40,8 @@ pub struct TakeBidT22<'info> {
     pub seller: Signer<'info>,
 
     /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(mut,
+    #[account(
+        mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
         bump = bid_state.bump[0],
         has_one = owner
@@ -62,19 +68,19 @@ pub struct TakeBidT22<'info> {
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
 
-    #[account(mut, token::mint = nft_mint, token::authority = seller)]
-    pub nft_seller_acc: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(mut, token::mint = mint, token::authority = seller)]
+    pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
-    pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         init_if_needed,
         payer = seller,
-        associated_token::mint = nft_mint,
+        associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata_acc: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token2022>,
 
@@ -84,7 +90,7 @@ pub struct TakeBidT22<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, EscrowProgram>,
+    pub escrow_program: Program<'info, EscrowProgram>,
 
     // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
@@ -95,9 +101,11 @@ pub struct TakeBidT22<'info> {
 
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
+    //
+    // ---- [0..n] remaining accounts for royalties transfer hook
 }
 
 impl<'info> Validate<'info> for TakeBidT22<'info> {
@@ -145,10 +153,10 @@ pub fn process_take_bid_t22<'info>(
 ) -> Result<()> {
     // validate mint account
 
-    validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.nft_mint.key();
+    let mint = ctx.accounts.mint.key();
 
     match bid_state.target {
         Target::AssetId => {
@@ -162,7 +170,7 @@ pub fn process_take_bid_t22<'info>(
             );
 
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let nft_mint = &ctx.accounts.nft_mint;
+            let nft_mint = &ctx.accounts.mint;
 
             // must have merkle tree; otherwise fail
             if whitelist.root_hash != ZERO_ARRAY {
@@ -190,7 +198,7 @@ pub fn process_take_bid_t22<'info>(
     if let Some(field) = &bid_state.field {
         match field {
             &Field::Name => {
-                let mint_info = &ctx.accounts.nft_mint.to_account_info();
+                let mint_info = &ctx.accounts.mint.to_account_info();
                 let token_metadata = {
                     let buffer = mint_info.try_borrow_data()?;
                     let state = TlvStateBorrowed::unpack(&buffer)?;
@@ -210,15 +218,53 @@ pub fn process_take_bid_t22<'info>(
 
     // transfer the NFT
 
-    let transfer_cpi = CpiContext::new(
+    let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.nft_seller_acc.to_account_info(),
-            to: ctx.accounts.owner_ata_acc.to_account_info(),
+            from: ctx.accounts.seller_ata.to_account_info(),
+            to: ctx.accounts.owner_ata.to_account_info(),
             authority: ctx.accounts.seller.to_account_info(),
-            mint: ctx.accounts.nft_mint.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
         },
     );
+
+    // this will only add the remaining accounts required by a transfer hook if we
+    // recognize the hook as a royalty one
+    let (creators, creator_accounts, seller_fee_basis_points) = if let Some(RoyaltyInfo {
+        creators,
+        seller_fee,
+    }) = &royalties
+    {
+        // add remaining accounts to the transfer cpi
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+
+        let mut creator_infos = Vec::with_capacity(creators.len());
+        let mut creator_data = Vec::with_capacity(creators.len());
+        // filter out the creators accounts; the transfer will fail if there
+        // are missing creator accounts – i.e., the creator is on the `creator_data`
+        // but the account is not in the `creator_infos`
+        creators.iter().for_each(|c| {
+            let creator = TCreator {
+                address: c.0,
+                share: c.1,
+                verified: true,
+            };
+
+            if let Some(account) = ctx
+                .remaining_accounts
+                .iter()
+                .find(|account| &creator.address == account.key)
+            {
+                creator_infos.push(account.clone());
+            }
+
+            creator_data.push(creator);
+        });
+
+        (creator_data, creator_infos, *seller_fee)
+    } else {
+        (vec![], vec![], 0)
+    };
 
     transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
 
@@ -229,19 +275,23 @@ pub fn process_take_bid_t22<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_dest,
+        rent_dest: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id: mint,
-        token_standard: Some(TokenStandard::NonFungible),
-        creators: vec![],
+        token_standard: Some(if royalties.is_some() {
+            TokenStandard::ProgrammableNonFungible
+        } else {
+            TokenStandard::NonFungible
+        }),
+        creators,
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: 0, // no royalties on T22
-        creator_accounts: ctx.remaining_accounts,
+        seller_fee_basis_points,
+        creator_accounts: &creator_accounts,
         tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.tensorswap_program,
+        tswap_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

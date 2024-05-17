@@ -21,6 +21,7 @@ module.exports = function visitor(options) {
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -30,6 +31,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -40,11 +42,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
+                importFrom:"resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -55,6 +59,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
+                  importFrom:"resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
@@ -85,6 +90,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -94,6 +100,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -104,11 +111,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
+                importFrom:"resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -119,6 +128,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
+                  importFrom:"resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
@@ -149,6 +159,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -158,6 +169,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -168,11 +180,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
+                importFrom:"resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -183,6 +197,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
+                  importFrom:"resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
@@ -210,6 +225,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -219,6 +235,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -229,11 +246,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
+                importFrom:"resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom:"resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -244,6 +263,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
+                  importFrom:"resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),

@@ -57,7 +57,9 @@ export type TakeBidCoreInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountEscrowProgram extends string | IAccountMeta<string> = string,
+  TAccountEscrowProgram extends
+    | string
+    | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountMintProof extends string | IAccountMeta<string> = string,
   TAccountRentDest extends string | IAccountMeta<string> = string,
@@ -192,7 +194,7 @@ export type TakeBidCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  escrowProgram: Address<TAccountEscrowProgram>;
+  escrowProgram?: Address<TAccountEscrowProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
@@ -304,6 +306,10 @@ export function getTakeBidCoreInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.escrowProgram.value) {
+    accounts.escrowProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

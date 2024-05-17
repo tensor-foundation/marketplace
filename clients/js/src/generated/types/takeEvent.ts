@@ -26,6 +26,7 @@ import {
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
+  mapEncoder,
 } from '@solana/codecs';
 import {
   Field,
@@ -63,7 +64,7 @@ export type TakeEventArgs = {
   field: OptionOrNullable<FieldArgs>;
   fieldId: OptionOrNullable<Address>;
   amount: number | bigint;
-  quantity: number;
+  quantity?: number;
   tcompFee: number | bigint;
   takerBrokerFee: number | bigint;
   makerBrokerFee: number | bigint;
@@ -73,22 +74,25 @@ export type TakeEventArgs = {
 };
 
 export function getTakeEventEncoder(): Encoder<TakeEventArgs> {
-  return getStructEncoder([
-    ['taker', getAddressEncoder()],
-    ['bidId', getOptionEncoder(getAddressEncoder())],
-    ['target', getTargetEncoder()],
-    ['targetId', getAddressEncoder()],
-    ['field', getOptionEncoder(getFieldEncoder())],
-    ['fieldId', getOptionEncoder(getAddressEncoder())],
-    ['amount', getU64Encoder()],
-    ['quantity', getU32Encoder()],
-    ['tcompFee', getU64Encoder()],
-    ['takerBrokerFee', getU64Encoder()],
-    ['makerBrokerFee', getU64Encoder()],
-    ['creatorFee', getU64Encoder()],
-    ['currency', getOptionEncoder(getAddressEncoder())],
-    ['assetId', getOptionEncoder(getAddressEncoder())],
-  ]);
+  return mapEncoder(
+    getStructEncoder([
+      ['taker', getAddressEncoder()],
+      ['bidId', getOptionEncoder(getAddressEncoder())],
+      ['target', getTargetEncoder()],
+      ['targetId', getAddressEncoder()],
+      ['field', getOptionEncoder(getFieldEncoder())],
+      ['fieldId', getOptionEncoder(getAddressEncoder())],
+      ['amount', getU64Encoder()],
+      ['quantity', getU32Encoder()],
+      ['tcompFee', getU64Encoder()],
+      ['takerBrokerFee', getU64Encoder()],
+      ['makerBrokerFee', getU64Encoder()],
+      ['creatorFee', getU64Encoder()],
+      ['currency', getOptionEncoder(getAddressEncoder())],
+      ['assetId', getOptionEncoder(getAddressEncoder())],
+    ]),
+    (value) => ({ ...value, quantity: value.quantity ?? 1 })
+  );
 }
 
 export function getTakeEventDecoder(): Decoder<TakeEvent> {

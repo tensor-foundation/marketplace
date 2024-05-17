@@ -57,50 +57,6 @@
       ]
     },
     {
-      "name": "withdrawFees",
-      "accounts": [
-        {
-          "name": "tswap",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tcomp",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "We ask also for a signature just to make sure this wallet can actually sign things"
-          ]
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
       "name": "edit",
       "accounts": [
         {
@@ -174,7 +130,7 @@
           "isSigner": true
         },
         {
-          "name": "marginAccount",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -277,7 +233,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -308,7 +264,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1367,12 +1323,14 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "cosigner",
@@ -1497,12 +1455,14 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1611,12 +1571,14 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -1720,12 +1682,14 @@
         {
           "name": "tokenMetadataProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "sysvarInstructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "cosigner",
@@ -1809,49 +1773,52 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "whitelist",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
-          "name": "nftSellerAcc",
+          "name": "sellerAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftMint",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "nftMetadata",
+          "name": "metadata",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "ownerAtaAcc",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftEdition",
+          "name": "edition",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "sellerTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "ownerTokenRecord",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "destTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "pnftShared",
@@ -1859,22 +1826,25 @@
             {
               "name": "tokenMetadataProgram",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             },
             {
-              "name": "instructions",
+              "name": "sysvarInstructions",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             },
             {
               "name": "authorizationRulesProgram",
               "isMut": false,
-              "isSigner": false
+              "isSigner": false,
+              "isOptional": true
             }
           ]
         },
         {
-          "name": "nftEscrow",
+          "name": "bidAta",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -1882,14 +1852,16 @@
           ]
         },
         {
-          "name": "tempEscrowTokenRecord",
+          "name": "bidTokenRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
-          "name": "authRules",
+          "name": "authorizationRules",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -1912,7 +1884,7 @@
           "isSigner": false
         },
         {
-          "name": "tensorswapProgram",
+          "name": "escrowProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1926,12 +1898,13 @@
           "name": "mintProof",
           "isMut": false,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -2314,17 +2287,17 @@
           "isSigner": false
         },
         {
-          "name": "nftSellerAcc",
+          "name": "sellerAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftMint",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "ownerAtaAcc",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -2349,7 +2322,7 @@
           "isSigner": false
         },
         {
-          "name": "tensorswapProgram",
+          "name": "escrowProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2368,7 +2341,7 @@
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }

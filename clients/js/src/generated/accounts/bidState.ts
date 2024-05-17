@@ -55,6 +55,7 @@ import {
   getNullableAddressDecoder,
   getNullableAddressEncoder,
 } from '../../hooked';
+import { BidStateSeeds, findBidStatePda } from '../pdas';
 import {
   Field,
   FieldArgs,
@@ -114,7 +115,7 @@ export type BidStateAccountDataArgs = {
   targetId: Address;
   field: OptionOrNullable<FieldArgs>;
   fieldId: OptionOrNullable<Address>;
-  quantity: number;
+  quantity?: number;
   filledQuantity: number;
   amount: number | bigint;
   currency: OptionOrNullable<Address>;
@@ -158,7 +159,11 @@ export function getBidStateAccountDataEncoder(): Encoder<BidStateAccountDataArgs
       ['reserved1', getArrayEncoder(getU8Encoder(), { size: 16 })],
       ['reserved2', getBytesEncoder({ size: 32 })],
     ]),
-    (value) => ({ ...value, discriminator: [155, 197, 5, 97, 189, 60, 8, 183] })
+    (value) => ({
+      ...value,
+      discriminator: [155, 197, 5, 97, 189, 60, 8, 183],
+      quantity: value.quantity ?? 1,
+    })
   );
 }
 
@@ -251,4 +256,24 @@ export async function fetchAllMaybeBidState(
 ): Promise<MaybeBidState[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeBidState(maybeAccount));
+}
+
+export async function fetchBidStateFromSeeds(
+  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  seeds: BidStateSeeds,
+  config: FetchAccountConfig & { programAddress?: Address } = {}
+): Promise<BidState> {
+  const maybeAccount = await fetchMaybeBidStateFromSeeds(rpc, seeds, config);
+  assertAccountExists(maybeAccount);
+  return maybeAccount;
+}
+
+export async function fetchMaybeBidStateFromSeeds(
+  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  seeds: BidStateSeeds,
+  config: FetchAccountConfig & { programAddress?: Address } = {}
+): Promise<MaybeBidState> {
+  const { programAddress, ...fetchConfig } = config;
+  const [address] = await findBidStatePda(seeds, { programAddress });
+  return await fetchMaybeBidState(rpc, address, fetchConfig);
 }

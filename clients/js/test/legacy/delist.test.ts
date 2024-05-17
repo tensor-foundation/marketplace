@@ -16,11 +16,12 @@ import {
 } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  TokenStandard,
   findListStatePda,
   getDelistLegacyInstructionAsync,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 
 test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -67,6 +68,10 @@ test('it can delist a legacy Programmable NFT', async (t) => {
   // We create an pNFT.
   const { mint } = await createDefaultpNft(client, owner, owner, owner);
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
   const listLegacyIx = await getListLegacyInstructionAsync({
     owner,
     mint,
@@ -77,6 +82,7 @@ test('it can delist a legacy Programmable NFT', async (t) => {
   // And we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionInstruction(computeIx, tx),
     (tx) => appendTransactionInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

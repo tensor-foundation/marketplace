@@ -42,7 +42,7 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { resolveListAta, resolveOwnerAta } from '../../hooked';
+import { resolveListAta, resolveOwnerAta } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

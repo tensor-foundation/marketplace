@@ -45,13 +45,16 @@ import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import {
   TokenStandard,
   TokenStandardArgs,
+  resolveAuthorizationRulesProgramFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
   resolveOwnerAta,
   resolveOwnerTokenRecordFromTokenStandard,
-} from '../../hooked';
+  resolveSysvarInstructionsFromTokenStandard,
+  resolveTokenMetadataProgramFromTokenStandard,
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -95,12 +98,8 @@ export type ListLegacyInstruction<
   TAccountAuthorizationRulesProgram extends
     | string
     | IAccountMeta<string> = string,
-  TAccountTokenMetadataProgram extends
-    | string
-    | IAccountMeta<string> = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  TAccountSysvarInstructions extends
-    | string
-    | IAccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountTokenMetadataProgram extends string | IAccountMeta<string> = string,
+  TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -479,18 +478,22 @@ export async function getListLegacyInstructionAsync<
     };
   }
   if (!accounts.authorizationRulesProgram.value) {
-    if (accounts.authorizationRules.value) {
-      accounts.authorizationRulesProgram.value =
-        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
-    }
+    accounts.authorizationRulesProgram = {
+      ...accounts.authorizationRulesProgram,
+      ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.tokenMetadataProgram.value) {
-    accounts.tokenMetadataProgram.value =
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+    accounts.tokenMetadataProgram = {
+      ...accounts.tokenMetadataProgram,
+      ...resolveTokenMetadataProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    accounts.sysvarInstructions = {
+      ...accounts.sysvarInstructions,
+      ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
+    };
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -713,6 +716,9 @@ export function getListLegacyInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -737,18 +743,22 @@ export function getListLegacyInstruction<
     args.tokenStandard = TokenStandard.NonFungible;
   }
   if (!accounts.authorizationRulesProgram.value) {
-    if (accounts.authorizationRules.value) {
-      accounts.authorizationRulesProgram.value =
-        'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg' as Address<'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'>;
-    }
+    accounts.authorizationRulesProgram = {
+      ...accounts.authorizationRulesProgram,
+      ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.tokenMetadataProgram.value) {
-    accounts.tokenMetadataProgram.value =
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as Address<'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'>;
+    accounts.tokenMetadataProgram = {
+      ...accounts.tokenMetadataProgram,
+      ...resolveTokenMetadataProgramFromTokenStandard(resolverScope),
+    };
   }
   if (!accounts.sysvarInstructions.value) {
-    accounts.sysvarInstructions.value =
-      'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
+    accounts.sysvarInstructions = {
+      ...accounts.sysvarInstructions,
+      ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
+    };
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -826,8 +836,8 @@ export type ParsedListLegacyInstruction<
     listTokenRecord?: TAccountMetas[13] | undefined;
     authorizationRules?: TAccountMetas[14] | undefined;
     authorizationRulesProgram?: TAccountMetas[15] | undefined;
-    tokenMetadataProgram: TAccountMetas[16];
-    sysvarInstructions: TAccountMetas[17];
+    tokenMetadataProgram?: TAccountMetas[16] | undefined;
+    sysvarInstructions?: TAccountMetas[17] | undefined;
     cosigner?: TAccountMetas[18] | undefined;
   };
   data: ListLegacyInstructionData;
@@ -876,8 +886,8 @@ export function parseListLegacyInstruction<
       listTokenRecord: getNextOptionalAccount(),
       authorizationRules: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
-      tokenMetadataProgram: getNextAccount(),
-      sysvarInstructions: getNextAccount(),
+      tokenMetadataProgram: getNextOptionalAccount(),
+      sysvarInstructions: getNextOptionalAccount(),
       cosigner: getNextOptionalAccount(),
     },
     data: getListLegacyInstructionDataDecoder().decode(instruction.data),

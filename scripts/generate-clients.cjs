@@ -37,27 +37,19 @@ kinobi.update(
     },
     // default programs
     {
-      account: "tokenProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-        "tokenProgram",
-      ),
-    },
-    {
-      account: "associatedTokenProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-        "associatedTokenProgram",
-      ),
-    },
-    {
       account: "marketplaceProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-        "marketplaceProgram",
+        "marketplaceProgram"
+      ),
+    },
+    {
+      account: "escrowProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
+        "escrowProgram"
       ),
     },
     {
@@ -65,39 +57,71 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "11111111111111111111111111111111",
-        "systemProgram",
+        "systemProgram"
       ),
     },
     {
-      account: "tokenMetadataProgram",
+      account: "tokenProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
-        "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
-        "tokenMetadataProgram",
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "tokenProgram"
+      ),
+    },
+    {
+      account: "associatedTokenProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+        "associatedTokenProgram"
+      ),
+    },
+    {
+      account: "tensorswapProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
+        "tensorswapProgram"
+      )
+    },
+    // Legacy
+    {
+      account: "tokenMetadataProgram",
+      defaultValue: k.resolverValueNode(
+        "resolveTokenMetadataProgramFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
       ),
     },
     {
       account: "authorizationRulesProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
-        "authorizationRulesProgram",
+      defaultValue: k.resolverValueNode(
+        "resolveAuthorizationRulesProgramFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
       ),
     },
     {
       account: "sysvarInstructions",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "Sysvar1111111111111111111111111111111111111",
-        "sysvarInstructions",
+      defaultValue: k.resolverValueNode(
+        "resolveSysvarInstructionsFromTokenStandard",
+        {
+          importFrom: "resolvers",
+          dependsOn: [k.argumentValueNode("tokenStandard")],
+        }
       ),
     },
+    // WNS
     {
       account: "wnsProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM",
-        "wnsProgram",
+        "wnsProgram"
       ),
     },
     {
@@ -105,9 +129,10 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
-        "wnsDistributionProgram",
+        "wnsDistributionProgram"
       ),
     },
+    // Compressed
     {
       account: "logWrapper",
       ignoreIfOptional: true,
@@ -137,14 +162,6 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.programIdValueNode(),
     },
-    {
-      account: "tensorswapProgram",
-      ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
-        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
-        "tensorswapProgram"
-      )
-    }
   ])
 );
 
@@ -157,7 +174,80 @@ kinobi.update(
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
-  }),
+    bidState: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("bid_state"),
+        k.variablePdaSeedNode("owner", k.publicKeyTypeNode()),
+        k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
+      ],
+    },
+  })
+);
+
+// Update instructions.
+kinobi.update(
+  k.updateInstructionsVisitor({
+    bid: {
+      accounts: {
+        rentPayer: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        sharedEscrow: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          defaultValue: k.argumentValueNode("targetId"),
+        },
+      },
+    },
+    cancelBid: {
+      accounts: {
+        rentDestination: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          type: k.publicKeyTypeNode(),
+          defaultValue: k.publicKeyValueNode(
+            "11111111111111111111111111111111"
+          ),
+        },
+      },
+    },
+    closeExpiredBid: {
+      accounts: {
+        rentDestination: {
+          defaultValue: k.accountValueNode("owner"),
+        },
+        bidState: {
+          defaultValue: k.pdaValueNode("bidState", [
+            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          ]),
+        },
+      },
+      arguments: {
+        bidId: {
+          type: k.publicKeyTypeNode(),
+          defaultValue: k.publicKeyValueNode(
+            "11111111111111111111111111111111"
+          ),
+        },
+      },
+    },
+  })
 );
 
 // Update instructions using additional visitors.
@@ -166,7 +256,7 @@ kinobi.update(compressedInstructions());
 kinobi.update(token22Instructions());
 kinobi.update(wnsInstructions());
 
-// Set more struct default values dynamically.
+// Set struct default values.
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
@@ -178,6 +268,8 @@ kinobi.update(
           "makerBroker",
           "authorizationData",
           "optionalRoyaltyPct",
+          "field",
+          "fieldId",
         ];
         return (
           k.isNode(node, ["instructionNode", "instructionArgumentNode"]) &&
@@ -196,7 +288,33 @@ kinobi.update(
         };
       },
     },
-  ]),
+    {
+      select: "[structFieldTypeNode|instructionArgumentNode]quantity",
+      transform: (node) => {
+        k.assertIsNode(node, [
+          "structFieldTypeNode",
+          "instructionArgumentNode",
+        ]);
+        return {
+          ...node,
+          defaultValue: k.numberValueNode(1),
+        };
+      },
+    },
+    {
+      select: "[structFieldTypeNode|instructionArgumentNode]rulesAccPresent",
+      transform: (node) => {
+        k.assertIsNode(node, [
+          "structFieldTypeNode",
+          "instructionArgumentNode",
+        ]);
+        return {
+          ...node,
+          defaultValue: k.booleanValueNode(false),
+        };
+      },
+    },
+  ])
 );
 
 // Add missing types from the IDL.
@@ -222,7 +340,7 @@ kinobi.update(
         };
       },
     },
-  ]),
+  ])
 );
 
 // Render JavaScript.
@@ -232,20 +350,30 @@ kinobi.accept(
   k.renderJavaScriptExperimentalVisitor(jsDir, {
     prettier,
     asyncResolvers: [
+      "resolveBidStateFromBidId",
+      "resolveFeeVaultPdaFromListState",
+      "resolveFeeVaultPdaFromBidState",
       "resolveBuyerAta",
       "resolveListAta",
       "resolveOwnerAta",
-      "resolveMetadata",
-      "resolveEditionFromTokenStandard",
-      "resolveOwnerTokenRecordFromTokenStandard",
+      "resolveSellerAta",
+      "resolveBidAta",
       "resolveBuyerTokenRecordFromTokenStandard",
       "resolveListTokenRecordFromTokenStandard",
+      "resolveOwnerTokenRecordFromTokenStandard",
+      "resolveSellerTokenRecordFromTokenStandard",
+      "resolveBidTokenRecordFromTokenStandard",
+      "resolveMetadata",
+      "resolveEditionFromTokenStandard",
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
       "resolveTreeAuthorityPda"
     ],
-  }),
+    dependencyMap: {
+      resolvers: "@tensor-foundation/resolvers",
+    },
+  })
 );
 
 // Render Rust.
@@ -255,5 +383,5 @@ kinobi.accept(
   k.renderRustVisitor(rustDir, {
     formatCode: true,
     crateFolder: crateDir,
-  }),
+  })
 );

@@ -21,7 +21,7 @@ pub struct Bid {
 
     pub owner: solana_program::pubkey::Pubkey,
 
-    pub margin_account: solana_program::pubkey::Pubkey,
+    pub shared_escrow: solana_program::pubkey::Pubkey,
 
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
@@ -58,7 +58,7 @@ impl Bid {
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin_account,
+            self.shared_escrow,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -125,7 +125,7 @@ pub struct BidInstructionArgs {
 ///   1. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
-///   4. `[writable]` margin_account
+///   4. `[writable]` shared_escrow
 ///   5. `[signer, optional]` cosigner
 ///   6. `[writable, signer]` rent_payer
 #[derive(Default)]
@@ -134,7 +134,7 @@ pub struct BidBuilder {
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    margin_account: Option<solana_program::pubkey::Pubkey>,
+    shared_escrow: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     rent_payer: Option<solana_program::pubkey::Pubkey>,
     bid_id: Option<Pubkey>,
@@ -181,8 +181,8 @@ impl BidBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin_account = Some(margin_account);
+    pub fn shared_escrow(&mut self, shared_escrow: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.shared_escrow = Some(shared_escrow);
         self
     }
     /// `[optional account]`
@@ -228,6 +228,7 @@ impl BidBuilder {
         self.amount = Some(amount);
         self
     }
+    /// `[optional argument, defaults to '1']`
     #[inline(always)]
     pub fn quantity(&mut self, quantity: u32) -> &mut Self {
         self.quantity = Some(quantity);
@@ -286,7 +287,7 @@ impl BidBuilder {
             )),
             bid_state: self.bid_state.expect("bid_state is not set"),
             owner: self.owner.expect("owner is not set"),
-            margin_account: self.margin_account.expect("margin_account is not set"),
+            shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
             cosigner: self.cosigner,
             rent_payer: self.rent_payer.expect("rent_payer is not set"),
         };
@@ -297,7 +298,7 @@ impl BidBuilder {
             field: self.field.clone(),
             field_id: self.field_id.clone(),
             amount: self.amount.clone().expect("amount is not set"),
-            quantity: self.quantity.clone().expect("quantity is not set"),
+            quantity: self.quantity.clone().unwrap_or(1),
             expire_in_sec: self.expire_in_sec.clone(),
             currency: self.currency.clone(),
             private_taker: self.private_taker.clone(),
@@ -318,7 +319,7 @@ pub struct BidCpiAccounts<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -338,7 +339,7 @@ pub struct BidCpi<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -359,7 +360,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
             marketplace_program: accounts.marketplace_program,
             bid_state: accounts.bid_state,
             owner: accounts.owner,
-            margin_account: accounts.margin_account,
+            shared_escrow: accounts.shared_escrow,
             cosigner: accounts.cosigner,
             rent_payer: accounts.rent_payer,
             __args: args,
@@ -416,7 +417,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin_account.key,
+            *self.shared_escrow.key,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -456,7 +457,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.shared_escrow.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
         }
@@ -481,7 +482,7 @@ impl<'a, 'b> BidCpi<'a, 'b> {
 ///   1. `[]` marketplace_program
 ///   2. `[writable]` bid_state
 ///   3. `[writable, signer]` owner
-///   4. `[writable]` margin_account
+///   4. `[writable]` shared_escrow
 ///   5. `[signer, optional]` cosigner
 ///   6. `[writable, signer]` rent_payer
 pub struct BidCpiBuilder<'a, 'b> {
@@ -496,7 +497,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
             marketplace_program: None,
             bid_state: None,
             owner: None,
-            margin_account: None,
+            shared_escrow: None,
             cosigner: None,
             rent_payer: None,
             bid_id: None,
@@ -544,11 +545,11 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin_account(
+    pub fn shared_escrow(
         &mut self,
-        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+        shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin_account = Some(margin_account);
+        self.instruction.shared_escrow = Some(shared_escrow);
         self
     }
     /// `[optional account]`
@@ -600,6 +601,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
         self.instruction.amount = Some(amount);
         self
     }
+    /// `[optional argument, defaults to '1']`
     #[inline(always)]
     pub fn quantity(&mut self, quantity: u32) -> &mut Self {
         self.instruction.quantity = Some(quantity);
@@ -681,11 +683,7 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
             field: self.instruction.field.clone(),
             field_id: self.instruction.field_id.clone(),
             amount: self.instruction.amount.clone().expect("amount is not set"),
-            quantity: self
-                .instruction
-                .quantity
-                .clone()
-                .expect("quantity is not set"),
+            quantity: self.instruction.quantity.clone().unwrap_or(1),
             expire_in_sec: self.instruction.expire_in_sec.clone(),
             currency: self.instruction.currency.clone(),
             private_taker: self.instruction.private_taker.clone(),
@@ -708,10 +706,10 @@ impl<'a, 'b> BidCpiBuilder<'a, 'b> {
 
             owner: self.instruction.owner.expect("owner is not set"),
 
-            margin_account: self
+            shared_escrow: self
                 .instruction
-                .margin_account
-                .expect("margin_account is not set"),
+                .shared_escrow
+                .expect("shared_escrow is not set"),
 
             cosigner: self.instruction.cosigner,
 
@@ -731,7 +729,7 @@ struct BidCpiBuilderInstruction<'a, 'b> {
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    shared_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_id: Option<Pubkey>,

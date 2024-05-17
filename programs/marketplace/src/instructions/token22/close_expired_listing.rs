@@ -1,7 +1,8 @@
 use anchor_spl::{
-    token_2022::{close_account, transfer_checked, CloseAccount, Token2022, TransferChecked},
+    token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
+use tensor_toolbox::token_2022::{transfer::transfer_checked, validate_mint};
 
 use self::program::MarketplaceProgram;
 use crate::*;
@@ -54,6 +55,8 @@ pub struct CloseExpiredListingT22<'info> {
     pub system_program: Program<'info, System>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
+    //
+    // ---- [0..n] remaining accounts for royalties transfer hook
 }
 
 pub fn process_close_expired_listing_t22<'info>(
@@ -65,9 +68,13 @@ pub fn process_close_expired_listing_t22<'info>(
         TcompError::ListingNotYetExpired
     );
 
+    // validates the mint
+
+    let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
+
     // transfer the NFT
 
-    let transfer_cpi = CpiContext::new(
+    let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
             from: ctx.accounts.list_ata.to_account_info(),
@@ -77,11 +84,17 @@ pub fn process_close_expired_listing_t22<'info>(
         },
     );
 
+    // this will only add the remaining accounts required by a transfer hook if we
+    // recognize the hook as a royalty one
+    if royalties.is_some() {
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+    }
+
     transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
-        1,
-        0,
-    )?; // supply = 1, decimals = 0
+        1, // supply = 1
+        0, // decimals = 0
+    )?;
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

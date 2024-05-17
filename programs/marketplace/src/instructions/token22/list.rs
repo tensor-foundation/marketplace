@@ -4,7 +4,7 @@ use anchor_spl::{
     token_2022::{close_account, transfer_checked, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
-use tensor_toolbox::NullableOption;
+use tensor_toolbox::{token_2022::validate_mint, NullableOption};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -54,6 +54,8 @@ pub struct ListT22<'info> {
     pub system_program: Program<'info, System>,
 
     pub cosigner: Option<Signer<'info>>,
+    //
+    // ---- [0..n] remaining accounts for royalties transfer hook
 }
 
 pub fn process_list_t22<'info>(
@@ -64,9 +66,13 @@ pub fn process_list_t22<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    // validates the mint
+
+    let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
+
     // transfer the NFT
 
-    let transfer_cpi = CpiContext::new(
+    let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
             from: ctx.accounts.owner_ata.to_account_info(),
@@ -75,6 +81,12 @@ pub fn process_list_t22<'info>(
             mint: ctx.accounts.mint.to_account_info(),
         },
     );
+
+    // this will only add the remaining accounts required by a transfer hook if we
+    // recognize the hook as a royalty one
+    if royalties.is_some() {
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+    }
 
     transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
 

@@ -38,4 +38,3 @@ export * from './takeBidLegacy';
 export * from './takeBidT22';
 export * from './takeBidWns';
 export * from './tcompNoop';
-export * from './withdrawFees';
