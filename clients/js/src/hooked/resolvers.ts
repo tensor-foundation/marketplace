@@ -104,12 +104,12 @@ export const resolveRemainingSignerWithOwnerOrDelegate = ({
     | TransactionSigner
     | null;
 } => {
-  if (!accounts.owner.value || isTransactionSigner(accounts.owner.value)) {
+  if (!!accounts.owner.value && isTransactionSigner(accounts.owner.value)) {
     return {
       value: accounts.owner.value,
     };
   }
-  if (!accounts.delegate.value || isTransactionSigner(accounts.delegate.value))
+  if (!!accounts.delegate.value && isTransactionSigner(accounts.delegate.value))
     return {
       value: accounts.delegate.value,
     };
@@ -129,12 +129,12 @@ export const resolveRemainingSignerWithSellerOrDelegate = ({
     | TransactionSigner
     | null;
 } => {
-  if (!accounts.seller.value || isTransactionSigner(accounts.seller.value)) {
+  if (!!accounts.seller.value && isTransactionSigner(accounts.seller.value)) {
     return {
       value: accounts.seller.value,
     };
   }
-  if (!accounts.delegate.value || isTransactionSigner(accounts.delegate.value))
+  if (!!accounts.delegate.value && isTransactionSigner(accounts.delegate.value))
     return {
       value: accounts.delegate.value,
     };
