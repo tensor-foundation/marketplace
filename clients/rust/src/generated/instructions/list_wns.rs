@@ -139,12 +139,12 @@ impl ListWns {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct ListWnsInstructionData {
+pub struct ListWnsInstructionData {
     discriminator: [u8; 8],
 }
 
 impl ListWnsInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [23, 202, 102, 138, 255, 190, 39, 196],
         }

@@ -33,7 +33,6 @@ import {
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
-  none,
 } from '@solana/codecs';
 import {
   IAccountMeta,
@@ -46,20 +45,36 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
+import {
+  resolveCreatorPath,
+  resolveProofPath,
+  resolveTreeAuthorityPda,
+} from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 
-export type BuyInstruction<
+export type BuyCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
-  TAccountLogWrapper extends string | IAccountMeta<string> = string,
-  TAccountCompressionProgram extends string | IAccountMeta<string> = string,
+  TAccountLogWrapper extends
+    | string
+    | IAccountMeta<string> = 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV',
+  TAccountCompressionProgram extends
+    | string
+    | IAccountMeta<string> = 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountBubblegumProgram extends string | IAccountMeta<string> = string,
+  TAccountBubblegumProgram extends
+    | string
+    | IAccountMeta<string> = 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY',
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
@@ -130,7 +145,7 @@ export type BuyInstruction<
     ]
   >;
 
-export type BuyInstructionData = {
+export type BuyCompressedInstructionData = {
   discriminator: Array<number>;
   nonce: bigint;
   index: number;
@@ -143,7 +158,7 @@ export type BuyInstructionData = {
   optionalRoyaltyPct: Option<number>;
 };
 
-export type BuyInstructionDataArgs = {
+export type BuyCompressedInstructionDataArgs = {
   nonce: number | bigint;
   index: number;
   root: Uint8Array;
@@ -155,7 +170,7 @@ export type BuyInstructionDataArgs = {
   optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
-export function getBuyInstructionDataEncoder(): Encoder<BuyInstructionDataArgs> {
+export function getBuyCompressedInstructionDataEncoder(): Encoder<BuyCompressedInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
@@ -172,12 +187,12 @@ export function getBuyInstructionDataEncoder(): Encoder<BuyInstructionDataArgs> 
     (value) => ({
       ...value,
       discriminator: [102, 6, 61, 18, 1, 218, 235, 234],
-      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? 100,
     })
   );
 }
 
-export function getBuyInstructionDataDecoder(): Decoder<BuyInstructionData> {
+export function getBuyCompressedInstructionDataDecoder(): Decoder<BuyCompressedInstructionData> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['nonce', getU64Decoder()],
@@ -192,17 +207,275 @@ export function getBuyInstructionDataDecoder(): Decoder<BuyInstructionData> {
   ]);
 }
 
-export function getBuyInstructionDataCodec(): Codec<
-  BuyInstructionDataArgs,
-  BuyInstructionData
+export function getBuyCompressedInstructionDataCodec(): Codec<
+  BuyCompressedInstructionDataArgs,
+  BuyCompressedInstructionData
 > {
   return combineCodec(
-    getBuyInstructionDataEncoder(),
-    getBuyInstructionDataDecoder()
+    getBuyCompressedInstructionDataEncoder(),
+    getBuyCompressedInstructionDataDecoder()
   );
 }
 
-export type BuyInput<
+export type BuyCompressedInstructionExtraArgs = {
+  /** creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ] */
+  creators?: Array<[Address, number]>;
+  /** proof path, can be shortened if canopyDepth of merkle tree is also specified */
+  proof?: Array<Address>;
+  /** canopy depth of merkle tree, reduces proofPath length if specified */
+  canopyDepth?: number;
+};
+
+export type BuyCompressedAsyncInput<
+  TAccountFeeVault extends string = string,
+  TAccountTreeAuthority extends string = string,
+  TAccountMerkleTree extends string = string,
+  TAccountLogWrapper extends string = string,
+  TAccountCompressionProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountBubblegumProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountListState extends string = string,
+  TAccountBuyer extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountRentDest extends string = string,
+  TAccountCosigner extends string = string,
+> = {
+  feeVault: Address<TAccountFeeVault>;
+  treeAuthority?: Address<TAccountTreeAuthority>;
+  merkleTree: Address<TAccountMerkleTree>;
+  logWrapper?: Address<TAccountLogWrapper>;
+  compressionProgram?: Address<TAccountCompressionProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  bubblegumProgram?: Address<TAccountBubblegumProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  listState: Address<TAccountListState>;
+  buyer?: Address<TAccountBuyer>;
+  payer: TransactionSigner<TAccountPayer>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  rentDest?: Address<TAccountRentDest>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  nonce?: BuyCompressedInstructionDataArgs['nonce'];
+  index: BuyCompressedInstructionDataArgs['index'];
+  root: BuyCompressedInstructionDataArgs['root'];
+  metaHash: BuyCompressedInstructionDataArgs['metaHash'];
+  creatorShares: BuyCompressedInstructionDataArgs['creatorShares'];
+  creatorVerified: BuyCompressedInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: BuyCompressedInstructionDataArgs['sellerFeeBasisPoints'];
+  maxAmount: BuyCompressedInstructionDataArgs['maxAmount'];
+  optionalRoyaltyPct?: BuyCompressedInstructionDataArgs['optionalRoyaltyPct'];
+  creators?: BuyCompressedInstructionExtraArgs['creators'];
+  proof?: BuyCompressedInstructionExtraArgs['proof'];
+  canopyDepth?: BuyCompressedInstructionExtraArgs['canopyDepth'];
+};
+
+export async function getBuyCompressedInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountTreeAuthority extends string,
+  TAccountMerkleTree extends string,
+  TAccountLogWrapper extends string,
+  TAccountCompressionProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountBubblegumProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountListState extends string,
+  TAccountBuyer extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountRentDest extends string,
+  TAccountCosigner extends string,
+>(
+  input: BuyCompressedAsyncInput<
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountMarketplaceProgram,
+    TAccountListState,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDest,
+    TAccountCosigner
+  >
+): Promise<
+  BuyCompressedInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountMarketplaceProgram,
+    TAccountListState,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDest,
+    TAccountCosigner
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
+    merkleTree: { value: input.merkleTree ?? null, isWritable: true },
+    logWrapper: { value: input.logWrapper ?? null, isWritable: false },
+    compressionProgram: {
+      value: input.compressionProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    bubblegumProgram: {
+      value: input.bubblegumProgram ?? null,
+      isWritable: false,
+    },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    listState: { value: input.listState ?? null, isWritable: true },
+    buyer: { value: input.buyer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.bubblegumProgram.value) {
+    accounts.bubblegumProgram.value =
+      'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
+  }
+  if (!accounts.treeAuthority.value) {
+    accounts.treeAuthority = {
+      ...accounts.treeAuthority,
+      ...(await resolveTreeAuthorityPda(resolverScope)),
+    };
+  }
+  if (!accounts.logWrapper.value) {
+    accounts.logWrapper.value =
+      'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
+  }
+  if (!accounts.compressionProgram.value) {
+    accounts.compressionProgram.value =
+      'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDest.value) {
+    accounts.rentDest.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
+  }
+  if (!args.creators) {
+    args.creators = [];
+  }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...resolveCreatorPath(resolverScope),
+    ...resolveProofPath(resolverScope),
+  ];
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.treeAuthority),
+      getAccountMeta(accounts.merkleTree),
+      getAccountMeta(accounts.logWrapper),
+      getAccountMeta(accounts.compressionProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.bubblegumProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.buyer),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getBuyCompressedInstructionDataEncoder().encode(
+      args as BuyCompressedInstructionDataArgs
+    ),
+  } as BuyCompressedInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountTreeAuthority,
+    TAccountMerkleTree,
+    TAccountLogWrapper,
+    TAccountCompressionProgram,
+    TAccountSystemProgram,
+    TAccountBubblegumProgram,
+    TAccountMarketplaceProgram,
+    TAccountListState,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDest,
+    TAccountCosigner
+  >;
+
+  return instruction;
+}
+
+export type BuyCompressedInput<
   TAccountFeeVault extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
@@ -223,31 +496,34 @@ export type BuyInput<
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
-  logWrapper: Address<TAccountLogWrapper>;
-  compressionProgram: Address<TAccountCompressionProgram>;
+  logWrapper?: Address<TAccountLogWrapper>;
+  compressionProgram?: Address<TAccountCompressionProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  bubblegumProgram: Address<TAccountBubblegumProgram>;
+  bubblegumProgram?: Address<TAccountBubblegumProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDest: Address<TAccountRentDest>;
+  rentDest?: Address<TAccountRentDest>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  nonce: BuyInstructionDataArgs['nonce'];
-  index: BuyInstructionDataArgs['index'];
-  root: BuyInstructionDataArgs['root'];
-  metaHash: BuyInstructionDataArgs['metaHash'];
-  creatorShares: BuyInstructionDataArgs['creatorShares'];
-  creatorVerified: BuyInstructionDataArgs['creatorVerified'];
-  sellerFeeBasisPoints: BuyInstructionDataArgs['sellerFeeBasisPoints'];
-  maxAmount: BuyInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct?: BuyInstructionDataArgs['optionalRoyaltyPct'];
+  nonce?: BuyCompressedInstructionDataArgs['nonce'];
+  index: BuyCompressedInstructionDataArgs['index'];
+  root: BuyCompressedInstructionDataArgs['root'];
+  metaHash: BuyCompressedInstructionDataArgs['metaHash'];
+  creatorShares: BuyCompressedInstructionDataArgs['creatorShares'];
+  creatorVerified: BuyCompressedInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: BuyCompressedInstructionDataArgs['sellerFeeBasisPoints'];
+  maxAmount: BuyCompressedInstructionDataArgs['maxAmount'];
+  optionalRoyaltyPct?: BuyCompressedInstructionDataArgs['optionalRoyaltyPct'];
+  creators?: BuyCompressedInstructionExtraArgs['creators'];
+  proof?: BuyCompressedInstructionExtraArgs['proof'];
+  canopyDepth?: BuyCompressedInstructionExtraArgs['canopyDepth'];
 };
 
-export function getBuyInstruction<
+export function getBuyCompressedInstruction<
   TAccountFeeVault extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
@@ -265,7 +541,7 @@ export function getBuyInstruction<
   TAccountRentDest extends string,
   TAccountCosigner extends string,
 >(
-  input: BuyInput<
+  input: BuyCompressedInput<
     TAccountFeeVault,
     TAccountTreeAuthority,
     TAccountMerkleTree,
@@ -283,7 +559,7 @@ export function getBuyInstruction<
     TAccountRentDest,
     TAccountCosigner
   >
-): BuyInstruction<
+): BuyCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountTreeAuthority,
@@ -341,7 +617,22 @@ export function getBuyInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
+  if (!accounts.bubblegumProgram.value) {
+    accounts.bubblegumProgram.value =
+      'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
+  }
+  if (!accounts.logWrapper.value) {
+    accounts.logWrapper.value =
+      'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV' as Address<'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV'>;
+  }
+  if (!accounts.compressionProgram.value) {
+    accounts.compressionProgram.value =
+      'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -350,6 +641,32 @@ export function getBuyInstruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDest.value) {
+    accounts.rentDest.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
+  }
+  if (!args.creators) {
+    args.creators = [];
+  }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...resolveCreatorPath(resolverScope),
+    ...resolveProofPath(resolverScope),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -370,10 +687,13 @@ export function getBuyInstruction<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.rentDest),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
-    data: getBuyInstructionDataEncoder().encode(args as BuyInstructionDataArgs),
-  } as BuyInstruction<
+    data: getBuyCompressedInstructionDataEncoder().encode(
+      args as BuyCompressedInstructionDataArgs
+    ),
+  } as BuyCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
@@ -396,7 +716,7 @@ export function getBuyInstruction<
   return instruction;
 }
 
-export type ParsedBuyInstruction<
+export type ParsedBuyCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -419,17 +739,17 @@ export type ParsedBuyInstruction<
     rentDest: TAccountMetas[14];
     cosigner?: TAccountMetas[15] | undefined;
   };
-  data: BuyInstructionData;
+  data: BuyCompressedInstructionData;
 };
 
-export function parseBuyInstruction<
+export function parseBuyCompressedInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedBuyInstruction<TProgram, TAccountMetas> {
+): ParsedBuyCompressedInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -466,6 +786,6 @@ export function parseBuyInstruction<
       rentDest: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },
-    data: getBuyInstructionDataDecoder().decode(instruction.data),
+    data: getBuyCompressedInstructionDataDecoder().decode(instruction.data),
   };
 }

@@ -10,6 +10,7 @@ const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
 
 // Additional visitors for instrunctions.
 const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
+const compressedInstructions = require("./kinobi/compressed-instructions.cjs");
 const token22Instructions = require("./kinobi/token22-instructions.cjs");
 const wnsInstructions = require("./kinobi/wns-instructions.cjs");
 
@@ -23,6 +24,17 @@ kinobi.update(
 // Set default account values accross multiple instructions.
 kinobi.update(
   k.setInstructionAccountDefaultValuesVisitor([
+    // TODO: set default value for newly added feeVault acc
+    {
+      account: "treeAuthority",
+      ignoreIfOptional: true,
+      defaultValue: k.resolverValueNode("resolveTreeAuthorityPda", {
+        dependsOn: [
+          k.accountValueNode("merkleTree"),
+          k.accountValueNode("bubblegumProgram")
+        ],
+      }),
+    },
     // default programs
     {
       account: "marketplaceProgram",
@@ -63,6 +75,14 @@ kinobi.update(
         "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
         "associatedTokenProgram"
       ),
+    },
+    {
+      account: "tensorswapProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
+        "tensorswapProgram"
+      )
     },
     // Legacy
     {
@@ -111,6 +131,36 @@ kinobi.update(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
         "wnsDistributionProgram"
       ),
+    },
+    // Compressed
+    {
+      account: "logWrapper",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV",
+        "logWrapper"
+      ),
+    },
+    {
+      account: "compressionProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK",
+        "compressionProgram"
+      ),
+    },
+    {
+      account: "bubblegumProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.publicKeyValueNode(
+        "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
+        "bubblegumProgram"
+      ),
+    },
+    {
+      account: "tcompProgram",
+      ignoreIfOptional: true,
+      defaultValue: k.programIdValueNode(),
     },
   ])
 );
@@ -202,6 +252,7 @@ kinobi.update(
 
 // Update instructions using additional visitors.
 kinobi.update(legacyInstructions());
+kinobi.update(compressedInstructions());
 kinobi.update(token22Instructions());
 kinobi.update(wnsInstructions());
 
@@ -228,6 +279,8 @@ kinobi.update(
       },
       transform: (node) => {
         k.assertIsNode(node, ["instructionNode", "instructionArgumentNode"]);
+        // prevents overriding existing default values (e.g. optionalRoyaltyPct for cNFTs)
+        if(!!node.defaultValue) return node;
         return {
           ...node,
           defaultValueStrategy: "optional",
@@ -315,6 +368,7 @@ kinobi.accept(
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
+      "resolveTreeAuthorityPda"
     ],
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers",

@@ -7,15 +7,10 @@
 
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct List {
+pub struct DelistCompressed {
     pub tree_authority: solana_program::pubkey::Pubkey,
-
-    pub owner: solana_program::pubkey::Pubkey,
-
-    pub delegate: solana_program::pubkey::Pubkey,
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
 
@@ -27,38 +22,31 @@ pub struct List {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub marketplace_program: solana_program::pubkey::Pubkey,
-
     pub list_state: solana_program::pubkey::Pubkey,
 
-    pub rent_payer: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+    pub marketplace_program: solana_program::pubkey::Pubkey,
+
+    pub rent_dest: solana_program::pubkey::Pubkey,
 }
 
-impl List {
+impl DelistCompressed {
     pub fn instruction(
         &self,
-        args: ListInstructionArgs,
+        args: DelistCompressedInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: ListInstructionArgs,
+        args: DelistCompressedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.tree_authority,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner, false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.delegate,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -81,30 +69,23 @@ impl List {
             self.bubblegum_program,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.list_state,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.owner, true,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+            self.rent_dest,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_payer,
-            true,
-        ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = ListInstructionData::new().try_to_vec().unwrap();
+        let mut data = DelistCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -117,77 +98,63 @@ impl List {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct ListInstructionData {
+pub struct DelistCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
-impl ListInstructionData {
-    fn new() -> Self {
+impl DelistCompressedInstructionData {
+    pub fn new() -> Self {
         Self {
-            discriminator: [54, 174, 193, 67, 17, 41, 132, 38],
+            discriminator: [55, 136, 205, 107, 107, 173, 4, 31],
         }
     }
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ListInstructionArgs {
+pub struct DelistCompressedInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
     pub data_hash: [u8; 32],
     pub creator_hash: [u8; 32],
-    pub amount: u64,
-    pub expire_in_sec: Option<u64>,
-    pub currency: Option<Pubkey>,
-    pub private_taker: Option<Pubkey>,
-    pub maker_broker: Option<Pubkey>,
 }
 
-/// Instruction builder for `List`.
+/// Instruction builder for `DelistCompressed`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[]` tree_authority
-///   1. `[]` owner
-///   2. `[]` delegate
-///   3. `[writable]` merkle_tree
-///   4. `[]` log_wrapper
-///   5. `[]` compression_program
-///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[]` bubblegum_program
+///   1. `[writable]` merkle_tree
+///   2. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
+///   3. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   5. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
+///   6. `[writable]` list_state
+///   7. `[signer]` owner
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   9. `[writable]` list_state
-///   10. `[writable, signer]` rent_payer
-///   11. `[signer, optional]` cosigner
+///   9. `[writable]` rent_dest
 #[derive(Default)]
-pub struct ListBuilder {
+pub struct DelistCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<solana_program::pubkey::Pubkey>,
-    delegate: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    marketplace_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
-    rent_payer: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<solana_program::pubkey::Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
+    marketplace_program: Option<solana_program::pubkey::Pubkey>,
+    rent_dest: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
     data_hash: Option<[u8; 32]>,
     creator_hash: Option<[u8; 32]>,
-    amount: Option<u64>,
-    expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
-    private_taker: Option<Pubkey>,
-    maker_broker: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl ListBuilder {
+impl DelistCompressedBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -197,25 +164,17 @@ impl ListBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
-        self
-    }
-    #[inline(always)]
-    pub fn delegate(&mut self, delegate: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.delegate = Some(delegate);
-        self
-    }
-    #[inline(always)]
     pub fn merkle_tree(&mut self, merkle_tree: solana_program::pubkey::Pubkey) -> &mut Self {
         self.merkle_tree = Some(merkle_tree);
         self
     }
+    /// `[optional account, default to 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV']`
     #[inline(always)]
     pub fn log_wrapper(&mut self, log_wrapper: solana_program::pubkey::Pubkey) -> &mut Self {
         self.log_wrapper = Some(log_wrapper);
         self
     }
+    /// `[optional account, default to 'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK']`
     #[inline(always)]
     pub fn compression_program(
         &mut self,
@@ -230,12 +189,23 @@ impl ListBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY']`
     #[inline(always)]
     pub fn bubblegum_program(
         &mut self,
         bubblegum_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.bubblegum_program = Some(bubblegum_program);
+        self
+    }
+    #[inline(always)]
+    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_state = Some(list_state);
+        self
+    }
+    #[inline(always)]
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
@@ -248,19 +218,8 @@ impl ListBuilder {
         self
     }
     #[inline(always)]
-    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_state = Some(list_state);
-        self
-    }
-    #[inline(always)]
-    pub fn rent_payer(&mut self, rent_payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_payer = Some(rent_payer);
-        self
-    }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.cosigner = cosigner;
+    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.rent_dest = Some(rent_dest);
         self
     }
     #[inline(always)]
@@ -288,35 +247,6 @@ impl ListBuilder {
         self.creator_hash = Some(creator_hash);
         self
     }
-    #[inline(always)]
-    pub fn amount(&mut self, amount: u64) -> &mut Self {
-        self.amount = Some(amount);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn expire_in_sec(&mut self, expire_in_sec: u64) -> &mut Self {
-        self.expire_in_sec = Some(expire_in_sec);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn currency(&mut self, currency: Pubkey) -> &mut Self {
-        self.currency = Some(currency);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn private_taker(&mut self, private_taker: Pubkey) -> &mut Self {
-        self.private_taker = Some(private_taker);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn maker_broker(&mut self, maker_broker: Pubkey) -> &mut Self {
-        self.maker_broker = Some(maker_broker);
-        self
-    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -337,52 +267,43 @@ impl ListBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = List {
+        let accounts = DelistCompressed {
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
-            owner: self.owner.expect("owner is not set"),
-            delegate: self.delegate.expect("delegate is not set"),
             merkle_tree: self.merkle_tree.expect("merkle_tree is not set"),
-            log_wrapper: self.log_wrapper.expect("log_wrapper is not set"),
-            compression_program: self
-                .compression_program
-                .expect("compression_program is not set"),
+            log_wrapper: self.log_wrapper.unwrap_or(solana_program::pubkey!(
+                "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
+            )),
+            compression_program: self.compression_program.unwrap_or(solana_program::pubkey!(
+                "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            bubblegum_program: self
-                .bubblegum_program
-                .expect("bubblegum_program is not set"),
+            bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
+                "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+            )),
+            list_state: self.list_state.expect("list_state is not set"),
+            owner: self.owner.expect("owner is not set"),
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            list_state: self.list_state.expect("list_state is not set"),
-            rent_payer: self.rent_payer.expect("rent_payer is not set"),
-            cosigner: self.cosigner,
+            rent_dest: self.rent_dest.expect("rent_dest is not set"),
         };
-        let args = ListInstructionArgs {
+        let args = DelistCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
             data_hash: self.data_hash.clone().expect("data_hash is not set"),
             creator_hash: self.creator_hash.clone().expect("creator_hash is not set"),
-            amount: self.amount.clone().expect("amount is not set"),
-            expire_in_sec: self.expire_in_sec.clone(),
-            currency: self.currency.clone(),
-            private_taker: self.private_taker.clone(),
-            maker_broker: self.maker_broker.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `list` CPI accounts.
-pub struct ListCpiAccounts<'a, 'b> {
+/// `delist_compressed` CPI accounts.
+pub struct DelistCompressedCpiAccounts<'a, 'b> {
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -394,26 +315,22 @@ pub struct ListCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `list` CPI instruction.
-pub struct ListCpi<'a, 'b> {
+/// `delist_compressed` CPI instruction.
+pub struct DelistCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub log_wrapper: &'b solana_program::account_info::AccountInfo<'a>,
@@ -424,37 +341,35 @@ pub struct ListCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: ListInstructionArgs,
+    pub __args: DelistCompressedInstructionArgs,
 }
 
-impl<'a, 'b> ListCpi<'a, 'b> {
+impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: ListCpiAccounts<'a, 'b>,
-        args: ListInstructionArgs,
+        accounts: DelistCompressedCpiAccounts<'a, 'b>,
+        args: DelistCompressedInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             tree_authority: accounts.tree_authority,
-            owner: accounts.owner,
-            delegate: accounts.delegate,
             merkle_tree: accounts.merkle_tree,
             log_wrapper: accounts.log_wrapper,
             compression_program: accounts.compression_program,
             system_program: accounts.system_program,
             bubblegum_program: accounts.bubblegum_program,
-            marketplace_program: accounts.marketplace_program,
             list_state: accounts.list_state,
-            rent_payer: accounts.rent_payer,
-            cosigner: accounts.cosigner,
+            owner: accounts.owner,
+            marketplace_program: accounts.marketplace_program,
+            rent_dest: accounts.rent_dest,
             __args: args,
         }
     }
@@ -491,17 +406,9 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.tree_authority.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.owner.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.delegate.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -524,29 +431,22 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             *self.bubblegum_program.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.list_state.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.owner.key,
+            true,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
+            *self.rent_dest.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_payer.key,
-            true,
-        ));
-        if let Some(cosigner) = self.cosigner {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *cosigner.key,
-                true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -554,7 +454,7 @@ impl<'a, 'b> ListCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = ListInstructionData::new().try_to_vec().unwrap();
+        let mut data = DelistCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -563,22 +463,18 @@ impl<'a, 'b> ListCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(12 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tree_authority.clone());
-        account_infos.push(self.owner.clone());
-        account_infos.push(self.delegate.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.list_state.clone());
-        account_infos.push(self.rent_payer.clone());
-        if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.clone());
-        }
+        account_infos.push(self.owner.clone());
+        account_infos.push(self.marketplace_program.clone());
+        account_infos.push(self.rent_dest.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -591,52 +487,43 @@ impl<'a, 'b> ListCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `List` via CPI.
+/// Instruction builder for `DelistCompressed` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[]` tree_authority
-///   1. `[]` owner
-///   2. `[]` delegate
-///   3. `[writable]` merkle_tree
-///   4. `[]` log_wrapper
-///   5. `[]` compression_program
-///   6. `[]` system_program
-///   7. `[]` bubblegum_program
+///   1. `[writable]` merkle_tree
+///   2. `[]` log_wrapper
+///   3. `[]` compression_program
+///   4. `[]` system_program
+///   5. `[]` bubblegum_program
+///   6. `[writable]` list_state
+///   7. `[signer]` owner
 ///   8. `[]` marketplace_program
-///   9. `[writable]` list_state
-///   10. `[writable, signer]` rent_payer
-///   11. `[signer, optional]` cosigner
-pub struct ListCpiBuilder<'a, 'b> {
-    instruction: Box<ListCpiBuilderInstruction<'a, 'b>>,
+///   9. `[writable]` rent_dest
+pub struct DelistCompressedCpiBuilder<'a, 'b> {
+    instruction: Box<DelistCompressedCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> ListCpiBuilder<'a, 'b> {
+impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(ListCpiBuilderInstruction {
+        let instruction = Box::new(DelistCompressedCpiBuilderInstruction {
             __program: program,
             tree_authority: None,
-            owner: None,
-            delegate: None,
             merkle_tree: None,
             log_wrapper: None,
             compression_program: None,
             system_program: None,
             bubblegum_program: None,
-            marketplace_program: None,
             list_state: None,
-            rent_payer: None,
-            cosigner: None,
+            owner: None,
+            marketplace_program: None,
+            rent_dest: None,
             nonce: None,
             index: None,
             root: None,
             data_hash: None,
             creator_hash: None,
-            amount: None,
-            expire_in_sec: None,
-            currency: None,
-            private_taker: None,
-            maker_broker: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -647,19 +534,6 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.tree_authority = Some(tree_authority);
-        self
-    }
-    #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
-        self
-    }
-    #[inline(always)]
-    pub fn delegate(
-        &mut self,
-        delegate: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -703,14 +577,6 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn marketplace_program(
-        &mut self,
-        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.marketplace_program = Some(marketplace_program);
-        self
-    }
-    #[inline(always)]
     pub fn list_state(
         &mut self,
         list_state: &'b solana_program::account_info::AccountInfo<'a>,
@@ -719,20 +585,24 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_payer(
-        &mut self,
-        rent_payer: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.rent_payer = Some(rent_payer);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
-    /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(
+    pub fn marketplace_program(
         &mut self,
-        cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.cosigner = cosigner;
+        self.instruction.marketplace_program = Some(marketplace_program);
+        self
+    }
+    #[inline(always)]
+    pub fn rent_dest(
+        &mut self,
+        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.rent_dest = Some(rent_dest);
         self
     }
     #[inline(always)]
@@ -758,35 +628,6 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn creator_hash(&mut self, creator_hash: [u8; 32]) -> &mut Self {
         self.instruction.creator_hash = Some(creator_hash);
-        self
-    }
-    #[inline(always)]
-    pub fn amount(&mut self, amount: u64) -> &mut Self {
-        self.instruction.amount = Some(amount);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn expire_in_sec(&mut self, expire_in_sec: u64) -> &mut Self {
-        self.instruction.expire_in_sec = Some(expire_in_sec);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn currency(&mut self, currency: Pubkey) -> &mut Self {
-        self.instruction.currency = Some(currency);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn private_taker(&mut self, private_taker: Pubkey) -> &mut Self {
-        self.instruction.private_taker = Some(private_taker);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn maker_broker(&mut self, maker_broker: Pubkey) -> &mut Self {
-        self.instruction.maker_broker = Some(maker_broker);
         self
     }
     /// Add an additional account to the instruction.
@@ -830,7 +671,7 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = ListInstructionArgs {
+        let args = DelistCompressedInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
@@ -844,23 +685,14 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
                 .creator_hash
                 .clone()
                 .expect("creator_hash is not set"),
-            amount: self.instruction.amount.clone().expect("amount is not set"),
-            expire_in_sec: self.instruction.expire_in_sec.clone(),
-            currency: self.instruction.currency.clone(),
-            private_taker: self.instruction.private_taker.clone(),
-            maker_broker: self.instruction.maker_broker.clone(),
         };
-        let instruction = ListCpi {
+        let instruction = DelistCompressedCpi {
             __program: self.instruction.__program,
 
             tree_authority: self
                 .instruction
                 .tree_authority
                 .expect("tree_authority is not set"),
-
-            owner: self.instruction.owner.expect("owner is not set"),
-
-            delegate: self.instruction.delegate.expect("delegate is not set"),
 
             merkle_tree: self
                 .instruction
@@ -887,16 +719,16 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
+            list_state: self.instruction.list_state.expect("list_state is not set"),
+
+            owner: self.instruction.owner.expect("owner is not set"),
+
             marketplace_program: self
                 .instruction
                 .marketplace_program
                 .expect("marketplace_program is not set"),
 
-            list_state: self.instruction.list_state.expect("list_state is not set"),
-
-            rent_payer: self.instruction.rent_payer.expect("rent_payer is not set"),
-
-            cosigner: self.instruction.cosigner,
+            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -906,30 +738,23 @@ impl<'a, 'b> ListCpiBuilder<'a, 'b> {
     }
 }
 
-struct ListCpiBuilderInstruction<'a, 'b> {
+struct DelistCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
     data_hash: Option<[u8; 32]>,
     creator_hash: Option<[u8; 32]>,
-    amount: Option<u64>,
-    expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
-    private_taker: Option<Pubkey>,
-    maker_broker: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

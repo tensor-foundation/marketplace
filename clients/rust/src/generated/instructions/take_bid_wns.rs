@@ -202,12 +202,12 @@ impl TakeBidWns {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct TakeBidWnsInstructionData {
+pub struct TakeBidWnsInstructionData {
     discriminator: [u8; 8],
 }
 
 impl TakeBidWnsInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             discriminator: [88, 5, 122, 88, 250, 139, 35, 216],
         }
@@ -239,7 +239,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   15. `[]` tensorswap_program
+///   15. `[optional]` tensorswap_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   16. `[signer, optional]` cosigner
 ///   17. `[]` mint_proof
 ///   18. `[writable]` rent_dest
@@ -375,6 +375,7 @@ impl TakeBidWnsBuilder {
         self.marketplace_program = Some(marketplace_program);
         self
     }
+    /// `[optional account, default to 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN']`
     #[inline(always)]
     pub fn tensorswap_program(
         &mut self,
@@ -481,9 +482,9 @@ impl TakeBidWnsBuilder {
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            tensorswap_program: self
-                .tensorswap_program
-                .expect("tensorswap_program is not set"),
+            tensorswap_program: self.tensorswap_program.unwrap_or(solana_program::pubkey!(
+                "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
+            )),
             cosigner: self.cosigner,
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
             rent_dest: self.rent_dest.expect("rent_dest is not set"),
