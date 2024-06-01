@@ -11,11 +11,11 @@ programs_common: &programs_common
   - ".github/file-filters.yml"
   - ".github/.env"
 
-cpitest_binary: &cpitest_program
+cpitest_binary: &cpitest_binary
   - *programs_common
   - "cpitest/**"
 
-program_binary: &marketplace_program
+program_binary: &program_binary
   - *programs_common
   - "program/**"
 
