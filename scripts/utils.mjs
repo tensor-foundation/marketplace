@@ -37,10 +37,14 @@ export function getExternalAccountAddresses() {
 let didWarnAboutMissingPrograms = false;
 export function getProgramFolders() {
   let programs;
+  let programsDirectory = workingDirectory;
 
   if (process.env.PROGRAMS) {
     try {
       programs = JSON.parse(process.env.PROGRAMS);
+      // TODO: This is here to support the CI workflow, need to find a more
+      // "generic" way to handle this.
+      programsDirectory = path.join(workingDirectory, "programs");
     } catch (error) {
       programs = process.env.PROGRAMS.split(/\s+/);
     }
@@ -49,7 +53,7 @@ export function getProgramFolders() {
   }
 
   const filteredPrograms = programs.filter((program) =>
-    fs.existsSync(path.join(workingDirectory, program))
+    fs.existsSync(path.join(programsDirectory, program))
   );
 
   if (
@@ -60,7 +64,7 @@ export function getProgramFolders() {
     programs
       .filter((program) => !filteredPrograms.includes(program))
       .forEach((program) => {
-        echo(chalk.yellow(`Program not found: ${workingDirectory}/${program}`));
+        echo(chalk.yellow(`Program not found: ${programsDirectory}/${program}`));
       });
   }
 
