@@ -73,7 +73,7 @@ jobs:
         uses: tensor-foundation/actions/cache-crate@v2
         with:
           folder: '.'
-          key: programs
+          key: build-programs
 
       - name: Build programs
         shell: bash
