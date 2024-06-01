@@ -84,5 +84,7 @@ jobs:
         with:
           name: programs-build
           # First wildcard ensures exported paths are consistently under the programs folder.
-          path: ./targe*/deploy/*.so
+          path: |
+            ./targe*/deploy/*.so
+            ./targe*/deploy/*.json
           if-no-files-found: error
