@@ -1,6 +1,7 @@
 name: Main
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -13,7 +14,7 @@ permissions: read-all
 
 jobs:
   changes:
-    name: Detect changes
+    name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
       any: ${{ steps.changes.outputs.any }}
@@ -36,30 +37,123 @@ jobs:
 
       - name: Filter program matrix
         id: program_matrix
-        uses: tensor-foundation/actions/filter-matrix@v1
+        uses: tensor-foundation/actions/filter-matrix@v2
         with:
           matrix: ${{ env.PROGRAMS }}
           changes: ${{ steps.changes.outputs.changes }}
-          suffix: _program
+          suffix: _binary
+
+  lint_js:
+    name: Lint (JavaScript)
+    if: ${{ needs.changes.outputs.js_client == 'true' }}
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: cat .github/.env >> $GITHUB_ENV
+
+      - name: Install Node.js
+        uses: tensor-foundation/actions/install-node-with-pnpm@v2
+        with:
+          version: ${{ inputs.node || env.NODE_VERSION }}
+          cache: ${{ env.CACHE }}
+          dependencies: false
+
+      - uses: tensor-foundation/actions/install-node-dependencies@v2
+        with:
+          folder: ./clients/js
+          command: pnpm install --frozen-lockfile
+          cache: ${{ env.CACHE }}
+          key: client-js
+
+      - name: Format
+        working-directory: ./clients/js
+        run: pnpm format
+
+      - name: Lint
+        working-directory: ./clients/js
+        run: pnpm lint
+
+      - name: No only tests
+        working-directory: ./clients/js
+        run: |
+          FILES=$(find test -type f -name '*.test.ts')
+          EXIT_CODE=0
+
+          while read FILE; do
+            if grep -Eq 'test.only\(' $FILE; then
+              echo "Error: '$FILE' contains 'test.only'"
+              EXIT_CODE=1
+            fi
+          done <<< "$FILES"
+
+          exit $EXIT_CODE
+
+  lint_rust:
+    name: Lint (Rust)
+    if: ${{ needs.changes.outputs.programs == 'true' || needs.changes.outputs.rust_client == 'true' }}
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: cat .github/.env >> $GITHUB_ENV
+
+      - name: Install Rust
+        uses: tensor-foundation/actions/install-rust@v2
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Cache program dependencies
+        if: env.CACHE == 'true'
+        uses: tensor-foundation/actions/cache-crate@v2
+        with:
+          folder: "."
+          key: programs
+
+      - name: Run cargo fmt
+        uses: tensor-foundation/actions/cargo@v2
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: tensor-foundation/actions/cargo@v2
+        with:
+          command: clippy
+          args: --all-targets --all-features --no-deps
 
   build_programs:
     name: Programs
-    if: ${{ needs.changes.outputs.any == 'true' }}
-    needs: changes
+    needs: [changes, lint_js, lint_rust]
+    if: |
+      always() &&
+      (needs.lint_js.result == 'success' || needs.lint_js.result == 'skipped') &&
+      (needs.lint_rust.result == 'success' || needs.lint_rust.result == 'skipped') &&
+      needs.changes.outputs.any == 'true'
     uses: ./.github/workflows/build-programs.yml
     secrets: inherit
 
   test_programs:
     name: Programs
-    if: ${{ needs.changes.outputs.programs == 'true' }}
-    needs: changes
+    needs: [changes, lint_js, lint_rust]
+    if: |
+      always() &&
+      (needs.lint_js.result == 'success' || needs.lint_js.result == 'skipped') &&
+      (needs.lint_rust.result == 'success' || needs.lint_rust.result == 'skipped') &&
+      needs.changes.outputs.programs == 'true'
     uses: ./.github/workflows/test-programs.yml
     secrets: inherit
     with:
       program_matrix: ${{ needs.changes.outputs.program_matrix }}
 
   generate_clients:
-    name: Generate clients
+    name: Generate Clients
     if: ${{ needs.changes.outputs.any == 'true' }}
     needs: [changes, build_programs]
     runs-on: ubuntu-latest
@@ -74,25 +168,25 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
 
       - name: Install Rust
-        uses: tensor-foundation/actions/install-rust@v1
+        uses: tensor-foundation/actions/install-rust@v2
         with:
           toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install Solana
-        uses: tensor-foundation/actions/install-solana@v1
+        uses: tensor-foundation/actions/install-solana@v2
         with:
           version: ${{ env.SOLANA_VERSION }}
           cache: ${{ env.CACHE }}
 
       - name: Cache program dependencies
         if: env.CACHE == 'true'
-        uses: tensor-foundation/actions/cache-crate@v1
+        uses: tensor-foundation/actions/cache-crate@v2
         with:
-          folder: '.'
+          folder: "."
           key: programs
 
       - name: Install Node.js
-        uses: tensor-foundation/actions/install-node-with-pnpm@v1
+        uses: tensor-foundation/actions/install-node-with-pnpm@v2
         with:
           version: ${{ env.NODE_VERSION }}
           cache: ${{ env.CACHE }}
@@ -100,17 +194,21 @@ jobs:
 
       - name: Cache IDL generators
         if: env.CACHE == 'true'
-        uses: tensor-foundation/actions/cache-idl-generators@v1
+        uses: tensor-foundation/actions/cache-idl-generators@v2
+        with:
+          path: "./.cargo/"
 
       - name: Generate IDLs and clients
         run: pnpm generate
 
       - name: Ensure working directory is clean
-        run: test -z "$(git status --porcelain)"
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
   test_js:
     if: needs.changes.outputs.js_client == 'true'
-    name: JS Client
+    name: JavaScript Client
     needs: [changes, generate_clients]
     uses: ./.github/workflows/test-js-client.yml
     secrets: inherit
