@@ -1,4 +1,4 @@
-const k = require("@metaplex-foundation/kinobi");
+const k = require("kinobi");
 
 module.exports = function visitor(options) {
   return k.rootNodeVisitor((currentRoot) => {

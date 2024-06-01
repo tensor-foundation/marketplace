@@ -1,4 +1,4 @@
-const k = require("@metaplex-foundation/kinobi");
+const k = require("kinobi");
 
 module.exports = function visitor(options) {
   return k.rootNodeVisitor((currentRoot) => {
@@ -9,27 +9,27 @@ module.exports = function visitor(options) {
       root = newRoot;
     };
     // Rename Compressed Ixs (matches PLock Ixs + is more intuitive
-    // since the "default" standard definitely isn't compressed (yet)) 
+    // since the "default" standard definitely isn't compressed (yet))
     updateRoot(
       k.updateInstructionsVisitor({
         buy: {
-          name: "buyCompressed"
+          name: "buyCompressed",
         },
         closeExpiredListing: {
-          name: "closeExpiredListingCompressed"
+          name: "closeExpiredListingCompressed",
         },
         delist: {
-          name: "delistCompressed"
+          name: "delistCompressed",
         },
         list: {
-          name: "listCompressed"
+          name: "listCompressed",
         },
         takeBidFullMeta: {
-          name: "takeBidCompressedFullMeta"
+          name: "takeBidCompressedFullMeta",
         },
         takeBidMetaHash: {
-          name: "takeBidCompressedMetaHash"
-        }
+          name: "takeBidCompressedMetaHash",
+        },
       })
     );
 
@@ -39,131 +39,143 @@ module.exports = function visitor(options) {
         buyCompressed: {
           accounts: {
             buyer: {
-              defaultValue: k.accountValueNode("payer")
+              defaultValue: k.accountValueNode("payer"),
             },
             rentDest: {
-              defaultValue: k.accountValueNode("owner")
-            }
+              defaultValue: k.accountValueNode("owner"),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
-              defaultValue: k.numberValueNode(100)
+              defaultValue: k.numberValueNode(100),
             },
             nonce: {
-              defaultValue: k.argumentValueNode("index")
+              defaultValue: k.argumentValueNode("index"),
             },
-          }
+          },
         },
         delistCompressed: {
           accounts: {
             rentDest: {
-              defaultValue: k.accountValueNode("owner")
-            }
+              defaultValue: k.accountValueNode("owner"),
+            },
           },
           arguments: {
             nonce: {
-              defaultValue: k.argumentValueNode("index")
+              defaultValue: k.argumentValueNode("index"),
             },
-          }
+          },
         },
         listCompressed: {
           accounts: {
             owner: {
-              isSigner: "either"
+              isSigner: "either",
             },
             delegate: {
               defaultValue: k.accountValueNode("owner"),
-              isSigner: "either"
+              isSigner: "either",
             },
             rentPayer: {
-              defaultValue: k.resolverValueNode("resolveRemainingSignerWithOwnerOrDelegate", {
-                dependsOn: [
-                  k.accountValueNode("owner"),
-                  k.accountValueNode("delegate")
-                ]
-              })
+              defaultValue: k.resolverValueNode(
+                "resolveRemainingSignerWithOwnerOrDelegate",
+                {
+                  dependsOn: [
+                    k.accountValueNode("owner"),
+                    k.accountValueNode("delegate"),
+                  ],
+                }
+              ),
             },
             cosigner: {
-              defaultValue: k.resolverValueNode("resolveRemainingSignerWithOwnerOrDelegate", {
-                dependsOn: [
-                  k.accountValueNode("owner"),
-                  k.accountValueNode("delegate")
-                ]
-              })
-            }
+              defaultValue: k.resolverValueNode(
+                "resolveRemainingSignerWithOwnerOrDelegate",
+                {
+                  dependsOn: [
+                    k.accountValueNode("owner"),
+                    k.accountValueNode("delegate"),
+                  ],
+                }
+              ),
+            },
           },
           arguments: {
             nonce: {
-              defaultValue: k.argumentValueNode("index")
-            }
+              defaultValue: k.argumentValueNode("index"),
+            },
           },
         },
         takeBidCompressedFullMeta: {
           accounts: {
             seller: {
-              isSigner: "either"
+              isSigner: "either",
             },
             delegate: {
               isSigner: "either",
-              defaultValue: k.accountValueNode("seller")
+              defaultValue: k.accountValueNode("seller"),
             },
             cosigner: {
-              defaultValue: k.resolverValueNode("resolveRemainingSignerWithSellerOrDelegate", {
-                dependsOn: [
-                  k.accountValueNode("seller"),
-                  k.accountValueNode("delegate")
-                ]
-              })
+              defaultValue: k.resolverValueNode(
+                "resolveRemainingSignerWithSellerOrDelegate",
+                {
+                  dependsOn: [
+                    k.accountValueNode("seller"),
+                    k.accountValueNode("delegate"),
+                  ],
+                }
+              ),
             },
             rentDest: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             marginAccount: {
-              defaultValue: k.accountValueNode("tensorswapProgram")
-            }
+              defaultValue: k.accountValueNode("tensorswapProgram"),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
-              defaultValue: k.numberValueNode(100)
+              defaultValue: k.numberValueNode(100),
             },
             nonce: {
-              defaultValue: k.argumentValueNode("index")
-            }
-          }
+              defaultValue: k.argumentValueNode("index"),
+            },
+          },
         },
         takeBidCompressedMetaHash: {
           accounts: {
             seller: {
-              isSigner: "either"
+              isSigner: "either",
             },
             delegate: {
               isSigner: "either",
-              defaultValue: k.accountValueNode("seller")
+              defaultValue: k.accountValueNode("seller"),
             },
             cosigner: {
-              defaultValue: k.resolverValueNode("resolveRemainingSignerWithSellerOrDelegate", {
-                dependsOn: [
-                  k.accountValueNode("seller"),
-                  k.accountValueNode("delegate")
-                ]
-              })
+              defaultValue: k.resolverValueNode(
+                "resolveRemainingSignerWithSellerOrDelegate",
+                {
+                  dependsOn: [
+                    k.accountValueNode("seller"),
+                    k.accountValueNode("delegate"),
+                  ],
+                }
+              ),
             },
             rentDest: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             marginAccount: {
-              defaultValue: k.accountValueNode("tensorswapProgram")
-            }
+              defaultValue: k.accountValueNode("tensorswapProgram"),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
-              defaultValue: k.numberValueNode(100)
+              defaultValue: k.numberValueNode(100),
             },
             nonce: {
-              defaultValue: k.argumentValueNode("index")
-            }
-          }
-        }
+              defaultValue: k.argumentValueNode("index"),
+            },
+          },
+        },
       })
     );
 
@@ -177,11 +189,10 @@ module.exports = function visitor(options) {
               "buyCompressed",
               "closeExpiredListingCompressed",
               "takeBidCompressedFullMeta",
-              "takeBidCompressedMetaHash"
+              "takeBidCompressedMetaHash",
             ];
             return (
-              k.isNode(node, "instructionNode") &&
-              names.includes(node.name)
+              k.isNode(node, "instructionNode") && names.includes(node.name)
             );
           },
           transform: (node) => {
@@ -191,59 +202,71 @@ module.exports = function visitor(options) {
               extraArguments: [
                 k.instructionArgumentNode({
                   name: "creators",
-                  type: k.arrayTypeNode(k.tupleTypeNode([k.publicKeyTypeNode(), k.numberTypeNode('u16')])),
-                  docs: ["creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ]"],
+                  type: k.arrayTypeNode(
+                    k.tupleTypeNode([
+                      k.publicKeyTypeNode(),
+                      k.numberTypeNode("u16"),
+                    ]),
+                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                  ),
+                  docs: [
+                    "creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ]",
+                  ],
                   defaultValue: k.arrayValueNode([]),
-                  defaultValueStrategy: 'optional'
+                  defaultValueStrategy: "optional",
                 }),
                 k.instructionArgumentNode({
                   name: "proof",
-                  type: k.arrayTypeNode(k.publicKeyTypeNode()),
-                  docs: ["proof path, can be shortened if canopyDepth of merkle tree is also specified"],
+                  type: k.arrayTypeNode(
+                    k.publicKeyTypeNode(),
+                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                  ),
+                  docs: [
+                    "proof path, can be shortened if canopyDepth of merkle tree is also specified",
+                  ],
                   defaultValue: k.arrayValueNode([]),
-                  defaultValueStrategy: 'optional'
+                  defaultValueStrategy: "optional",
                 }),
                 k.instructionArgumentNode({
                   name: "canopyDepth",
-                  type: k.numberTypeNode('u8'),
-                  docs: ["canopy depth of merkle tree, reduces proofPath length if specified"],
+                  type: k.numberTypeNode("u8"),
+                  docs: [
+                    "canopy depth of merkle tree, reduces proofPath length if specified",
+                  ],
                   defaultValue: k.numberValueNode(0),
-                  defaultValueStrategy: 'optional'
-                })
+                  defaultValueStrategy: "optional",
+                }),
               ],
               remainingAccounts: [
-                k.instructionRemainingAccountsNode(k.resolverValueNode("resolveCreatorPath", {
-                  dependsOn: [
-                    k.argumentValueNode("creators"),
-                  ]
-                }),
+                k.instructionRemainingAccountsNode(
+                  k.resolverValueNode("resolveCreatorPath", {
+                    dependsOn: [k.argumentValueNode("creators")],
+                  }),
                   {
                     isOptional: true,
                   }
                 ),
-                k.instructionRemainingAccountsNode(k.resolverValueNode("resolveProofPath", {
-                  dependsOn: [
-                    k.argumentValueNode("proof"),
-                    k.argumentValueNode("canopyDepth")
-                  ]
-                }),
+                k.instructionRemainingAccountsNode(
+                  k.resolverValueNode("resolveProofPath", {
+                    dependsOn: [
+                      k.argumentValueNode("proof"),
+                      k.argumentValueNode("canopyDepth"),
+                    ],
+                  }),
                   {
-                    isOptional: true
-                  })
+                    isOptional: true,
+                  }
+                ),
               ],
-            }
-          }
+            };
+          },
         },
         // proof, canopyDepth (doesn't need creators)
         {
           select: (node) => {
-            const names = [
-              "delistCompressed",
-              "listCompressed"
-            ];
+            const names = ["delistCompressed", "listCompressed"];
             return (
-              k.isNode(node, "instructionNode") &&
-              names.includes(node.name)
+              k.isNode(node, "instructionNode") && names.includes(node.name)
             );
           },
           transform: (node) => {
@@ -253,32 +276,41 @@ module.exports = function visitor(options) {
               extraArguments: [
                 k.instructionArgumentNode({
                   name: "proof",
-                  type: k.arrayTypeNode(k.publicKeyTypeNode()),
-                  docs: ["proof path, can be shortened if canopyDepth of merkle tree is also specified"],
+                  type: k.arrayTypeNode(
+                    k.publicKeyTypeNode(),
+                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                  ),
+                  docs: [
+                    "proof path, can be shortened if canopyDepth of merkle tree is also specified",
+                  ],
                   defaultValue: k.arrayValueNode([]),
-                  defaultValueStrategy: 'optional'
+                  defaultValueStrategy: "optional",
                 }),
                 k.instructionArgumentNode({
                   name: "canopyDepth",
-                  type: k.numberTypeNode('u8'),
-                  docs: ["canopy depth of merkle tree, reduces proofPath length if specified"],
+                  type: k.numberTypeNode("u8"),
+                  docs: [
+                    "canopy depth of merkle tree, reduces proofPath length if specified",
+                  ],
                   defaultValue: k.numberValueNode(0),
-                  defaultValueStrategy: 'optional'
-                })
+                  defaultValueStrategy: "optional",
+                }),
               ],
               remainingAccounts: [
-                k.instructionRemainingAccountsNode(k.resolverValueNode("resolveProofPath", {
-                  dependsOn: [
-                    k.argumentValueNode("proof"),
-                    k.argumentValueNode("canopyDepth")
-                  ]
-                }),
+                k.instructionRemainingAccountsNode(
+                  k.resolverValueNode("resolveProofPath", {
+                    dependsOn: [
+                      k.argumentValueNode("proof"),
+                      k.argumentValueNode("canopyDepth"),
+                    ],
+                  }),
                   {
-                    isOptional: true
-                  })
+                    isOptional: true,
+                  }
+                ),
               ],
-            }
-          }
+            };
+          },
         },
       ])
     );

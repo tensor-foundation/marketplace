@@ -3,18 +3,21 @@
   "version": "0.0.0",
   "description": "Your one-stop-shop for your NFT needs.",
   "sideEffects": false,
-  "module": "./dist/src/index.js",
-  "main": "dist/src/index.cjs",
-  "types": "dist/types/src/index.d.ts",
-  "type": "module",
+  "module": "./dist/src/index.mjs",
+  "main": "./dist/src/index.js",
+  "types": "./dist/types/index.d.ts",
+  "type": "commonjs",
   "exports": {
     ".": {
-      "types": "./dist/types/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "require": "./dist/src/index.cjs"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/src/index.mjs",
+      "require": "./dist/src/index.js"
     }
   },
-  "files": ["./dist/src", "./dist/types"],
+  "files": [
+    "./dist/src",
+    "./dist/types"
+  ],
   "scripts": {
     "build": "rimraf dist && tsup && tsc -p ./tsconfig.declarations.json",
     "build:docs": "typedoc",
@@ -34,25 +37,21 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@solana/accounts": "2.0.0-preview.2",
-    "@solana/addresses": "2.0.0-preview.2",
-    "@solana/codecs": "2.0.0-preview.2",
-    "@solana/errors": "2.0.0-preview.2",
-    "@solana/instructions": "2.0.0-preview.2",
-    "@solana/programs": "2.0.0-preview.2",
-    "@solana/signers": "2.0.0-preview.2",
-    "@solana/web3.js": "2.0.0-preview.2",
-    "@tensor-foundation/resolvers": "0.0.5"
+    "@tensor-foundation/resolvers": "^0.0.6"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": "2.0.0-preview.3"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
-    "@solana-program/compute-budget": "0.2.0",
-    "@solana/eslint-config-solana": "^3.0.3",
-    "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.2",
-    "@tensor-foundation/test-helpers": "0.0.2",
-    "@tensor-foundation/toolkit-token-metadata": "0.0.1",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@solana/eslint-config-solana": "^3.0.0",
+    "@solana/web3.js": "2.0.0-preview.3",
+    "@solana-program/compute-budget": "^0.3.2",
+    "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
+    "@tensor-foundation/test-helpers": "^0.0.5",
+    "@tensor-foundation/mpl-token-metadata": "^0.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "ava": "^6.1.2",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
@@ -63,14 +62,18 @@
     "typescript": "^5.4.2"
   },
   "ava": {
-    "require": ["@solana/webcrypto-ed25519-polyfill"],
+    "nodeArguments": [
+      "--no-warnings"
+    ],
+    "require": [
+      "@solana/webcrypto-ed25519-polyfill"
+    ],
     "typescript": {
       "compile": false,
       "rewritePaths": {
         "test/": "dist/test/"
       }
-    },
-    "nodeArguments": ["--no-warnings"]
+    }
   },
   "packageManager": "pnpm@9.1.0"
 }

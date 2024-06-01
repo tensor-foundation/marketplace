@@ -1,4 +1,4 @@
-import { combineCodec, createDecoder, createEncoder } from '@solana/codecs';
+import { combineCodec, createDecoder, createEncoder } from '@solana/web3.js';
 import {
   Address,
   address,

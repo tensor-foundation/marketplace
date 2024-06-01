@@ -1,19 +1,18 @@
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { createDefaultNft } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  ListState,
-  TensorMarketplaceProgramErrorCode,
+  TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED,
   fetchListStateFromSeeds,
   findListStatePda,
   getCloseExpiredListingLegacyInstructionAsync,
@@ -36,14 +35,14 @@ test('it can close an expired listing', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -63,7 +62,7 @@ test('it can close an expired listing', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(closeExpiredListingIx, tx),
+    (tx) => appendTransactionMessageInstruction(closeExpiredListingIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -94,14 +93,14 @@ test('it cannot close an active listing', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -120,7 +119,7 @@ test('it cannot close an active listing', async (t) => {
   try {
     await pipe(
       await createDefaultTransaction(client, owner),
-      (tx) => appendTransactionInstruction(closeExpiredListingIx, tx),
+      (tx) => appendTransactionMessageInstruction(closeExpiredListingIx, tx),
       (tx) => signAndSendTransaction(client, tx)
     );
     t.fail('I cannot close an active listing');
@@ -128,7 +127,7 @@ test('it cannot close an active listing', async (t) => {
     t.like(error, {
       cause: {
         context: {
-          code: TensorMarketplaceProgramErrorCode.LISTING_NOT_YET_EXPIRED,
+          code: TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED,
         },
       },
     });
@@ -151,14 +150,14 @@ test('it can close an expired listing with another payer', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -180,7 +179,7 @@ test('it can close an expired listing with another payer', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionInstruction(closeExpiredListingIx, tx),
+    (tx) => appendTransactionMessageInstruction(closeExpiredListingIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 

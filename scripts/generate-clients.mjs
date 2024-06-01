@@ -1,12 +1,16 @@
-const path = require("path");
-const k = require("@metaplex-foundation/kinobi");
-
-// Paths.
-const clientDir = path.join(__dirname, "..", "clients");
-const idlDir = path.join(__dirname, "..", "programs", "marketplace");
+#!/usr/bin/env zx
+import "zx/globals";
+import * as k from "kinobi";
+import { rootNodeFromAnchor } from "@kinobi-so/nodes-from-anchor";
+import { renderVisitor as renderJavaScriptVisitor } from "@kinobi-so/renderers-js";
+import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
+import { getAllProgramIdls } from "./utils.mjs";
 
 // Instanciate Kinobi.
-const kinobi = k.createFromIdls([path.join(idlDir, "idl.json")]);
+const [idl] = getAllProgramIdls()
+  .filter((idl) => idl.includes("marketplace/idl.json"))
+  .map((idl) => rootNodeFromAnchor(require(idl)));
+const kinobi = k.createFromRoot(idl);
 
 // Additional visitors for instrunctions.
 const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
@@ -31,7 +35,7 @@ kinobi.update(
       defaultValue: k.resolverValueNode("resolveTreeAuthorityPda", {
         dependsOn: [
           k.accountValueNode("merkleTree"),
-          k.accountValueNode("bubblegumProgram")
+          k.accountValueNode("bubblegumProgram"),
         ],
       }),
     },
@@ -82,7 +86,7 @@ kinobi.update(
       defaultValue: k.publicKeyValueNode(
         "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
         "tensorswapProgram"
-      )
+      ),
     },
     // Legacy
     {
@@ -170,13 +174,13 @@ kinobi.update(
   k.updateAccountsVisitor({
     listState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("list_state"),
+        k.constantPdaSeedNodeFromString("utf8", "list_state"),
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
     bidState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("bid_state"),
+        k.constantPdaSeedNodeFromString("utf8", "bid_state"),
         k.variablePdaSeedNode("owner", k.publicKeyTypeNode()),
         k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
       ],
@@ -280,7 +284,7 @@ kinobi.update(
       transform: (node) => {
         k.assertIsNode(node, ["instructionNode", "instructionArgumentNode"]);
         // prevents overriding existing default values (e.g. optionalRoyaltyPct for cNFTs)
-        if(!!node.defaultValue) return node;
+        if (!!node.defaultValue) return node;
         return {
           ...node,
           defaultValueStrategy: "optional",
@@ -344,11 +348,10 @@ kinobi.update(
 );
 
 // Render JavaScript.
-const jsDir = path.join(clientDir, "js", "src", "generated");
-const prettier = require(path.join(clientDir, "js", ".prettierrc.json"));
+const jsClient = path.join(__dirname, "..", "clients", "js");
 kinobi.accept(
-  k.renderJavaScriptExperimentalVisitor(jsDir, {
-    prettier,
+  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), {
+    prettier: require(path.join(jsClient, ".prettierrc.json")),
     asyncResolvers: [
       "resolveBidStateFromBidId",
       "resolveFeeVaultPdaFromListState",
@@ -368,7 +371,7 @@ kinobi.accept(
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
-      "resolveTreeAuthorityPda"
+      "resolveTreeAuthorityPda",
     ],
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers",
@@ -377,11 +380,10 @@ kinobi.accept(
 );
 
 // Render Rust.
-const crateDir = path.join(clientDir, "rust");
-const rustDir = path.join(clientDir, "rust", "src", "generated");
+const rustClient = path.join(__dirname, "..", "clients", "rust");
 kinobi.accept(
-  k.renderRustVisitor(rustDir, {
+  renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
-    crateFolder: crateDir,
+    crateFolder: rustClient,
   })
 );
