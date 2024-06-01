@@ -61,4 +61,4 @@ jobs:
         shell: bash
         run: RUST_LOG=error pnpm programs:test
         env:
-          PROGRAM: ${{ matrix.program }}
+          PROGRAMS: ${{ matrix.program }}
