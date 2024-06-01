@@ -1,15 +1,15 @@
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { createDefaultNft } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
   Target,
@@ -34,7 +34,7 @@ test('it can cancel a bid on a legacy NFT', async (t) => {
   // And we create a bid on the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(bidIx, tx),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -46,7 +46,7 @@ test('it can cancel a bid on a legacy NFT', async (t) => {
   // When we cancel the bid.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(cancelBidIx, tx),
+    (tx) => appendTransactionMessageInstruction(cancelBidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 

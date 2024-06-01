@@ -1,14 +1,13 @@
-import { appendTransactionInstruction, pipe } from '@solana/web3.js';
+import { appendTransactionMessageInstruction, pipe } from '@solana/web3.js';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { createDefaultNft } from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  BidState,
   Target,
   fetchBidStateFromSeeds,
   getBidInstructionAsync,
@@ -30,7 +29,7 @@ test('it can bid on an NFT', async (t) => {
   // When we create a bid on the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(bidIx, tx),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -39,7 +38,7 @@ test('it can bid on an NFT', async (t) => {
     owner: owner.address,
     bidId: mint,
   });
-  t.like(bid, <BidState>{
+  t.like(bid, {
     data: {
       owner: owner.address,
       amount: 1n,

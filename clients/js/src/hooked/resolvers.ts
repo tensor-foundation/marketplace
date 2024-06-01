@@ -1,16 +1,16 @@
 import {
   Address,
+  IAccountMeta,
   ProgramDerivedAddress,
   ProgramDerivedAddressBump,
-} from '@solana/addresses';
+  TransactionSigner,
+} from '@solana/web3.js';
 import {
   ResolvedAccount,
   expectAddress,
   isTransactionSigner,
-} from '../generated';
-import { findTreeAuthorityPda, findFeeVaultPda } from './pdas';
-import { IAccountMeta } from '@solana/instructions';
-import { TransactionSigner } from '@solana/signers';
+} from '../generated/shared';
+import { findFeeVaultPda, findTreeAuthorityPda } from './pdas';
 
 //---- Fee Vault resolvers
 
@@ -55,7 +55,7 @@ export const resolveTreeAuthorityPda = async ({
 
 // satisfy linter
 type ArgsWithOptionalCreatorsField = {
-  creators?: [Address, number][] | undefined;
+  creators?: (readonly [Address, number])[] | undefined;
   [key: string]: unknown;
 };
 type ArgsWithOptionalProofAndCanopyDepth = {
@@ -67,13 +67,11 @@ type ArgsWithOptionalProofAndCanopyDepth = {
 export const resolveCreatorPath = ({
   args,
 }: {
-  programAddress: Address;
-  accounts: Record<string, ResolvedAccount>;
   args: ArgsWithOptionalCreatorsField;
 }): IAccountMeta[] => {
   const creators = args.creators ?? [];
-  return creators.map(([address, share]: [Address, number]) => ({
-    address,
+  return creators.map(([creator, share]) => ({
+    address: creator,
     role: +(share > 0),
   }));
 };
@@ -81,14 +79,12 @@ export const resolveCreatorPath = ({
 export const resolveProofPath = ({
   args,
 }: {
-  programAddress: Address;
-  accounts: Record<string, ResolvedAccount>;
   args: ArgsWithOptionalProofAndCanopyDepth;
 }): IAccountMeta[] => {
   const proof = args.proof ?? [];
   const canopyDepth = args.canopyDepth ?? 0;
-  return proof.slice(0, proof.length - canopyDepth).map((address: Address) => ({
-    address,
+  return proof.slice(0, proof.length - canopyDepth).map((proof: Address) => ({
+    address: proof,
     role: 0,
   }));
 };

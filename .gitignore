@@ -1,12 +1,11 @@
 .anchor
+.cargo
 .DS_Store
+.vercel
 **/.DS_Store
 **/target
 **/*.rs.bk
+dist
+docs
 node_modules
 test-ledger
-dist
-.amman
-.crates
-.bin
-.vscode

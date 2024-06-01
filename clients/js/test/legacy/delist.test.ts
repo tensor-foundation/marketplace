@@ -1,27 +1,27 @@
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   assertAccountExists,
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
+import {
+  createDefaultNft,
+  createDefaultpNft,
+} from '@tensor-foundation/mpl-token-metadata';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  createDefaultpNft,
-} from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
   findListStatePda,
   getDelistLegacyInstructionAsync,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
-import { TokenStandard } from '@tensor-foundation/resolvers';
 
 test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -38,7 +38,7 @@ test('it can delist a legacy NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -53,7 +53,7 @@ test('it can delist a legacy NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(delistLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(delistLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -82,8 +82,8 @@ test('it can delist a legacy Programmable NFT', async (t) => {
   // And we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -99,7 +99,7 @@ test('it can delist a legacy Programmable NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(delistLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(delistLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 

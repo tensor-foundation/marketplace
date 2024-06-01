@@ -1,6 +1,6 @@
 import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   assertAccountDecoded,
   assertAccountExists,
   fetchEncodedAccount,
@@ -19,10 +19,11 @@ import {
   createDefaultNft,
   createDefaultpNft,
   findAtaPda,
-} from '@tensor-foundation/toolkit-token-metadata';
+} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
-  TensorMarketplaceProgramErrorCode,
+  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
+  TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH,
   findListStatePda,
   getBuyLegacyInstructionAsync,
   getListLegacyInstructionAsync,
@@ -44,7 +45,7 @@ test('it can buy an NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -63,7 +64,7 @@ test('it can buy an NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, buyer),
-    (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -110,7 +111,7 @@ test('it can buy a Programmable NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -134,8 +135,8 @@ test('it can buy a Programmable NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, buyer),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -186,8 +187,8 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -209,8 +210,8 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
   try {
     await pipe(
       await createDefaultTransaction(client, buyer),
-      (tx) => appendTransactionInstruction(computeIx, tx),
-      (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+      (tx) => appendTransactionMessageInstruction(computeIx, tx),
+      (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
       (tx) => signAndSendTransaction(client, tx)
     );
     t.fail('Expected price mismatch error.');
@@ -218,7 +219,7 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
     t.like(error, {
       cause: {
         context: {
-          code: TensorMarketplaceProgramErrorCode.PRICE_MISMATCH,
+          code: TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH,
         },
       },
     });
@@ -243,7 +244,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -263,7 +264,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, buyer),
-    (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -316,8 +317,8 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -339,8 +340,8 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
   try {
     await pipe(
       await createDefaultTransaction(client, buyer),
-      (tx) => appendTransactionInstruction(computeIx, tx),
-      (tx) => appendTransactionInstruction(buyLegacyIx, tx),
+      (tx) => appendTransactionMessageInstruction(computeIx, tx),
+      (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
       (tx) => signAndSendTransaction(client, tx)
     );
     t.fail('Expected bad cosigner error.');
@@ -348,7 +349,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
     t.like(error, {
       cause: {
         context: {
-          code: TensorMarketplaceProgramErrorCode.BAD_COSIGNER,
+          code: TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
         },
       },
     });

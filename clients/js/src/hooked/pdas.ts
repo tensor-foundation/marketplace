@@ -4,8 +4,9 @@ import {
   address,
   getAddressEncoder,
   getProgramDerivedAddress,
-} from '@solana/addresses';
-import { getStringEncoder, getU8Encoder } from '@solana/codecs';
+  getU8Encoder,
+  getUtf8Encoder,
+} from '@solana/web3.js';
 
 export type TreeAuthoritySeeds = {
   /** The address of the merkle tree */
@@ -42,7 +43,7 @@ export async function findFeeVaultPda(
   return await getProgramDerivedAddress({
     programAddress: address('TFEEgwDP6nn1s8mMX2tTNPPz8j2VomkphLUmyxKm17A'),
     seeds: [
-      getStringEncoder({ size: 'variable' }).encode('fee_vault'),
+      getUtf8Encoder().encode('fee_vault'),
       getU8Encoder().encode(lastByte),
     ],
   });

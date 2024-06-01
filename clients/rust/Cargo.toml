@@ -5,9 +5,6 @@ edition = "2021"
 readme = "README.md"
 license-file = "../../LICENSE"
 
-[lib]
-crate-type = ["cdylib", "lib"]
-
 [features]
 test-sbf = []
 serde = ["dep:serde", "dep:serde_with"]

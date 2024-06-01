@@ -1,5 +1,5 @@
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   assertAccountDecoded,
   fetchEncodedAccount,
   fetchJsonParsedAccount,
@@ -14,7 +14,7 @@ import {
 import {
   createDefaultNft,
   findAtaPda,
-} from '@tensor-foundation/toolkit-token-metadata';
+} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
   Target,
@@ -40,7 +40,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
   // And the owner creates a bid on the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(bidIx, tx),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -55,7 +55,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, seller),
-    (tx) => appendTransactionInstruction(takeBidIx, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 

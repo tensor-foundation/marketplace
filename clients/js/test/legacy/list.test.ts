@@ -1,9 +1,13 @@
 import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import {
+  createDefaultNft,
+  createDefaultpNft,
+} from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
@@ -11,13 +15,8 @@ import {
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  createDefaultpNft,
-} from '@tensor-foundation/toolkit-token-metadata';
 import test from 'ava';
 import {
-  ListState,
   fetchListStateFromSeeds,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
@@ -37,7 +36,7 @@ test('it can list an NFT', async (t) => {
   // When we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -45,7 +44,7 @@ test('it can list an NFT', async (t) => {
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -75,8 +74,8 @@ test('it can list a Programmable NFT', async (t) => {
   // When we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -84,7 +83,7 @@ test('it can list a Programmable NFT', async (t) => {
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -111,7 +110,7 @@ test('it can list an NFT with a cosigner', async (t) => {
   // When we list the NFT with a cosigner.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -119,7 +118,7 @@ test('it can list an NFT with a cosigner', async (t) => {
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
@@ -151,8 +150,8 @@ test('it can list a Programmable NFT with a cosigner', async (t) => {
   // When we list the pNFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(computeIx, tx),
-    (tx) => appendTransactionInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -160,7 +159,7 @@ test('it can list a Programmable NFT with a cosigner', async (t) => {
   const listing = await fetchListStateFromSeeds(client.rpc, {
     mint,
   });
-  t.like(listing, <ListState>{
+  t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,

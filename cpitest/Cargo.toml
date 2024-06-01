@@ -3,8 +3,12 @@ name = "cpitest"
 version = "0.0.0"
 description = "Created with Anchor"
 edition = "2021"
-license-file = "../../LICENSE"
+license-file = "../LICENSE"
 publish = false
+
+[package.metadata.solana]
+program-id = "5zABSn1WYLHYenFtTFcM5AHdJjnHkx6S85rkWkFzLExq"
+program-dependencies = []
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -20,4 +24,4 @@ testing = []
 
 [dependencies]
 anchor-lang = "0.29.0"
-marketplace-program = { path="../marketplace", features = [ "no-entrypoint", "cpi" ]}
+marketplace-program = { path="../program", features = [ "no-entrypoint", "cpi" ]}

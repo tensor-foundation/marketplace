@@ -1,5 +1,5 @@
 import {
-  appendTransactionInstruction,
+  appendTransactionMessageInstruction,
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
@@ -9,11 +9,11 @@ import {
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { createDefaultNft } from '@tensor-foundation/toolkit-token-metadata';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
+  TENSOR_MARKETPLACE_ERROR__BID_NOT_YET_EXPIRED,
   Target,
-  TensorMarketplaceProgramErrorCode,
   findBidStatePda,
   getBidInstructionAsync,
   getCloseExpiredBidInstructionAsync,
@@ -36,7 +36,7 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
   // And we create a bid on the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(bidIx, tx),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -52,7 +52,7 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
   const payer = await generateKeyPairSignerWithSol(client);
   await pipe(
     await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionInstruction(closeExpiredBidIx, tx),
+    (tx) => appendTransactionMessageInstruction(closeExpiredBidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -84,7 +84,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
   // And we create a bid on the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionInstruction(bidIx, tx),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -98,7 +98,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
   try {
     await pipe(
       await createDefaultTransaction(client, owner),
-      (tx) => appendTransactionInstruction(closeExpiredBidIx, tx),
+      (tx) => appendTransactionMessageInstruction(closeExpiredBidIx, tx),
       (tx) => signAndSendTransaction(client, tx)
     );
     t.fail('I cannot close an active bid');
@@ -106,7 +106,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
     t.like(error, {
       cause: {
         context: {
-          code: TensorMarketplaceProgramErrorCode.BID_NOT_YET_EXPIRED,
+          code: TENSOR_MARKETPLACE_ERROR__BID_NOT_YET_EXPIRED,
         },
       },
     });
