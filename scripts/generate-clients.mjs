@@ -8,7 +8,7 @@ import { getAllProgramIdls } from "./utils.mjs";
 
 // Instanciate Kinobi.
 const [idl] = getAllProgramIdls()
-  .filter((idl) => idl.includes("marketplace/idl.json"))
+  .filter((idl) => idl.includes("program/idl.json"))
   .map((idl) => rootNodeFromAnchor(require(idl)));
 const kinobi = k.createFromRoot(idl);
 

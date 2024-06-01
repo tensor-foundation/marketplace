@@ -24,4 +24,4 @@ testing = []
 
 [dependencies]
 anchor-lang = "0.29.0"
-marketplace-program = { path="../marketplace", features = [ "no-entrypoint", "cpi" ]}
+marketplace-program = { path="../program", features = [ "no-entrypoint", "cpi" ]}

@@ -7,7 +7,7 @@
     "programs:format": "zx ./scripts/program/format.mjs",
     "programs:lint": "zx ./scripts/program/lint.mjs",
     "generate:idls": "zx ./scripts/generate-idls.mjs",
-    "generate": "PROGRAMS=programs/marketplace pnpm generate:idls && pnpm generate:clients",
+    "generate": "PROGRAMS=program pnpm generate:idls && pnpm generate:clients",
     "generate:clients": "zx ./scripts/generate-clients.mjs",
     "validator:start": "zx ./scripts/start-validator.mjs",
     "validator:restart": "pnpm validator:start --restart",
