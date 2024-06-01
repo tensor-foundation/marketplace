@@ -3,7 +3,7 @@ import {
   IAccountMeta,
   ProgramDerivedAddress,
   ProgramDerivedAddressBump,
-  TransactionSigner
+  TransactionSigner,
 } from '@solana/web3.js';
 import {
   ResolvedAccount,
