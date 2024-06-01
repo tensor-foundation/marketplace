@@ -7,5 +7,6 @@ import "./dump.mjs";
 
 // Build the programs.
 for (const folder of getProgramFolders()) {
-  await $`cd ${path.join(workingDirectory, folder)} && cargo-build-sbf ${process.argv.slice(3)}`;
+  cd(`${path.join(workingDirectory, folder)}`);
+  await $`cargo-build-sbf ${process.argv.slice(3)}`;
 }
