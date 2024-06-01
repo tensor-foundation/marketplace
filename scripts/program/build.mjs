@@ -9,7 +9,6 @@ import './dump.mjs';
 await Promise.all(
   getProgramFolders().map(async (folder) => {
     await $`cd ${path.join(workingDirectory, folder)}`.quiet();
-    console.log((await $`pwd`.quiet()).toString().trim());
-    await $`cargo-build-sbf ${argv._}`;
+    await $`cargo-build-sbf ${process.argv.slice(3)}`;
   })
 );
