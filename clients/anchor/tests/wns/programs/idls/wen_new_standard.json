@@ -74,11 +74,6 @@
           "isSigner": false
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
@@ -182,11 +177,6 @@
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         },

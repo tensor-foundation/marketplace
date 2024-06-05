@@ -74,11 +74,6 @@ export type WenNewStandard = {
           "isSigner": false
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
@@ -182,11 +177,6 @@ export type WenNewStandard = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         },
@@ -1049,11 +1039,6 @@ export const IDL: WenNewStandard = {
           "isSigner": false
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1157,11 +1142,6 @@ export const IDL: WenNewStandard = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         },

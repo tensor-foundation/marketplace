@@ -63,12 +63,12 @@ async function dump() {
         if (onChainHash.toString() !== localHash.toString()) {
           echo(
             chalk.yellow("[ WARNING ]"),
-            `on-chain and local binaries are different for '${binary}'`
+            `on-chain and local binaries are different for '${binary}'`,
           );
         } else {
           echo(
             chalk.green("[ SKIPPED ]"),
-            `on-chain and local binaries are the same for '${binary}'`
+            `on-chain and local binaries are the same for '${binary}'`,
           );
         }
 
@@ -76,10 +76,10 @@ async function dump() {
       } else {
         echo(
           chalk.yellow("[ WARNING ]"),
-          `skipped check for '${binary}' (missing 'sha256sum' command)`
+          `skipped check for '${binary}' (missing 'sha256sum' command)`,
         );
       }
-    })
+    }),
   );
 }
 
