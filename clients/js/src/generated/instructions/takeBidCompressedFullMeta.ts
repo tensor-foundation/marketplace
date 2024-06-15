@@ -110,7 +110,7 @@ export type TakeBidCompressedFullMetaInstruction<
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -171,9 +171,9 @@ export type TakeBidCompressedFullMetaInstruction<
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -333,7 +333,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
@@ -353,7 +353,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedFullMetaInstructionDataArgs['nonce'];
   index: TakeBidCompressedFullMetaInstructionDataArgs['index'];
   root: TakeBidCompressedFullMetaInstructionDataArgs['root'];
@@ -396,7 +396,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: TakeBidCompressedFullMetaAsyncInput<
     TAccountFeeVault,
@@ -417,7 +417,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): Promise<
   TakeBidCompressedFullMetaInstruction<
@@ -446,7 +446,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 > {
   // Program address.
@@ -484,7 +484,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -540,9 +540,6 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
       ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
     };
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -583,7 +580,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -616,7 +613,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -641,7 +638,7 @@ export type TakeBidCompressedFullMetaInput<
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
@@ -661,7 +658,7 @@ export type TakeBidCompressedFullMetaInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedFullMetaInstructionDataArgs['nonce'];
   index: TakeBidCompressedFullMetaInstructionDataArgs['index'];
   root: TakeBidCompressedFullMetaInstructionDataArgs['root'];
@@ -704,7 +701,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: TakeBidCompressedFullMetaInput<
     TAccountFeeVault,
@@ -725,7 +722,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): TakeBidCompressedFullMetaInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -752,7 +749,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountMarginAccount,
   TAccountWhitelist,
   TAccountCosigner,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -789,7 +786,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -839,9 +836,6 @@ export function getTakeBidCompressedFullMetaInstruction<
       ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
     };
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -882,7 +876,7 @@ export function getTakeBidCompressedFullMetaInstruction<
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -915,7 +909,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -945,7 +939,7 @@ export type ParsedTakeBidCompressedFullMetaInstruction<
     marginAccount: TAccountMetas[15];
     whitelist: TAccountMetas[16];
     cosigner?: TAccountMetas[17] | undefined;
-    rentDest: TAccountMetas[18];
+    rentDestination: TAccountMetas[18];
   };
   data: TakeBidCompressedFullMetaInstructionData;
 };
@@ -995,7 +989,7 @@ export function parseTakeBidCompressedFullMetaInstruction<
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
       cosigner: getNextOptionalAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getTakeBidCompressedFullMetaInstructionDataDecoder().decode(
       instruction.data

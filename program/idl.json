@@ -347,7 +347,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -495,7 +495,7 @@
           "isSigner": false
         },
         {
-          "name": "ownerDest",
+          "name": "ownerDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -529,7 +529,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -647,7 +647,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -870,7 +870,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1010,7 +1010,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1165,7 +1165,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -2806,17 +2806,17 @@
           "isSigner": false
         },
         {
-          "name": "nftSellerAcc",
+          "name": "sellerToken",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftMint",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "ownerAtaAcc",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -2841,7 +2841,7 @@
           "isSigner": false
         },
         {
-          "name": "tensorswapProgram",
+          "name": "escrowProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2860,7 +2860,7 @@
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -2949,7 +2949,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -3022,7 +3022,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -3069,7 +3069,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": true
         }
@@ -3249,7 +3249,7 @@
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }

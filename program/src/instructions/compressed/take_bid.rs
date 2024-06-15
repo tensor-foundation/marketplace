@@ -64,9 +64,9 @@ pub struct TakeBidCompressed<'info> {
     pub cosigner: Option<Signer<'info>>,
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -153,7 +153,7 @@ impl<'info> TakeBidCompressed<'info> {
             seller: &self.seller,
             margin_account: &self.margin_account,
             owner: &self.owner,
-            rent_dest: &self.rent_dest,
+            rent_destination: &self.rent_destination,
             maker_broker: &self.maker_broker,
             taker_broker: &self.taker_broker,
             fee_vault: self.fee_vault.deref(),

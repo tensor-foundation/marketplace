@@ -38,7 +38,7 @@ pub struct Buy<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             list_state.asset_id.as_ref(),
@@ -70,9 +70,9 @@ pub struct Buy<'info> {
 
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,

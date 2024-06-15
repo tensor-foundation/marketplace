@@ -90,9 +90,9 @@ pub struct TakeBidCore<'info> {
 
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -255,7 +255,7 @@ pub fn process_take_bid_core<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_dest,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),

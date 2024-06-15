@@ -71,7 +71,7 @@ pub struct TakeBidT22<'info> {
     #[account(mut, token::mint = mint, token::authority = seller)]
     pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
@@ -156,11 +156,14 @@ pub fn process_take_bid_t22<'info>(
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.mint.key();
+    let mint_pubkey = ctx.accounts.mint.key();
 
     match bid_state.target {
         Target::AssetId => {
-            require!(bid_state.target_id == mint, TcompError::WrongTargetId);
+            require!(
+                bid_state.target_id == mint_pubkey,
+                TcompError::WrongTargetId
+            );
         }
         Target::Whitelist => {
             // Ensure the correct whitelist is passed in
@@ -170,14 +173,17 @@ pub fn process_take_bid_t22<'info>(
             );
 
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let nft_mint = &ctx.accounts.mint;
+            let mint = &ctx.accounts.mint;
 
             // must have merkle tree; otherwise fail
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
-                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
+                let mint_proof = assert_decode_mint_proof(
+                    ctx.accounts.whitelist.key,
+                    &mint_pubkey,
+                    mint_proof_acc,
+                )?;
+                let leaf = anchor_lang::solana_program::keccak::hash(mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);
                 whitelist.verify_whitelist(
@@ -275,11 +281,11 @@ pub fn process_take_bid_t22<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_destination,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
-        asset_id: mint,
+        asset_id: mint_pubkey,
         token_standard: Some(if royalties.is_some() {
             TokenStandard::ProgrammableNonFungible
         } else {

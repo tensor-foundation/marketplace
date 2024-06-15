@@ -71,7 +71,7 @@ pub struct TakeBidLegacy<'info> {
     #[account(mut, token::mint = mint, token::authority = seller)]
     pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //can't deserialize directly coz Anchor traits not implemented
@@ -360,7 +360,7 @@ pub fn process_take_bid_legacy<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_destination,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),

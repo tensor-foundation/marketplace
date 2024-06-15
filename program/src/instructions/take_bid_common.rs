@@ -13,7 +13,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller: &'a AccountInfo<'info>,
     pub margin_account: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
-    pub rent_dest: &'a UncheckedAccount<'info>,
+    pub rent_destination: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
     pub taker_broker: &'a Option<UncheckedAccount<'info>>,
     pub fee_vault: &'a AccountInfo<'info>,
@@ -35,7 +35,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         seller,
         margin_account,
         owner,
-        rent_dest,
+        rent_destination,
         maker_broker,
         taker_broker,
         fee_vault,
@@ -173,7 +173,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         BidState::verify_empty_balance(bid_state)?;
         close_account(
             &mut bid_state.to_account_info(),
-            &mut rent_dest.to_account_info(),
+            &mut rent_destination.to_account_info(),
         )?;
     }
 
@@ -198,14 +198,14 @@ fn transfer_lamports_from_pda_min_balance<'info>(
 #[inline(never)]
 pub fn assert_decode_mint_proof(
     whitelist_pubkey: &Pubkey,
-    nft_mint: &Pubkey,
+    mint: &Pubkey,
     mint_proof: &UncheckedAccount,
 ) -> Result<MintProof> {
     let program_id = &tensor_whitelist::id();
     let (key, _) = Pubkey::find_program_address(
         &[
             b"mint_proof".as_ref(),
-            nft_mint.as_ref(),
+            mint.as_ref(),
             whitelist_pubkey.as_ref(),
         ],
         program_id,

@@ -86,7 +86,7 @@ export type BuyCompressedInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -136,9 +136,9 @@ export type BuyCompressedInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountCosigner extends string
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
@@ -246,7 +246,7 @@ export type BuyCompressedAsyncInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
@@ -263,7 +263,7 @@ export type BuyCompressedAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
@@ -294,7 +294,7 @@ export async function getBuyCompressedInstructionAsync<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountCosigner extends string,
 >(
   input: BuyCompressedAsyncInput<
@@ -312,7 +312,7 @@ export async function getBuyCompressedInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountCosigner
   >
 ): Promise<
@@ -332,7 +332,7 @@ export async function getBuyCompressedInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountCosigner
   >
 > {
@@ -364,7 +364,7 @@ export async function getBuyCompressedInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -410,9 +410,6 @@ export async function getBuyCompressedInstructionAsync<
       accounts.payer.value
     ).address;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -449,7 +446,7 @@ export async function getBuyCompressedInstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
@@ -473,7 +470,7 @@ export async function getBuyCompressedInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountCosigner
   >;
 
@@ -495,7 +492,7 @@ export type BuyCompressedInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
@@ -512,7 +509,7 @@ export type BuyCompressedInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
@@ -543,7 +540,7 @@ export function getBuyCompressedInstruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountCosigner extends string,
 >(
   input: BuyCompressedInput<
@@ -561,7 +558,7 @@ export function getBuyCompressedInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountCosigner
   >
 ): BuyCompressedInstruction<
@@ -580,7 +577,7 @@ export function getBuyCompressedInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountRentDest,
+  TAccountRentDestination,
   TAccountCosigner
 > {
   // Program address.
@@ -611,7 +608,7 @@ export function getBuyCompressedInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -651,9 +648,6 @@ export function getBuyCompressedInstruction<
       accounts.payer.value
     ).address;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -690,7 +684,7 @@ export function getBuyCompressedInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.cosigner),
       ...remainingAccounts,
     ],
@@ -714,7 +708,7 @@ export function getBuyCompressedInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountCosigner
   >;
 
@@ -741,7 +735,7 @@ export type ParsedBuyCompressedInstruction<
     owner: TAccountMetas[11];
     takerBroker?: TAccountMetas[12] | undefined;
     makerBroker?: TAccountMetas[13] | undefined;
-    rentDest: TAccountMetas[14];
+    rentDestination: TAccountMetas[14];
     cosigner?: TAccountMetas[15] | undefined;
   };
   data: BuyCompressedInstructionData;
@@ -788,7 +782,7 @@ export function parseBuyCompressedInstruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },
     data: getBuyCompressedInstructionDataDecoder().decode(instruction.data),

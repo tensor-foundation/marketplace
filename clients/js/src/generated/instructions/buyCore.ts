@@ -47,7 +47,7 @@ export type BuyCoreInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountMplCoreProgram extends
     | string
     | IAccountMeta<string> = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
@@ -91,9 +91,9 @@ export type BuyCoreInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountMplCoreProgram extends string
         ? ReadonlyAccount<TAccountMplCoreProgram>
         : TAccountMplCoreProgram,
@@ -158,7 +158,7 @@ export type BuyCoreInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -173,7 +173,7 @@ export type BuyCoreInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -191,7 +191,7 @@ export function getBuyCoreInstruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
@@ -207,7 +207,7 @@ export function getBuyCoreInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -224,7 +224,7 @@ export function getBuyCoreInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountRentDest,
+  TAccountRentDestination,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
@@ -244,7 +244,7 @@ export function getBuyCoreInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
     marketplaceProgram: {
       value: input.marketplaceProgram ?? null,
@@ -287,7 +287,7 @@ export function getBuyCoreInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
@@ -308,7 +308,7 @@ export function getBuyCoreInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -333,7 +333,7 @@ export type ParsedBuyCoreInstruction<
     owner: TAccountMetas[6];
     takerBroker?: TAccountMetas[7] | undefined;
     makerBroker?: TAccountMetas[8] | undefined;
-    rentDest: TAccountMetas[9];
+    rentDestination: TAccountMetas[9];
     mplCoreProgram: TAccountMetas[10];
     marketplaceProgram: TAccountMetas[11];
     systemProgram: TAccountMetas[12];
@@ -378,7 +378,7 @@ export function parseBuyCoreInstruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
       mplCoreProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),

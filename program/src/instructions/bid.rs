@@ -103,7 +103,7 @@ pub fn process_bid<'info>(
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target.clone();
         bid_state.target_id = target_id;
-        bid_state.field = field.clone();
+        bid_state.field.clone_from(&field);
         bid_state.field_id = field_id;
 
         // SECURITY RISK: do NOT store the cosigner if it's the owner's signer key

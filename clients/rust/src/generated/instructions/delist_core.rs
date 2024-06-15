@@ -24,7 +24,7 @@ pub struct DelistCore {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl DelistCore {
@@ -70,7 +70,7 @@ impl DelistCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             true,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -114,7 +114,7 @@ impl Default for DelistCoreInstructionData {
 ///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[writable, signer]` rent_dest
+///   7. `[writable, signer]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct DelistCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
@@ -124,7 +124,7 @@ pub struct DelistCoreBuilder {
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -178,8 +178,11 @@ impl DelistCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// Add an aditional account to the instruction.
@@ -216,7 +219,7 @@ impl DelistCoreBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -239,7 +242,7 @@ pub struct DelistCoreCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `delist_core` CPI instruction.
@@ -261,7 +264,7 @@ pub struct DelistCoreCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> DelistCoreCpi<'a, 'b> {
@@ -278,7 +281,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
             mpl_core_program: accounts.mpl_core_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
         }
     }
     #[inline(always)]
@@ -351,7 +354,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             true,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -379,7 +382,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
         account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -403,7 +406,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
 ///   4. `[]` mpl_core_program
 ///   5. `[]` marketplace_program
 ///   6. `[]` system_program
-///   7. `[writable, signer]` rent_dest
+///   7. `[writable, signer]` rent_destination
 #[derive(Clone, Debug)]
 pub struct DelistCoreCpiBuilder<'a, 'b> {
     instruction: Box<DelistCoreCpiBuilderInstruction<'a, 'b>>,
@@ -420,7 +423,7 @@ impl<'a, 'b> DelistCoreCpiBuilder<'a, 'b> {
             mpl_core_program: None,
             marketplace_program: None,
             system_program: None,
-            rent_dest: None,
+            rent_destination: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -477,11 +480,11 @@ impl<'a, 'b> DelistCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     /// Add an additional account to the instruction.
@@ -551,7 +554,10 @@ impl<'a, 'b> DelistCoreCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -570,7 +576,7 @@ struct DelistCoreCpiBuilderInstruction<'a, 'b> {
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

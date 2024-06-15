@@ -42,7 +42,7 @@ pub struct BuySpl<'info> {
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             list_state.asset_id.as_ref(),
@@ -67,7 +67,7 @@ pub struct BuySpl<'info> {
       associated_token::mint = currency,
       associated_token::authority = owner,
     )]
-    pub owner_dest: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_destination: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: list_state.currency
     pub currency: Box<InterfaceAccount<'info, Mint>>,
     // TODO: brokers are Option<T> to save bytes
@@ -91,9 +91,9 @@ pub struct BuySpl<'info> {
     pub maker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
     // cosigner is checked in validate()
@@ -350,7 +350,7 @@ pub fn process_buy_spl<'info>(
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts.transfer_ata(
-        ctx.accounts.owner_dest.deref().as_ref(),
+        ctx.accounts.owner_destination.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         amount,
         ctx.accounts.currency.decimals,

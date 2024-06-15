@@ -28,7 +28,7 @@ pub struct BuyCore<'info> {
     )]
     pub fee_vault: UncheckedAccount<'info>,
 
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             asset.key.as_ref(),
@@ -67,9 +67,9 @@ pub struct BuyCore<'info> {
 
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 

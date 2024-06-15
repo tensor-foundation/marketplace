@@ -28,7 +28,7 @@ pub struct BuyCore {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub mpl_core_program: solana_program::pubkey::Pubkey,
 
@@ -106,7 +106,7 @@ impl BuyCore {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -182,7 +182,7 @@ pub struct BuyCoreInstructionArgs {
 ///   6. `[writable]` owner
 ///   7. `[writable, optional]` taker_broker
 ///   8. `[writable, optional]` maker_broker
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -198,7 +198,7 @@ pub struct BuyCoreBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -266,8 +266,11 @@ impl BuyCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
@@ -335,7 +338,7 @@ impl BuyCoreBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
             mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
                 "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
             )),
@@ -375,7 +378,7 @@ pub struct BuyCoreCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -409,7 +412,7 @@ pub struct BuyCoreCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -439,7 +442,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             mpl_core_program: accounts.mpl_core_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
@@ -539,7 +542,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -598,7 +601,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
@@ -630,7 +633,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
 ///   6. `[writable]` owner
 ///   7. `[writable, optional]` taker_broker
 ///   8. `[writable, optional]` maker_broker
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 ///   10. `[]` mpl_core_program
 ///   11. `[]` marketplace_program
 ///   12. `[]` system_program
@@ -653,7 +656,7 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            rent_dest: None,
+            rent_destination: None,
             mpl_core_program: None,
             marketplace_program: None,
             system_program: None,
@@ -727,11 +730,11 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -841,7 +844,10 @@ impl<'a, 'b> BuyCoreCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             mpl_core_program: self
                 .instruction
@@ -880,7 +886,7 @@ struct BuyCoreCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

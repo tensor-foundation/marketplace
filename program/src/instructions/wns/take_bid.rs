@@ -68,22 +68,22 @@ pub struct WnsTakeBid<'info> {
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
 
-    #[account(mut, token::mint = nft_mint, token::authority = seller)]
-    pub nft_seller_acc: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(mut, token::mint = mint, token::authority = seller)]
+    pub seller_token: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     #[account(
         mint::token_program = anchor_spl::token_interface::spl_token_2022::id(),
     )]
-    pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         init_if_needed,
         payer = seller,
-        associated_token::mint = nft_mint,
+        associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata_acc: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token2022>,
 
@@ -93,7 +93,7 @@ pub struct WnsTakeBid<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    pub tensorswap_program: Program<'info, EscrowProgram>,
+    pub escrow_program: Program<'info, EscrowProgram>,
 
     // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
@@ -104,9 +104,9 @@ pub struct WnsTakeBid<'info> {
 
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     // ---- WNS royalty enforcement
     /// CHECK: checked on approve CPI
@@ -171,7 +171,7 @@ pub fn process_take_bid_wns<'info>(
     min_amount: u64,
 ) -> Result<()> {
     // validate mint account
-    let seller_fee_basis_points = validate_mint(&ctx.accounts.nft_mint.to_account_info())?;
+    let seller_fee_basis_points = validate_mint(&ctx.accounts.mint.to_account_info())?;
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         min_amount,
@@ -180,7 +180,7 @@ pub fn process_take_bid_wns<'info>(
     )?;
 
     let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.nft_mint.key();
+    let mint = ctx.accounts.mint.key();
 
     match bid_state.target {
         Target::AssetId => {
@@ -194,14 +194,17 @@ pub fn process_take_bid_wns<'info>(
             );
 
             let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let nft_mint = &ctx.accounts.nft_mint;
+            let mint = &ctx.accounts.mint;
 
             // must have merkle tree; otherwise fail
             if whitelist.root_hash != ZERO_ARRAY {
                 let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
-                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
+                let mint_proof = assert_decode_mint_proof(
+                    ctx.accounts.whitelist.key,
+                    &mint.key(),
+                    mint_proof_acc,
+                )?;
+                let leaf = anchor_lang::solana_program::keccak::hash(mint.key().as_ref());
                 let proof = &mut mint_proof.proof.to_vec();
                 proof.truncate(mint_proof.proof_len as usize);
                 whitelist.verify_whitelist(
@@ -222,7 +225,7 @@ pub fn process_take_bid_wns<'info>(
     if let Some(field) = &bid_state.field {
         match field {
             &Field::Name => {
-                let mint_info = &ctx.accounts.nft_mint.to_account_info();
+                let mint_info = &ctx.accounts.mint.to_account_info();
                 let token_metadata = {
                     let buffer = mint_info.try_borrow_data()?;
                     let state = TlvStateBorrowed::unpack(&buffer)?;
@@ -248,7 +251,7 @@ pub fn process_take_bid_wns<'info>(
     let approve_accounts = ApproveAccounts {
         payer: ctx.accounts.seller.to_account_info(),
         authority: ctx.accounts.seller.to_account_info(),
-        mint: ctx.accounts.nft_mint.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve_account.to_account_info(),
         payment_mint: None,
         authority_token_account: ctx.accounts.seller.to_account_info(),
@@ -268,10 +271,10 @@ pub fn process_take_bid_wns<'info>(
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.nft_seller_acc.to_account_info(),
-            to: ctx.accounts.owner_ata_acc.to_account_info(),
+            from: ctx.accounts.seller_token.to_account_info(),
+            to: ctx.accounts.owner_ata.to_account_info(),
             authority: ctx.accounts.seller.to_account_info(),
-            mint: ctx.accounts.nft_mint.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
         },
     );
 
@@ -292,7 +295,7 @@ pub fn process_take_bid_wns<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_dest,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
@@ -304,7 +307,7 @@ pub fn process_take_bid_wns<'info>(
         seller_fee_basis_points: 0, // <- royalty value was already paid on approve
         creator_accounts: ctx.remaining_accounts,
         tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.tensorswap_program,
+        tswap_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }
