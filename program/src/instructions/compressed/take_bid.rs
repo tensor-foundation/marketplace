@@ -1,7 +1,6 @@
 use mpl_bubblegum::types::Creator;
 use tensor_toolbox::{
-    fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num, transfer_cnft, CnftArgs, DataHashArgs,
-    MakeCnftArgs, MetadataSrc, TransferArgs,
+    make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;
@@ -11,16 +10,7 @@ use crate::{take_bid_common::*, *};
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
@@ -74,6 +64,11 @@ pub struct TakeBidCompressed<'info> {
 
 impl<'info> Validate<'info> for TakeBidCompressed<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(

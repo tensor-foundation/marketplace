@@ -7,8 +7,6 @@ use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
     FromExternal,
@@ -16,24 +14,15 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, TakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT,
-    TCOMP_FEE_BPS,
+    assert_fee_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
+    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
+    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
 pub struct BuyLegacy<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(list_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -149,6 +138,11 @@ pub struct BuyLegacy<'info> {
 
 impl<'info> Validate<'info> for BuyLegacy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(

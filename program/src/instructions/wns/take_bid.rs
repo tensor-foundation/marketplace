@@ -8,8 +8,6 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     calc_creators_fee,
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
@@ -17,6 +15,7 @@ use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
+    assert_fee_account,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
@@ -24,16 +23,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct WnsTakeBid<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -129,6 +119,11 @@ pub struct WnsTakeBid<'info> {
 
 impl<'info> Validate<'info> for WnsTakeBid<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(

@@ -4189,6 +4189,11 @@
       "code": 6139,
       "name": "WrongTokenRecordDerivation",
       "msg": "token record derivation is wrong"
+    },
+    {
+      "code": 6140,
+      "name": "InvalidFeeAccount",
+      "msg": "invalid fee account"
     }
   ],
   "metadata": {

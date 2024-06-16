@@ -130,6 +130,9 @@ pub enum TensorMarketplaceError {
     /// 6139 - token record derivation is wrong
     #[error("token record derivation is wrong")]
     WrongTokenRecordDerivation = 0x17FB,
+    /// 6140 - invalid fee account
+    #[error("invalid fee account")]
+    InvalidFeeAccount = 0x17FC,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

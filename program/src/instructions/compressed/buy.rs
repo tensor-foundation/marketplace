@@ -1,24 +1,14 @@
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num,
-    transfer_cnft, transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, FromAcc,
-    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs,
+    calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft, transfer_creators_fee, CnftArgs,
+    CreatorFeeMode, DataHashArgs, FromAcc, FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 
 use crate::*;
 
 #[derive(Accounts)]
 pub struct Buy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(list_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    /// CHECK: Checked in assert_fee_account().
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: downstream
@@ -83,6 +73,11 @@ pub struct Buy<'info> {
 
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(

@@ -13,14 +13,14 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_account, program::MarketplaceProgram, record_event, ListState, TakeEvent, Target,
+    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
 pub struct BuyT22<'info> {
     /// CHECK: seeds (fee account)
-    #[account(mut, seeds=[], bump)]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -94,6 +94,11 @@ pub struct BuyT22<'info> {
 
 impl<'info> Validate<'info> for BuyT22<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(

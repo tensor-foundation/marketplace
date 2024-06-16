@@ -4,16 +4,13 @@ use anchor_spl::{
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::{
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
-    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
-};
+use tensor_toolbox::token_metadata::{assert_decode_metadata, transfer, TransferArgs};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
+    assert_fee_account,
     pnft_adapter::*,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
@@ -23,16 +20,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -150,6 +138,11 @@ pub struct TakeBidLegacy<'info> {
 
 impl<'info> Validate<'info> for TakeBidLegacy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(

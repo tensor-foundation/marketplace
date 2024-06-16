@@ -22,13 +22,12 @@ const wnsInstructions = require("./kinobi/wns-instructions.cjs");
 kinobi.update(
   new k.updateProgramsVisitor({
     marketplaceProgram: { name: "tensorMarketplace" },
-  })
+  }),
 );
 
 // Set default account values accross multiple instructions.
 kinobi.update(
   k.setInstructionAccountDefaultValuesVisitor([
-    // TODO: set default value for newly added feeVault acc
     {
       account: "treeAuthority",
       ignoreIfOptional: true,
@@ -45,7 +44,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-        "marketplaceProgram"
+        "marketplaceProgram",
       ),
     },
     {
@@ -53,7 +52,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
-        "escrowProgram"
+        "escrowProgram",
       ),
     },
     {
@@ -61,7 +60,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "11111111111111111111111111111111",
-        "systemProgram"
+        "systemProgram",
       ),
     },
     {
@@ -69,7 +68,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-        "tokenProgram"
+        "tokenProgram",
       ),
     },
     {
@@ -77,7 +76,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-        "associatedTokenProgram"
+        "associatedTokenProgram",
       ),
     },
     {
@@ -85,7 +84,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
-        "tensorswapProgram"
+        "tensorswapProgram",
       ),
     },
     // Legacy
@@ -96,7 +95,7 @@ kinobi.update(
         {
           importFrom: "resolvers",
           dependsOn: [k.argumentValueNode("tokenStandard")],
-        }
+        },
       ),
     },
     {
@@ -106,7 +105,7 @@ kinobi.update(
         {
           importFrom: "resolvers",
           dependsOn: [k.argumentValueNode("tokenStandard")],
-        }
+        },
       ),
     },
     {
@@ -116,7 +115,7 @@ kinobi.update(
         {
           importFrom: "resolvers",
           dependsOn: [k.argumentValueNode("tokenStandard")],
-        }
+        },
       ),
     },
     // WNS
@@ -125,7 +124,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM",
-        "wnsProgram"
+        "wnsProgram",
       ),
     },
     {
@@ -133,7 +132,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
-        "wnsDistributionProgram"
+        "wnsDistributionProgram",
       ),
     },
     // Compressed
@@ -142,7 +141,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV",
-        "logWrapper"
+        "logWrapper",
       ),
     },
     {
@@ -150,7 +149,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK",
-        "compressionProgram"
+        "compressionProgram",
       ),
     },
     {
@@ -158,7 +157,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
-        "bubblegumProgram"
+        "bubblegumProgram",
       ),
     },
     {
@@ -166,7 +165,7 @@ kinobi.update(
       ignoreIfOptional: true,
       defaultValue: k.programIdValueNode(),
     },
-  ])
+  ]),
 );
 
 // Update accounts.
@@ -185,7 +184,7 @@ kinobi.update(
         k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
       ],
     },
-  })
+  }),
 );
 
 // Update instructions.
@@ -226,7 +225,7 @@ kinobi.update(
         bidId: {
           type: k.publicKeyTypeNode(),
           defaultValue: k.publicKeyValueNode(
-            "11111111111111111111111111111111"
+            "11111111111111111111111111111111",
           ),
         },
       },
@@ -246,12 +245,12 @@ kinobi.update(
         bidId: {
           type: k.publicKeyTypeNode(),
           defaultValue: k.publicKeyValueNode(
-            "11111111111111111111111111111111"
+            "11111111111111111111111111111111",
           ),
         },
       },
     },
-  })
+  }),
 );
 
 // Update instructions using additional visitors.
@@ -318,7 +317,7 @@ kinobi.update(
         };
       },
     },
-  ])
+  ]),
 );
 
 // Add missing types from the IDL.
@@ -344,7 +343,7 @@ kinobi.update(
         };
       },
     },
-  ])
+  ]),
 );
 
 // Render JavaScript.
@@ -376,7 +375,7 @@ kinobi.accept(
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers",
     },
-  })
+  }),
 );
 
 // Render Rust.
@@ -385,5 +384,5 @@ kinobi.accept(
   renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
     crateFolder: rustClient,
-  })
+  }),
 );

@@ -3,10 +3,8 @@ use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
-    fees::ID as TFEE_PROGRAM_ID,
     metaplex_core::{validate_asset, MetaplexCore},
-    shard_num, transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc,
-    FromExternal,
+    transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
 };
 
 use crate::*;
@@ -16,16 +14,7 @@ use self::program::MarketplaceProgram;
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(list_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut, close = rent_destination,
@@ -115,6 +104,11 @@ impl<'info> BuyCore<'info> {
 
 impl<'info> Validate<'info> for BuyCore<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
