@@ -185,14 +185,14 @@ pub fn process_buy_wns<'info, 'b>(
         mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve.to_account_info(),
         payment_mint: None,
-        authority_token_account: ctx.accounts.payer.to_account_info(),
+        authority_token_account: None,
         distribution_account: ctx.accounts.distribution.to_account_info(),
-        distribution_token_account: ctx.accounts.distribution.to_account_info(),
+        distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
         distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
-        associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
+        payment_token_program: None,
     };
     // royalty payment
     approve(approve_accounts, amount, creator_fee)?;
