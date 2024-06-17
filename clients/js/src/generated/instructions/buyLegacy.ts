@@ -20,7 +20,6 @@ import {
   Option,
   OptionOrNullable,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -183,8 +182,7 @@ export type BuyLegacyInstruction<
         ? ReadonlyAccount<TAccountSysvarInstructions>
         : TAccountSysvarInstructions,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -295,7 +293,7 @@ export type BuyLegacyAsyncInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];
@@ -658,7 +656,7 @@ export type BuyLegacyInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];

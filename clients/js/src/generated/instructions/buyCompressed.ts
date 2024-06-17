@@ -19,7 +19,6 @@ import {
   Option,
   OptionOrNullable,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -140,8 +139,7 @@ export type BuyCompressedInstruction<
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -264,7 +262,7 @@ export type BuyCompressedAsyncInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination: Address<TAccountRentDestination>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];
@@ -510,7 +508,7 @@ export type BuyCompressedInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination: Address<TAccountRentDestination>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];

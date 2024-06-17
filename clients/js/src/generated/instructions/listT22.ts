@@ -109,8 +109,7 @@ export type ListT22Instruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -198,7 +197,7 @@ export type ListT22AsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   amount: ListT22InstructionDataArgs['amount'];
   expireInSec?: ListT22InstructionDataArgs['expireInSec'];
   currency?: ListT22InstructionDataArgs['currency'];
@@ -380,7 +379,7 @@ export type ListT22Input<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   amount: ListT22InstructionDataArgs['amount'];
   expireInSec?: ListT22InstructionDataArgs['expireInSec'];
   currency?: ListT22InstructionDataArgs['currency'];

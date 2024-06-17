@@ -42,7 +42,7 @@ pub struct List<'info> {
     #[account(mut)]
     pub rent_payer: Signer<'info>,
 
-    pub cosigner: Option<Signer<'info>>,
+    pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. proof accounts (less canopy)
 }
@@ -65,6 +65,22 @@ pub fn process_list<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
     require!(
         maker_broker_is_whitelisted(maker_broker),
         TcompError::MakerBrokerNotYetWhitelisted
@@ -85,7 +101,7 @@ pub fn process_list<'info>(
         compression_program: &ctx.accounts.compression_program.to_account_info(),
         system_program: &ctx.accounts.system_program.to_account_info(),
         bubblegum_program: &ctx.accounts.bubblegum_program.to_account_info(),
-        proof_accounts: ctx.remaining_accounts,
+        proof_accounts: remaining_accounts,
         signer: None,
         signer_seeds: None,
     })?;

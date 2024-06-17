@@ -17,7 +17,6 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -122,8 +121,7 @@ export type BuyT22Instruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -199,7 +197,7 @@ export type BuyT22AsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   maxAmount: BuyT22InstructionDataArgs['maxAmount'];
 };
 
@@ -422,7 +420,7 @@ export type BuyT22Input<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   maxAmount: BuyT22InstructionDataArgs['maxAmount'];
 };
 

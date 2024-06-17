@@ -130,7 +130,7 @@ impl BuyCompressed {
         ));
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
+                cosigner, false,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -203,7 +203,7 @@ pub struct BuyCompressedInstructionArgs {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_destination
-///   15. `[signer, optional]` cosigner
+///   15. `[optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyCompressedBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -676,7 +676,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                true,
+                false,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -755,7 +755,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_destination
-///   15. `[signer, optional]` cosigner
+///   15. `[optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyCompressedCpiBuilder<'a, 'b> {
     instruction: Box<BuyCompressedCpiBuilderInstruction<'a, 'b>>,

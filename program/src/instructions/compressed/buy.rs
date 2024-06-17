@@ -65,7 +65,7 @@ pub struct Buy<'info> {
     pub rent_destination: UncheckedAccount<'info>,
 
     // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
+    pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -101,13 +101,6 @@ impl<'info> Validate<'info> for Buy<'info> {
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
-
-        // check if the cosigner is required
-        if let Some(cosigner) = list_state.cosigner.value() {
-            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
-
-            require!(cosigner == signer.key, TcompError::BadCosigner);
-        }
 
         Ok(())
     }
@@ -154,6 +147,22 @@ pub fn process_buy<'info>(
     max_amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
     // TODO: for now enforcing
     // NB: TRoll hardcodes Some(100) to match
     require!(
@@ -161,7 +170,7 @@ pub fn process_buy<'info>(
         TcompError::OptionalRoyaltiesNotYetEnabled
     );
 
-    let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
+    let (creator_accounts, proof_accounts) = remaining_accounts.split_at(creator_shares.len());
 
     // Verification occurs during transfer_cnft (ie creator_shares/verified/royalty checked via creator_hash).
     let CnftArgs {
@@ -181,7 +190,6 @@ pub fn process_buy<'info>(
         creator_accounts,
     })?;
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);

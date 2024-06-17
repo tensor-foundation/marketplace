@@ -17,7 +17,6 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
-  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -104,8 +103,7 @@ export type BuyCoreInstruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -177,7 +175,7 @@ export type BuyCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
 };
 

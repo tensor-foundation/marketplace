@@ -354,7 +354,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -541,7 +541,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -751,7 +751,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -1335,7 +1335,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -2017,7 +2017,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -2206,7 +2206,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -2971,7 +2971,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],

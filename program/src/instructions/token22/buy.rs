@@ -13,8 +13,9 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    assert_fee_account, program::MarketplaceProgram, record_event, ListState, TakeEvent, Target,
-    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_account, program::MarketplaceProgram, record_event, validate_cosigner, ListState,
+    TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
+    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -87,7 +88,7 @@ pub struct BuyT22<'info> {
     pub system_program: Program<'info, System>,
 
     // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
+    pub cosigner: Option<UncheckedAccount<'info>>,
     //
     // ---- [0..n] remaining accounts for royalties transfer hook
 }
@@ -123,13 +124,6 @@ impl<'info> Validate<'info> for BuyT22<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
-        if let Some(cosigner) = list_state.cosigner.value() {
-            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
-
-            require!(cosigner == signer.key, TcompError::BadCosigner);
-        }
-
         Ok(())
     }
 }
@@ -139,11 +133,25 @@ pub fn process_buy_t22<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyT22<'info>>,
     max_amount: u64,
 ) -> Result<()> {
-    // validate mint account
+    let list_state = &ctx.accounts.list_state;
 
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
+    // validate mint account
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
 
@@ -178,7 +186,7 @@ pub fn process_buy_t22<'info, 'b>(
     }) = &royalties
     {
         // add remaining accounts to the transfer cpi
-        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        transfer_cpi = transfer_cpi.with_remaining_accounts(remaining_accounts.to_vec());
 
         let mut creator_infos = Vec::with_capacity(creators.len());
         let mut creator_data = Vec::with_capacity(creators.len());
@@ -192,8 +200,7 @@ pub fn process_buy_t22<'info, 'b>(
                 verified: true,
             };
 
-            if let Some(account) = ctx
-                .remaining_accounts
+            if let Some(account) = remaining_accounts
                 .iter()
                 .find(|account| &creator.address == account.key)
             {

@@ -173,8 +173,7 @@ export type BuySplInstruction<
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -306,7 +305,7 @@ export type BuySplAsyncInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -611,7 +610,7 @@ export type BuySplInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];

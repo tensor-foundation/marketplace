@@ -14,9 +14,9 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    assert_fee_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
-    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_account, program::MarketplaceProgram, record_event, validate_cosigner,
+    AuthorizationDataLocal, ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner,
+    CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -128,8 +128,7 @@ pub struct BuyLegacy<'info> {
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: Option<UncheckedAccount<'info>>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
+    pub cosigner: Option<UncheckedAccount<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
     //
@@ -167,13 +166,6 @@ impl<'info> Validate<'info> for BuyLegacy<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
-        if let Some(cosigner) = list_state.cosigner.value() {
-            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
-
-            require!(cosigner == signer.key, TcompError::BadCosigner);
-        }
-
         Ok(())
     }
 }
@@ -188,8 +180,22 @@ pub fn process_buy_legacy<'info, 'b>(
     // validate the mint
     let mint = ctx.accounts.mint.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
-
     let list_state = &ctx.accounts.list_state;
+
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
@@ -291,7 +297,7 @@ pub fn process_buy_legacy<'info, 'b>(
             .into_iter()
             .map(Into::into)
             .collect(),
-        &mut ctx.remaining_accounts.iter(),
+        &mut remaining_accounts.iter(),
         creator_fee,
         &CreatorFeeMode::Sol {
             from: &FromAcc::External(&FromExternal {
