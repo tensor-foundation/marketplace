@@ -1,507 +1,487 @@
 export type WenRoyaltyDistribution = {
-  "version": "0.0.2-alpha",
-  "name": "wen_royalty_distribution",
-  "instructions": [
+  version: "0.0.2-alpha";
+  name: "wen_royalty_distribution";
+  instructions: [
     {
-      "name": "initializeDistribution",
-      "docs": [
-        "Initializes a new distribution account."
-      ],
-      "accounts": [
+      name: "initializeDistribution";
+      docs: ["Initializes a new distribution account."];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "groupMint",
-          "isMut": false,
-          "isSigner": false
+          name: "groupMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "paymentMint",
-          "type": "publicKey"
+          name: "paymentMint";
+          type: "publicKey";
         }
-      ]
+      ];
     },
     {
-      "name": "updateDistribution",
-      "docs": [
-        "Update royalty amount for creators a distribution account."
-      ],
-      "accounts": [
+      name: "updateDistribution";
+      docs: ["Update royalty amount for creators a distribution account."];
+      accounts: [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "paymentMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "authorityTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "authorityTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "paymentTokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "UpdateDistributionArgs"
-          }
+          name: "args";
+          type: {
+            defined: "UpdateDistributionArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "claimDistribution",
-      "docs": [
-        "Claim royalties from a distribution account."
-      ],
-      "accounts": [
+      name: "claimDistribution";
+      docs: ["Claim royalties from a distribution account."];
+      accounts: [
         {
-          "name": "creator",
-          "isMut": true,
-          "isSigner": true
+          name: "creator";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "distribution",
-          "isMut": true,
-          "isSigner": false
+          name: "distribution";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "creatorTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "creatorTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "paymentMint",
-          "type": "publicKey"
+          name: "paymentMint";
+          type: "publicKey";
         }
-      ]
+      ];
     }
-  ],
-  "accounts": [
+  ];
+  accounts: [
     {
-      "name": "distributionAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "distributionAccount";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "version",
-            "docs": [
-              "distribution version"
-            ],
-            "type": "u8"
+            name: "version";
+            docs: ["distribution version"];
+            type: "u8";
           },
           {
-            "name": "groupMint",
-            "docs": [
-              "group to which the distribution account belongs to"
-            ],
-            "type": "publicKey"
+            name: "groupMint";
+            docs: ["group to which the distribution account belongs to"];
+            type: "publicKey";
           },
           {
-            "name": "paymentMint",
-            "docs": [
-              "payment mint for the distribution account"
-            ],
-            "type": "publicKey"
+            name: "paymentMint";
+            docs: ["payment mint for the distribution account"];
+            type: "publicKey";
           },
           {
-            "name": "claimData",
-            "type": {
-              "vec": {
-                "defined": "Creator"
-              }
-            }
+            name: "claimData";
+            type: {
+              vec: {
+                defined: "Creator";
+              };
+            };
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "types": [
+  ];
+  types: [
     {
-      "name": "CreatorShare",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreatorShare";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "address",
-            "docs": [
-              "creator address"
-            ],
-            "type": "publicKey"
+            name: "address";
+            docs: ["creator address"];
+            type: "publicKey";
           },
           {
-            "name": "pct",
-            "docs": [
-              "creator share percentage"
-            ],
-            "type": "u8"
+            name: "pct";
+            docs: ["creator share percentage"];
+            type: "u8";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "UpdateDistributionArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateDistributionArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount";
+            type: "u64";
           },
           {
-            "name": "paymentMint",
-            "type": "publicKey"
+            name: "paymentMint";
+            type: "publicKey";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "Creator",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "Creator";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "address",
-            "docs": [
-              "creator address"
-            ],
-            "type": "publicKey"
+            name: "address";
+            docs: ["creator address"];
+            type: "publicKey";
           },
           {
-            "name": "claimAmount",
-            "docs": [
-              "token amount that creator can claim"
-            ],
-            "type": "u64"
+            name: "claimAmount";
+            docs: ["token amount that creator can claim"];
+            type: "u64";
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "errors": [
+  ];
+  errors: [
     {
-      "code": 6000,
-      "name": "InvalidGroupAuthority",
-      "msg": "Invalid Group Authority for collection account"
+      code: 6000;
+      name: "InvalidGroupAuthority";
+      msg: "Invalid Group Authority for collection account";
     },
     {
-      "code": 6001,
-      "name": "InvalidCreatorPctAmount",
-      "msg": "Invalid creator pct amount. Must add up to 100"
+      code: 6001;
+      name: "InvalidCreatorPctAmount";
+      msg: "Invalid creator pct amount. Must add up to 100";
     },
     {
-      "code": 6002,
-      "name": "ArithmeticOverflow",
-      "msg": "Arithmetic overflow"
+      code: 6002;
+      name: "ArithmeticOverflow";
+      msg: "Arithmetic overflow";
     }
-  ]
+  ];
 };
 
 export const IDL: WenRoyaltyDistribution = {
-  "version": "0.0.2-alpha",
-  "name": "wen_royalty_distribution",
-  "instructions": [
+  version: "0.0.2-alpha",
+  name: "wen_royalty_distribution",
+  instructions: [
     {
-      "name": "initializeDistribution",
-      "docs": [
-        "Initializes a new distribution account."
+      name: "initializeDistribution",
+      docs: ["Initializes a new distribution account."],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "groupMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "distributionAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "paymentMint",
+          type: "publicKey",
         },
-        {
-          "name": "groupMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "paymentMint",
-          "type": "publicKey"
-        }
-      ]
     },
     {
-      "name": "updateDistribution",
-      "docs": [
-        "Update royalty amount for creators a distribution account."
+      name: "updateDistribution",
+      docs: ["Update royalty amount for creators a distribution account."],
+      accounts: [
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "paymentMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "distributionAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "distributionTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "authorityTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "paymentTokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "UpdateDistributionArgs",
+          },
         },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authorityTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "UpdateDistributionArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "claimDistribution",
-      "docs": [
-        "Claim royalties from a distribution account."
+      name: "claimDistribution",
+      docs: ["Claim royalties from a distribution account."],
+      accounts: [
+        {
+          name: "creator",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "distribution",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "distributionTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "creatorTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "creator",
-          "isMut": true,
-          "isSigner": true
+          name: "paymentMint",
+          type: "publicKey",
         },
-        {
-          "name": "distribution",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "creatorTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "paymentMint",
-          "type": "publicKey"
-        }
-      ]
-    }
+    },
   ],
-  "accounts": [
+  accounts: [
     {
-      "name": "distributionAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "distributionAccount",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "version",
-            "docs": [
-              "distribution version"
-            ],
-            "type": "u8"
+            name: "version",
+            docs: ["distribution version"],
+            type: "u8",
           },
           {
-            "name": "groupMint",
-            "docs": [
-              "group to which the distribution account belongs to"
-            ],
-            "type": "publicKey"
+            name: "groupMint",
+            docs: ["group to which the distribution account belongs to"],
+            type: "publicKey",
           },
           {
-            "name": "paymentMint",
-            "docs": [
-              "payment mint for the distribution account"
-            ],
-            "type": "publicKey"
+            name: "paymentMint",
+            docs: ["payment mint for the distribution account"],
+            type: "publicKey",
           },
           {
-            "name": "claimData",
-            "type": {
-              "vec": {
-                "defined": "Creator"
-              }
-            }
-          }
-        ]
-      }
-    }
+            name: "claimData",
+            type: {
+              vec: {
+                defined: "Creator",
+              },
+            },
+          },
+        ],
+      },
+    },
   ],
-  "types": [
+  types: [
     {
-      "name": "CreatorShare",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreatorShare",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "address",
-            "docs": [
-              "creator address"
-            ],
-            "type": "publicKey"
+            name: "address",
+            docs: ["creator address"],
+            type: "publicKey",
           },
           {
-            "name": "pct",
-            "docs": [
-              "creator share percentage"
-            ],
-            "type": "u8"
-          }
-        ]
-      }
+            name: "pct",
+            docs: ["creator share percentage"],
+            type: "u8",
+          },
+        ],
+      },
     },
     {
-      "name": "UpdateDistributionArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateDistributionArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount",
+            type: "u64",
           },
           {
-            "name": "paymentMint",
-            "type": "publicKey"
-          }
-        ]
-      }
+            name: "paymentMint",
+            type: "publicKey",
+          },
+        ],
+      },
     },
     {
-      "name": "Creator",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "Creator",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "address",
-            "docs": [
-              "creator address"
-            ],
-            "type": "publicKey"
+            name: "address",
+            docs: ["creator address"],
+            type: "publicKey",
           },
           {
-            "name": "claimAmount",
-            "docs": [
-              "token amount that creator can claim"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
-    }
+            name: "claimAmount",
+            docs: ["token amount that creator can claim"],
+            type: "u64",
+          },
+        ],
+      },
+    },
   ],
-  "errors": [
+  errors: [
     {
-      "code": 6000,
-      "name": "InvalidGroupAuthority",
-      "msg": "Invalid Group Authority for collection account"
+      code: 6000,
+      name: "InvalidGroupAuthority",
+      msg: "Invalid Group Authority for collection account",
     },
     {
-      "code": 6001,
-      "name": "InvalidCreatorPctAmount",
-      "msg": "Invalid creator pct amount. Must add up to 100"
+      code: 6001,
+      name: "InvalidCreatorPctAmount",
+      msg: "Invalid creator pct amount. Must add up to 100",
     },
     {
-      "code": 6002,
-      "name": "ArithmeticOverflow",
-      "msg": "Arithmetic overflow"
-    }
-  ]
+      code: 6002,
+      name: "ArithmeticOverflow",
+      msg: "Arithmetic overflow",
+    },
+  ],
 };

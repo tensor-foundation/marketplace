@@ -1,1949 +1,1843 @@
 export type WenNewStandard = {
-  "version": "0.0.2-alpha",
-  "name": "wen_new_standard",
-  "instructions": [
+  version: "0.0.2-alpha";
+  name: "wen_new_standard";
+  instructions: [
     {
-      "name": "initManagerAccount",
-      "docs": [
-        "Init manager account"
-      ],
-      "accounts": [
+      name: "initManagerAccount";
+      docs: ["Init manager account"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "manager",
-          "isMut": true,
-          "isSigner": false
+          name: "manager";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "createGroupAccount",
-      "docs": [
-        "Token group instructions",
-        "create group"
-      ],
-      "accounts": [
+      name: "createGroupAccount";
+      docs: ["Token group instructions", "create group"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
+          name: "authority";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "receiver",
-          "isMut": false,
-          "isSigner": false
+          name: "receiver";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
+          name: "group";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
+          name: "mint";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "mintTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "CreateGroupAccountArgs"
-          }
+          name: "args";
+          type: {
+            defined: "CreateGroupAccountArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "updateGroupAccount",
-      "docs": [
-        "update group"
-      ],
-      "accounts": [
+      name: "updateGroupAccount";
+      docs: ["update group"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
+          name: "authority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
+          name: "group";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "UpdateGroupAccountArgs"
-          }
+          name: "args";
+          type: {
+            defined: "UpdateGroupAccountArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "createMintAccount",
-      "docs": [
-        "create mint"
-      ],
-      "accounts": [
+      name: "createMintAccount";
+      docs: ["create mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "receiver",
-          "isMut": false,
-          "isSigner": false
+          name: "receiver";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
+          name: "mint";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "mintTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "CreateMintAccountArgs"
-          }
+          name: "args";
+          type: {
+            defined: "CreateMintAccountArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "addMintToGroup",
-      "docs": [
-        "add mint to group"
-      ],
-      "accounts": [
+      name: "addMintToGroup";
+      docs: ["add mint to group"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
+          name: "group";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "member",
-          "isMut": true,
-          "isSigner": false
+          name: "member";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "addRoyalties",
-      "docs": [
-        "add royalties to mint"
-      ],
-      "accounts": [
+      name: "addRoyalties";
+      docs: ["add royalties to mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "extraMetasAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "extraMetasAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "UpdateRoyaltiesArgs"
-          }
+          name: "args";
+          type: {
+            defined: "UpdateRoyaltiesArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "modifyRoyalties",
-      "docs": [
-        "modify royalties of mint"
-      ],
-      "accounts": [
+      name: "modifyRoyalties";
+      docs: ["modify royalties of mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "UpdateRoyaltiesArgs"
-          }
+          name: "args";
+          type: {
+            defined: "UpdateRoyaltiesArgs";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "addMetadata",
-      "docs": [
-        "add additional metadata to mint"
-      ],
-      "accounts": [
+      name: "addMetadata";
+      docs: ["add additional metadata to mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "vec": {
-              "defined": "AddMetadataArgs"
-            }
-          }
+          name: "args";
+          type: {
+            vec: {
+              defined: "AddMetadataArgs";
+            };
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "removeMetadata",
-      "docs": [
-        "remove additional metadata to mint"
-      ],
-      "accounts": [
+      name: "removeMetadata";
+      docs: ["remove additional metadata to mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "vec": {
-              "defined": "RemoveMetadataArgs"
-            }
-          }
+          name: "args";
+          type: {
+            vec: {
+              defined: "RemoveMetadataArgs";
+            };
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "freezeMintAccount",
-      "docs": [
-        "freeze mint"
-      ],
-      "accounts": [
+      name: "freezeMintAccount";
+      docs: ["freeze mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "user",
-          "isMut": false,
-          "isSigner": false
+          name: "user";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "delegateAuthority",
-          "isMut": true,
-          "isSigner": true
+          name: "delegateAuthority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "mintTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "thawMintAccount",
-      "docs": [
-        "thaw mint"
-      ],
-      "accounts": [
+      name: "thawMintAccount";
+      docs: ["thaw mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "user",
-          "isMut": false,
-          "isSigner": false
+          name: "user";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "delegateAuthority",
-          "isMut": true,
-          "isSigner": true
+          name: "delegateAuthority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "mintTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "burnMintAccount",
-      "docs": [
-        "burn mint"
-      ],
-      "accounts": [
+      name: "burnMintAccount";
+      docs: ["burn mint"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "user",
-          "isMut": false,
-          "isSigner": true
+          name: "user";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: "mint";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "mintTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
+          name: "manager";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "execute",
-      "docs": [
+      name: "execute";
+      docs: [
         "Royalty distribution + enforcement instructions",
         "validate transfer"
-      ],
-      "accounts": [
+      ];
+      accounts: [
         {
-          "name": "sourceAccount",
-          "isMut": false,
-          "isSigner": false
+          name: "sourceAccount";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "destinationAccount",
-          "isMut": false,
-          "isSigner": false
+          name: "destinationAccount";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ownerDelegate",
-          "isMut": false,
-          "isSigner": false
+          name: "ownerDelegate";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "extraMetasAccount",
-          "isMut": false,
-          "isSigner": false
+          name: "extraMetasAccount";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "approveTransfer",
-      "docs": [
-        "approve transfer"
-      ],
-      "accounts": [
+      name: "approveTransfer";
+      docs: ["approve transfer"];
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
+          name: "authority";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "approveAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "approveAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "paymentMint",
-          "isMut": false,
-          "isSigner": false
+          name: "paymentMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "authorityTokenAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "authorityTokenAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "distributionAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "distributionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "distributionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "paymentTokenProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "buyAmount",
-          "type": "u64"
+          name: "buyAmount";
+          type: "u64";
         }
-      ]
+      ];
     }
-  ],
-  "accounts": [
+  ];
+  accounts: [
     {
-      "name": "approveAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "approveAccount";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "slot",
-            "type": "u64"
+            name: "slot";
+            type: "u64";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "tokenGroup",
-      "docs": [
-        "Data struct for a `TokenGroup`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "tokenGroup";
+      docs: ["Data struct for a `TokenGroup`"];
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "updateAuthority",
-            "docs": [
-              "The authority that can sign to update the group"
-            ],
-            "type": "publicKey"
+            name: "updateAuthority";
+            docs: ["The authority that can sign to update the group"];
+            type: "publicKey";
           },
           {
-            "name": "mint",
-            "docs": [
+            name: "mint";
+            docs: [
               "The associated mint, used to counter spoofing to be sure that group",
               "belongs to a particular mint"
-            ],
-            "type": "publicKey"
+            ];
+            type: "publicKey";
           },
           {
-            "name": "size",
-            "docs": [
-              "The current number of group members"
-            ],
-            "type": "u32"
+            name: "size";
+            docs: ["The current number of group members"];
+            type: "u32";
           },
           {
-            "name": "maxSize",
-            "docs": [
-              "The maximum number of group members"
-            ],
-            "type": "u32"
+            name: "maxSize";
+            docs: ["The maximum number of group members"];
+            type: "u32";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "manager",
-      "docs": [
-        "Data struct for a `Manager`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": []
-      }
+      name: "manager";
+      docs: ["Data struct for a `Manager`"];
+      type: {
+        kind: "struct";
+        fields: [];
+      };
     },
     {
-      "name": "tokenGroupMember",
-      "docs": [
-        "Data struct for a `TokenGroupMember`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "tokenGroupMember";
+      docs: ["Data struct for a `TokenGroupMember`"];
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "mint",
-            "docs": [
+            name: "mint";
+            docs: [
               "The associated mint, used to counter spoofing to be sure that member",
               "belongs to a particular mint"
-            ],
-            "type": "publicKey"
+            ];
+            type: "publicKey";
           },
           {
-            "name": "group",
-            "docs": [
-              "The pubkey of the `TokenGroup`"
-            ],
-            "type": "publicKey"
+            name: "group";
+            docs: ["The pubkey of the `TokenGroup`"];
+            type: "publicKey";
           },
           {
-            "name": "memberNumber",
-            "docs": [
-              "The member number"
-            ],
-            "type": "u32"
+            name: "memberNumber";
+            docs: ["The member number"];
+            type: "u32";
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "types": [
+  ];
+  types: [
     {
-      "name": "CreateGroupAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreateGroupAccountArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name";
+            type: "string";
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol";
+            type: "string";
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri";
+            type: "string";
           },
           {
-            "name": "maxSize",
-            "type": "u32"
+            name: "maxSize";
+            type: "u32";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "UpdateGroupAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateGroupAccountArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name";
+            type: "string";
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol";
+            type: "string";
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri";
+            type: "string";
           },
           {
-            "name": "maxSize",
-            "type": "u32"
+            name: "maxSize";
+            type: "u32";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "CreateMintAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreateMintAccountArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name";
+            type: "string";
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol";
+            type: "string";
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri";
+            type: "string";
           },
           {
-            "name": "permanentDelegate",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "permanentDelegate";
+            type: {
+              option: "publicKey";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "AddMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "AddMetadataArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "field",
-            "type": "string"
+            name: "field";
+            type: "string";
           },
           {
-            "name": "value",
-            "type": "string"
+            name: "value";
+            type: "string";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "RemoveMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "RemoveMetadataArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "field",
-            "type": "string"
+            name: "field";
+            type: "string";
           },
           {
-            "name": "value",
-            "type": "string"
+            name: "value";
+            type: "string";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "CreatorWithShare",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreatorWithShare";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "address",
-            "type": "publicKey"
+            name: "address";
+            type: "publicKey";
           },
           {
-            "name": "share",
-            "type": "u8"
+            name: "share";
+            type: "u8";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "UpdateRoyaltiesArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateRoyaltiesArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "royaltyBasisPoints",
-            "type": "u16"
+            name: "royaltyBasisPoints";
+            type: "u16";
           },
           {
-            "name": "creators",
-            "type": {
-              "vec": {
-                "defined": "CreatorWithShare"
-              }
-            }
+            name: "creators";
+            type: {
+              vec: {
+                defined: "CreatorWithShare";
+              };
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "MintErrors",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "MintErrors";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "InvalidFreezeAuthority"
+            name: "InvalidFreezeAuthority";
           },
           {
-            "name": "InvalidDelegateAuthority"
+            name: "InvalidDelegateAuthority";
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "errors": [
+  ];
+  errors: [
     {
-      "code": 6000,
-      "name": "SizeExceedsMaxSize",
-      "msg": "Collection size exceeds max size."
+      code: 6000;
+      name: "SizeExceedsMaxSize";
+      msg: "Collection size exceeds max size.";
     },
     {
-      "code": 6001,
-      "name": "MaxSizeBelowCurrentSize",
-      "msg": "Max size cannot be reduced below current size."
+      code: 6001;
+      name: "MaxSizeBelowCurrentSize";
+      msg: "Max size cannot be reduced below current size.";
     },
     {
-      "code": 6002,
-      "name": "CreatorShareInvalid",
-      "msg": "Creators shares must add up to 100."
+      code: 6002;
+      name: "CreatorShareInvalid";
+      msg: "Creators shares must add up to 100.";
     },
     {
-      "code": 6003,
-      "name": "MissingApproveAccount",
-      "msg": "Missing approve account."
+      code: 6003;
+      name: "MissingApproveAccount";
+      msg: "Missing approve account.";
     },
     {
-      "code": 6004,
-      "name": "ExpiredApproveAccount",
-      "msg": "Approve account has expired."
+      code: 6004;
+      name: "ExpiredApproveAccount";
+      msg: "Approve account has expired.";
     },
     {
-      "code": 6005,
-      "name": "InvalidField",
-      "msg": "Invalid field. You cannot use a public key as a field."
+      code: 6005;
+      name: "InvalidField";
+      msg: "Invalid field. You cannot use a public key as a field.";
     },
     {
-      "code": 6006,
-      "name": "CreatorAddressInvalid",
-      "msg": "The Address you provided is invalid. Please provide a valid address."
+      code: 6006;
+      name: "CreatorAddressInvalid";
+      msg: "The Address you provided is invalid. Please provide a valid address.";
     },
     {
-      "code": 6007,
-      "name": "RoyaltyBasisPointsInvalid",
-      "msg": "Royalty basis points must be less than or equal to 10000."
+      code: 6007;
+      name: "RoyaltyBasisPointsInvalid";
+      msg: "Royalty basis points must be less than or equal to 10000.";
     }
-  ]
+  ];
 };
 
 export const IDL: WenNewStandard = {
-  "version": "0.0.2-alpha",
-  "name": "wen_new_standard",
-  "instructions": [
+  version: "0.0.2-alpha",
+  name: "wen_new_standard",
+  instructions: [
     {
-      "name": "initManagerAccount",
-      "docs": [
-        "Init manager account"
-      ],
-      "accounts": [
+      name: "initManagerAccount",
+      docs: ["Init manager account"],
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer",
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "manager",
-          "isMut": true,
-          "isSigner": false
+          name: "manager",
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "createGroupAccount",
-      "docs": [
-        "Token group instructions",
-        "create group"
+      name: "createGroupAccount",
+      docs: ["Token group instructions", "create group"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "receiver",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "group",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mintTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "CreateGroupAccountArgs",
+          },
         },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "receiver",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "CreateGroupAccountArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "updateGroupAccount",
-      "docs": [
-        "update group"
+      name: "updateGroupAccount",
+      docs: ["update group"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "group",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "UpdateGroupAccountArgs",
+          },
         },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "UpdateGroupAccountArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "createMintAccount",
-      "docs": [
-        "create mint"
+      name: "createMintAccount",
+      docs: ["create mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "receiver",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mintTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "CreateMintAccountArgs",
+          },
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "receiver",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "CreateMintAccountArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "addMintToGroup",
-      "docs": [
-        "add mint to group"
+      name: "addMintToGroup",
+      docs: ["add mint to group"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "group",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "member",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "member",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "addRoyalties",
-      "docs": [
-        "add royalties to mint"
+      name: "addRoyalties",
+      docs: ["add royalties to mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "extraMetasAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "UpdateRoyaltiesArgs",
+          },
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "extraMetasAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "UpdateRoyaltiesArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "modifyRoyalties",
-      "docs": [
-        "modify royalties of mint"
+      name: "modifyRoyalties",
+      docs: ["modify royalties of mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            defined: "UpdateRoyaltiesArgs",
+          },
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": "UpdateRoyaltiesArgs"
-          }
-        }
-      ]
     },
     {
-      "name": "addMetadata",
-      "docs": [
-        "add additional metadata to mint"
+      name: "addMetadata",
+      docs: ["add additional metadata to mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            vec: {
+              defined: "AddMetadataArgs",
+            },
+          },
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "vec": {
-              "defined": "AddMetadataArgs"
-            }
-          }
-        }
-      ]
     },
     {
-      "name": "removeMetadata",
-      "docs": [
-        "remove additional metadata to mint"
+      name: "removeMetadata",
+      docs: ["remove additional metadata to mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "args",
+          type: {
+            vec: {
+              defined: "RemoveMetadataArgs",
+            },
+          },
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "vec": {
-              "defined": "RemoveMetadataArgs"
-            }
-          }
-        }
-      ]
     },
     {
-      "name": "freezeMintAccount",
-      "docs": [
-        "freeze mint"
+      name: "freezeMintAccount",
+      docs: ["freeze mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "user",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "delegateAuthority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mintTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "user",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "delegateAuthority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "thawMintAccount",
-      "docs": [
-        "thaw mint"
+      name: "thawMintAccount",
+      docs: ["thaw mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "user",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "delegateAuthority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mintTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "user",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "delegateAuthority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "burnMintAccount",
-      "docs": [
-        "burn mint"
+      name: "burnMintAccount",
+      docs: ["burn mint"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "user",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mintTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "manager",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "user",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "manager",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "execute",
-      "docs": [
+      name: "execute",
+      docs: [
         "Royalty distribution + enforcement instructions",
-        "validate transfer"
+        "validate transfer",
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "sourceAccount",
-          "isMut": false,
-          "isSigner": false
+          name: "sourceAccount",
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: "mint",
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "destinationAccount",
-          "isMut": false,
-          "isSigner": false
+          name: "destinationAccount",
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "ownerDelegate",
-          "isMut": false,
-          "isSigner": false
+          name: "ownerDelegate",
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "extraMetasAccount",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: "extraMetasAccount",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
+          name: "amount",
+          type: "u64",
+        },
+      ],
     },
     {
-      "name": "approveTransfer",
-      "docs": [
-        "approve transfer"
+      name: "approveTransfer",
+      docs: ["approve transfer"],
+      accounts: [
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "approveAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "paymentMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "distributionTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "authorityTokenAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "distributionAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "distributionProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "paymentTokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "buyAmount",
+          type: "u64",
         },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "approveAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "paymentMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "distributionTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authorityTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "distributionAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "distributionProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "buyAmount",
-          "type": "u64"
-        }
-      ]
-    }
+    },
   ],
-  "accounts": [
+  accounts: [
     {
-      "name": "approveAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "approveAccount",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "slot",
-            "type": "u64"
-          }
-        ]
-      }
+            name: "slot",
+            type: "u64",
+          },
+        ],
+      },
     },
     {
-      "name": "tokenGroup",
-      "docs": [
-        "Data struct for a `TokenGroup`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "tokenGroup",
+      docs: ["Data struct for a `TokenGroup`"],
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "updateAuthority",
-            "docs": [
-              "The authority that can sign to update the group"
-            ],
-            "type": "publicKey"
+            name: "updateAuthority",
+            docs: ["The authority that can sign to update the group"],
+            type: "publicKey",
           },
           {
-            "name": "mint",
-            "docs": [
+            name: "mint",
+            docs: [
               "The associated mint, used to counter spoofing to be sure that group",
-              "belongs to a particular mint"
+              "belongs to a particular mint",
             ],
-            "type": "publicKey"
+            type: "publicKey",
           },
           {
-            "name": "size",
-            "docs": [
-              "The current number of group members"
-            ],
-            "type": "u32"
+            name: "size",
+            docs: ["The current number of group members"],
+            type: "u32",
           },
           {
-            "name": "maxSize",
-            "docs": [
-              "The maximum number of group members"
-            ],
-            "type": "u32"
-          }
-        ]
-      }
+            name: "maxSize",
+            docs: ["The maximum number of group members"],
+            type: "u32",
+          },
+        ],
+      },
     },
     {
-      "name": "manager",
-      "docs": [
-        "Data struct for a `Manager`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": []
-      }
+      name: "manager",
+      docs: ["Data struct for a `Manager`"],
+      type: {
+        kind: "struct",
+        fields: [],
+      },
     },
     {
-      "name": "tokenGroupMember",
-      "docs": [
-        "Data struct for a `TokenGroupMember`"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "tokenGroupMember",
+      docs: ["Data struct for a `TokenGroupMember`"],
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "mint",
-            "docs": [
+            name: "mint",
+            docs: [
               "The associated mint, used to counter spoofing to be sure that member",
-              "belongs to a particular mint"
+              "belongs to a particular mint",
             ],
-            "type": "publicKey"
+            type: "publicKey",
           },
           {
-            "name": "group",
-            "docs": [
-              "The pubkey of the `TokenGroup`"
-            ],
-            "type": "publicKey"
+            name: "group",
+            docs: ["The pubkey of the `TokenGroup`"],
+            type: "publicKey",
           },
           {
-            "name": "memberNumber",
-            "docs": [
-              "The member number"
-            ],
-            "type": "u32"
-          }
-        ]
-      }
-    }
+            name: "memberNumber",
+            docs: ["The member number"],
+            type: "u32",
+          },
+        ],
+      },
+    },
   ],
-  "types": [
+  types: [
     {
-      "name": "CreateGroupAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreateGroupAccountArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name",
+            type: "string",
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol",
+            type: "string",
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri",
+            type: "string",
           },
           {
-            "name": "maxSize",
-            "type": "u32"
-          }
-        ]
-      }
+            name: "maxSize",
+            type: "u32",
+          },
+        ],
+      },
     },
     {
-      "name": "UpdateGroupAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateGroupAccountArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name",
+            type: "string",
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol",
+            type: "string",
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri",
+            type: "string",
           },
           {
-            "name": "maxSize",
-            "type": "u32"
-          }
-        ]
-      }
+            name: "maxSize",
+            type: "u32",
+          },
+        ],
+      },
     },
     {
-      "name": "CreateMintAccountArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreateMintAccountArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name",
+            type: "string",
           },
           {
-            "name": "symbol",
-            "type": "string"
+            name: "symbol",
+            type: "string",
           },
           {
-            "name": "uri",
-            "type": "string"
+            name: "uri",
+            type: "string",
           },
           {
-            "name": "permanentDelegate",
-            "type": {
-              "option": "publicKey"
-            }
-          }
-        ]
-      }
+            name: "permanentDelegate",
+            type: {
+              option: "publicKey",
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "AddMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "AddMetadataArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "field",
-            "type": "string"
+            name: "field",
+            type: "string",
           },
           {
-            "name": "value",
-            "type": "string"
-          }
-        ]
-      }
+            name: "value",
+            type: "string",
+          },
+        ],
+      },
     },
     {
-      "name": "RemoveMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "RemoveMetadataArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "field",
-            "type": "string"
+            name: "field",
+            type: "string",
           },
           {
-            "name": "value",
-            "type": "string"
-          }
-        ]
-      }
+            name: "value",
+            type: "string",
+          },
+        ],
+      },
     },
     {
-      "name": "CreatorWithShare",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "CreatorWithShare",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "address",
-            "type": "publicKey"
+            name: "address",
+            type: "publicKey",
           },
           {
-            "name": "share",
-            "type": "u8"
-          }
-        ]
-      }
+            name: "share",
+            type: "u8",
+          },
+        ],
+      },
     },
     {
-      "name": "UpdateRoyaltiesArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "UpdateRoyaltiesArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "royaltyBasisPoints",
-            "type": "u16"
+            name: "royaltyBasisPoints",
+            type: "u16",
           },
           {
-            "name": "creators",
-            "type": {
-              "vec": {
-                "defined": "CreatorWithShare"
-              }
-            }
-          }
-        ]
-      }
+            name: "creators",
+            type: {
+              vec: {
+                defined: "CreatorWithShare",
+              },
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "MintErrors",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "MintErrors",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "InvalidFreezeAuthority"
+            name: "InvalidFreezeAuthority",
           },
           {
-            "name": "InvalidDelegateAuthority"
-          }
-        ]
-      }
-    }
+            name: "InvalidDelegateAuthority",
+          },
+        ],
+      },
+    },
   ],
-  "errors": [
+  errors: [
     {
-      "code": 6000,
-      "name": "SizeExceedsMaxSize",
-      "msg": "Collection size exceeds max size."
+      code: 6000,
+      name: "SizeExceedsMaxSize",
+      msg: "Collection size exceeds max size.",
     },
     {
-      "code": 6001,
-      "name": "MaxSizeBelowCurrentSize",
-      "msg": "Max size cannot be reduced below current size."
+      code: 6001,
+      name: "MaxSizeBelowCurrentSize",
+      msg: "Max size cannot be reduced below current size.",
     },
     {
-      "code": 6002,
-      "name": "CreatorShareInvalid",
-      "msg": "Creators shares must add up to 100."
+      code: 6002,
+      name: "CreatorShareInvalid",
+      msg: "Creators shares must add up to 100.",
     },
     {
-      "code": 6003,
-      "name": "MissingApproveAccount",
-      "msg": "Missing approve account."
+      code: 6003,
+      name: "MissingApproveAccount",
+      msg: "Missing approve account.",
     },
     {
-      "code": 6004,
-      "name": "ExpiredApproveAccount",
-      "msg": "Approve account has expired."
+      code: 6004,
+      name: "ExpiredApproveAccount",
+      msg: "Approve account has expired.",
     },
     {
-      "code": 6005,
-      "name": "InvalidField",
-      "msg": "Invalid field. You cannot use a public key as a field."
+      code: 6005,
+      name: "InvalidField",
+      msg: "Invalid field. You cannot use a public key as a field.",
     },
     {
-      "code": 6006,
-      "name": "CreatorAddressInvalid",
-      "msg": "The Address you provided is invalid. Please provide a valid address."
+      code: 6006,
+      name: "CreatorAddressInvalid",
+      msg: "The Address you provided is invalid. Please provide a valid address.",
     },
     {
-      "code": 6007,
-      "name": "RoyaltyBasisPointsInvalid",
-      "msg": "Royalty basis points must be less than or equal to 10000."
-    }
-  ]
+      code: 6007,
+      name: "RoyaltyBasisPointsInvalid",
+      msg: "Royalty basis points must be less than or equal to 10000.",
+    },
+  ],
 };

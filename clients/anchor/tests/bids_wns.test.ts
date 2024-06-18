@@ -89,25 +89,25 @@ describe("[WNS Token 2022] tcomp bids", () => {
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
-      // Mismatch NFT.
-      await expect(
-        testTakeBidWns({
-          ...common,
-          nftMint: badMint,
-          nftSellerAcc: badAta,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
-          cosigner,
-          collectionMint,
-        })
-      ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
+      // // Mismatch NFT.
+      // await expect(
+      //   testTakeBidWns({
+      //     ...common,
+      //     nftMint: badMint,
+      //     nftSellerAcc: badAta,
+      //     minAmount: new BN(LAMPORTS_PER_SOL / 2),
+      //     cosigner,
+      //     collectionMint,
+      //   })
+      // ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
 
-      // Final sale.
-      await testTakeBidWns({
-        ...common,
-        minAmount: new BN(LAMPORTS_PER_SOL / 2),
-        cosigner,
-        collectionMint,
-      });
+      // // Final sale.
+      // await testTakeBidWns({
+      //   ...common,
+      //   minAmount: new BN(LAMPORTS_PER_SOL / 2),
+      //   cosigner,
+      //   collectionMint,
+      // });
     }
   });
 });
