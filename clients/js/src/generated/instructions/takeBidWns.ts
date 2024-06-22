@@ -46,7 +46,7 @@ export type TakeBidWnsInstruction<
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountSellerToken extends string | IAccountMeta<string> = string,
+  TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwnerAta extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -104,9 +104,9 @@ export type TakeBidWnsInstruction<
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountSellerToken extends string
-        ? WritableAccount<TAccountSellerToken>
-        : TAccountSellerToken,
+      TAccountSellerTa extends string
+        ? WritableAccount<TAccountSellerTa>
+        : TAccountSellerTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -203,7 +203,7 @@ export type TakeBidWnsInput<
   TAccountMakerBroker extends string = string,
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
-  TAccountSellerToken extends string = string,
+  TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
   TAccountOwnerAta extends string = string,
   TAccountTokenProgram extends string = string,
@@ -228,7 +228,7 @@ export type TakeBidWnsInput<
   makerBroker?: Address<TAccountMakerBroker>;
   marginAccount: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
-  sellerToken: Address<TAccountSellerToken>;
+  sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   ownerAta: Address<TAccountOwnerAta>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -257,7 +257,7 @@ export function getTakeBidWnsInstruction<
   TAccountMakerBroker extends string,
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
-  TAccountSellerToken extends string,
+  TAccountSellerTa extends string,
   TAccountMint extends string,
   TAccountOwnerAta extends string,
   TAccountTokenProgram extends string,
@@ -283,7 +283,7 @@ export function getTakeBidWnsInstruction<
     TAccountMakerBroker,
     TAccountMarginAccount,
     TAccountWhitelist,
-    TAccountSellerToken,
+    TAccountSellerTa,
     TAccountMint,
     TAccountOwnerAta,
     TAccountTokenProgram,
@@ -310,7 +310,7 @@ export function getTakeBidWnsInstruction<
   TAccountMakerBroker,
   TAccountMarginAccount,
   TAccountWhitelist,
-  TAccountSellerToken,
+  TAccountSellerTa,
   TAccountMint,
   TAccountOwnerAta,
   TAccountTokenProgram,
@@ -340,7 +340,7 @@ export function getTakeBidWnsInstruction<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    sellerToken: { value: input.sellerToken ?? null, isWritable: true },
+    sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     ownerAta: { value: input.ownerAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -411,7 +411,7 @@ export function getTakeBidWnsInstruction<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.sellerToken),
+      getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.ownerAta),
       getAccountMeta(accounts.tokenProgram),
@@ -442,7 +442,7 @@ export function getTakeBidWnsInstruction<
     TAccountMakerBroker,
     TAccountMarginAccount,
     TAccountWhitelist,
-    TAccountSellerToken,
+    TAccountSellerTa,
     TAccountMint,
     TAccountOwnerAta,
     TAccountTokenProgram,
@@ -477,7 +477,7 @@ export type ParsedTakeBidWnsInstruction<
     makerBroker?: TAccountMetas[5] | undefined;
     marginAccount: TAccountMetas[6];
     whitelist: TAccountMetas[7];
-    sellerToken: TAccountMetas[8];
+    sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
     ownerAta: TAccountMetas[10];
     tokenProgram: TAccountMetas[11];
@@ -533,7 +533,7 @@ export function parseTakeBidWnsInstruction<
       makerBroker: getNextOptionalAccount(),
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
-      sellerToken: getNextAccount(),
+      sellerTa: getNextAccount(),
       mint: getNextAccount(),
       ownerAta: getNextAccount(),
       tokenProgram: getNextAccount(),

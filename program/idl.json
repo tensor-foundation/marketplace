@@ -1784,7 +1784,7 @@
           "isOptional": true
         },
         {
-          "name": "sellerAta",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },
@@ -2287,7 +2287,7 @@
           "isSigner": false
         },
         {
-          "name": "sellerAta",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },
@@ -2806,7 +2806,7 @@
           "isSigner": false
         },
         {
-          "name": "sellerToken",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },

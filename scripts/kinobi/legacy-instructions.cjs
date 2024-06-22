@@ -14,11 +14,12 @@ module.exports = function visitor(options) {
         buyLegacy: {
           accounts: {
             feeVault: {
-              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromListState", {
-                dependsOn: [
-                  k.accountValueNode("listState"),
-                ],
-              }),
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
             },
             buyer: {
               defaultValue: k.accountValueNode("payer"),
@@ -28,7 +29,7 @@ module.exports = function visitor(options) {
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -38,7 +39,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -49,7 +50,7 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
@@ -57,38 +58,38 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             buyerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveBuyerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("buyerAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("listAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -98,7 +99,7 @@ module.exports = function visitor(options) {
               {
                 isWritable: true,
                 isOptional: true,
-              }
+              },
             ),
           ],
           arguments: {
@@ -106,7 +107,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
+                "NonFungible",
               ),
             },
           },
@@ -121,7 +122,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -131,7 +132,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -142,7 +143,7 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
@@ -150,38 +151,38 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("ownerAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("listAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -190,7 +191,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
+                "NonFungible",
               ),
             },
           },
@@ -205,7 +206,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -215,7 +216,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -226,7 +227,7 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
@@ -234,38 +235,38 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("ownerAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("listAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -274,7 +275,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
+                "NonFungible",
               ),
             },
           },
@@ -286,7 +287,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -296,7 +297,7 @@ module.exports = function visitor(options) {
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -307,7 +308,7 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
@@ -315,38 +316,38 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("ownerAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("listAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -355,7 +356,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
+                "NonFungible",
               ),
             },
           },
@@ -363,11 +364,12 @@ module.exports = function visitor(options) {
         takeBidLegacy: {
           accounts: {
             feeVault: {
-              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromBidState", {
-                dependsOn: [
-                  k.accountValueNode("bidState"),
-                ],
-              }),
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")],
+                },
+              ),
             },
             sharedEscrow: {
               defaultValue: k.accountValueNode("owner"),
@@ -377,12 +379,12 @@ module.exports = function visitor(options) {
             },
             whitelist: {
               defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111"
+                "11111111111111111111111111111111",
               ),
             },
-            sellerAta: {
+            sellerTa: {
               defaultValue: k.resolverValueNode("resolveSellerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("seller"),
                   k.accountValueNode("tokenProgram"),
@@ -392,7 +394,7 @@ module.exports = function visitor(options) {
             },
             ownerAta: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -402,7 +404,7 @@ module.exports = function visitor(options) {
             },
             bidAta: {
               defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("bidState"),
                   k.accountValueNode("tokenProgram"),
@@ -417,7 +419,7 @@ module.exports = function visitor(options) {
             },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
@@ -425,51 +427,51 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             sellerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveSellerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("sellerAta"),
+                    k.accountValueNode("sellerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("ownerAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
             bidTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveBidTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("bidAta"),
                     k.argumentValueNode("tokenStandard"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -479,7 +481,7 @@ module.exports = function visitor(options) {
               {
                 isWritable: true,
                 isOptional: true,
-              }
+              },
             ),
           ],
           arguments: {
@@ -487,12 +489,12 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
+                "NonFungible",
               ),
             },
           },
         },
-      })
+      }),
     );
 
     return root;

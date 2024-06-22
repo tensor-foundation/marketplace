@@ -27,7 +27,7 @@ pub struct TakeBidLegacy {
 
     pub whitelist: Option<solana_program::pubkey::Pubkey>,
 
-    pub seller_ata: solana_program::pubkey::Pubkey,
+    pub seller_ta: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
 
@@ -136,7 +136,7 @@ impl TakeBidLegacy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller_ata,
+            self.seller_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -332,7 +332,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist (default to `11111111111111111111111111111111`)
-///   8. `[writable]` seller_ata
+///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
 ///   11. `[writable]` owner_ata
@@ -363,7 +363,7 @@ pub struct TakeBidLegacyBuilder {
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     shared_escrow: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
-    seller_ata: Option<solana_program::pubkey::Pubkey>,
+    seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     owner_ata: Option<solana_program::pubkey::Pubkey>,
@@ -445,8 +445,8 @@ impl TakeBidLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller_ata(&mut self, seller_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.seller_ata = Some(seller_ata);
+    pub fn seller_ta(&mut self, seller_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller_ta = Some(seller_ta);
         self
     }
     #[inline(always)]
@@ -647,7 +647,7 @@ impl TakeBidLegacyBuilder {
             maker_broker: self.maker_broker,
             shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
             whitelist: self.whitelist,
-            seller_ata: self.seller_ata.expect("seller_ata is not set"),
+            seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             metadata: self.metadata.expect("metadata is not set"),
             owner_ata: self.owner_ata.expect("owner_ata is not set"),
@@ -708,7 +708,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -772,7 +772,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -833,7 +833,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             maker_broker: accounts.maker_broker,
             shared_escrow: accounts.shared_escrow,
             whitelist: accounts.whitelist,
-            seller_ata: accounts.seller_ata,
+            seller_ta: accounts.seller_ta,
             mint: accounts.mint,
             metadata: accounts.metadata,
             owner_ata: accounts.owner_ata,
@@ -945,7 +945,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller_ata.key,
+            *self.seller_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1123,7 +1123,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         if let Some(whitelist) = self.whitelist {
             account_infos.push(whitelist.clone());
         }
-        account_infos.push(self.seller_ata.clone());
+        account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.owner_ata.clone());
@@ -1186,7 +1186,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist
-///   8. `[writable]` seller_ata
+///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
 ///   11. `[writable]` owner_ata
@@ -1224,7 +1224,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             maker_broker: None,
             shared_escrow: None,
             whitelist: None,
-            seller_ata: None,
+            seller_ta: None,
             mint: None,
             metadata: None,
             owner_ata: None,
@@ -1318,11 +1318,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn seller_ata(
+    pub fn seller_ta(
         &mut self,
-        seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.seller_ata = Some(seller_ata);
+        self.instruction.seller_ta = Some(seller_ta);
         self
     }
     #[inline(always)]
@@ -1589,7 +1589,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist,
 
-            seller_ata: self.instruction.seller_ata.expect("seller_ata is not set"),
+            seller_ta: self.instruction.seller_ta.expect("seller_ta is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -1668,7 +1668,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     shared_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
