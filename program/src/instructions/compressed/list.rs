@@ -51,7 +51,7 @@ pub fn process_list<'info>(
     ctx: Context<'_, '_, '_, 'info, List<'info>>,
     // What is the difference between nonce and index?
     // Nonce is a higher level metaplex concept that is used to derive asset_id
-    // Index i a lowerl level account-compression concept that is used to indicate leaf #
+    // Index is a lower level account-compression concept that is used to indicate leaf #
     // Most of the time they are the same, but it's possible that an NFT is decompressed and
     // then put into a new leaf with a different index, but preserves old nonce to preserve asset id
     nonce: u64,
@@ -127,7 +127,16 @@ pub fn process_list<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
-    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
+
+    // Only set the cosigner if it's a signer and not a remaining account.
+    list_state.cosigner = ctx
+        .accounts
+        .cosigner
+        .as_ref()
+        .filter(|cosigner| cosigner.is_signer)
+        .map(|cosigner| cosigner.key())
+        .into();
+
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;
 

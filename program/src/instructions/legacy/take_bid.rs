@@ -4,13 +4,15 @@ use anchor_spl::{
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::token_metadata::{assert_decode_metadata, transfer, TransferArgs};
+use tensor_toolbox::{
+    assert_fee_account,
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
-    assert_fee_account,
     pnft_adapter::*,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
@@ -57,7 +59,7 @@ pub struct TakeBidLegacy<'info> {
 
     // --------------------------------------- nft
     #[account(mut, token::mint = mint, token::authority = seller)]
-    pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
@@ -287,7 +289,7 @@ pub fn process_take_bid_legacy<'info>(
         TransferArgs {
             source: &ctx.accounts.seller,
             payer: &ctx.accounts.seller,
-            source_ata: &ctx.accounts.seller_ata,
+            source_ata: &ctx.accounts.seller_ta,
             destination_ata: &ctx.accounts.bid_ata,
             destination: &ctx.accounts.bid_state.to_account_info(),
             mint: &ctx.accounts.mint,

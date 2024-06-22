@@ -2,8 +2,9 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft, transfer_creators_fee, CnftArgs,
-    CreatorFeeMode, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+    assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
+    transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, MakeCnftArgs, MetadataSrc,
+    TransferArgs,
 };
 
 use crate::*;

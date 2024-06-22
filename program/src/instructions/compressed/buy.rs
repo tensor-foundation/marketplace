@@ -1,6 +1,7 @@
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft, transfer_creators_fee, CnftArgs,
-    CreatorFeeMode, DataHashArgs, FromAcc, FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs,
+    assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
+    transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, FromAcc, FromExternal,
+    MakeCnftArgs, MetadataSrc, TransferArgs,
 };
 
 use crate::*;
@@ -64,7 +65,7 @@ pub struct Buy<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
+    // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)

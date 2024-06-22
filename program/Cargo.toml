@@ -45,7 +45,7 @@ spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 spl-token-metadata-interface = "0.2.0"
 spl-type-length-value = "0.3.0"
 static_assertions = "1.1.0"
-tensor-toolbox = { version = "0.0.5", git = "ssh://git@github.com/tensor-foundation/toolbox.git", rev = "83b0257", features = [
+tensor-toolbox = { version = "0.0.5", git = "ssh://git@github.com/tensor-foundation/toolbox.git", rev = "fb9b979", features = [
     "cnft",
     "mpl-core",
     "token-2022",

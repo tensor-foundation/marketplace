@@ -5,13 +5,15 @@ use metaplex_core::{
     types::{Royalties, UpdateAuthority},
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::{
+    assert_fee_account,
+    metaplex_core::{validate_asset, MetaplexCore},
+};
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
-    assert_fee_account,
     program::MarketplaceProgram,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,

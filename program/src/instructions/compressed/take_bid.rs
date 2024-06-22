@@ -1,6 +1,7 @@
 use mpl_bubblegum::types::Creator;
 use tensor_toolbox::{
-    make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs, MetadataSrc, TransferArgs,
+    assert_fee_account, make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs,
+    MetadataSrc, TransferArgs,
 };
 use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;

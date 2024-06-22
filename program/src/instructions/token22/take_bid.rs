@@ -7,6 +7,7 @@ use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
+    assert_fee_account,
     token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
     TCreator,
 };
@@ -15,7 +16,6 @@ use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
-    assert_fee_account,
     take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
@@ -59,7 +59,7 @@ pub struct TakeBidT22<'info> {
     pub whitelist: UncheckedAccount<'info>,
 
     #[account(mut, token::mint = mint, token::authority = seller)]
-    pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
@@ -222,7 +222,7 @@ pub fn process_take_bid_t22<'info>(
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.seller_ata.to_account_info(),
+            from: ctx.accounts.seller_ta.to_account_info(),
             to: ctx.accounts.owner_ata.to_account_info(),
             authority: ctx.accounts.seller.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
