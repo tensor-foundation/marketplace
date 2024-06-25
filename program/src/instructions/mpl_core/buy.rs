@@ -5,6 +5,7 @@ use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_asset, MetaplexCore},
     transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
+    BROKER_FEE_PCT,
 };
 
 use crate::*;
@@ -177,6 +178,7 @@ pub fn process_buy_core<'info, 'b>(
     let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
         amount,
         TCOMP_FEE_BPS,
+        BROKER_FEE_PCT,
         MAKER_BROKER_PCT,
         list_state.maker_broker,
         ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),

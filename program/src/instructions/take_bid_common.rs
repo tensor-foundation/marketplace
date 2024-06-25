@@ -1,7 +1,7 @@
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
-    CreatorFeeMode, FromAcc, TCreator,
+    CreatorFeeMode, FromAcc, TCreator, BROKER_FEE_PCT,
 };
 use tensor_whitelist::MintProof;
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
@@ -62,6 +62,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
         amount,
         TCOMP_FEE_BPS,
+        BROKER_FEE_PCT,
         MAKER_BROKER_PCT,
         maker_broker.as_ref().map(|acc| acc.key()),
         taker_broker.as_ref().map(|acc| acc.key()),

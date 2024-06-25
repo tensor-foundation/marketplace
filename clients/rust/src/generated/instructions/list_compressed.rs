@@ -96,7 +96,7 @@ impl ListCompressed {
         ));
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, false,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -166,7 +166,7 @@ pub struct ListCompressedInstructionArgs {
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
-///   11. `[optional]` cosigner
+///   11. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct ListCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -555,7 +555,7 @@ impl<'a, 'b> ListCompressedCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                false,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -622,7 +622,7 @@ impl<'a, 'b> ListCompressedCpi<'a, 'b> {
 ///   8. `[]` marketplace_program
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
-///   11. `[optional]` cosigner
+///   11. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct ListCompressedCpiBuilder<'a, 'b> {
     instruction: Box<ListCompressedCpiBuilderInstruction<'a, 'b>>,

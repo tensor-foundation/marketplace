@@ -20,6 +20,7 @@ import {
   Option,
   OptionOrNullable,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -105,7 +106,9 @@ export type BuyLegacyInstruction<
     | IAccountMeta<string> = string,
   TAccountTokenMetadataProgram extends string | IAccountMeta<string> = string,
   TAccountSysvarInstructions extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -182,7 +185,8 @@ export type BuyLegacyInstruction<
         ? ReadonlyAccount<TAccountSysvarInstructions>
         : TAccountSysvarInstructions,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -293,7 +297,7 @@ export type BuyLegacyAsyncInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];
@@ -537,6 +541,10 @@ export async function getBuyLegacyInstructionAsync<
       ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
     };
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
@@ -656,7 +664,7 @@ export type BuyLegacyInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyLegacyInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacyInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacyInstructionDataArgs['authorizationData'];
@@ -850,6 +858,10 @@ export function getBuyLegacyInstruction<
       ...accounts.sysvarInstructions,
       ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
     };
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   // Remaining accounts.

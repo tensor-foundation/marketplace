@@ -92,7 +92,9 @@ export type BuySplInstruction<
   TAccountMakerBrokerAta extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -173,7 +175,8 @@ export type BuySplInstruction<
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -305,7 +308,7 @@ export type BuySplAsyncInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -493,6 +496,10 @@ export async function getBuySplInstructionAsync<
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -610,7 +617,7 @@ export type BuySplInput<
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
   index: BuySplInstructionDataArgs['index'];
   root: BuySplInstructionDataArgs['root'];
@@ -786,6 +793,10 @@ export function getBuySplInstruction<
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

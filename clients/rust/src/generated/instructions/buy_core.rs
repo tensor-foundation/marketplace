@@ -123,7 +123,7 @@ impl BuyCore {
         ));
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, false,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -186,7 +186,7 @@ pub struct BuyCoreInstructionArgs {
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   13. `[optional]` cosigner
+///   13. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct BuyCoreBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -560,7 +560,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                false,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -637,7 +637,7 @@ impl<'a, 'b> BuyCoreCpi<'a, 'b> {
 ///   10. `[]` mpl_core_program
 ///   11. `[]` marketplace_program
 ///   12. `[]` system_program
-///   13. `[optional]` cosigner
+///   13. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyCoreCpiBuilder<'a, 'b> {
     instruction: Box<BuyCoreCpiBuilderInstruction<'a, 'b>>,

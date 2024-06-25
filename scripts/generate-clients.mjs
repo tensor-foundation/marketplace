@@ -190,6 +190,87 @@ kinobi.update(
 // Update instructions.
 kinobi.update(
   k.updateInstructionsVisitor({
+    // Manually set cosigner to be true if it's passed in.
+    buyLegacy: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    buy: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    list: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    buySpl: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    buyCore: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    buyWns: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    buyT22: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
+    listT22: {
+      accounts: {
+        cosigner: {
+          defaultValue: k.publicKeyValueNode(
+            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+          ),
+          isSigner: true,
+        },
+      },
+    },
     bid: {
       accounts: {
         rentPayer: {

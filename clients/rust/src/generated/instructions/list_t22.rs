@@ -87,7 +87,7 @@ impl ListT22 {
         ));
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, false,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -151,7 +151,7 @@ pub struct ListT22InstructionArgs {
 ///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   10. `[optional]` cosigner
+///   10. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct ListT22Builder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -479,7 +479,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                false,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -544,7 +544,7 @@ impl<'a, 'b> ListT22Cpi<'a, 'b> {
 ///   7. `[]` associated_token_program
 ///   8. `[]` marketplace_program
 ///   9. `[]` system_program
-///   10. `[optional]` cosigner
+///   10. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct ListT22CpiBuilder<'a, 'b> {
     instruction: Box<ListT22CpiBuilderInstruction<'a, 'b>>,

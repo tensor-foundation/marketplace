@@ -114,7 +114,8 @@ export type ListCompressedInstruction<
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -231,7 +232,7 @@ export type ListCompressedAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   rentPayer?: TransactionSigner<TAccountRentPayer>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];
@@ -459,7 +460,7 @@ export type ListCompressedInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   rentPayer?: TransactionSigner<TAccountRentPayer>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];

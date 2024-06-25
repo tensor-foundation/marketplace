@@ -198,7 +198,7 @@ impl BuySpl {
         ));
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, false,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -280,7 +280,7 @@ pub struct BuySplInstructionArgs {
 ///   21. `[writable, optional]` maker_broker_ata
 ///   22. `[writable]` rent_destination
 ///   23. `[writable, signer]` rent_payer
-///   24. `[optional]` cosigner
+///   24. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct BuySplBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -933,7 +933,7 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                false,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1034,7 +1034,7 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
 ///   21. `[writable, optional]` maker_broker_ata
 ///   22. `[writable]` rent_destination
 ///   23. `[writable, signer]` rent_payer
-///   24. `[optional]` cosigner
+///   24. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuySplCpiBuilder<'a, 'b> {
     instruction: Box<BuySplCpiBuilderInstruction<'a, 'b>>,

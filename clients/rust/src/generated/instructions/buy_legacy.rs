@@ -220,7 +220,7 @@ impl BuyLegacy {
         }
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, false,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -295,7 +295,7 @@ pub struct BuyLegacyInstructionArgs {
 ///   20. `[optional]` authorization_rules_program
 ///   21. `[optional]` token_metadata_program
 ///   22. `[optional]` sysvar_instructions
-///   23. `[optional]` cosigner
+///   23. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct BuyLegacyBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -906,7 +906,7 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                false,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1013,7 +1013,7 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
 ///   20. `[optional]` authorization_rules_program
 ///   21. `[optional]` token_metadata_program
 ///   22. `[optional]` sysvar_instructions
-///   23. `[optional]` cosigner
+///   23. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyLegacyCpiBuilder<'a, 'b> {
     instruction: Box<BuyLegacyCpiBuilderInstruction<'a, 'b>>,

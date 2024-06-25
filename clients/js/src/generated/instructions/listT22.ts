@@ -70,7 +70,9 @@ export type ListT22Instruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -109,7 +111,8 @@ export type ListT22Instruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -197,7 +200,7 @@ export type ListT22AsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListT22InstructionDataArgs['amount'];
   expireInSec?: ListT22InstructionDataArgs['expireInSec'];
   currency?: ListT22InstructionDataArgs['currency'];
@@ -318,6 +321,10 @@ export async function getListT22InstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -379,7 +386,7 @@ export type ListT22Input<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListT22InstructionDataArgs['amount'];
   expireInSec?: ListT22InstructionDataArgs['expireInSec'];
   currency?: ListT22InstructionDataArgs['currency'];
@@ -477,6 +484,10 @@ export function getListT22Instruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

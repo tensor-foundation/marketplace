@@ -4,7 +4,7 @@ use anchor_spl::token_interface::{
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
     transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, MakeCnftArgs, MetadataSrc,
-    TransferArgs,
+    TransferArgs, BROKER_FEE_PCT,
 };
 
 use crate::*;
@@ -249,6 +249,7 @@ pub fn process_buy_spl<'info>(
     let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
         amount,
         TCOMP_FEE_BPS,
+        BROKER_FEE_PCT,
         MAKER_BROKER_PCT,
         list_state.maker_broker,
         ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),

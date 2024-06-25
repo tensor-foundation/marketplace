@@ -19,6 +19,7 @@ import {
   Option,
   OptionOrNullable,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   ReadonlyUint8Array,
   TransactionSigner,
   WritableAccount,
@@ -86,7 +87,9 @@ export type BuyCompressedInstruction<
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -139,7 +142,8 @@ export type BuyCompressedInstruction<
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -262,7 +266,7 @@ export type BuyCompressedAsyncInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination: Address<TAccountRentDestination>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];
@@ -408,6 +412,10 @@ export async function getBuyCompressedInstructionAsync<
       accounts.payer.value
     ).address;
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -508,7 +516,7 @@ export type BuyCompressedInput<
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination: Address<TAccountRentDestination>;
-  cosigner?: Address<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];
@@ -645,6 +653,10 @@ export function getBuyCompressedInstruction<
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
     ).address;
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);

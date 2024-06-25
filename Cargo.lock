@@ -5335,7 +5335,7 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.0.5"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=fb9b979#fb9b979f116c1dd09fcb7ec2bc1562d776d8c0e2"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#86498ce010703ffbc4081067c8f0cd25caba91ba"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5347,7 +5347,7 @@ dependencies = [
  "spl-account-compression 0.3.0",
  "spl-noop",
  "spl-token-metadata-interface",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=fb9b979)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting)",
 ]
 
 [[package]]
@@ -5851,6 +5851,16 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#86498ce010703ffbc4081067c8f0cd25caba91ba"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "num-traits",
+]
+
+[[package]]
+name = "vipers"
+version = "2.0.6"
 source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=1e84508#1e8450835f681463130ebbfcdb7625b15a89e2ae"
 dependencies = [
  "anchor-lang 0.29.0",
@@ -5862,16 +5872,6 @@ dependencies = [
 name = "vipers"
 version = "2.0.6"
 source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=a6c7423#a6c742314a03302668af46f95c750dd8c0bcfdc6"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl",
- "num-traits",
-]
-
-[[package]]
-name = "vipers"
-version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=fb9b979#fb9b979f116c1dd09fcb7ec2bc1562d776d8c0e2"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
