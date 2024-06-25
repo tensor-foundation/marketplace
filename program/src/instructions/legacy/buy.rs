@@ -21,7 +21,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyLegacy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: checked in assert_fee_account.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
