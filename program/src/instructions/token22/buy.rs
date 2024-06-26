@@ -7,8 +7,8 @@ use anchor_spl::{
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     token_2022::{validate_mint, RoyaltyInfo},
-    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
-    FromExternal, TCreator, BROKER_FEE_PCT,
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
+    CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -157,14 +157,13 @@ pub fn process_buy_t22<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        BROKER_FEE_PCT,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
 
     // transfer the NFT
 

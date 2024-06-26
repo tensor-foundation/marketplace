@@ -5335,7 +5335,7 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.0.5"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#86498ce010703ffbc4081067c8f0cd25caba91ba"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#54d3a2658d40305123390e58c7f5e2602d1e91e6"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5851,7 +5851,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#86498ce010703ffbc4081067c8f0cd25caba91ba"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#54d3a2658d40305123390e58c7f5e2602d1e91e6"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",

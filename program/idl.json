@@ -9,7 +9,7 @@
     },
     {
       "name": "TCOMP_FEE_BPS",
-      "type": "u16",
+      "type": "u64",
       "value": "150"
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "name": "MAKER_BROKER_PCT",
-      "type": "u16",
+      "type": "u64",
       "value": "0"
     },
     {

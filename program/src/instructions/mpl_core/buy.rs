@@ -4,8 +4,8 @@ use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_asset, MetaplexCore},
-    transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc, FromExternal,
-    BROKER_FEE_PCT,
+    transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, FromAcc,
+    FromExternal, BROKER_FEE_PCT,
 };
 
 use crate::*;
@@ -175,14 +175,14 @@ pub fn process_buy_core<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        BROKER_FEE_PCT,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
+
     // No optional royalties.
     let creator_fee = calc_creators_fee(seller_fee, amount, None, Some(100))?;
 
