@@ -5,26 +5,26 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
 } from "@solana/web3.js";
+import { nameToBuffer } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
+import { Field, MakeEvent, MAKER_BROKER_PCT, Target } from "../src";
 import { makeNTraders } from "./account";
-import {
-  beforeAllHook,
-  FEE_PCT,
-  fetchAndCheckSingleIxTx,
-  tcompSdk,
-  testBid,
-  testTakeBidCore,
-  testTakeBidWns,
-} from "./shared";
 import {
   createAssetWithCollection,
   createUmi,
   getOwner,
 } from "./metaplex_core";
+import {
+  beforeAllHook,
+  BROKER_FEE_PCT,
+  FEE_PCT,
+  fetchAndCheckSingleIxTx,
+  tcompSdk,
+  testBid,
+  testTakeBidCore,
+} from "./shared";
 import { makeVocWhitelist } from "./tswap";
-import { Field, MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
-import { nameToBuffer } from "@tensor-hq/tensor-common";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -226,17 +226,29 @@ describe("[mpl-core] tcomp bids", () => {
         new PublicKey(nameToBuffer(name))?.toString()
       );
       expect(event.amount.toString()).eq(amount.toString());
-      if (MAKER_BROKER_PCT > 0) {
-        expect(event.makerBrokerFee?.toNumber()).eq(
-          Math.trunc((amount * FEE_PCT * MAKER_BROKER_PCT) / 100)
-        );
-      }
+
+      // Protocol fee is the remainder after broker fees are deducted.
       expect(event.tcompFee?.toNumber()).eq(
-        Math.trunc(amount * FEE_PCT * (1 - MAKER_BROKER_PCT / 100))
+        Math.trunc(amount * FEE_PCT * (1 - BROKER_FEE_PCT / 100))
       );
+
+      const brokerFee = Math.trunc((amount * FEE_PCT * BROKER_FEE_PCT) / 100);
+
+      // Maker broker percent decides the split between maker and taker brokers.
+      expect(event.makerBrokerFee?.toNumber()).eq(
+        (brokerFee * MAKER_BROKER_PCT) / 100
+      );
+
+      // Taker Broker is the remainder of the broker fee.
+      expect(event.takerBrokerFee?.toNumber()).eq(
+        brokerFee - event.makerBrokerFee?.toNumber()
+      );
+
+      // Creator fee is sellerFeeBasisPoints of the price.
       expect(event.creatorFee?.toNumber()).eq(
         Math.trunc((amount * royaltyBps) / 10000)
       );
+
       expect(event.quantity).eq(1);
       expect(event.currency).to.be.null;
     }

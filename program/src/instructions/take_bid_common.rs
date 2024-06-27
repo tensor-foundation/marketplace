@@ -66,6 +66,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
+
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,

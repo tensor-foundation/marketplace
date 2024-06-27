@@ -46,9 +46,9 @@ import {
   ExtensionType,
   getAccountLen,
   getMinimumBalanceForRentExemptAccount,
-  TokenAccountNotFoundError,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
+  TokenAccountNotFoundError,
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
@@ -83,8 +83,8 @@ import { createDefaultRuleSet } from "@tensor-hq/tensor-tests-common";
 import {
   TensorSwapSDK,
   TensorWhitelistSDK,
-  TSwapConfigAnchor,
   TSWAP_TAKER_FEE_BPS,
+  TSwapConfigAnchor,
 } from "@tensor-hq/tensorswap-ts";
 import { fail } from "assert";
 import chai, { expect } from "chai";
@@ -109,11 +109,11 @@ import {
   getApproveAccountLen,
   MAKER_BROKER_PCT,
   Target,
-  TCompIxName,
-  TCompSDK,
   TCOMP_ADDR,
   TCOMP_DISC_MAP,
   TCOMP_FEE_BPS,
+  TCompIxName,
+  TCompSDK,
 } from "../src";
 import { getCreators } from "../src/metaplexCore";
 import {
@@ -310,9 +310,10 @@ export const DEFAULT_DEPTH_SIZE: ValidDepthSizePair = {
 };
 
 export const FEE_PCT = TCOMP_FEE_BPS / 1e4;
+export const BROKER_FEE_PCT = 50;
 export const calcFees = (amount: number) => {
   const totalFee = Math.trunc(amount * FEE_PCT);
-  const brokerFee = Math.trunc((totalFee * MAKER_BROKER_PCT) / 100);
+  const brokerFee = Math.trunc((totalFee * BROKER_FEE_PCT) / 100);
   const tcompFee = totalFee - brokerFee;
 
   return { totalFee, brokerFee, tcompFee };
@@ -822,7 +823,7 @@ export const verifyCNftCreator = async ({
   const account = ConcurrentMerkleTreeAccount.fromBuffer(accountInfo!.data!);
 
   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
-  const verifyCreatorIx = await createVerifyCreatorInstruction(
+  const verifyCreatorIx = createVerifyCreatorInstruction(
     {
       merkleTree,
       treeAuthority,
@@ -1598,7 +1599,7 @@ export const testBuy = async ({
 
   let sig: string | undefined;
 
-  const feeVault = await findFeeVaultPda({ stateAccount: listState });
+  const feeVault = findFeeVaultPda({ stateAccount: listState });
 
   await withLamports(
     {
@@ -1667,14 +1668,32 @@ export const testBuy = async ({
       const { tcompFee, brokerFee } = calcFees(amount);
       if (isNullLike(currency)) {
         const feeAccLamports = await getLamports(feeVault);
-        expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+        // If no brokers, feeVault gets it all.
+        let actualTcompFee = tcompFee;
+        if (!takerBroker && !makerBroker) {
+          actualTcompFee += brokerFee;
+        }
+
+        console.log("actualTcompFee", actualTcompFee);
+
+        expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerLamports = await getLamports(makerBroker);
           expect(brokerLamports! - (prevMakerBroker ?? 0)).eq(brokerFee);
         }
       } else {
         const feeAccTokens = await getTokenBalance(findAta(currency, feeVault));
-        expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(tcompFee);
+
+        // If no brokers, feeVault gets it all.
+        let actualTcompFee = tcompFee;
+        if (!takerBroker && !makerBroker) {
+          actualTcompFee += brokerFee;
+        }
+
+        expect(feeAccTokens! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(
             findAta(currency, makerBroker)
@@ -2211,7 +2230,7 @@ export const testTakeBid = async ({
     cosigner: cosigner?.publicKey,
   });
 
-  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+  const feeVault = findFeeVaultPda({ stateAccount: bidState });
 
   let sig;
 
@@ -2286,7 +2305,15 @@ export const testTakeBid = async ({
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+      // If no brokers, feeVault gets it all.
+      let actualTcompFee = tcompFee;
+      if (!takerBroker && !makerBroker) {
+        actualTcompFee += brokerFee;
+      }
+
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
         const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
@@ -2420,7 +2447,7 @@ export const testTakeBidLegacy = async ({
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+  const feeVault = findFeeVaultPda({ stateAccount: bidState });
 
   let sig;
 
@@ -2501,7 +2528,15 @@ export const testTakeBidLegacy = async ({
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+      // If no brokers, feeVault gets it all.
+      let actualTcompFee = tcompFee;
+      if (!takerBroker && !makerBroker) {
+        actualTcompFee += brokerFee;
+      }
+
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
         const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
@@ -2624,7 +2659,7 @@ export const testTakeBidT22 = async ({
     cosigner: cosigner?.publicKey,
   });
 
-  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+  const feeVault = findFeeVaultPda({ stateAccount: bidState });
 
   let sig;
 
@@ -2714,7 +2749,15 @@ export const testTakeBidT22 = async ({
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+      // If no brokers, feeVault gets it all.
+      let actualTcompFee = tcompFee;
+      if (!takerBroker && !makerBroker) {
+        actualTcompFee += brokerFee;
+      }
+
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
         const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
@@ -2895,7 +2938,15 @@ export const testTakeBidWns = async ({
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+      // If no brokers, feeVault gets it all.
+      let actualTcompFee = tcompFee;
+      if (!takerBroker && !makerBroker) {
+        actualTcompFee += brokerFee;
+      }
+
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
         const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
@@ -2996,7 +3047,7 @@ export const testTakeBidCore = async ({
     collection,
   });
 
-  const feeVault = await findFeeVaultPda({ stateAccount: bidState });
+  const feeVault = findFeeVaultPda({ stateAccount: bidState });
 
   let sig;
 
@@ -3054,7 +3105,15 @@ export const testTakeBidCore = async ({
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
       const { tcompFee, brokerFee } = calcFees(amount);
-      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+      // If no brokers, feeVault gets it all.
+      let actualTcompFee = tcompFee;
+      if (!takerBroker && !makerBroker) {
+        actualTcompFee += brokerFee;
+      }
+
+      expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
       if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
         const brokerLamports = await getLamports(makerBroker);
         expect(brokerLamports! - (prevTakerBroker ?? 0)).eq(brokerFee);
@@ -3406,14 +3465,30 @@ export const testBuyCore = async ({
       const { tcompFee, brokerFee } = calcFees(amount);
       if (isNullLike(currency)) {
         const feeAccLamports = await getLamports(feeVault);
-        expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(tcompFee);
+
+        // If no brokers, feeVault gets it all.
+        let actualTcompFee = tcompFee;
+        if (!takerBroker && !makerBroker) {
+          actualTcompFee += brokerFee;
+        }
+
+        expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerLamports = await getLamports(makerBroker);
           expect(brokerLamports! - (prevMakerBroker ?? 0)).eq(brokerFee);
         }
       } else {
         const feeAccTokens = await getTokenBalance(findAta(currency, feeVault));
-        expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(tcompFee);
+
+        // If no brokers, feeVault gets it all.
+        let actualTcompFee = tcompFee;
+        if (!takerBroker && !makerBroker) {
+          actualTcompFee += brokerFee;
+        }
+
+        expect(feeAccTokens! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(
             findAta(currency, makerBroker)

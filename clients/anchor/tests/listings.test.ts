@@ -3,7 +3,7 @@ import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey
+  PublicKey,
 } from "@solana/web3.js";
 import { isNullLike, waitMS } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
@@ -15,6 +15,7 @@ import {
   ALREADY_IN_USE_ERR,
   beforeAllHook,
   beforeHook,
+  BROKER_FEE_PCT,
   buildAndSendTx,
   CONC_MERKLE_TREE_ERROR,
   delegateCNft,
@@ -22,11 +23,11 @@ import {
   fetchAndCheckSingleIxTx,
   HAS_ONE_ERR,
   tcompSdk,
+  TEST_USDC,
   testBuy,
   testDelist,
   testEdit,
   testList,
-  TEST_USDC
 } from "./shared";
 
 // Enables rejectedWith.
@@ -876,17 +877,31 @@ describe("tcomp listings", () => {
             expect(event.field).to.be.null;
             expect(event.fieldId).to.be.null;
             expect(event.amount.toString()).eq(amount.toString());
-            if (MAKER_BROKER_PCT > 0) {
-              expect(event.makerBrokerFee?.toNumber()).eq(
-                Math.trunc((amount * FEE_PCT * MAKER_BROKER_PCT) / 100)
-              );
-            }
+
+            // Protocol fee is the remainder after broker fees are deducted.
             expect(event.tcompFee?.toNumber()).eq(
-              Math.trunc(amount * FEE_PCT * (1 - MAKER_BROKER_PCT / 100))
+              Math.trunc(amount * FEE_PCT * (1 - BROKER_FEE_PCT / 100))
             );
+
+            const brokerFee = Math.trunc(
+              (amount * FEE_PCT * BROKER_FEE_PCT) / 100
+            );
+
+            // Maker broker percent decides the split between maker and taker brokers.
+            expect(event.makerBrokerFee?.toNumber()).eq(
+              (brokerFee * MAKER_BROKER_PCT) / 100
+            );
+
+            // Taker Broker is the remainder of the broker fee.
+            expect(event.takerBrokerFee?.toNumber()).eq(
+              brokerFee - event.makerBrokerFee?.toNumber()
+            );
+
+            // Creator fee is sellerFeeBasisPoints of the price.
             expect(event.creatorFee?.toNumber()).eq(
               Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
             );
+
             expect(event.quantity).eq(0);
             expect(event.currency?.toString()).to.eq(currency?.toString());
             expect(event.assetId?.toString()).to.eq(assetId.toString());
