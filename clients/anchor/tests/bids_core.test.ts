@@ -8,7 +8,7 @@ import {
 import { nameToBuffer } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { Field, MakeEvent, MAKER_BROKER_PCT, Target } from "../src";
+import { Field, MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
 import { makeNTraders } from "./account";
 import {
   createAssetWithCollection,
