@@ -1675,8 +1675,6 @@ export const testBuy = async ({
           actualTcompFee += brokerFee;
         }
 
-        console.log("actualTcompFee", actualTcompFee);
-
         expect(feeAccLamports! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
 
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
@@ -1692,7 +1690,7 @@ export const testBuy = async ({
           actualTcompFee += brokerFee;
         }
 
-        expect(feeAccTokens! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+        expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(actualTcompFee);
 
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(
@@ -3487,7 +3485,7 @@ export const testBuyCore = async ({
           actualTcompFee += brokerFee;
         }
 
-        expect(feeAccTokens! - (prevFeeAccLamports ?? 0)).eq(actualTcompFee);
+        expect(feeAccTokens! - (prevFeeAccTokens ?? 0)).eq(actualTcompFee);
 
         if (!isNullLike(makerBroker) && MAKER_BROKER_PCT > 0) {
           const brokerTokens = await getTokenBalance(
