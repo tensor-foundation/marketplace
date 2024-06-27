@@ -47,7 +47,6 @@ import {
   TokenStandard,
   TokenStandardArgs,
   resolveAuthorizationRulesProgramFromTokenStandard,
-  resolveBidAta,
   resolveBidTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveMetadata,
@@ -58,7 +57,7 @@ import {
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromBidState } from '../../hooked';
+import { resolveBidTa, resolveFeeVaultPdaFromBidState } from '../../hooked';
 import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -98,7 +97,7 @@ export type TakeBidLegacyInstruction<
   TAccountAuthorizationRulesProgram extends
     | string
     | IAccountMeta<string> = string,
-  TAccountBidAta extends string | IAccountMeta<string> = string,
+  TAccountBidTa extends string | IAccountMeta<string> = string,
   TAccountBidTokenRecord extends string | IAccountMeta<string> = string,
   TAccountAuthorizationRules extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -179,9 +178,9 @@ export type TakeBidLegacyInstruction<
       TAccountAuthorizationRulesProgram extends string
         ? ReadonlyAccount<TAccountAuthorizationRulesProgram>
         : TAccountAuthorizationRulesProgram,
-      TAccountBidAta extends string
-        ? WritableAccount<TAccountBidAta>
-        : TAccountBidAta,
+      TAccountBidTa extends string
+        ? WritableAccount<TAccountBidTa>
+        : TAccountBidTa,
       TAccountBidTokenRecord extends string
         ? WritableAccount<TAccountBidTokenRecord>
         : TAccountBidTokenRecord,
@@ -297,7 +296,7 @@ export type TakeBidLegacyAsyncInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
-  TAccountBidAta extends string = string,
+  TAccountBidTa extends string = string,
   TAccountBidTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountTokenProgram extends string = string,
@@ -328,7 +327,7 @@ export type TakeBidLegacyAsyncInput<
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  bidAta?: Address<TAccountBidAta>;
+  bidTa?: Address<TAccountBidTa>;
   bidTokenRecord?: Address<TAccountBidTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -367,7 +366,7 @@ export async function getTakeBidLegacyInstructionAsync<
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
   TAccountAuthorizationRulesProgram extends string,
-  TAccountBidAta extends string,
+  TAccountBidTa extends string,
   TAccountBidTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountTokenProgram extends string,
@@ -398,7 +397,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -431,7 +430,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -482,7 +481,7 @@ export async function getTakeBidLegacyInstructionAsync<
       value: input.authorizationRulesProgram ?? null,
       isWritable: false,
     },
-    bidAta: { value: input.bidAta ?? null, isWritable: true },
+    bidTa: { value: input.bidTa ?? null, isWritable: true },
     bidTokenRecord: { value: input.bidTokenRecord ?? null, isWritable: true },
     authorizationRules: {
       value: input.authorizationRules ?? null,
@@ -595,10 +594,10 @@ export async function getTakeBidLegacyInstructionAsync<
       ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
     };
   }
-  if (!accounts.bidAta.value) {
-    accounts.bidAta = {
-      ...accounts.bidAta,
-      ...(await resolveBidAta(resolverScope)),
+  if (!accounts.bidTa.value) {
+    accounts.bidTa = {
+      ...accounts.bidTa,
+      ...(await resolveBidTa(resolverScope)),
     };
   }
   if (!accounts.bidTokenRecord.value) {
@@ -653,7 +652,7 @@ export async function getTakeBidLegacyInstructionAsync<
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
       getAccountMeta(accounts.authorizationRulesProgram),
-      getAccountMeta(accounts.bidAta),
+      getAccountMeta(accounts.bidTa),
       getAccountMeta(accounts.bidTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.tokenProgram),
@@ -690,7 +689,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -725,7 +724,7 @@ export type TakeBidLegacyInput<
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
-  TAccountBidAta extends string = string,
+  TAccountBidTa extends string = string,
   TAccountBidTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountTokenProgram extends string = string,
@@ -756,7 +755,7 @@ export type TakeBidLegacyInput<
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  bidAta: Address<TAccountBidAta>;
+  bidTa: Address<TAccountBidTa>;
   bidTokenRecord?: Address<TAccountBidTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -795,7 +794,7 @@ export function getTakeBidLegacyInstruction<
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
   TAccountAuthorizationRulesProgram extends string,
-  TAccountBidAta extends string,
+  TAccountBidTa extends string,
   TAccountBidTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountTokenProgram extends string,
@@ -826,7 +825,7 @@ export function getTakeBidLegacyInstruction<
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -858,7 +857,7 @@ export function getTakeBidLegacyInstruction<
   TAccountTokenMetadataProgram,
   TAccountSysvarInstructions,
   TAccountAuthorizationRulesProgram,
-  TAccountBidAta,
+  TAccountBidTa,
   TAccountBidTokenRecord,
   TAccountAuthorizationRules,
   TAccountTokenProgram,
@@ -908,7 +907,7 @@ export function getTakeBidLegacyInstruction<
       value: input.authorizationRulesProgram ?? null,
       isWritable: false,
     },
-    bidAta: { value: input.bidAta ?? null, isWritable: true },
+    bidTa: { value: input.bidTa ?? null, isWritable: true },
     bidTokenRecord: { value: input.bidTokenRecord ?? null, isWritable: true },
     authorizationRules: {
       value: input.authorizationRules ?? null,
@@ -1019,7 +1018,7 @@ export function getTakeBidLegacyInstruction<
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
       getAccountMeta(accounts.authorizationRulesProgram),
-      getAccountMeta(accounts.bidAta),
+      getAccountMeta(accounts.bidTa),
       getAccountMeta(accounts.bidTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.tokenProgram),
@@ -1056,7 +1055,7 @@ export function getTakeBidLegacyInstruction<
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -1097,7 +1096,7 @@ export type ParsedTakeBidLegacyInstruction<
     sysvarInstructions?: TAccountMetas[16] | undefined;
     authorizationRulesProgram?: TAccountMetas[17] | undefined;
     /** Implicitly checked via transfer. Will fail if wrong account */
-    bidAta: TAccountMetas[18];
+    bidTa: TAccountMetas[18];
     bidTokenRecord?: TAccountMetas[19] | undefined;
     authorizationRules?: TAccountMetas[20] | undefined;
     tokenProgram: TAccountMetas[21];
@@ -1158,7 +1157,7 @@ export function parseTakeBidLegacyInstruction<
       tokenMetadataProgram: getNextOptionalAccount(),
       sysvarInstructions: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
-      bidAta: getNextAccount(),
+      bidTa: getNextAccount(),
       bidTokenRecord: getNextOptionalAccount(),
       authorizationRules: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),

@@ -7,4 +7,5 @@
  */
 
 export * from './bidState';
+export * from './bidTa';
 export * from './listState';

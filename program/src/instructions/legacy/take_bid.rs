@@ -98,11 +98,16 @@ pub struct TakeBidLegacy<'info> {
     #[account(
         init_if_needed,
         payer = seller,
-        associated_token::mint = mint,
+        seeds=[
+            b"nft_escrow".as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump,
+        token::mint = mint,
         // NB: super important this is a PDA w/ data, o/w ProgramOwnedList rulesets break.
-        associated_token::authority = bid_state,
+        token::authority = bid_state,
     )]
-    pub bid_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub bid_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
@@ -181,11 +186,11 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
 }
 
 impl<'info> TakeBidLegacy<'info> {
-    fn close_bid_ata_ctx(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
+    fn close_bid_ta_ctx(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
             CloseAccount {
-                account: self.bid_ata.to_account_info(),
+                account: self.bid_ta.to_account_info(),
                 destination: self.seller.to_account_info(),
                 authority: self.bid_state.to_account_info(),
             },
@@ -290,7 +295,7 @@ pub fn process_take_bid_legacy<'info>(
             source: &ctx.accounts.seller,
             payer: &ctx.accounts.seller,
             source_ata: &ctx.accounts.seller_ta,
-            destination_ata: &ctx.accounts.bid_ata,
+            destination_ata: &ctx.accounts.bid_ta,
             destination: &ctx.accounts.bid_state.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,
@@ -322,7 +327,7 @@ pub fn process_take_bid_legacy<'info>(
         TransferArgs {
             source: &ctx.accounts.bid_state.to_account_info(),
             payer: &ctx.accounts.seller.to_account_info(),
-            source_ata: &ctx.accounts.bid_ata,
+            source_ata: &ctx.accounts.bid_ta,
             destination_ata: &ctx.accounts.owner_ata,
             destination: &ctx.accounts.owner.to_account_info(),
             mint: &ctx.accounts.mint,
@@ -348,7 +353,7 @@ pub fn process_take_bid_legacy<'info>(
     )?;
 
     // close temp nft escrow account, so it's not dangling
-    token_interface::close_account(ctx.accounts.close_bid_ata_ctx().with_signer(seeds))?;
+    token_interface::close_account(ctx.accounts.close_bid_ta_ctx().with_signer(seeds))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,

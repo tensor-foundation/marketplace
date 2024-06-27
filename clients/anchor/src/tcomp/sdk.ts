@@ -5,26 +5,25 @@ import {
   EventParser,
   Instruction,
   Program,
-  Provider
+  Provider,
 } from "@coral-xyz/anchor";
 import {
   MetadataArgs,
   TokenProgramVersion,
   TokenStandard,
-  UseMethod
+  UseMethod,
 } from "@metaplex-foundation/mpl-bubblegum";
 import { MPL_CORE_PROGRAM_ID } from "@metaplex-foundation/mpl-core";
 import { Creator, Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  SPL_NOOP_PROGRAM_ID
+  SPL_NOOP_PROGRAM_ID,
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getExtraAccountMetaAddress,
   TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -33,7 +32,7 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   TransactionInstruction,
-  TransactionResponse
+  TransactionResponse,
 } from "@solana/web3.js";
 import {
   AcctDiscHexMap,
@@ -58,9 +57,8 @@ import {
   TMETA_PROGRAM_ID,
   TSWAP_COSIGNER,
   TSWAP_OWNER,
-  TSWAP_PROGRAM_ID
+  TSWAP_PROGRAM_ID,
 } from "@tensor-hq/tensor-common";
-import { requestAirdrop } from "@tensor-hq/tensor-tests-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
 import bs58 from "bs58";
@@ -73,24 +71,24 @@ import {
   DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
   findAta,
-  findAtaWithProgramId
+  findAtaWithProgramId,
 } from "../shared";
 import {
   getApprovalAccount,
   getDistributionAccount,
   WNS_DISTRIBUTION_PROGRAM_ID,
-  WNS_PROGRAM_ID
+  WNS_PROGRAM_ID,
 } from "../token2022";
 import { ParsedAccount } from "../types";
-import { KEEP_ALIVE_RENT, TCOMP_ADDR } from "./constants";
+import { TCOMP_ADDR } from "./constants";
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import {
   IDL as IDL_v0_11_0,
-  Tcomp as TComp_v0_11_0
+  Tcomp as TComp_v0_11_0,
 } from "./idl/tcomp_v0_11_0";
 import {
   IDL as IDL_v0_13_4,
-  Tcomp as Tcomp_v0_13_4
+  Tcomp as Tcomp_v0_13_4,
 } from "./idl/tcomp_v0_13_4";
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
 import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
@@ -101,7 +99,7 @@ import {
   findListStatePda,
   findNftEscrowPda,
   findTCompPda,
-  findTreeAuthorityPda
+  findTreeAuthorityPda,
 } from "./pda";
 
 // --------------------------------------- idl
@@ -214,10 +212,10 @@ export enum Target {
 }
 
 export const castTargetAnchor = (target: TargetAnchor): Target =>
-({
-  0: Target.AssetId,
-  1: Target.Whitelist,
-}[targetU8(target)]);
+  ({
+    0: Target.AssetId,
+    1: Target.Whitelist,
+  }[targetU8(target)]);
 
 export const castTarget = (target: Target): TargetAnchor => {
   switch (target) {
@@ -251,9 +249,9 @@ export enum Field {
 }
 
 export const castFieldAnchor = (target: FieldAnchor): Field =>
-({
-  0: Field.Name,
-}[fieldU8(target)]);
+  ({
+    0: Field.Name,
+  }[fieldU8(target)]);
 
 export const castField = (target: Field): FieldAnchor => {
   switch (target) {
@@ -400,21 +398,21 @@ export type ListStateAnchor = {
 export type TCompPdaAnchor = BidStateAnchor | ListStateAnchor;
 export type TaggedTCompPdaAnchor =
   | {
-    name: "bidState";
-    account: BidStateAnchor;
-  }
+      name: "bidState";
+      account: BidStateAnchor;
+    }
   | {
-    name: "BidState";
-    account: BidStateAnchor;
-  }
+      name: "BidState";
+      account: BidStateAnchor;
+    }
   | {
-    name: "listState";
-    account: ListStateAnchor;
-  }
+      name: "listState";
+      account: ListStateAnchor;
+    }
   | {
-    name: "ListState";
-    account: ListStateAnchor;
-  };
+      name: "ListState";
+      account: ListStateAnchor;
+    };
 
 // --------------------------------------- sdk
 
@@ -1195,15 +1193,15 @@ export class TCompSDK {
     cosigner = null,
   }: {
     targetData:
-    | {
-      target: "assetIdOrFvcWithoutField";
-      data: {
-        metaHash: Buffer;
-        creators: Creator[];
-        sellerFeeBasisPoints: number;
-      };
-    }
-    | { target: "rest"; data: { metadata: MetadataArgs } };
+      | {
+          target: "assetIdOrFvcWithoutField";
+          data: {
+            metaHash: Buffer;
+            creators: Creator[];
+            sellerFeeBasisPoints: number;
+          };
+        }
+      | { target: "rest"; data: { metadata: MetadataArgs } };
     bidId: PublicKey;
     merkleTree: PublicKey;
     proof: Buffer[];
@@ -1387,7 +1385,7 @@ export class TCompSDK {
     const ownerAtaAcc = findAta(nftMint, owner);
     const nftMetadata = findMetadataPda(nftMint)[0];
     const [bidState] = findBidStatePda({ bidId, owner });
-    const escrowPda = findAta(nftMint, bidState);
+    const escrowPda = findNftEscrowPda({ nftMint });
     const mintProofPda = whitelist
       ? findMintProofPDA({ mint: nftMint, whitelist })[0]
       : SystemProgram.programId;

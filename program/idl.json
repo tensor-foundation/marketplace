@@ -1844,7 +1844,7 @@
           ]
         },
         {
-          "name": "bidAta",
+          "name": "bidTa",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -3485,6 +3485,13 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "BidTa",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
     }
   ],

@@ -184,6 +184,12 @@ kinobi.update(
         k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
       ],
     },
+    bidTa: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("utf8", "nft_escrow"),
+        k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
+      ],
+    },
   }),
 );
 
@@ -440,7 +446,7 @@ kinobi.accept(
       "resolveListAta",
       "resolveOwnerAta",
       "resolveSellerAta",
-      "resolveBidAta",
+      "resolveBidTa",
       "resolveBuyerTokenRecordFromTokenStandard",
       "resolveListTokenRecordFromTokenStandard",
       "resolveOwnerTokenRecordFromTokenStandard",

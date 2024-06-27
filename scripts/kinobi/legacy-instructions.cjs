@@ -402,14 +402,9 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            bidAta: {
-              defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom: "resolvers",
-                dependsOn: [
-                  k.accountValueNode("bidState"),
-                  k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
+            bidTa: {
+              defaultValue: k.resolverValueNode("resolveBidTa", {
+                dependsOn: [k.accountValueNode("mint")],
               }),
             },
             bidState: {
@@ -468,7 +463,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("bidAta"),
+                    k.accountValueNode("bidTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },

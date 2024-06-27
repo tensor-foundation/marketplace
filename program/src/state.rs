@@ -167,3 +167,7 @@ impl BidState {
         Ok(())
     }
 }
+
+// Dummy account to allow generating findPda client function.
+#[account]
+pub struct BidTa {}
