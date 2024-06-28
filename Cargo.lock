@@ -2432,7 +2432,7 @@ dependencies = [
  "tensor-toolbox 0.0.5",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=a6c7423)",
  "whitelist-program 0.0.0 (git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=0a9ef59)",
- "whitelist-program 0.0.0 (git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=d01e101)",
+ "whitelist-program 0.0.0 (git+ssh://git@github.com/tensor-foundation/whitelist.git)",
 ]
 
 [[package]]
@@ -5336,7 +5336,7 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.0.5"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#54d3a2658d40305123390e58c7f5e2602d1e91e6"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=16d98bc#16d98bcf5098156a806aa2a318cfc73b0d021172"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -5348,7 +5348,7 @@ dependencies = [
  "spl-account-compression 0.3.0",
  "spl-noop",
  "spl-token-metadata-interface",
- "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting)",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=16d98bc)",
 ]
 
 [[package]]
@@ -5852,7 +5852,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vipers"
 version = "2.0.6"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/fee-splitting#54d3a2658d40305123390e58c7f5e2602d1e91e6"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?rev=16d98bc#16d98bcf5098156a806aa2a318cfc73b0d021172"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl",
@@ -6048,6 +6048,18 @@ dependencies = [
  "anchor-spl",
  "mpl-token-metadata",
  "solana-program",
+ "tensor-toolbox 0.0.2",
+ "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
+]
+
+[[package]]
+name = "whitelist-program"
+version = "0.0.0"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git#0a9ef59e4ce1762fa0f6275f396e7a7f547fe85d"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl",
+ "mpl-token-metadata",
  "tensor-toolbox 0.0.2",
  "vipers 2.0.6 (git+ssh://git@github.com/tensor-foundation/toolbox.git)",
 ]

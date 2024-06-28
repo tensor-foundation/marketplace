@@ -11,12 +11,12 @@ use tensor_toolbox::{
     token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
     TCreator,
 };
-use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
+use whitelist_program::verify_whitelist_generic;
 
 use crate::{
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid_common::{take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
@@ -167,31 +167,12 @@ pub fn process_take_bid_t22<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let mint = &ctx.accounts.mint;
-
-            // must have merkle tree; otherwise fail
-            if whitelist.root_hash != ZERO_ARRAY {
-                let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof = assert_decode_mint_proof(
-                    ctx.accounts.whitelist.key,
-                    &mint_pubkey,
-                    mint_proof_acc,
-                )?;
-                let leaf = anchor_lang::solana_program::keccak::hash(mint.key().as_ref());
-                let proof = &mut mint_proof.proof.to_vec();
-                proof.truncate(mint_proof.proof_len as usize);
-                whitelist.verify_whitelist(
-                    None,
-                    Some(FullMerkleProof {
-                        proof: proof.clone(),
-                        leaf: leaf.0,
-                    }),
-                )?;
-            } else {
-                // TODO: update this logic once T22 support collection and creator verification
-                return Err(TcompError::BadWhitelist.into());
-            }
+            verify_whitelist_generic(
+                &ctx.accounts.whitelist.to_account_info(),
+                Some(&ctx.accounts.mint_proof.to_account_info()),
+                &ctx.accounts.mint.to_account_info(),
+                None, // Collection and Creator verification not supported on T22 standards yet.
+            )?;
         }
     }
 

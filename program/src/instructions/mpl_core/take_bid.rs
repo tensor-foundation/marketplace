@@ -9,13 +9,16 @@ use tensor_toolbox::{
     assert_fee_account,
     metaplex_core::{validate_asset, MetaplexCore},
 };
-use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
+use whitelist_program::{
+    assert_decode_mint_proof_generic, assert_decode_whitelist_generic, FullMerkleProof,
+    MintProofType, WhitelistType, ZERO_ARRAY,
+};
 
 use crate::{
     program::MarketplaceProgram,
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid_common::{take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
@@ -170,51 +173,83 @@ pub fn process_take_bid_core<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
+            let mint_proof_acc = &ctx.accounts.mint_proof;
+            let mint_proof_type = assert_decode_mint_proof_generic(
+                ctx.accounts.whitelist.key,
+                &asset_id,
+                mint_proof_acc,
+            )?;
 
-            //prioritize merkle tree if proof present
-            if whitelist.root_hash != ZERO_ARRAY {
-                let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof = assert_decode_mint_proof(
-                    ctx.accounts.whitelist.key,
-                    &asset_id,
-                    mint_proof_acc,
-                )?;
-                let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
-                let proof = &mut mint_proof.proof.to_vec();
-                proof.truncate(mint_proof.proof_len as usize);
-                whitelist.verify_whitelist(
-                    None,
-                    Some(FullMerkleProof {
-                        proof: proof.clone(),
-                        leaf: leaf.0,
-                    }),
-                )?;
-            } else if let Some(collection) = &ctx.accounts.collection {
-                let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+            let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
 
-                if let UpdateAuthority::Collection(c) = asset.update_authority {
-                    if c != *collection.key {
-                        msg!("Asset collection account does not match the provided collection account");
+            let proof = match mint_proof_type {
+                MintProofType::V1(mint_proof) => {
+                    let mut proof = mint_proof.proof.to_vec();
+                    proof.truncate(mint_proof.proof_len as usize);
+                    proof
+                }
+                MintProofType::V2(mint_proof) => {
+                    let mut proof = mint_proof.proof.to_vec();
+                    proof.truncate(mint_proof.proof_len as usize);
+                    proof
+                }
+            };
+
+            let mint_proof = FullMerkleProof {
+                proof: proof.clone(),
+                leaf: leaf.0,
+            };
+
+            let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
+
+            match whitelist_type {
+                WhitelistType::V1(whitelist) => {
+                    //prioritize merkle tree if proof present
+                    if whitelist.root_hash != ZERO_ARRAY {
+                        whitelist.verify_whitelist(None, Some(mint_proof))?;
+                    } else if let Some(collection) = &ctx.accounts.collection {
+                        let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+
+                        if let UpdateAuthority::Collection(c) = asset.update_authority {
+                            if c != *collection.key {
+                                msg!("Asset collection account does not match the provided collection account");
+                                return Err(TcompError::MissingCollection.into());
+                            }
+
+                            whitelist.verify_whitelist_tcomp(
+                                Some(Collection {
+                                    key: collection.key(),
+                                    // there is no verify flag on Core, but only the collection update authority
+                                    // can set a collection
+                                    verified: true,
+                                }),
+                                // creators have no verified flag on Core, they can't be used
+                                None,
+                            )?;
+                        } else {
+                            msg!("Asset has no collection set");
+                            return Err(TcompError::MissingCollection.into());
+                        }
+                    } else {
                         return Err(TcompError::MissingCollection.into());
                     }
-
-                    whitelist.verify_whitelist_tcomp(
-                        Some(Collection {
-                            key: collection.key(),
-                            // there is no verify flag on Core, but only the collection update authority
-                            // can set a collection
-                            verified: true,
-                        }),
-                        // creators have no verified flag on Core, they can't be used
-                        None,
-                    )?;
-                } else {
-                    msg!("Asset has no collection set");
-                    return Err(TcompError::MissingCollection.into());
                 }
-            } else {
-                return Err(TcompError::MissingCollection.into());
+                WhitelistType::V2(whitelist) => {
+                    let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+
+                    let collection = match asset.update_authority {
+                        UpdateAuthority::Collection(address) => Some(Collection {
+                            key: address,
+                            verified: true, // Only the collection update authority can set a collection, so this is always verified.
+                        }),
+                        _ => None,
+                    };
+
+                    // creators have no verified flag on Core, they can't be used
+                    let creators = None;
+
+                    whitelist.verify(&collection, &creators, &Some(mint_proof))?;
+                }
             }
         }
     }

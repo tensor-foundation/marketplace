@@ -3,8 +3,8 @@ use tensor_toolbox::{
     assert_fee_account, make_cnft_args, transfer_cnft, CnftArgs, DataHashArgs, MakeCnftArgs,
     MetadataSrc, TransferArgs,
 };
-use tensor_whitelist::assert_decode_whitelist;
 use tensorswap::program::EscrowProgram;
+use whitelist_program::{assert_decode_whitelist_generic, WhitelistType};
 
 use crate::{take_bid_common::*, *};
 
@@ -213,7 +213,6 @@ pub fn handler_full_meta<'info>(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
                 TcompError::WrongTargetId
             );
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
             let collection =
                 meta_args
                     .collection
@@ -232,20 +231,27 @@ pub fn handler_full_meta<'info>(
                 );
             }
 
-            // Run the verification
-            whitelist.verify_whitelist_tcomp(
-                collection,
-                Some(
-                    creators
-                        .iter()
-                        .map(|c| mpl_token_metadata::types::Creator {
-                            address: c.address,
-                            verified: c.verified,
-                            share: c.share,
-                        })
-                        .collect::<Vec<_>>(),
-                ),
-            )?;
+            let creators = Some(
+                creators
+                    .iter()
+                    .map(|c| mpl_token_metadata::types::Creator {
+                        address: c.address,
+                        verified: c.verified,
+                        share: c.share,
+                    })
+                    .collect::<Vec<_>>(),
+            );
+
+            let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
+
+            match whitelist_type {
+                WhitelistType::V1(whitelist) => {
+                    whitelist.verify_whitelist_tcomp(collection, creators)?;
+                }
+                WhitelistType::V2(whitelist) => {
+                    whitelist.verify(&collection, &creators, &None)?;
+                }
+            }
         }
     }
 
@@ -332,21 +338,28 @@ pub fn handler_meta_hash<'info>(
                 *ctx.accounts.whitelist.key == bid_state.target_id,
                 TcompError::WrongTargetId
             );
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            // Run the verification (this time collection is None since it can't be used w/o full meta
-            whitelist.verify_whitelist_tcomp(
-                None,
-                Some(
-                    creators
-                        .iter()
-                        .map(|c| mpl_token_metadata::types::Creator {
-                            address: c.address,
-                            verified: c.verified,
-                            share: c.share,
-                        })
-                        .collect::<Vec<_>>(),
-                ),
-            )?;
+
+            let creators = Some(
+                creators
+                    .iter()
+                    .map(|c| mpl_token_metadata::types::Creator {
+                        address: c.address,
+                        verified: c.verified,
+                        share: c.share,
+                    })
+                    .collect::<Vec<_>>(),
+            );
+
+            let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
+
+            match whitelist_type {
+                WhitelistType::V1(whitelist) => {
+                    whitelist.verify_whitelist_tcomp(None, creators)?;
+                }
+                WhitelistType::V2(whitelist) => {
+                    whitelist.verify(&None, &creators, &None)?;
+                }
+            }
         }
     }
 
