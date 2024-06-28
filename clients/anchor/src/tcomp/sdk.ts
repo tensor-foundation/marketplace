@@ -5,25 +5,25 @@ import {
   EventParser,
   Instruction,
   Program,
-  Provider,
+  Provider
 } from "@coral-xyz/anchor";
 import {
   MetadataArgs,
   TokenProgramVersion,
   TokenStandard,
-  UseMethod,
+  UseMethod
 } from "@metaplex-foundation/mpl-bubblegum";
 import { MPL_CORE_PROGRAM_ID } from "@metaplex-foundation/mpl-core";
 import { Creator, Uses } from "@metaplex-foundation/mpl-token-metadata";
 import { toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  SPL_NOOP_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getExtraAccountMetaAddress,
-  TOKEN_2022_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -32,7 +32,7 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   TransactionInstruction,
-  TransactionResponse,
+  TransactionResponse
 } from "@solana/web3.js";
 import {
   AcctDiscHexMap,
@@ -57,7 +57,7 @@ import {
   TMETA_PROGRAM_ID,
   TSWAP_COSIGNER,
   TSWAP_OWNER,
-  TSWAP_PROGRAM_ID,
+  TSWAP_PROGRAM_ID
 } from "@tensor-hq/tensor-common";
 import { findMintProofPDA, findTSwapPDA } from "@tensor-hq/tensorswap-ts";
 import * as borsh from "borsh";
@@ -71,24 +71,24 @@ import {
   DEFAULT_XFER_COMPUTE_UNITS,
   evalMathExpr,
   findAta,
-  findAtaWithProgramId,
+  findAtaWithProgramId
 } from "../shared";
 import {
   getApprovalAccount,
   getDistributionAccount,
   WNS_DISTRIBUTION_PROGRAM_ID,
-  WNS_PROGRAM_ID,
+  WNS_PROGRAM_ID
 } from "../token2022";
 import { ParsedAccount } from "../types";
 import { TCOMP_ADDR } from "./constants";
 import { IDL as IDL_latest, Tcomp as TComp_latest } from "./idl/tcomp";
 import {
   IDL as IDL_v0_11_0,
-  Tcomp as TComp_v0_11_0,
+  Tcomp as TComp_v0_11_0
 } from "./idl/tcomp_v0_11_0";
 import {
   IDL as IDL_v0_13_4,
-  Tcomp as Tcomp_v0_13_4,
+  Tcomp as Tcomp_v0_13_4
 } from "./idl/tcomp_v0_13_4";
 import { IDL as IDL_v0_1_0, Tcomp as TComp_v0_1_0 } from "./idl/tcomp_v0_1_0";
 import { IDL as IDL_v0_4_0, Tcomp as TComp_v0_4_0 } from "./idl/tcomp_v0_4_0";
@@ -99,7 +99,7 @@ import {
   findListStatePda,
   findNftEscrowPda,
   findTCompPda,
-  findTreeAuthorityPda,
+  findTreeAuthorityPda
 } from "./pda";
 
 // --------------------------------------- idl
@@ -190,14 +190,14 @@ export const APPROX_LIST_STATE_RENT = getRentSync(LIST_STATE_SIZE);
 
 export const TargetAnchor = {
   AssetId: { assetId: {} },
-  Whitelist: { whitelist: {} },
+  Whitelist: { whitelist: {} }
 };
 type TargetAnchor = (typeof TargetAnchor)[keyof typeof TargetAnchor];
 
 export const targetU8 = (target: TargetAnchor): 0 | 1 => {
   const t: Record<string, 0 | 1> = {
     assetId: 0,
-    whitelist: 1,
+    whitelist: 1
   };
   return t[Object.keys(target)[0]];
 };
@@ -208,13 +208,13 @@ export const targetFromU8 = (n: number): Target => {
 
 export enum Target {
   AssetId = "AssetId",
-  Whitelist = "Whitelist",
+  Whitelist = "Whitelist"
 }
 
 export const castTargetAnchor = (target: TargetAnchor): Target =>
   ({
     0: Target.AssetId,
-    1: Target.Whitelist,
+    1: Target.Whitelist
   }[targetU8(target)]);
 
 export const castTarget = (target: Target): TargetAnchor => {
@@ -229,13 +229,13 @@ export const castTarget = (target: Target): TargetAnchor => {
 // --------------------------------------- types (field)
 
 export const FieldAnchor = {
-  Name: { name: {} },
+  Name: { name: {} }
 };
 type FieldAnchor = (typeof FieldAnchor)[keyof typeof FieldAnchor];
 
 export const fieldU8 = (target: FieldAnchor): 0 => {
   const t: Record<string, 0> = {
-    name: 0,
+    name: 0
   };
   return t[Object.keys(target)[0]];
 };
@@ -245,12 +245,12 @@ export const fieldFromU8 = (n: number): Field => {
 };
 
 export enum Field {
-  Name = "Name",
+  Name = "Name"
 }
 
 export const castFieldAnchor = (target: FieldAnchor): Field =>
   ({
-    0: Field.Name,
+    0: Field.Name
   }[fieldU8(target)]);
 
 export const castField = (target: Field): FieldAnchor => {
@@ -266,7 +266,7 @@ export const TokenStandardAnchor = {
   NonFungible: { nonFungible: {} },
   FungibleAsset: { fungibleAsset: {} },
   Fungible: { fungible: {} },
-  NonFungibleEdition: { nonFungibleEdition: {} },
+  NonFungibleEdition: { nonFungibleEdition: {} }
 };
 export type TokenStandardAnchor =
   (typeof TokenStandardAnchor)[keyof typeof TokenStandardAnchor];
@@ -289,7 +289,7 @@ export const castTokenStandard = (
 export const UseMethodAnchor = {
   Burn: { burn: {} },
   Multiple: { multiple: {} },
-  Single: { single: {} },
+  Single: { single: {} }
 };
 export type UseMethodAnchor =
   (typeof UseMethodAnchor)[keyof typeof UseMethodAnchor];
@@ -314,13 +314,13 @@ export const castUses = (u: Uses | null): UsesAnchor | null => {
   return {
     useMethod: castUseMethod(u.useMethod),
     remaining: new BN(u.remaining),
-    total: new BN(u.total),
+    total: new BN(u.total)
   };
 };
 
 const TokenProgramVersionAnchor = {
   Original: { original: {} },
-  Token2022: { token2022: {} },
+  Token2022: { token2022: {} }
 };
 export type TokenProgramVersionAnchor =
   (typeof TokenProgramVersionAnchor)[keyof typeof TokenProgramVersionAnchor];
@@ -353,7 +353,7 @@ export const castMetadata = (m: MetadataArgs): MetadataArgsAnchor => {
     uses: castUses(m.uses),
     tokenProgramVersion: castTokenProgramVersion(m.tokenProgramVersion),
     creatorShares: Buffer.from(creators.map((c) => c.share)),
-    creatorVerified: creators.map((c) => c.verified),
+    creatorVerified: creators.map((c) => c.verified)
   };
 };
 
@@ -426,7 +426,7 @@ export class TCompSDK {
     idl = IDL_latest,
     addr = TCOMP_ADDR,
     provider,
-    coder,
+    coder
   }: {
     idl?: any;
     addr?: PublicKey;
@@ -483,7 +483,7 @@ export class TCompSDK {
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     canopyDepth = 0,
-    delegateSigner,
+    delegateSigner
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
@@ -515,7 +515,7 @@ export class TCompSDK {
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const builder = this.program.methods
@@ -542,7 +542,7 @@ export class TCompSDK {
         delegate,
         owner,
         listState,
-        rentPayer: rentPayer ?? owner,
+        rentPayer: rentPayer ?? owner
       })
       .remainingAccounts(proofPath);
 
@@ -562,12 +562,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       treeAuthority,
       assetId,
       listState,
-      proofPath,
+      proofPath
     };
   }
 
@@ -581,7 +581,7 @@ export class TCompSDK {
     makerBroker = null,
     // Not a heavy ix, no need
     compute = null,
-    priorityMicroLamports = null,
+    priorityMicroLamports = null
   }: {
     owner: PublicKey;
     listState: PublicKey;
@@ -598,7 +598,7 @@ export class TCompSDK {
       .accounts({
         owner,
         listState,
-        marketplaceProgram: TCOMP_ADDR,
+        marketplaceProgram: TCOMP_ADDR
       });
 
     const ixs = prependComputeIxs(
@@ -611,8 +611,8 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
-      },
+        extraSigners: []
+      }
     };
   }
 
@@ -628,7 +628,7 @@ export class TCompSDK {
     index,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    canopyDepth = 0,
+    canopyDepth = 0
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
@@ -653,7 +653,7 @@ export class TCompSDK {
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const builder = this.program.methods
@@ -668,7 +668,7 @@ export class TCompSDK {
         treeAuthority,
         owner,
         rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
-        listState,
+        listState
       })
       .remainingAccounts(proofPath);
 
@@ -682,12 +682,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       treeAuthority,
       assetId,
       listState,
-      proofPath,
+      proofPath
     };
   }
 
@@ -710,7 +710,7 @@ export class TCompSDK {
     rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    canopyDepth = 0,
+    canopyDepth = 0
   }: {
     merkleTree: PublicKey;
     proof: Buffer[];
@@ -744,12 +744,12 @@ export class TCompSDK {
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
-      isWritable: c.share > 0, // reduces congestion + program creators
+      isWritable: c.share > 0 // reduces congestion + program creators
     }));
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const builder = this.program.methods
@@ -779,7 +779,7 @@ export class TCompSDK {
         listState,
         feeVault,
         takerBroker,
-        makerBroker,
+        makerBroker
       })
       .remainingAccounts([...creatorsPath, ...proofPath]);
 
@@ -793,12 +793,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       listState,
       treeAuthority,
       creators,
-      proofPath,
+      proofPath
     };
   }
 
@@ -823,7 +823,7 @@ export class TCompSDK {
     rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    canopyDepth = 0,
+    canopyDepth = 0
   }: {
     merkleTree: PublicKey;
     proof: Buffer[];
@@ -865,17 +865,17 @@ export class TCompSDK {
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
-      isWritable: c.share > 0, // reduces congestion + program creators
+      isWritable: c.share > 0 // reduces congestion + program creators
     }));
     let creatorAtasPath = creators.map((c) => ({
       pubkey: findAta(currency, c.address),
       isSigner: false,
-      isWritable: true,
+      isWritable: true
     }));
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const builder = this.program.methods
@@ -912,7 +912,7 @@ export class TCompSDK {
         takerBroker,
         takerBrokerAta,
         makerBroker,
-        makerBrokerAta,
+        makerBrokerAta
       })
       .remainingAccounts([...creatorsPath, ...creatorAtasPath, ...proofPath]);
 
@@ -926,12 +926,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       listState,
       treeAuthority,
       creators,
-      proofPath,
+      proofPath
     };
   }
 
@@ -952,7 +952,7 @@ export class TCompSDK {
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
     margin = null,
     cosigner = null,
-    rentPayer = null,
+    rentPayer = null
   }: {
     target: Target;
     targetId: PublicKey;
@@ -995,7 +995,7 @@ export class TCompSDK {
         bidState,
         marginAccount: margin ?? owner,
         cosigner: cosigner ?? owner,
-        rentPayer: rentPayer ?? owner,
+        rentPayer: rentPayer ?? owner
       });
 
     const ixs = prependComputeIxs(
@@ -1008,9 +1008,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      bidState,
+      bidState
     };
   }
 
@@ -1019,7 +1019,7 @@ export class TCompSDK {
     owner,
     rentDest,
     compute = null,
-    priorityMicroLamports = null,
+    priorityMicroLamports = null
   }: {
     bidId: PublicKey;
     owner: PublicKey;
@@ -1034,7 +1034,7 @@ export class TCompSDK {
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
       systemProgram: SystemProgram.programId,
-      bidState,
+      bidState
     });
 
     const ixs = prependComputeIxs(
@@ -1047,9 +1047,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      bidState,
+      bidState
     };
   }
 
@@ -1058,7 +1058,7 @@ export class TCompSDK {
     owner,
     rentDest,
     compute = null,
-    priorityMicroLamports = null,
+    priorityMicroLamports = null
   }: {
     bidId: PublicKey;
     owner: PublicKey;
@@ -1073,7 +1073,7 @@ export class TCompSDK {
       owner,
       systemProgram: SystemProgram.programId,
       bidState,
-      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner })
     });
 
     const ixs = prependComputeIxs(
@@ -1086,9 +1086,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      bidState,
+      bidState
     };
   }
 
@@ -1104,7 +1104,7 @@ export class TCompSDK {
     index,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    canopyDepth = 0,
+    canopyDepth = 0
   }: {
     merkleTree: PublicKey;
     owner: PublicKey;
@@ -1129,7 +1129,7 @@ export class TCompSDK {
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const builder = this.program.methods
@@ -1144,7 +1144,7 @@ export class TCompSDK {
         treeAuthority,
         owner,
         listState,
-        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+        rentDest: getTcompRentPayer({ rentPayer: rentDest, owner })
       })
       .remainingAccounts(proofPath);
 
@@ -1158,12 +1158,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       treeAuthority,
       assetId,
       listState,
-      proofPath,
+      proofPath
     };
   }
 
@@ -1190,7 +1190,7 @@ export class TCompSDK {
     canopyDepth = 0,
     whitelist = null,
     delegateSigner,
-    cosigner = null,
+    cosigner = null
   }: {
     targetData:
       | {
@@ -1242,12 +1242,12 @@ export class TCompSDK {
     let creatorsPath = creators.map((c) => ({
       pubkey: c.address,
       isSigner: false,
-      isWritable: c.share > 0, // reduces congestion + program creators
+      isWritable: c.share > 0 // reduces congestion + program creators
     }));
     let proofPath = proof.slice(0, proof.length - canopyDepth).map((b) => ({
       pubkey: new PublicKey(b),
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     }));
 
     const accounts = {
@@ -1269,7 +1269,7 @@ export class TCompSDK {
       marginAccount: margin ?? seller,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       whitelist: whitelist ?? TSWAP_PROGRAM_ID,
-      cosigner: cosigner ?? delegate ?? seller,
+      cosigner: cosigner ?? delegate ?? seller
     };
     const remAccounts = [...creatorsPath, ...proofPath];
 
@@ -1321,13 +1321,13 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       bidState,
       treeAuthority,
       tcomp,
       creators,
-      proofPath,
+      proofPath
     };
   }
 
@@ -1352,7 +1352,7 @@ export class TCompSDK {
     compute = 800_000, // pnfts are expensive
     ruleSetAddnCompute = DEFAULT_RULESET_ADDN_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    cosigner = null,
+    cosigner = null
   }: {
     bidId: PublicKey;
     nftMint: PublicKey;
@@ -1400,14 +1400,14 @@ export class TCompSDK {
       destTokenRecordPda: escrowDestTokenRecordPda,
       ruleSet,
       nftEditionPda,
-      authDataSerialized,
+      authDataSerialized
     } = await prepPnftAccounts({
       connection: this.program.provider.connection,
       meta,
       nftMint,
       destAta: escrowPda,
       authData,
-      sourceAta: nftSellerAcc,
+      sourceAta: nftSellerAcc
     });
     meta = newMeta;
     const [destTokenRecord] = findTokenRecordPda(nftMint, ownerAtaAcc);
@@ -1439,7 +1439,7 @@ export class TCompSDK {
         pnftShared: {
           authorizationRulesProgram: AUTH_PROGRAM_ID,
           tokenMetadataProgram: TMETA_PROGRAM_ID,
-          instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+          instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         },
         nftEscrow: escrowPda,
         tempEscrowTokenRecord: escrowDestTokenRecordPda,
@@ -1451,13 +1451,13 @@ export class TCompSDK {
         marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
-        mintProof: mintProofPda,
+        mintProof: mintProofPda
       })
       .remainingAccounts(
         creators.map((c) => ({
           pubkey: c.address,
           isSigner: false,
-          isWritable: c.share > 0, // reduces congestion + program creators
+          isWritable: c.share > 0 // reduces congestion + program creators
         }))
       );
     const ix = await builder.instruction();
@@ -1475,12 +1475,12 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       bidState,
       tcomp,
       creators,
-      ownerAtaAcc,
+      ownerAtaAcc
     };
   }
 
@@ -1488,7 +1488,7 @@ export class TCompSDK {
     lamports,
     destination,
     owner = TSWAP_OWNER,
-    cosigner = TSWAP_COSIGNER,
+    cosigner = TSWAP_COSIGNER
   }: {
     owner?: PublicKey;
     cosigner?: PublicKey;
@@ -1504,15 +1504,15 @@ export class TCompSDK {
       cosigner,
       owner,
       destination,
-      systemProgram: SystemProgram.programId,
+      systemProgram: SystemProgram.programId
     });
     const ix = await builder.instruction();
     return {
       builder,
       tx: {
         ixs: [ix],
-        extraSigners: [],
-      },
+        extraSigners: []
+      }
     };
   }
 
@@ -1531,7 +1531,7 @@ export class TCompSDK {
     whitelist = null,
     compute = 800_000, // pnfts are expensive
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    cosigner = null,
+    cosigner = null
   }: {
     bidId: PublicKey;
     nftMint: PublicKey;
@@ -1581,7 +1581,7 @@ export class TCompSDK {
       marketplaceProgram: TCOMP_ADDR,
       tensorswapProgram: TSWAP_PROGRAM_ID,
       cosigner: cosigner ?? seller,
-      mintProof: mintProofPda,
+      mintProof: mintProofPda
     });
     const ix = await builder.instruction();
 
@@ -1595,11 +1595,11 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       bidState,
       tcomp,
-      ownerAtaAcc,
+      ownerAtaAcc
     };
   }
 
@@ -1619,7 +1619,7 @@ export class TCompSDK {
     whitelist = null,
     compute = 800_000, // pnfts are expensive
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    cosigner = null,
+    cosigner = null
   }: {
     bidId: PublicKey;
     nftMint: PublicKey;
@@ -1679,7 +1679,7 @@ export class TCompSDK {
       distribution,
       distributionProgram: WNS_DISTRIBUTION_PROGRAM_ID,
       wnsProgram: WNS_PROGRAM_ID,
-      extraMetas,
+      extraMetas
     });
     const ix = await builder.instruction();
 
@@ -1693,11 +1693,11 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       bidState,
       tcomp,
-      ownerAtaAcc,
+      ownerAtaAcc
     };
   }
 
@@ -1718,7 +1718,7 @@ export class TCompSDK {
     whitelist = null,
     compute = 800_000, // pnfts are expensive
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
-    cosigner = null,
+    cosigner = null
   }: {
     bidId: PublicKey;
     asset: PublicKey;
@@ -1768,14 +1768,14 @@ export class TCompSDK {
         marketplaceProgram: TCOMP_ADDR,
         tensorswapProgram: TSWAP_PROGRAM_ID,
         cosigner: cosigner ?? seller,
-        mintProof: mintProofPda,
+        mintProof: mintProofPda
       })
       .remainingAccounts(
         creators.map((c) => {
           return {
             pubkey: toWeb3JsPublicKey(c.address),
             isWritable: c.percentage > 0, // reduces congestion + program creators
-            isSigner: false,
+            isSigner: false
           };
         })
       );
@@ -1791,10 +1791,10 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       bidState,
-      tcomp,
+      tcomp
     };
   }
 
@@ -1809,7 +1809,7 @@ export class TCompSDK {
     privateTaker = null,
     payer = null,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
-    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS
   }: {
     asset: PublicKey;
     collection?: PublicKey | null;
@@ -1835,7 +1835,7 @@ export class TCompSDK {
         marketplaceProgram: TCOMP_ADDR,
         owner,
         listState,
-        payer: payer ?? owner,
+        payer: payer ?? owner
       });
 
     //because EITHER of the two has to sign, mark one of them as signer
@@ -1846,9 +1846,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      listState,
+      listState
     };
   }
 
@@ -1858,7 +1858,7 @@ export class TCompSDK {
     owner,
     rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
-    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS
   }: {
     asset: PublicKey;
     collection?: PublicKey | null;
@@ -1877,7 +1877,7 @@ export class TCompSDK {
       systemProgram: SystemProgram.programId,
       owner,
       rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
-      listState,
+      listState
     });
 
     const ixs = prependComputeIxs(
@@ -1890,9 +1890,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      listState,
+      listState
     };
   }
 
@@ -1907,7 +1907,7 @@ export class TCompSDK {
     payer = null,
     rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
-    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS
   }: {
     asset: PublicKey;
     collection?: PublicKey | null;
@@ -1947,14 +1947,14 @@ export class TCompSDK {
         listState,
         feeVault,
         takerBroker,
-        makerBroker,
+        makerBroker
       })
       .remainingAccounts(
         creators.map((c) => {
           return {
             pubkey: toWeb3JsPublicKey(c.address),
             isWritable: c.percentage > 0, // reduces congestion + program creators
-            isSigner: false,
+            isSigner: false
           };
         })
       );
@@ -1969,11 +1969,11 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
       listState,
       tcomp,
-      creators,
+      creators
     };
   }
 
@@ -1983,7 +1983,7 @@ export class TCompSDK {
     owner,
     rentDest,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
-    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS,
+    priorityMicroLamports = DEFAULT_MICRO_LAMPORTS
   }: {
     asset: PublicKey;
     collection?: PublicKey | null;
@@ -2002,7 +2002,7 @@ export class TCompSDK {
       systemProgram: SystemProgram.programId,
       owner,
       listState,
-      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner })
     });
 
     const ixs = prependComputeIxs(
@@ -2015,9 +2015,9 @@ export class TCompSDK {
       builder,
       tx: {
         ixs,
-        extraSigners: [],
+        extraSigners: []
       },
-      listState,
+      listState
     };
   }
 
@@ -2055,7 +2055,7 @@ export class TCompSDK {
       coder: this.coder,
       tx,
       programId: this.program.programId,
-      noopIxDiscHex: TCOMP_DISC_MAP.tcompNoop,
+      noopIxDiscHex: TCOMP_DISC_MAP.tcompNoop
     });
   }
 
@@ -2132,10 +2132,10 @@ export const makeEventSchema = new Map([
         ["currency", { kind: "option", type: [32] }],
         ["expiry", "u64"],
         ["privateTaker", { kind: "option", type: [32] }],
-        ["assetId", { kind: "option", type: [32] }],
-      ],
-    },
-  ],
+        ["assetId", { kind: "option", type: [32] }]
+      ]
+    }
+  ]
 ]);
 
 export type TakeEvent = {
@@ -2194,10 +2194,10 @@ export const takeEventSchema = new Map([
         ["makerBrokerFee", "u64"],
         ["creatorFee", "u64"],
         ["currency", { kind: "option", type: [32] }],
-        ["assetId", { kind: "option", type: [32] }],
-      ],
-    },
-  ],
+        ["assetId", { kind: "option", type: [32] }]
+      ]
+    }
+  ]
 ]);
 
 // --------------------------------------- parsing
@@ -2237,7 +2237,7 @@ export function deserializeTcompEvent(data: Buffer) {
       currency: e.currency ? new PublicKey(e.currency) : null,
       expiry: new BN(e.expiry),
       privateTaker: e.privateTaker ? new PublicKey(e.privateTaker) : null,
-      assetId: e.assetId ? new PublicKey(e.assetId) : null,
+      assetId: e.assetId ? new PublicKey(e.assetId) : null
     };
     return typedEvent;
   } else if (data[0] === 1) {
@@ -2262,7 +2262,7 @@ export function deserializeTcompEvent(data: Buffer) {
       takerBrokerFee: new BN(e.takerBrokerFee),
       makerBrokerFee: new BN(e.makerBrokerFee),
       currency: e.currency ? new PublicKey(e.currency) : null,
-      assetId: e.assetId ? new PublicKey(e.assetId) : null,
+      assetId: e.assetId ? new PublicKey(e.assetId) : null
     };
     return typedEvent;
   } else {
@@ -2273,7 +2273,7 @@ export function deserializeTcompEvent(data: Buffer) {
 //(!!) sync with state.rs:get_rent_payer()
 export const getTcompRentPayer = ({
   rentPayer,
-  owner,
+  owner
 }: {
   rentPayer: PublicKey;
   owner: PublicKey;

@@ -6,7 +6,7 @@ use anchor_spl::{
 };
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
 };
@@ -19,8 +19,15 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyWns<'info> {
-    /// CHECK: Seeds checked here, account has no state.
-    #[account(mut)]
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
+            shard_num!(list_state),
+        ],
+        bump,
+        seeds::program = fees::ID,
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -140,7 +147,7 @@ impl<'info> Validate<'info> for BuyWns<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
+        // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 

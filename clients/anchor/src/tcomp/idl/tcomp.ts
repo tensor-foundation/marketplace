@@ -1,5544 +1,5359 @@
 export type Tcomp = {
-  "version": "2.0.1",
-  "name": "tcomp",
-  "constants": [
+  version: "2.0.1";
+  name: "tcomp";
+  constants: [
     {
-      "name": "CURRENT_TCOMP_VERSION",
-      "type": "u8",
-      "value": "1"
+      name: "CURRENT_TCOMP_VERSION";
+      type: "u8";
+      value: "1";
     },
     {
-      "name": "TCOMP_FEE_BPS",
-      "type": "u16",
-      "value": "150"
+      name: "TCOMP_FEE_BPS";
+      type: "u16";
+      value: "200";
     },
     {
-      "name": "MAX_EXPIRY_SEC",
-      "type": "i64",
-      "value": "31536000"
+      name: "MAX_EXPIRY_SEC";
+      type: "i64";
+      value: "31536000";
     },
     {
-      "name": "MAKER_BROKER_PCT",
-      "type": "u16",
-      "value": "0"
+      name: "MAKER_BROKER_PCT";
+      type: "u16";
+      value: "80";
     },
     {
-      "name": "LIST_STATE_SIZE",
-      "type": {
-        "defined": "usize"
-      },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
+      name: "LIST_STATE_SIZE";
+      type: {
+        defined: "usize";
+      };
+      value: "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128";
     },
     {
-      "name": "BID_STATE_SIZE",
-      "type": {
-        "defined": "usize"
-      },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128"
+      name: "BID_STATE_SIZE";
+      type: {
+        defined: "usize";
+      };
+      value: "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128";
     }
-  ],
-  "instructions": [
+  ];
+  instructions: [
     {
-      "name": "tcompNoop",
-      "accounts": [
+      name: "tcompNoop";
+      accounts: [
         {
-          "name": "tcompSigner",
-          "isMut": false,
-          "isSigner": true
+          name: "tcompSigner";
+          isMut: false;
+          isSigner: true;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "event",
-          "type": {
-            "defined": "TcompEvent"
-          }
+          name: "event";
+          type: {
+            defined: "TcompEvent";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "withdrawFees",
-      "accounts": [
+      name: "withdrawFees";
+      accounts: [
         {
-          "name": "tswap",
-          "isMut": true,
-          "isSigner": false
+          name: "tswap";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tcomp",
-          "isMut": true,
-          "isSigner": false
+          name: "tcomp";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          docs: [
             "We ask also for a signature just to make sure this wallet can actually sign things"
-          ]
+          ];
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false
+          name: "destination";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "buy",
-      "accounts": [
+      name: "buy";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce";
+          type: "u64";
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index";
+          type: "u32";
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "metaHash";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "creatorShares",
-          "type": "bytes"
+          name: "creatorShares";
+          type: "bytes";
         },
         {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
-          }
+          name: "creatorVerified";
+          type: {
+            vec: "bool";
+          };
         },
         {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
+          name: "sellerFeeBasisPoints";
+          type: "u16";
         },
         {
-          "name": "maxAmount",
-          "type": "u64"
+          name: "maxAmount";
+          type: "u64";
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
-          }
+          name: "optionalRoyaltyPct";
+          type: {
+            option: "u16";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "buySpl",
-      "accounts": [
+      name: "buySpl";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "feeVaultAta",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVaultAta";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "payer",
-          "isMut": false,
-          "isSigner": true
+          name: "payer";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "payerSource",
-          "isMut": true,
-          "isSigner": false
+          name: "payerSource";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ownerDest",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerDest";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "currency",
-          "isMut": false,
-          "isSigner": false
+          name: "currency";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "takerBrokerAta",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBrokerAta";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBrokerAta",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBrokerAta";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-      ],
-      "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
-        {
-          "name": "index",
-          "type": "u32"
-        },
-        {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "creatorShares",
-          "type": "bytes"
-        },
-        {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
-          }
-        },
-        {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
-        },
-        {
-          "name": "maxAmount",
-          "type": "u64"
-        },
-        {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
-          }
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         }
-      ]
+      ];
+      args: [
+        {
+          name: "nonce";
+          type: "u64";
+        },
+        {
+          name: "index";
+          type: "u32";
+        },
+        {
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "metaHash";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "creatorShares";
+          type: "bytes";
+        },
+        {
+          name: "creatorVerified";
+          type: {
+            vec: "bool";
+          };
+        },
+        {
+          name: "sellerFeeBasisPoints";
+          type: "u16";
+        },
+        {
+          name: "maxAmount";
+          type: "u64";
+        },
+        {
+          name: "optionalRoyaltyPct";
+          type: {
+            option: "u16";
+          };
+        }
+      ];
     },
     {
-      "name": "buyCore",
-      "accounts": [
+      name: "buyCore";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection";
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "maxAmount",
-          "type": "u64"
+          name: "maxAmount";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "list",
-      "accounts": [
+      name: "list";
+      accounts: [
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "delegate";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-
-      ],
-      "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
-        {
-          "name": "index",
-          "type": "u32"
-        },
-        {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "amount",
-          "type": "u64"
-        },
-        {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
-          }
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         }
-      ]
+      ];
+      args: [
+        {
+          name: "nonce";
+          type: "u64";
+        },
+        {
+          name: "index";
+          type: "u32";
+        },
+        {
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "dataHash";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "creatorHash";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "amount";
+          type: "u64";
+        },
+        {
+          name: "expireInSec";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "currency";
+          type: {
+            option: "publicKey";
+          };
+        },
+        {
+          name: "privateTaker";
+          type: {
+            option: "publicKey";
+          };
+        },
+        {
+          name: "makerBroker";
+          type: {
+            option: "publicKey";
+          };
+        }
+      ];
     },
     {
-      "name": "delist",
-      "accounts": [
+      name: "delist";
+      accounts: [
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce";
+          type: "u64";
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index";
+          type: "u32";
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "dataHash";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "creatorHash";
+          type: {
+            array: ["u8", 32];
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "edit",
-      "accounts": [
+      name: "edit";
+      accounts: [
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount";
+          type: "u64";
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
-          }
+          name: "expireInSec";
+          type: {
+            option: "u64";
+          };
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "currency";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "privateTaker";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "makerBroker";
+          type: {
+            option: "publicKey";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "listCore",
-      "accounts": [
+      name: "listCore";
+      accounts: [
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection";
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount";
+          type: "u64";
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
-          }
+          name: "expireInSec";
+          type: {
+            option: "u64";
+          };
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "currency";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "privateTaker";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "makerBroker";
+          type: {
+            option: "publicKey";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "delistCore",
-      "accounts": [
+      name: "delistCore";
+      accounts: [
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection";
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": true
+          name: "rentDest";
+          isMut: true;
+          isSigner: true;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "bid",
-      "accounts": [
+      name: "bid";
+      accounts: [
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer";
+          isMut: true;
+          isSigner: true;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "bidId",
-          "type": "publicKey"
+          name: "bidId";
+          type: "publicKey";
         },
         {
-          "name": "target",
-          "type": {
-            "defined": "Target"
-          }
+          name: "target";
+          type: {
+            defined: "Target";
+          };
         },
         {
-          "name": "targetId",
-          "type": "publicKey"
+          name: "targetId";
+          type: "publicKey";
         },
         {
-          "name": "field",
-          "type": {
-            "option": {
-              "defined": "Field"
-            }
-          }
+          name: "field";
+          type: {
+            option: {
+              defined: "Field";
+            };
+          };
         },
         {
-          "name": "fieldId",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "fieldId";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount";
+          type: "u64";
         },
         {
-          "name": "quantity",
-          "type": "u32"
+          name: "quantity";
+          type: "u32";
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
-          }
+          name: "expireInSec";
+          type: {
+            option: "u64";
+          };
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "currency";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "privateTaker";
+          type: {
+            option: "publicKey";
+          };
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
+          name: "makerBroker";
+          type: {
+            option: "publicKey";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "cancelBid",
-      "accounts": [
+      name: "cancelBid";
+      accounts: [
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "closeExpiredBid",
-      "accounts": [
+      name: "closeExpiredBid";
+      accounts: [
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "closeExpiredListing",
-      "accounts": [
+      name: "closeExpiredListing";
+      accounts: [
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce";
+          type: "u64";
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index";
+          type: "u32";
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "dataHash";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "creatorHash";
+          type: {
+            array: ["u8", 32];
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "closeExpiredListingCore",
-      "accounts": [
+      name: "closeExpiredListingCore";
+      accounts: [
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection";
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "takeBidMetaHash",
-      "accounts": [
+      name: "takeBidMetaHash";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": false
+          name: "seller";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "delegate";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce";
+          type: "u64";
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index";
+          type: "u32";
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "metaHash";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "creatorShares",
-          "type": "bytes"
+          name: "creatorShares";
+          type: "bytes";
         },
         {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
-          }
+          name: "creatorVerified";
+          type: {
+            vec: "bool";
+          };
         },
         {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
+          name: "sellerFeeBasisPoints";
+          type: "u16";
         },
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
-          }
+          name: "optionalRoyaltyPct";
+          type: {
+            option: "u16";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "takeBidFullMeta",
-      "accounts": [
+      name: "takeBidFullMeta";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": false
+          name: "seller";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "delegate";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce";
+          type: "u64";
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index";
+          type: "u32";
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          name: "root";
+          type: {
+            array: ["u8", 32];
+          };
         },
         {
-          "name": "metaArgs",
-          "type": {
-            "defined": "TMetadataArgs"
-          }
+          name: "metaArgs";
+          type: {
+            defined: "TMetadataArgs";
+          };
         },
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
-          }
+          name: "optionalRoyaltyPct";
+          type: {
+            option: "u16";
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "takeBidLegacy",
-      "accounts": [
+      name: "takeBidLegacy";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "nftSellerAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "nftMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "nftMetadata",
-          "isMut": true,
-          "isSigner": false
+          name: "nftMetadata";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerAtaAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "nftEdition",
-          "isMut": false,
-          "isSigner": false
+          name: "nftEdition";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ownerTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerTokenRecord";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "destTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "destTokenRecord";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "pnftShared",
-          "accounts": [
+          name: "pnftShared";
+          accounts: [
             {
-              "name": "tokenMetadataProgram",
-              "isMut": false,
-              "isSigner": false
+              name: "tokenMetadataProgram";
+              isMut: false;
+              isSigner: false;
             },
             {
-              "name": "instructions",
-              "isMut": false,
-              "isSigner": false
+              name: "instructions";
+              isMut: false;
+              isSigner: false;
             },
             {
-              "name": "authorizationRulesProgram",
-              "isMut": false,
-              "isSigner": false
+              name: "authorizationRulesProgram";
+              isMut: false;
+              isSigner: false;
             }
-          ]
+          ];
         },
         {
-          "name": "nftEscrow",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Implicitly checked via transfer. Will fail if wrong account"
-          ]
+          name: "nftEscrow";
+          isMut: true;
+          isSigner: false;
+          docs: ["Implicitly checked via transfer. Will fail if wrong account"];
         },
         {
-          "name": "tempEscrowTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "tempEscrowTokenRecord";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "authRules",
-          "isMut": false,
-          "isSigner": false
+          name: "authRules";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof";
+          isMut: false;
+          isSigner: false;
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
-          ]
+          ];
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
-          }
+          name: "optionalRoyaltyPct";
+          type: {
+            option: "u16";
+          };
         },
         {
-          "name": "rulesAccPresent",
-          "type": "bool"
+          name: "rulesAccPresent";
+          type: "bool";
         },
         {
-          "name": "authorizationData",
-          "type": {
-            "option": {
-              "defined": "AuthorizationDataLocal"
-            }
-          }
+          name: "authorizationData";
+          type: {
+            option: {
+              defined: "AuthorizationDataLocal";
+            };
+          };
         }
-      ]
+      ];
     },
     {
-      "name": "takeBidT22",
-      "accounts": [
+      name: "takeBidT22";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "nftSellerAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "nftMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerAtaAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof";
+          isMut: false;
+          isSigner: false;
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
-          ]
+          ];
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "takeBidWns",
-      "accounts": [
+      name: "takeBidWns";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "nftSellerAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "nftMint";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerAtaAcc";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof";
+          isMut: false;
+          isSigner: false;
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
-          ]
+          ];
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "approveAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "approveAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "distribution",
-          "isMut": true,
-          "isSigner": false
+          name: "distribution";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "wnsProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "wnsProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "distributionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "distributionProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "extraMetas",
-          "isMut": false,
-          "isSigner": false
+          name: "extraMetas";
+          isMut: false;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "takeBidCore",
-      "accounts": [
+      name: "takeBidCore";
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller";
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker";
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset";
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection";
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram";
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner";
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof";
+          isMut: false;
+          isSigner: false;
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
-          ]
+          ];
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest";
+          isMut: true;
+          isSigner: false;
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount";
+          type: "u64";
         }
-      ]
+      ];
     }
-  ],
-  "accounts": [
+  ];
+  accounts: [
     {
-      "name": "listState",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "listState";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "version",
-            "type": "u8"
+            name: "version";
+            type: "u8";
           },
           {
-            "name": "bump",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
-            }
+            name: "bump";
+            type: {
+              array: ["u8", 1];
+            };
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: "owner";
+            type: "publicKey";
           },
           {
-            "name": "assetId",
-            "type": "publicKey"
+            name: "assetId";
+            type: "publicKey";
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount";
+            type: "u64";
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "currency";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry";
+            type: "i64";
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "privateTaker";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "makerBroker",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "makerBroker";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is PublicKey::default"
-            ],
-            "type": "publicKey"
+            name: "rentPayer";
+            docs: ["owner is the rent payer when this is PublicKey::default"];
+            type: "publicKey";
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            name: "reserved";
+            type: {
+              array: ["u8", 32];
+            };
           },
           {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
+            name: "reserved1";
+            type: {
+              array: ["u8", 64];
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "bidState",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "bidState";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "version",
-            "type": "u8"
+            name: "version";
+            type: "u8";
           },
           {
-            "name": "bump",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
-            }
+            name: "bump";
+            type: {
+              array: ["u8", 1];
+            };
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: "owner";
+            type: "publicKey";
           },
           {
-            "name": "bidId",
-            "docs": [
+            name: "bidId";
+            docs: [
               "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
-            ],
-            "type": "publicKey"
+            ];
+            type: "publicKey";
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
-            }
+            name: "target";
+            type: {
+              defined: "Target";
+            };
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId";
+            type: "publicKey";
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
-              }
-            }
+            name: "field";
+            type: {
+              option: {
+                defined: "Field";
+              };
+            };
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "fieldId";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity";
+            type: "u32";
           },
           {
-            "name": "filledQuantity",
-            "type": "u32"
+            name: "filledQuantity";
+            type: "u32";
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount";
+            type: "u64";
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "currency";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry";
+            type: "i64";
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "privateTaker";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "makerBroker",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "makerBroker";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "margin",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "margin";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "updatedAt",
-            "type": "i64"
+            name: "updatedAt";
+            type: "i64";
           },
           {
-            "name": "cosigner",
-            "type": "publicKey"
+            name: "cosigner";
+            type: "publicKey";
           },
           {
-            "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is PublicKey::default"
-            ],
-            "type": "publicKey"
+            name: "rentPayer";
+            docs: ["owner is the rent payer when this is PublicKey::default"];
+            type: "publicKey";
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
+            name: "reserved";
+            type: {
+              array: ["u8", 8];
+            };
           },
           {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            name: "reserved1";
+            type: {
+              array: ["u8", 16];
+            };
           },
           {
-            "name": "reserved2",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            name: "reserved2";
+            type: {
+              array: ["u8", 32];
+            };
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "types": [
+  ];
+  types: [
     {
-      "name": "TUses",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TUses";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "useMethod",
-            "type": {
-              "defined": "TUseMethod"
-            }
+            name: "useMethod";
+            type: {
+              defined: "TUseMethod";
+            };
           },
           {
-            "name": "remaining",
-            "type": "u64"
+            name: "remaining";
+            type: "u64";
           },
           {
-            "name": "total",
-            "type": "u64"
+            name: "total";
+            type: "u64";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TCollection",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TCollection";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "verified",
-            "type": "bool"
+            name: "verified";
+            type: "bool";
           },
           {
-            "name": "key",
-            "type": "publicKey"
+            name: "key";
+            type: "publicKey";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TMetadataArgs";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "name",
-            "docs": [
-              "The name of the asset"
-            ],
-            "type": "string"
+            name: "name";
+            docs: ["The name of the asset"];
+            type: "string";
           },
           {
-            "name": "symbol",
-            "docs": [
-              "The symbol for the asset"
-            ],
-            "type": "string"
+            name: "symbol";
+            docs: ["The symbol for the asset"];
+            type: "string";
           },
           {
-            "name": "uri",
-            "docs": [
-              "URI pointing to JSON representing the asset"
-            ],
-            "type": "string"
+            name: "uri";
+            docs: ["URI pointing to JSON representing the asset"];
+            type: "string";
           },
           {
-            "name": "sellerFeeBasisPoints",
-            "docs": [
+            name: "sellerFeeBasisPoints";
+            docs: [
               "Royalty basis points that goes to creators in secondary sales (0-10000)"
-            ],
-            "type": "u16"
+            ];
+            type: "u16";
           },
           {
-            "name": "primarySaleHappened",
-            "type": "bool"
+            name: "primarySaleHappened";
+            type: "bool";
           },
           {
-            "name": "isMutable",
-            "type": "bool"
+            name: "isMutable";
+            type: "bool";
           },
           {
-            "name": "editionNonce",
-            "docs": [
-              "nonce for easy calculation of editions, if present"
-            ],
-            "type": {
-              "option": "u8"
-            }
+            name: "editionNonce";
+            docs: ["nonce for easy calculation of editions, if present"];
+            type: {
+              option: "u8";
+            };
           },
           {
-            "name": "tokenStandard",
-            "docs": [
+            name: "tokenStandard";
+            docs: [
               "Since we cannot easily change Metadata, we add the new DataV2 fields here at the end."
-            ],
-            "type": {
-              "option": {
-                "defined": "TTokenStandard"
-              }
-            }
+            ];
+            type: {
+              option: {
+                defined: "TTokenStandard";
+              };
+            };
           },
           {
-            "name": "collection",
-            "docs": [
-              "Collection"
-            ],
-            "type": {
-              "option": {
-                "defined": "TCollection"
-              }
-            }
+            name: "collection";
+            docs: ["Collection"];
+            type: {
+              option: {
+                defined: "TCollection";
+              };
+            };
           },
           {
-            "name": "uses",
-            "docs": [
-              "Uses"
-            ],
-            "type": {
-              "option": {
-                "defined": "TUses"
-              }
-            }
+            name: "uses";
+            docs: ["Uses"];
+            type: {
+              option: {
+                defined: "TUses";
+              };
+            };
           },
           {
-            "name": "tokenProgramVersion",
-            "type": {
-              "defined": "TTokenProgramVersion"
-            }
+            name: "tokenProgramVersion";
+            type: {
+              defined: "TTokenProgramVersion";
+            };
           },
           {
-            "name": "creatorShares",
-            "type": "bytes"
+            name: "creatorShares";
+            type: "bytes";
           },
           {
-            "name": "creatorVerified",
-            "type": {
-              "vec": "bool"
-            }
+            name: "creatorVerified";
+            type: {
+              vec: "bool";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "MakeEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "MakeEvent";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "maker",
-            "type": "publicKey"
+            name: "maker";
+            type: "publicKey";
           },
           {
-            "name": "bidId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "bidId";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
-            }
+            name: "target";
+            type: {
+              defined: "Target";
+            };
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId";
+            type: "publicKey";
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
-              }
-            }
+            name: "field";
+            type: {
+              option: {
+                defined: "Field";
+              };
+            };
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "fieldId";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount";
+            type: "u64";
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity";
+            type: "u32";
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "currency";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry";
+            type: "i64";
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "privateTaker";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "assetId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "assetId";
+            type: {
+              option: "publicKey";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TakeEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TakeEvent";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "taker",
-            "type": "publicKey"
+            name: "taker";
+            type: "publicKey";
           },
           {
-            "name": "bidId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "bidId";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
-            }
+            name: "target";
+            type: {
+              defined: "Target";
+            };
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId";
+            type: "publicKey";
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
-              }
-            }
+            name: "field";
+            type: {
+              option: {
+                defined: "Field";
+              };
+            };
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "fieldId";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount";
+            type: "u64";
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity";
+            type: "u32";
           },
           {
-            "name": "tcompFee",
-            "type": "u64"
+            name: "tcompFee";
+            type: "u64";
           },
           {
-            "name": "takerBrokerFee",
-            "type": "u64"
+            name: "takerBrokerFee";
+            type: "u64";
           },
           {
-            "name": "makerBrokerFee",
-            "type": "u64"
+            name: "makerBrokerFee";
+            type: "u64";
           },
           {
-            "name": "creatorFee",
-            "type": "u64"
+            name: "creatorFee";
+            type: "u64";
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "currency";
+            type: {
+              option: "publicKey";
+            };
           },
           {
-            "name": "assetId",
-            "type": {
-              "option": "publicKey"
-            }
+            name: "assetId";
+            type: {
+              option: "publicKey";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "AuthorizationDataLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "AuthorizationDataLocal";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "payload",
-            "type": {
-              "vec": {
-                "defined": "TaggedPayload"
-              }
-            }
+            name: "payload";
+            type: {
+              vec: {
+                defined: "TaggedPayload";
+              };
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TaggedPayload",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TaggedPayload";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name";
+            type: "string";
           },
           {
-            "name": "payload",
-            "type": {
-              "defined": "PayloadTypeLocal"
-            }
+            name: "payload";
+            type: {
+              defined: "PayloadTypeLocal";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "SeedsVecLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "SeedsVecLocal";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "seeds",
-            "docs": [
-              "The vector of derivation seeds."
-            ],
-            "type": {
-              "vec": "bytes"
-            }
+            name: "seeds";
+            docs: ["The vector of derivation seeds."];
+            type: {
+              vec: "bytes";
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "ProofInfoLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "ProofInfoLocal";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "proof",
-            "docs": [
-              "The merkle proof."
-            ],
-            "type": {
-              "vec": {
-                "array": [
-                  "u8",
-                  32
-                ]
-              }
-            }
+            name: "proof";
+            docs: ["The merkle proof."];
+            type: {
+              vec: {
+                array: ["u8", 32];
+              };
+            };
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TTokenProgramVersion",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TTokenProgramVersion";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "Original"
+            name: "Original";
           },
           {
-            "name": "Token2022"
+            name: "Token2022";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TTokenStandard",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TTokenStandard";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "NonFungible"
+            name: "NonFungible";
           },
           {
-            "name": "FungibleAsset"
+            name: "FungibleAsset";
           },
           {
-            "name": "Fungible"
+            name: "Fungible";
           },
           {
-            "name": "NonFungibleEdition"
+            name: "NonFungibleEdition";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TUseMethod",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TUseMethod";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "Burn"
+            name: "Burn";
           },
           {
-            "name": "Multiple"
+            name: "Multiple";
           },
           {
-            "name": "Single"
+            name: "Single";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "TcompEvent",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TcompEvent";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "Maker",
-            "fields": [
+            name: "Maker";
+            fields: [
               {
-                "defined": "MakeEvent"
+                defined: "MakeEvent";
               }
-            ]
+            ];
           },
           {
-            "name": "Taker",
-            "fields": [
+            name: "Taker";
+            fields: [
               {
-                "defined": "TakeEvent"
+                defined: "TakeEvent";
               }
-            ]
+            ];
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "PayloadTypeLocal",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "PayloadTypeLocal";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "Pubkey",
-            "fields": [
-              "publicKey"
-            ]
+            name: "Pubkey";
+            fields: ["publicKey"];
           },
           {
-            "name": "Seeds",
-            "fields": [
+            name: "Seeds";
+            fields: [
               {
-                "defined": "SeedsVecLocal"
+                defined: "SeedsVecLocal";
               }
-            ]
+            ];
           },
           {
-            "name": "MerkleProof",
-            "fields": [
+            name: "MerkleProof";
+            fields: [
               {
-                "defined": "ProofInfoLocal"
+                defined: "ProofInfoLocal";
               }
-            ]
+            ];
           },
           {
-            "name": "Number",
-            "fields": [
-              "u64"
-            ]
+            name: "Number";
+            fields: ["u64"];
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "Target",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "Target";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "AssetId"
+            name: "AssetId";
           },
           {
-            "name": "Whitelist"
+            name: "Whitelist";
           }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "Field",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "Field";
+      type: {
+        kind: "enum";
+        variants: [
           {
-            "name": "Name"
+            name: "Name";
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "errors": [
+  ];
+  errors: [
     {
-      "code": 6100,
-      "name": "ArithmeticError",
-      "msg": "arithmetic error"
+      code: 6100;
+      name: "ArithmeticError";
+      msg: "arithmetic error";
     },
     {
-      "code": 6101,
-      "name": "ExpiryTooLarge",
-      "msg": "expiry too large"
+      code: 6101;
+      name: "ExpiryTooLarge";
+      msg: "expiry too large";
     },
     {
-      "code": 6102,
-      "name": "BadOwner",
-      "msg": "bad owner"
+      code: 6102;
+      name: "BadOwner";
+      msg: "bad owner";
     },
     {
-      "code": 6103,
-      "name": "BadListState",
-      "msg": "bad list state"
+      code: 6103;
+      name: "BadListState";
+      msg: "bad list state";
     },
     {
-      "code": 6104,
-      "name": "BadRoyaltiesPct",
-      "msg": "royalties pct must be between 0 and 100"
+      code: 6104;
+      name: "BadRoyaltiesPct";
+      msg: "royalties pct must be between 0 and 100";
     },
     {
-      "code": 6105,
-      "name": "PriceMismatch",
-      "msg": "price mismatch"
+      code: 6105;
+      name: "PriceMismatch";
+      msg: "price mismatch";
     },
     {
-      "code": 6106,
-      "name": "CreatorMismatch",
-      "msg": "creator mismatch"
+      code: 6106;
+      name: "CreatorMismatch";
+      msg: "creator mismatch";
     },
     {
-      "code": 6107,
-      "name": "InsufficientBalance",
-      "msg": "insufficient balance"
+      code: 6107;
+      name: "InsufficientBalance";
+      msg: "insufficient balance";
     },
     {
-      "code": 6108,
-      "name": "BidExpired",
-      "msg": "bid has expired"
+      code: 6108;
+      name: "BidExpired";
+      msg: "bid has expired";
     },
     {
-      "code": 6109,
-      "name": "TakerNotAllowed",
-      "msg": "taker not allowed"
+      code: 6109;
+      name: "TakerNotAllowed";
+      msg: "taker not allowed";
     },
     {
-      "code": 6110,
-      "name": "BadBidField",
-      "msg": "cannot pass bid field"
+      code: 6110;
+      name: "BadBidField";
+      msg: "cannot pass bid field";
     },
     {
-      "code": 6111,
-      "name": "BidNotYetExpired",
-      "msg": "bid not yet expired"
+      code: 6111;
+      name: "BidNotYetExpired";
+      msg: "bid not yet expired";
     },
     {
-      "code": 6112,
-      "name": "BadMargin",
-      "msg": "bad margin"
+      code: 6112;
+      name: "BadMargin";
+      msg: "bad margin";
     },
     {
-      "code": 6113,
-      "name": "WrongIxForBidTarget",
-      "msg": "wrong ix for bid target called"
+      code: 6113;
+      name: "WrongIxForBidTarget";
+      msg: "wrong ix for bid target called";
     },
     {
-      "code": 6114,
-      "name": "WrongTargetId",
-      "msg": "wrong target id"
+      code: 6114;
+      name: "WrongTargetId";
+      msg: "wrong target id";
     },
     {
-      "code": 6115,
-      "name": "MissingFvc",
-      "msg": "creator array missing first verified creator"
+      code: 6115;
+      name: "MissingFvc";
+      msg: "creator array missing first verified creator";
     },
     {
-      "code": 6116,
-      "name": "MissingCollection",
-      "msg": "metadata missing collection"
+      code: 6116;
+      name: "MissingCollection";
+      msg: "metadata missing collection";
     },
     {
-      "code": 6117,
-      "name": "CannotModifyTarget",
-      "msg": "cannot modify bid target, create a new bid"
+      code: 6117;
+      name: "CannotModifyTarget";
+      msg: "cannot modify bid target, create a new bid";
     },
     {
-      "code": 6118,
-      "name": "TargetIdMustEqualBidId",
-      "msg": "target id and bid id must be the same for single bids"
+      code: 6118;
+      name: "TargetIdMustEqualBidId";
+      msg: "target id and bid id must be the same for single bids";
     },
     {
-      "code": 6119,
-      "name": "CurrencyNotYetEnabled",
-      "msg": "currency not yet enabled"
+      code: 6119;
+      name: "CurrencyNotYetEnabled";
+      msg: "currency not yet enabled";
     },
     {
-      "code": 6120,
-      "name": "MakerBrokerNotYetEnabled",
-      "msg": "maker broker not yet enabled"
+      code: 6120;
+      name: "MakerBrokerNotYetEnabled";
+      msg: "maker broker not yet enabled";
     },
     {
-      "code": 6121,
-      "name": "OptionalRoyaltiesNotYetEnabled",
-      "msg": "optional royalties not yet enabled"
+      code: 6121;
+      name: "OptionalRoyaltiesNotYetEnabled";
+      msg: "optional royalties not yet enabled";
     },
     {
-      "code": 6122,
-      "name": "WrongStateVersion",
-      "msg": "wrong state version"
+      code: 6122;
+      name: "WrongStateVersion";
+      msg: "wrong state version";
     },
     {
-      "code": 6123,
-      "name": "WrongBidFieldId",
-      "msg": "wrong field id"
+      code: 6123;
+      name: "WrongBidFieldId";
+      msg: "wrong field id";
     },
     {
-      "code": 6124,
-      "name": "BrokerMismatch",
-      "msg": "broker mismatch"
+      code: 6124;
+      name: "BrokerMismatch";
+      msg: "broker mismatch";
     },
     {
-      "code": 6125,
-      "name": "AssetIdMismatch",
-      "msg": "asset id mismatch"
+      code: 6125;
+      name: "AssetIdMismatch";
+      msg: "asset id mismatch";
     },
     {
-      "code": 6126,
-      "name": "ListingExpired",
-      "msg": "listing has expired"
+      code: 6126;
+      name: "ListingExpired";
+      msg: "listing has expired";
     },
     {
-      "code": 6127,
-      "name": "ListingNotYetExpired",
-      "msg": "listing not yet expired"
+      code: 6127;
+      name: "ListingNotYetExpired";
+      msg: "listing not yet expired";
     },
     {
-      "code": 6128,
-      "name": "BadQuantity",
-      "msg": "bad quantity passed in"
+      code: 6128;
+      name: "BadQuantity";
+      msg: "bad quantity passed in";
     },
     {
-      "code": 6129,
-      "name": "BidFullyFilled",
-      "msg": "bid fully filled"
+      code: 6129;
+      name: "BidFullyFilled";
+      msg: "bid fully filled";
     },
     {
-      "code": 6130,
-      "name": "BadWhitelist",
-      "msg": "bad whitelist"
+      code: 6130;
+      name: "BadWhitelist";
+      msg: "bad whitelist";
     },
     {
-      "code": 6131,
-      "name": "ForbiddenCollection",
-      "msg": "forbidden collection"
+      code: 6131;
+      name: "ForbiddenCollection";
+      msg: "forbidden collection";
     },
     {
-      "code": 6132,
-      "name": "BadCosigner",
-      "msg": "bad cosigner"
+      code: 6132;
+      name: "BadCosigner";
+      msg: "bad cosigner";
     },
     {
-      "code": 6133,
-      "name": "BadMintProof",
-      "msg": "bad mint proof"
+      code: 6133;
+      name: "BadMintProof";
+      msg: "bad mint proof";
     },
     {
-      "code": 6134,
-      "name": "CurrencyMismatch",
-      "msg": "Currency mismatch"
+      code: 6134;
+      name: "CurrencyMismatch";
+      msg: "Currency mismatch";
     },
     {
-      "code": 6135,
-      "name": "BidBalanceNotEmptied",
-      "msg": "The bid balance was not emptied"
+      code: 6135;
+      name: "BidBalanceNotEmptied";
+      msg: "The bid balance was not emptied";
     },
     {
-      "code": 6136,
-      "name": "BadRentDest",
-      "msg": "Bad rent dest."
+      code: 6136;
+      name: "BadRentDest";
+      msg: "Bad rent dest.";
     },
     {
-      "code": 6137,
-      "name": "CurrencyNotYetWhitelisted",
-      "msg": "currency not yet whitelisted"
+      code: 6137;
+      name: "CurrencyNotYetWhitelisted";
+      msg: "currency not yet whitelisted";
     },
     {
-      "code": 6138,
-      "name": "MakerBrokerNotYetWhitelisted",
-      "msg": "maker broker not yet whitelisted"
+      code: 6138;
+      name: "MakerBrokerNotYetWhitelisted";
+      msg: "maker broker not yet whitelisted";
     },
     {
-      "code": 6139,
-      "name": "WrongTokenRecordDerivation",
-      "msg": "token record derivation is wrong"
+      code: 6139;
+      name: "WrongTokenRecordDerivation";
+      msg: "token record derivation is wrong";
     }
-  ]
+  ];
 };
 
 export const IDL: Tcomp = {
-  "version": "2.0.1",
-  "name": "tcomp",
-  "constants": [
+  version: "2.0.1",
+  name: "tcomp",
+  constants: [
     {
-      "name": "CURRENT_TCOMP_VERSION",
-      "type": "u8",
-      "value": "1"
+      name: "CURRENT_TCOMP_VERSION",
+      type: "u8",
+      value: "1"
     },
     {
-      "name": "TCOMP_FEE_BPS",
-      "type": "u16",
-      "value": "150"
+      name: "TCOMP_FEE_BPS",
+      type: "u16",
+      value: "200"
     },
     {
-      "name": "MAX_EXPIRY_SEC",
-      "type": "i64",
-      "value": "31536000"
+      name: "MAX_EXPIRY_SEC",
+      type: "i64",
+      value: "31536000"
     },
     {
-      "name": "MAKER_BROKER_PCT",
-      "type": "u16",
-      "value": "0"
+      name: "MAKER_BROKER_PCT",
+      type: "u16",
+      value: "80"
     },
     {
-      "name": "LIST_STATE_SIZE",
-      "type": {
-        "defined": "usize"
+      name: "LIST_STATE_SIZE",
+      type: {
+        defined: "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
+      value: "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
     },
     {
-      "name": "BID_STATE_SIZE",
-      "type": {
-        "defined": "usize"
+      name: "BID_STATE_SIZE",
+      type: {
+        defined: "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128"
+      value:
+        "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128"
     }
   ],
-  "instructions": [
+  instructions: [
     {
-      "name": "tcompNoop",
-      "accounts": [
+      name: "tcompNoop",
+      accounts: [
         {
-          "name": "tcompSigner",
-          "isMut": false,
-          "isSigner": true
+          name: "tcompSigner",
+          isMut: false,
+          isSigner: true
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "event",
-          "type": {
-            "defined": "TcompEvent"
+          name: "event",
+          type: {
+            defined: "TcompEvent"
           }
         }
       ]
     },
     {
-      "name": "withdrawFees",
-      "accounts": [
+      name: "withdrawFees",
+      accounts: [
         {
-          "name": "tswap",
-          "isMut": true,
-          "isSigner": false
+          name: "tswap",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "tcomp",
-          "isMut": true,
-          "isSigner": false
+          name: "tcomp",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          docs: [
             "We ask also for a signature just to make sure this wallet can actually sign things"
           ]
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false
+          name: "destination",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount",
+          type: "u64"
         }
       ]
     },
     {
-      "name": "buy",
-      "accounts": [
+      name: "buy",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          isOptional: true
+        }
       ],
-      "args": [
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce",
+          type: "u64"
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index",
+          type: "u32"
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "metaHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "creatorShares",
-          "type": "bytes"
+          name: "creatorShares",
+          type: "bytes"
         },
         {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
+          name: "creatorVerified",
+          type: {
+            vec: "bool"
           }
         },
         {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
+          name: "sellerFeeBasisPoints",
+          type: "u16"
         },
         {
-          "name": "maxAmount",
-          "type": "u64"
+          name: "maxAmount",
+          type: "u64"
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
+          name: "optionalRoyaltyPct",
+          type: {
+            option: "u16"
           }
         }
       ]
     },
     {
-      "name": "buySpl",
-      "accounts": [
+      name: "buySpl",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "feeVaultAta",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVaultAta",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "payer",
-          "isMut": false,
-          "isSigner": true
+          name: "payer",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "payerSource",
-          "isMut": true,
-          "isSigner": false
+          name: "payerSource",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "ownerDest",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerDest",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "currency",
-          "isMut": false,
-          "isSigner": false
+          name: "currency",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "takerBrokerAta",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBrokerAta",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBrokerAta",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBrokerAta",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          isOptional: true
+        }
       ],
-      "args": [
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce",
+          type: "u64"
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index",
+          type: "u32"
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "metaHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "creatorShares",
-          "type": "bytes"
+          name: "creatorShares",
+          type: "bytes"
         },
         {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
+          name: "creatorVerified",
+          type: {
+            vec: "bool"
           }
         },
         {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
+          name: "sellerFeeBasisPoints",
+          type: "u16"
         },
         {
-          "name": "maxAmount",
-          "type": "u64"
+          name: "maxAmount",
+          type: "u64"
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
+          name: "optionalRoyaltyPct",
+          type: {
+            option: "u16"
           }
         }
       ]
     },
     {
-      "name": "buyCore",
-      "accounts": [
+      name: "buyCore",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection",
+          isMut: false,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "buyer",
-          "isMut": false,
-          "isSigner": false
+          name: "buyer",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          isOptional: true
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "maxAmount",
-          "type": "u64"
+          name: "maxAmount",
+          type: "u64"
         }
       ]
     },
     {
-      "name": "list",
-      "accounts": [
+      name: "list",
+      accounts: [
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "owner",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "delegate",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          isOptional: true
+        }
       ],
-      "args": [
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce",
+          type: "u64"
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index",
+          type: "u32"
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "dataHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "creatorHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount",
+          type: "u64"
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
+          name: "expireInSec",
+          type: {
+            option: "u64"
           }
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+          name: "currency",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
+          name: "privateTaker",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
+          name: "makerBroker",
+          type: {
+            option: "publicKey"
           }
         }
       ]
     },
     {
-      "name": "delist",
-      "accounts": [
+      name: "delist",
+      accounts: [
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "nonce",
+          type: "u64"
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "index",
+          type: "u32"
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "dataHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "creatorHash",
+          type: {
+            array: ["u8", 32]
           }
         }
       ]
     },
     {
-      "name": "edit",
-      "accounts": [
+      name: "edit",
+      accounts: [
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount",
+          type: "u64"
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
+          name: "expireInSec",
+          type: {
+            option: "u64"
           }
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+          name: "currency",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
+          name: "privateTaker",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
+          name: "makerBroker",
+          type: {
+            option: "publicKey"
           }
         }
       ]
     },
     {
-      "name": "listCore",
-      "accounts": [
+      name: "listCore",
+      accounts: [
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection",
+          isMut: false,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: "owner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: "payer",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true,
+          isOptional: true
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount",
+          type: "u64"
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
+          name: "expireInSec",
+          type: {
+            option: "u64"
           }
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+          name: "currency",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
+          name: "privateTaker",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
+          name: "makerBroker",
+          type: {
+            option: "publicKey"
           }
         }
       ]
     },
     {
-      "name": "delistCore",
-      "accounts": [
+      name: "delistCore",
+      accounts: [
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection",
+          isMut: false,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": true
+          name: "rentDest",
+          isMut: true,
+          isSigner: true
         }
       ],
-      "args": []
+      args: []
     },
     {
-      "name": "bid",
-      "accounts": [
+      name: "bid",
+      accounts: [
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: "owner",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "rentPayer",
-          "isMut": true,
-          "isSigner": true
+          name: "rentPayer",
+          isMut: true,
+          isSigner: true
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "bidId",
-          "type": "publicKey"
+          name: "bidId",
+          type: "publicKey"
         },
         {
-          "name": "target",
-          "type": {
-            "defined": "Target"
+          name: "target",
+          type: {
+            defined: "Target"
           }
         },
         {
-          "name": "targetId",
-          "type": "publicKey"
+          name: "targetId",
+          type: "publicKey"
         },
         {
-          "name": "field",
-          "type": {
-            "option": {
-              "defined": "Field"
+          name: "field",
+          type: {
+            option: {
+              defined: "Field"
             }
           }
         },
         {
-          "name": "fieldId",
-          "type": {
-            "option": "publicKey"
+          name: "fieldId",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "amount",
-          "type": "u64"
+          name: "amount",
+          type: "u64"
         },
         {
-          "name": "quantity",
-          "type": "u32"
+          name: "quantity",
+          type: "u32"
         },
         {
-          "name": "expireInSec",
-          "type": {
-            "option": "u64"
+          name: "expireInSec",
+          type: {
+            option: "u64"
           }
         },
         {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
+          name: "currency",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "privateTaker",
-          "type": {
-            "option": "publicKey"
+          name: "privateTaker",
+          type: {
+            option: "publicKey"
           }
         },
         {
-          "name": "makerBroker",
-          "type": {
-            "option": "publicKey"
-          }
-        }
-      ]
-    },
-    {
-      "name": "cancelBid",
-      "accounts": [
-        {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "closeExpiredBid",
-      "accounts": [
-        {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "closeExpiredListing",
-      "accounts": [
-        {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "nonce",
-          "type": "u64"
-        },
-        {
-          "name": "index",
-          "type": "u32"
-        },
-        {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "dataHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "creatorHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "makerBroker",
+          type: {
+            option: "publicKey"
           }
         }
       ]
     },
     {
-      "name": "closeExpiredListingCore",
-      "accounts": [
+      name: "cancelBid",
+      accounts: [
         {
-          "name": "listState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": []
+      args: []
     },
     {
-      "name": "takeBidMetaHash",
-      "accounts": [
+      name: "closeExpiredBid",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: []
+    },
+    {
+      name: "closeExpiredListing",
+      accounts: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "owner",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "nonce",
+          type: "u64"
+        },
+        {
+          name: "index",
+          type: "u32"
+        },
+        {
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "metaHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "dataHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "creatorShares",
-          "type": "bytes"
-        },
-        {
-          "name": "creatorVerified",
-          "type": {
-            "vec": "bool"
-          }
-        },
-        {
-          "name": "sellerFeeBasisPoints",
-          "type": "u16"
-        },
-        {
-          "name": "minAmount",
-          "type": "u64"
-        },
-        {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
+          name: "creatorHash",
+          type: {
+            array: ["u8", 32]
           }
         }
       ]
     },
     {
-      "name": "takeBidFullMeta",
-      "accounts": [
+      name: "closeExpiredListingCore",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "listState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "treeAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: "asset",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": false
+          name: "collection",
+          isMut: false,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "delegate",
-          "isMut": false,
-          "isSigner": false
+          name: "owner",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "merkleTree",
-          "isMut": true,
-          "isSigner": false
+          name: "mplCoreProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "logWrapper",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "compressionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bubblegumProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: []
+    },
+    {
+      name: "takeBidMetaHash",
+      accounts: [
         {
-          "name": "nonce",
-          "type": "u64"
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "index",
-          "type": "u32"
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "root",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
+          name: "seller",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "delegate",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "bidState",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "owner",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
+        },
+        {
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
+        },
+        {
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
+        },
+        {
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "nonce",
+          type: "u64"
+        },
+        {
+          name: "index",
+          type: "u32"
+        },
+        {
+          name: "root",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "metaArgs",
-          "type": {
-            "defined": "TMetadataArgs"
+          name: "metaHash",
+          type: {
+            array: ["u8", 32]
           }
         },
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "creatorShares",
+          type: "bytes"
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
+          name: "creatorVerified",
+          type: {
+            vec: "bool"
+          }
+        },
+        {
+          name: "sellerFeeBasisPoints",
+          type: "u16"
+        },
+        {
+          name: "minAmount",
+          type: "u64"
+        },
+        {
+          name: "optionalRoyaltyPct",
+          type: {
+            option: "u16"
           }
         }
       ]
     },
     {
-      "name": "takeBidLegacy",
-      "accounts": [
+      name: "takeBidFullMeta",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "treeAuthority",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "seller",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "delegate",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "merkleTree",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "logWrapper",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "compressionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "bubblegumProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "nftMetadata",
-          "isMut": true,
-          "isSigner": false
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "nftEdition",
-          "isMut": false,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "ownerTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "destTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "pnftShared",
-          "accounts": [
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
+        },
+        {
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "nonce",
+          type: "u64"
+        },
+        {
+          name: "index",
+          type: "u32"
+        },
+        {
+          name: "root",
+          type: {
+            array: ["u8", 32]
+          }
+        },
+        {
+          name: "metaArgs",
+          type: {
+            defined: "TMetadataArgs"
+          }
+        },
+        {
+          name: "minAmount",
+          type: "u64"
+        },
+        {
+          name: "optionalRoyaltyPct",
+          type: {
+            option: "u16"
+          }
+        }
+      ]
+    },
+    {
+      name: "takeBidLegacy",
+      accounts: [
+        {
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "seller",
+          isMut: true,
+          isSigner: true
+        },
+        {
+          name: "bidState",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "owner",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
+        },
+        {
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
+        },
+        {
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "nftSellerAcc",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "nftMint",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "nftMetadata",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "ownerAtaAcc",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "nftEdition",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "ownerTokenRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "destTokenRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "pnftShared",
+          accounts: [
             {
-              "name": "tokenMetadataProgram",
-              "isMut": false,
-              "isSigner": false
+              name: "tokenMetadataProgram",
+              isMut: false,
+              isSigner: false
             },
             {
-              "name": "instructions",
-              "isMut": false,
-              "isSigner": false
+              name: "instructions",
+              isMut: false,
+              isSigner: false
             },
             {
-              "name": "authorizationRulesProgram",
-              "isMut": false,
-              "isSigner": false
+              name: "authorizationRulesProgram",
+              isMut: false,
+              isSigner: false
             }
           ]
         },
         {
-          "name": "nftEscrow",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Implicitly checked via transfer. Will fail if wrong account"
-          ]
+          name: "nftEscrow",
+          isMut: true,
+          isSigner: false,
+          docs: ["Implicitly checked via transfer. Will fail if wrong account"]
         },
         {
-          "name": "tempEscrowTokenRecord",
-          "isMut": true,
-          "isSigner": false
+          name: "tempEscrowTokenRecord",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "authRules",
-          "isMut": false,
-          "isSigner": false
+          name: "authRules",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof",
+          isMut: false,
+          isSigner: false,
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount",
+          type: "u64"
         },
         {
-          "name": "optionalRoyaltyPct",
-          "type": {
-            "option": "u16"
+          name: "optionalRoyaltyPct",
+          type: {
+            option: "u16"
           }
         },
         {
-          "name": "rulesAccPresent",
-          "type": "bool"
+          name: "rulesAccPresent",
+          type: "bool"
         },
         {
-          "name": "authorizationData",
-          "type": {
-            "option": {
-              "defined": "AuthorizationDataLocal"
+          name: "authorizationData",
+          type: {
+            option: {
+              defined: "AuthorizationDataLocal"
             }
           }
         }
       ]
     },
     {
-      "name": "takeBidT22",
-      "accounts": [
+      name: "takeBidT22",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "nftSellerAcc",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "nftMint",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerAtaAcc",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof",
+          isMut: false,
+          isSigner: false,
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount",
+          type: "u64"
         }
       ]
     },
     {
-      "name": "takeBidWns",
-      "accounts": [
+      name: "takeBidWns",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "nftSellerAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "nftSellerAcc",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "nftMint",
-          "isMut": false,
-          "isSigner": false
+          name: "nftMint",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "ownerAtaAcc",
-          "isMut": true,
-          "isSigner": false
+          name: "ownerAtaAcc",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof",
+          isMut: false,
+          isSigner: false,
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "approveAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "approveAccount",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "distribution",
-          "isMut": true,
-          "isSigner": false
+          name: "distribution",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "wnsProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "wnsProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "distributionProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "distributionProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "extraMetas",
-          "isMut": false,
-          "isSigner": false
+          name: "extraMetas",
+          isMut: false,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount",
+          type: "u64"
         }
       ]
     },
     {
-      "name": "takeBidCore",
-      "accounts": [
+      name: "takeBidCore",
+      accounts: [
         {
-          "name": "feeVault",
-          "isMut": true,
-          "isSigner": false
+          name: "feeVault",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "seller",
-          "isMut": true,
-          "isSigner": true
+          name: "seller",
+          isMut: true,
+          isSigner: true
         },
         {
-          "name": "bidState",
-          "isMut": true,
-          "isSigner": false
+          name: "bidState",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
+          name: "owner",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "takerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "takerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "makerBroker",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: "makerBroker",
+          isMut: true,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "marginAccount",
-          "isMut": true,
-          "isSigner": false
+          name: "marginAccount",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
+          name: "whitelist",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
+          name: "asset",
+          isMut: true,
+          isSigner: false
         },
         {
-          "name": "collection",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: "collection",
+          isMut: false,
+          isSigner: false,
+          isOptional: true
         },
         {
-          "name": "mplCoreProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "mplCoreProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "marketplaceProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "marketplaceProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "tensorswapProgram",
-          "isMut": false,
-          "isSigner": false
+          name: "tensorswapProgram",
+          isMut: false,
+          isSigner: false
         },
         {
-          "name": "cosigner",
-          "isMut": false,
-          "isSigner": true
+          name: "cosigner",
+          isMut: false,
+          isSigner: true
         },
         {
-          "name": "mintProof",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
+          name: "mintProof",
+          isMut: false,
+          isSigner: false,
+          docs: [
             "intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification"
           ]
         },
         {
-          "name": "rentDest",
-          "isMut": true,
-          "isSigner": false
+          name: "rentDest",
+          isMut: true,
+          isSigner: false
         }
       ],
-      "args": [
+      args: [
         {
-          "name": "minAmount",
-          "type": "u64"
+          name: "minAmount",
+          type: "u64"
         }
       ]
     }
   ],
-  "accounts": [
+  accounts: [
     {
-      "name": "listState",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "listState",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "version",
-            "type": "u8"
+            name: "version",
+            type: "u8"
           },
           {
-            "name": "bump",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
+            name: "bump",
+            type: {
+              array: ["u8", 1]
             }
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: "owner",
+            type: "publicKey"
           },
           {
-            "name": "assetId",
-            "type": "publicKey"
+            name: "assetId",
+            type: "publicKey"
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount",
+            type: "u64"
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
+            name: "currency",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry",
+            type: "i64"
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
+            name: "privateTaker",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "makerBroker",
-            "type": {
-              "option": "publicKey"
+            name: "makerBroker",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is PublicKey::default"
-            ],
-            "type": "publicKey"
+            name: "rentPayer",
+            docs: ["owner is the rent payer when this is PublicKey::default"],
+            type: "publicKey"
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
+            name: "reserved",
+            type: {
+              array: ["u8", 32]
             }
           },
           {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
+            name: "reserved1",
+            type: {
+              array: ["u8", 64]
             }
           }
         ]
       }
     },
     {
-      "name": "bidState",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "bidState",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "version",
-            "type": "u8"
+            name: "version",
+            type: "u8"
           },
           {
-            "name": "bump",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
+            name: "bump",
+            type: {
+              array: ["u8", 1]
             }
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: "owner",
+            type: "publicKey"
           },
           {
-            "name": "bidId",
-            "docs": [
+            name: "bidId",
+            docs: [
               "Randomly picked pubkey used in bid seeds. To avoid dangling bids can use assetId here."
             ],
-            "type": "publicKey"
+            type: "publicKey"
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
+            name: "target",
+            type: {
+              defined: "Target"
             }
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId",
+            type: "publicKey"
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
+            name: "field",
+            type: {
+              option: {
+                defined: "Field"
               }
             }
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
+            name: "fieldId",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity",
+            type: "u32"
           },
           {
-            "name": "filledQuantity",
-            "type": "u32"
+            name: "filledQuantity",
+            type: "u32"
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount",
+            type: "u64"
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
+            name: "currency",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry",
+            type: "i64"
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
+            name: "privateTaker",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "makerBroker",
-            "type": {
-              "option": "publicKey"
+            name: "makerBroker",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "margin",
-            "type": {
-              "option": "publicKey"
+            name: "margin",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "updatedAt",
-            "type": "i64"
+            name: "updatedAt",
+            type: "i64"
           },
           {
-            "name": "cosigner",
-            "type": "publicKey"
+            name: "cosigner",
+            type: "publicKey"
           },
           {
-            "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is PublicKey::default"
-            ],
-            "type": "publicKey"
+            name: "rentPayer",
+            docs: ["owner is the rent payer when this is PublicKey::default"],
+            type: "publicKey"
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
+            name: "reserved",
+            type: {
+              array: ["u8", 8]
             }
           },
           {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
+            name: "reserved1",
+            type: {
+              array: ["u8", 16]
             }
           },
           {
-            "name": "reserved2",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
+            name: "reserved2",
+            type: {
+              array: ["u8", 32]
             }
           }
         ]
       }
     }
   ],
-  "types": [
+  types: [
     {
-      "name": "TUses",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TUses",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "useMethod",
-            "type": {
-              "defined": "TUseMethod"
+            name: "useMethod",
+            type: {
+              defined: "TUseMethod"
             }
           },
           {
-            "name": "remaining",
-            "type": "u64"
+            name: "remaining",
+            type: "u64"
           },
           {
-            "name": "total",
-            "type": "u64"
+            name: "total",
+            type: "u64"
           }
         ]
       }
     },
     {
-      "name": "TCollection",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TCollection",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "verified",
-            "type": "bool"
+            name: "verified",
+            type: "bool"
           },
           {
-            "name": "key",
-            "type": "publicKey"
+            name: "key",
+            type: "publicKey"
           }
         ]
       }
     },
     {
-      "name": "TMetadataArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TMetadataArgs",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "name",
-            "docs": [
-              "The name of the asset"
-            ],
-            "type": "string"
+            name: "name",
+            docs: ["The name of the asset"],
+            type: "string"
           },
           {
-            "name": "symbol",
-            "docs": [
-              "The symbol for the asset"
-            ],
-            "type": "string"
+            name: "symbol",
+            docs: ["The symbol for the asset"],
+            type: "string"
           },
           {
-            "name": "uri",
-            "docs": [
-              "URI pointing to JSON representing the asset"
-            ],
-            "type": "string"
+            name: "uri",
+            docs: ["URI pointing to JSON representing the asset"],
+            type: "string"
           },
           {
-            "name": "sellerFeeBasisPoints",
-            "docs": [
+            name: "sellerFeeBasisPoints",
+            docs: [
               "Royalty basis points that goes to creators in secondary sales (0-10000)"
             ],
-            "type": "u16"
+            type: "u16"
           },
           {
-            "name": "primarySaleHappened",
-            "type": "bool"
+            name: "primarySaleHappened",
+            type: "bool"
           },
           {
-            "name": "isMutable",
-            "type": "bool"
+            name: "isMutable",
+            type: "bool"
           },
           {
-            "name": "editionNonce",
-            "docs": [
-              "nonce for easy calculation of editions, if present"
-            ],
-            "type": {
-              "option": "u8"
+            name: "editionNonce",
+            docs: ["nonce for easy calculation of editions, if present"],
+            type: {
+              option: "u8"
             }
           },
           {
-            "name": "tokenStandard",
-            "docs": [
+            name: "tokenStandard",
+            docs: [
               "Since we cannot easily change Metadata, we add the new DataV2 fields here at the end."
             ],
-            "type": {
-              "option": {
-                "defined": "TTokenStandard"
+            type: {
+              option: {
+                defined: "TTokenStandard"
               }
             }
           },
           {
-            "name": "collection",
-            "docs": [
-              "Collection"
-            ],
-            "type": {
-              "option": {
-                "defined": "TCollection"
+            name: "collection",
+            docs: ["Collection"],
+            type: {
+              option: {
+                defined: "TCollection"
               }
             }
           },
           {
-            "name": "uses",
-            "docs": [
-              "Uses"
-            ],
-            "type": {
-              "option": {
-                "defined": "TUses"
+            name: "uses",
+            docs: ["Uses"],
+            type: {
+              option: {
+                defined: "TUses"
               }
             }
           },
           {
-            "name": "tokenProgramVersion",
-            "type": {
-              "defined": "TTokenProgramVersion"
+            name: "tokenProgramVersion",
+            type: {
+              defined: "TTokenProgramVersion"
             }
           },
           {
-            "name": "creatorShares",
-            "type": "bytes"
+            name: "creatorShares",
+            type: "bytes"
           },
           {
-            "name": "creatorVerified",
-            "type": {
-              "vec": "bool"
+            name: "creatorVerified",
+            type: {
+              vec: "bool"
             }
           }
         ]
       }
     },
     {
-      "name": "MakeEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "MakeEvent",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "maker",
-            "type": "publicKey"
+            name: "maker",
+            type: "publicKey"
           },
           {
-            "name": "bidId",
-            "type": {
-              "option": "publicKey"
+            name: "bidId",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
+            name: "target",
+            type: {
+              defined: "Target"
             }
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId",
+            type: "publicKey"
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
+            name: "field",
+            type: {
+              option: {
+                defined: "Field"
               }
             }
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
+            name: "fieldId",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount",
+            type: "u64"
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity",
+            type: "u32"
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
+            name: "currency",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "expiry",
-            "type": "i64"
+            name: "expiry",
+            type: "i64"
           },
           {
-            "name": "privateTaker",
-            "type": {
-              "option": "publicKey"
+            name: "privateTaker",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "assetId",
-            "type": {
-              "option": "publicKey"
+            name: "assetId",
+            type: {
+              option: "publicKey"
             }
           }
         ]
       }
     },
     {
-      "name": "TakeEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TakeEvent",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "taker",
-            "type": "publicKey"
+            name: "taker",
+            type: "publicKey"
           },
           {
-            "name": "bidId",
-            "type": {
-              "option": "publicKey"
+            name: "bidId",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "target",
-            "type": {
-              "defined": "Target"
+            name: "target",
+            type: {
+              defined: "Target"
             }
           },
           {
-            "name": "targetId",
-            "type": "publicKey"
+            name: "targetId",
+            type: "publicKey"
           },
           {
-            "name": "field",
-            "type": {
-              "option": {
-                "defined": "Field"
+            name: "field",
+            type: {
+              option: {
+                defined: "Field"
               }
             }
           },
           {
-            "name": "fieldId",
-            "type": {
-              "option": "publicKey"
+            name: "fieldId",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "amount",
+            type: "u64"
           },
           {
-            "name": "quantity",
-            "type": "u32"
+            name: "quantity",
+            type: "u32"
           },
           {
-            "name": "tcompFee",
-            "type": "u64"
+            name: "tcompFee",
+            type: "u64"
           },
           {
-            "name": "takerBrokerFee",
-            "type": "u64"
+            name: "takerBrokerFee",
+            type: "u64"
           },
           {
-            "name": "makerBrokerFee",
-            "type": "u64"
+            name: "makerBrokerFee",
+            type: "u64"
           },
           {
-            "name": "creatorFee",
-            "type": "u64"
+            name: "creatorFee",
+            type: "u64"
           },
           {
-            "name": "currency",
-            "type": {
-              "option": "publicKey"
+            name: "currency",
+            type: {
+              option: "publicKey"
             }
           },
           {
-            "name": "assetId",
-            "type": {
-              "option": "publicKey"
+            name: "assetId",
+            type: {
+              option: "publicKey"
             }
           }
         ]
       }
     },
     {
-      "name": "AuthorizationDataLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "AuthorizationDataLocal",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "payload",
-            "type": {
-              "vec": {
-                "defined": "TaggedPayload"
+            name: "payload",
+            type: {
+              vec: {
+                defined: "TaggedPayload"
               }
             }
           }
@@ -5546,56 +5361,49 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "TaggedPayload",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "TaggedPayload",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "name",
-            "type": "string"
+            name: "name",
+            type: "string"
           },
           {
-            "name": "payload",
-            "type": {
-              "defined": "PayloadTypeLocal"
+            name: "payload",
+            type: {
+              defined: "PayloadTypeLocal"
             }
           }
         ]
       }
     },
     {
-      "name": "SeedsVecLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "SeedsVecLocal",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "seeds",
-            "docs": [
-              "The vector of derivation seeds."
-            ],
-            "type": {
-              "vec": "bytes"
+            name: "seeds",
+            docs: ["The vector of derivation seeds."],
+            type: {
+              vec: "bytes"
             }
           }
         ]
       }
     },
     {
-      "name": "ProofInfoLocal",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "ProofInfoLocal",
+      type: {
+        kind: "struct",
+        fields: [
           {
-            "name": "proof",
-            "docs": [
-              "The merkle proof."
-            ],
-            "type": {
-              "vec": {
-                "array": [
-                  "u8",
-                  32
-                ]
+            name: "proof",
+            docs: ["The merkle proof."],
+            type: {
+              vec: {
+                array: ["u8", 32]
               }
             }
           }
@@ -5603,74 +5411,74 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "TTokenProgramVersion",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TTokenProgramVersion",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "Original"
+            name: "Original"
           },
           {
-            "name": "Token2022"
+            name: "Token2022"
           }
         ]
       }
     },
     {
-      "name": "TTokenStandard",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TTokenStandard",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "NonFungible"
+            name: "NonFungible"
           },
           {
-            "name": "FungibleAsset"
+            name: "FungibleAsset"
           },
           {
-            "name": "Fungible"
+            name: "Fungible"
           },
           {
-            "name": "NonFungibleEdition"
+            name: "NonFungibleEdition"
           }
         ]
       }
     },
     {
-      "name": "TUseMethod",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TUseMethod",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "Burn"
+            name: "Burn"
           },
           {
-            "name": "Multiple"
+            name: "Multiple"
           },
           {
-            "name": "Single"
+            name: "Single"
           }
         ]
       }
     },
     {
-      "name": "TcompEvent",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "TcompEvent",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "Maker",
-            "fields": [
+            name: "Maker",
+            fields: [
               {
-                "defined": "MakeEvent"
+                defined: "MakeEvent"
               }
             ]
           },
           {
-            "name": "Taker",
-            "fields": [
+            name: "Taker",
+            fields: [
               {
-                "defined": "TakeEvent"
+                defined: "TakeEvent"
               }
             ]
           }
@@ -5678,267 +5486,263 @@ export const IDL: Tcomp = {
       }
     },
     {
-      "name": "PayloadTypeLocal",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "PayloadTypeLocal",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "Pubkey",
-            "fields": [
-              "publicKey"
-            ]
+            name: "Pubkey",
+            fields: ["publicKey"]
           },
           {
-            "name": "Seeds",
-            "fields": [
+            name: "Seeds",
+            fields: [
               {
-                "defined": "SeedsVecLocal"
+                defined: "SeedsVecLocal"
               }
             ]
           },
           {
-            "name": "MerkleProof",
-            "fields": [
+            name: "MerkleProof",
+            fields: [
               {
-                "defined": "ProofInfoLocal"
+                defined: "ProofInfoLocal"
               }
             ]
           },
           {
-            "name": "Number",
-            "fields": [
-              "u64"
-            ]
+            name: "Number",
+            fields: ["u64"]
           }
         ]
       }
     },
     {
-      "name": "Target",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "Target",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "AssetId"
+            name: "AssetId"
           },
           {
-            "name": "Whitelist"
+            name: "Whitelist"
           }
         ]
       }
     },
     {
-      "name": "Field",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: "Field",
+      type: {
+        kind: "enum",
+        variants: [
           {
-            "name": "Name"
+            name: "Name"
           }
         ]
       }
     }
   ],
-  "errors": [
+  errors: [
     {
-      "code": 6100,
-      "name": "ArithmeticError",
-      "msg": "arithmetic error"
+      code: 6100,
+      name: "ArithmeticError",
+      msg: "arithmetic error"
     },
     {
-      "code": 6101,
-      "name": "ExpiryTooLarge",
-      "msg": "expiry too large"
+      code: 6101,
+      name: "ExpiryTooLarge",
+      msg: "expiry too large"
     },
     {
-      "code": 6102,
-      "name": "BadOwner",
-      "msg": "bad owner"
+      code: 6102,
+      name: "BadOwner",
+      msg: "bad owner"
     },
     {
-      "code": 6103,
-      "name": "BadListState",
-      "msg": "bad list state"
+      code: 6103,
+      name: "BadListState",
+      msg: "bad list state"
     },
     {
-      "code": 6104,
-      "name": "BadRoyaltiesPct",
-      "msg": "royalties pct must be between 0 and 100"
+      code: 6104,
+      name: "BadRoyaltiesPct",
+      msg: "royalties pct must be between 0 and 100"
     },
     {
-      "code": 6105,
-      "name": "PriceMismatch",
-      "msg": "price mismatch"
+      code: 6105,
+      name: "PriceMismatch",
+      msg: "price mismatch"
     },
     {
-      "code": 6106,
-      "name": "CreatorMismatch",
-      "msg": "creator mismatch"
+      code: 6106,
+      name: "CreatorMismatch",
+      msg: "creator mismatch"
     },
     {
-      "code": 6107,
-      "name": "InsufficientBalance",
-      "msg": "insufficient balance"
+      code: 6107,
+      name: "InsufficientBalance",
+      msg: "insufficient balance"
     },
     {
-      "code": 6108,
-      "name": "BidExpired",
-      "msg": "bid has expired"
+      code: 6108,
+      name: "BidExpired",
+      msg: "bid has expired"
     },
     {
-      "code": 6109,
-      "name": "TakerNotAllowed",
-      "msg": "taker not allowed"
+      code: 6109,
+      name: "TakerNotAllowed",
+      msg: "taker not allowed"
     },
     {
-      "code": 6110,
-      "name": "BadBidField",
-      "msg": "cannot pass bid field"
+      code: 6110,
+      name: "BadBidField",
+      msg: "cannot pass bid field"
     },
     {
-      "code": 6111,
-      "name": "BidNotYetExpired",
-      "msg": "bid not yet expired"
+      code: 6111,
+      name: "BidNotYetExpired",
+      msg: "bid not yet expired"
     },
     {
-      "code": 6112,
-      "name": "BadMargin",
-      "msg": "bad margin"
+      code: 6112,
+      name: "BadMargin",
+      msg: "bad margin"
     },
     {
-      "code": 6113,
-      "name": "WrongIxForBidTarget",
-      "msg": "wrong ix for bid target called"
+      code: 6113,
+      name: "WrongIxForBidTarget",
+      msg: "wrong ix for bid target called"
     },
     {
-      "code": 6114,
-      "name": "WrongTargetId",
-      "msg": "wrong target id"
+      code: 6114,
+      name: "WrongTargetId",
+      msg: "wrong target id"
     },
     {
-      "code": 6115,
-      "name": "MissingFvc",
-      "msg": "creator array missing first verified creator"
+      code: 6115,
+      name: "MissingFvc",
+      msg: "creator array missing first verified creator"
     },
     {
-      "code": 6116,
-      "name": "MissingCollection",
-      "msg": "metadata missing collection"
+      code: 6116,
+      name: "MissingCollection",
+      msg: "metadata missing collection"
     },
     {
-      "code": 6117,
-      "name": "CannotModifyTarget",
-      "msg": "cannot modify bid target, create a new bid"
+      code: 6117,
+      name: "CannotModifyTarget",
+      msg: "cannot modify bid target, create a new bid"
     },
     {
-      "code": 6118,
-      "name": "TargetIdMustEqualBidId",
-      "msg": "target id and bid id must be the same for single bids"
+      code: 6118,
+      name: "TargetIdMustEqualBidId",
+      msg: "target id and bid id must be the same for single bids"
     },
     {
-      "code": 6119,
-      "name": "CurrencyNotYetEnabled",
-      "msg": "currency not yet enabled"
+      code: 6119,
+      name: "CurrencyNotYetEnabled",
+      msg: "currency not yet enabled"
     },
     {
-      "code": 6120,
-      "name": "MakerBrokerNotYetEnabled",
-      "msg": "maker broker not yet enabled"
+      code: 6120,
+      name: "MakerBrokerNotYetEnabled",
+      msg: "maker broker not yet enabled"
     },
     {
-      "code": 6121,
-      "name": "OptionalRoyaltiesNotYetEnabled",
-      "msg": "optional royalties not yet enabled"
+      code: 6121,
+      name: "OptionalRoyaltiesNotYetEnabled",
+      msg: "optional royalties not yet enabled"
     },
     {
-      "code": 6122,
-      "name": "WrongStateVersion",
-      "msg": "wrong state version"
+      code: 6122,
+      name: "WrongStateVersion",
+      msg: "wrong state version"
     },
     {
-      "code": 6123,
-      "name": "WrongBidFieldId",
-      "msg": "wrong field id"
+      code: 6123,
+      name: "WrongBidFieldId",
+      msg: "wrong field id"
     },
     {
-      "code": 6124,
-      "name": "BrokerMismatch",
-      "msg": "broker mismatch"
+      code: 6124,
+      name: "BrokerMismatch",
+      msg: "broker mismatch"
     },
     {
-      "code": 6125,
-      "name": "AssetIdMismatch",
-      "msg": "asset id mismatch"
+      code: 6125,
+      name: "AssetIdMismatch",
+      msg: "asset id mismatch"
     },
     {
-      "code": 6126,
-      "name": "ListingExpired",
-      "msg": "listing has expired"
+      code: 6126,
+      name: "ListingExpired",
+      msg: "listing has expired"
     },
     {
-      "code": 6127,
-      "name": "ListingNotYetExpired",
-      "msg": "listing not yet expired"
+      code: 6127,
+      name: "ListingNotYetExpired",
+      msg: "listing not yet expired"
     },
     {
-      "code": 6128,
-      "name": "BadQuantity",
-      "msg": "bad quantity passed in"
+      code: 6128,
+      name: "BadQuantity",
+      msg: "bad quantity passed in"
     },
     {
-      "code": 6129,
-      "name": "BidFullyFilled",
-      "msg": "bid fully filled"
+      code: 6129,
+      name: "BidFullyFilled",
+      msg: "bid fully filled"
     },
     {
-      "code": 6130,
-      "name": "BadWhitelist",
-      "msg": "bad whitelist"
+      code: 6130,
+      name: "BadWhitelist",
+      msg: "bad whitelist"
     },
     {
-      "code": 6131,
-      "name": "ForbiddenCollection",
-      "msg": "forbidden collection"
+      code: 6131,
+      name: "ForbiddenCollection",
+      msg: "forbidden collection"
     },
     {
-      "code": 6132,
-      "name": "BadCosigner",
-      "msg": "bad cosigner"
+      code: 6132,
+      name: "BadCosigner",
+      msg: "bad cosigner"
     },
     {
-      "code": 6133,
-      "name": "BadMintProof",
-      "msg": "bad mint proof"
+      code: 6133,
+      name: "BadMintProof",
+      msg: "bad mint proof"
     },
     {
-      "code": 6134,
-      "name": "CurrencyMismatch",
-      "msg": "Currency mismatch"
+      code: 6134,
+      name: "CurrencyMismatch",
+      msg: "Currency mismatch"
     },
     {
-      "code": 6135,
-      "name": "BidBalanceNotEmptied",
-      "msg": "The bid balance was not emptied"
+      code: 6135,
+      name: "BidBalanceNotEmptied",
+      msg: "The bid balance was not emptied"
     },
     {
-      "code": 6136,
-      "name": "BadRentDest",
-      "msg": "Bad rent dest."
+      code: 6136,
+      name: "BadRentDest",
+      msg: "Bad rent dest."
     },
     {
-      "code": 6137,
-      "name": "CurrencyNotYetWhitelisted",
-      "msg": "currency not yet whitelisted"
+      code: 6137,
+      name: "CurrencyNotYetWhitelisted",
+      msg: "currency not yet whitelisted"
     },
     {
-      "code": 6138,
-      "name": "MakerBrokerNotYetWhitelisted",
-      "msg": "maker broker not yet whitelisted"
+      code: 6138,
+      name: "MakerBrokerNotYetWhitelisted",
+      msg: "maker broker not yet whitelisted"
     },
     {
-      "code": 6139,
-      "name": "WrongTokenRecordDerivation",
-      "msg": "token record derivation is wrong"
+      code: 6139,
+      name: "WrongTokenRecordDerivation",
+      msg: "token record derivation is wrong"
     }
   ]
 };

@@ -10,7 +10,7 @@
     {
       "name": "TCOMP_FEE_BPS",
       "type": "u64",
-      "value": "150"
+      "value": "200"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -20,7 +20,7 @@
     {
       "name": "MAKER_BROKER_PCT",
       "type": "u64",
-      "value": "0"
+      "value": "80"
     },
     {
       "name": "LIST_STATE_SIZE",
@@ -1335,7 +1335,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": false,
+          "isSigner": true,
           "isOptional": true
         }
       ],
@@ -2017,7 +2017,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": false,
+          "isSigner": true,
           "isOptional": true
         }
       ],
@@ -2206,7 +2206,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": false,
+          "isSigner": true,
           "isOptional": true
         }
       ],

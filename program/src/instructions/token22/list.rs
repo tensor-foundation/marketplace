@@ -7,8 +7,8 @@ use anchor_spl::{
 use tensor_toolbox::{token_2022::validate_mint, NullableOption};
 
 use crate::{
-    program::MarketplaceProgram, record_event, validate_cosigner, ListState, MakeEvent, Target,
-    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
@@ -53,7 +53,7 @@ pub struct ListT22<'info> {
 
     pub system_program: Program<'info, System>,
 
-    pub cosigner: Option<UncheckedAccount<'info>>,
+    pub cosigner: Option<Signer<'info>>,
     //
     // ---- [0..n] remaining accounts for royalties transfer hook
 }
@@ -66,28 +66,12 @@ pub fn process_list_t22<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    let list_state = &ctx.accounts.list_state;
-
-    // In case we have an extra remaining account.
-    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
-
-    // Validate the cosigner and fetch additional remaining account if it exists.
-    // Cosigner could be a remaining account from an old client.
-    let remaining_accounts =
-        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
-            v.push(remaining_account);
-            v.extend_from_slice(ctx.remaining_accounts);
-            v
-        } else {
-            ctx.remaining_accounts.to_vec()
-        };
+    let remaining_accounts = ctx.remaining_accounts.to_vec();
 
     // validates the mint
-
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     // transfer the NFT
-
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {

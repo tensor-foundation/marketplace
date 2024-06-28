@@ -6,7 +6,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, FromAcc, FromExternal, BROKER_FEE_PCT,
@@ -14,15 +14,22 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, validate_cosigner, AuthorizationDataLocal,
-    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, TakeEvent,
+    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT,
+    TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
 pub struct BuyLegacy<'info> {
-    /// CHECK: checked in assert_fee_account.
-    #[account(mut)]
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
+            shard_num!(list_state),
+        ],
+        bump,
+        seeds::program = fees::ID,
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -128,7 +135,7 @@ pub struct BuyLegacy<'info> {
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: Option<UncheckedAccount<'info>>,
 
-    pub cosigner: Option<UncheckedAccount<'info>>,
+    pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
     //
@@ -166,6 +173,13 @@ impl<'info> Validate<'info> for BuyLegacy<'info> {
             TcompError::BrokerMismatch
         );
 
+        // Validate the cosigner if it's required.
+        if let Some(cosigner) = list_state.cosigner.value() {
+            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+            require!(cosigner == signer.key, TcompError::BadCosigner);
+        }
+
         Ok(())
     }
 }
@@ -181,20 +195,6 @@ pub fn process_buy_legacy<'info, 'b>(
     let mint = ctx.accounts.mint.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
     let list_state = &ctx.accounts.list_state;
-
-    // In case we have an extra remaining account.
-    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
-
-    // Validate the cosigner and fetch additional remaining account if it exists.
-    // Cosigner could be a remaining account from an old client.
-    let remaining_accounts =
-        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
-            v.push(remaining_account);
-            v.extend_from_slice(ctx.remaining_accounts);
-            v.as_slice()
-        } else {
-            ctx.remaining_accounts
-        };
 
     let amount = list_state.amount;
     let currency = list_state.currency;
@@ -298,7 +298,7 @@ pub fn process_buy_legacy<'info, 'b>(
             .into_iter()
             .map(Into::into)
             .collect(),
-        &mut remaining_accounts.iter(),
+        &mut ctx.remaining_accounts.iter(),
         creator_fee,
         &CreatorFeeMode::Sol {
             from: &FromAcc::External(&FromExternal {

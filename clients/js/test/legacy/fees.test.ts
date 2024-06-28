@@ -1,5 +1,4 @@
 import {
-  address,
   airdropFactory,
   appendTransactionMessageInstruction,
   assertAccountDecoded,
@@ -28,10 +27,10 @@ import {
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
 
-const TOTAL_FEE_BP = 150n; // 1.5% of the price.
+const TOTAL_FEE_BP = 200n; // 2% of the price.
 const HUNDRED_BP = 10_000n;
 const BROKER_FEE_BP = 5000n; // 50% of the total fee.
-const MAKER_FEE_BP = 0n;
+const MAKER_FEE_BP = 8000n; // 80% of the broker fee.
 
 test('it can buy an NFT paying out fees correctly', async (t) => {
   const client = createDefaultSolanaClient();
