@@ -38,7 +38,7 @@ pub struct BuyCompressed {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
@@ -125,7 +125,7 @@ impl BuyCompressed {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -202,8 +202,8 @@ pub struct BuyCompressedInstructionArgs {
 ///   11. `[writable]` owner
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
-///   14. `[writable]` rent_dest
-///   15. `[signer, optional]` cosigner
+///   14. `[writable]` rent_destination
+///   15. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct BuyCompressedBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -220,7 +220,7 @@ pub struct BuyCompressedBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
@@ -331,8 +331,11 @@ impl BuyCompressedBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account]`
@@ -432,7 +435,7 @@ impl BuyCompressedBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
             cosigner: self.cosigner,
         };
         let args = BuyCompressedInstructionArgs {
@@ -490,7 +493,7 @@ pub struct BuyCompressedCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
@@ -528,7 +531,7 @@ pub struct BuyCompressedCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
@@ -557,7 +560,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             cosigner: accounts.cosigner,
             __args: args,
         }
@@ -667,7 +670,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -717,7 +720,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
         }
@@ -751,7 +754,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
 ///   11. `[writable]` owner
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
-///   14. `[writable]` rent_dest
+///   14. `[writable]` rent_destination
 ///   15. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyCompressedCpiBuilder<'a, 'b> {
@@ -776,7 +779,7 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            rent_dest: None,
+            rent_destination: None,
             cosigner: None,
             nonce: None,
             index: None,
@@ -897,11 +900,11 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     /// `[optional account]`
@@ -1083,7 +1086,10 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
 
             cosigner: self.instruction.cosigner,
             __args: args,
@@ -1112,7 +1118,7 @@ struct BuyCompressedCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,

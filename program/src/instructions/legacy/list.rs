@@ -115,7 +115,6 @@ pub fn process_list_legacy<'info>(
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
     // transfer the NFT (the mint is validated on the transfer)
-
     transfer(
         TransferArgs {
             source: &ctx.accounts.owner,

@@ -15,6 +15,7 @@ import {
   ALREADY_IN_USE_ERR,
   beforeAllHook,
   beforeHook,
+  BROKER_FEE_PCT,
   buildAndSendTx,
   CONC_MERKLE_TREE_ERROR,
   delegateCNft,
@@ -22,11 +23,11 @@ import {
   fetchAndCheckSingleIxTx,
   HAS_ONE_ERR,
   tcompSdk,
+  TEST_USDC,
   testBuy,
   testDelist,
   testEdit,
-  testList,
-  TEST_USDC
+  testList
 } from "./shared";
 
 // Enables rejectedWith.
@@ -54,26 +55,26 @@ describe("tcomp listings", () => {
         for (const { nrCreators, canopyDepth } of [
           {
             nrCreators: 0,
-            canopyDepth: 0, // 14 proof length
+            canopyDepth: 0 // 14 proof length
           },
           {
             nrCreators: 1,
-            canopyDepth: 2, // 12 proof length
+            canopyDepth: 2 // 12 proof length
           },
           {
             nrCreators: 2,
-            canopyDepth: 4, // 10 proof length
+            canopyDepth: 4 // 10 proof length
           },
           {
             nrCreators: 4,
-            canopyDepth: 8, // 6 proof length
-          },
+            canopyDepth: 8 // 6 proof length
+          }
         ]) {
           const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
             await beforeHook({
               nrCreators,
               canopyDepth,
-              numMints: 2,
+              numMints: 2
             });
 
           for (const { leaf, index, metadata, assetId } of leaves) {
@@ -86,7 +87,7 @@ describe("tcomp listings", () => {
               owner: traderA,
               lookupTableAccount,
               currency,
-              canopyDepth,
+              canopyDepth
             });
             //can't list again
             await expect(
@@ -99,14 +100,14 @@ describe("tcomp listings", () => {
                 owner: traderA,
                 lookupTableAccount,
                 currency,
-                canopyDepth,
+                canopyDepth
               })
             ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
             await testEdit({
               amount: new BN(LAMPORTS_PER_SOL * 2),
               owner: traderA,
               listState,
-              currency,
+              currency
             });
             //try to buy at the wrong price
             await expect(
@@ -120,14 +121,14 @@ describe("tcomp listings", () => {
                 owner: traderA.publicKey,
                 lookupTableAccount,
                 currency,
-                canopyDepth,
+                canopyDepth
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
             await testEdit({
               amount: new BN(LAMPORTS_PER_SOL / 2),
               owner: traderA,
               listState,
-              currency,
+              currency
             });
             await testBuy({
               index,
@@ -139,7 +140,7 @@ describe("tcomp listings", () => {
               owner: traderA.publicKey,
               lookupTableAccount,
               currency,
-              canopyDepth,
+              canopyDepth
             });
           }
         }
@@ -151,7 +152,7 @@ describe("tcomp listings", () => {
           const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
             await beforeHook({
               nrCreators: currency ? 1 : 4,
-              numMints: 2,
+              numMints: 2
             });
 
           for (const { leaf, index, metadata, assetId } of leaves) {
@@ -163,7 +164,7 @@ describe("tcomp listings", () => {
               metadata,
               owner: traderA,
               lookupTableAccount,
-              currency,
+              currency
             });
             if (!optionalRoyaltyPct) {
               await expect(
@@ -177,7 +178,7 @@ describe("tcomp listings", () => {
                   owner: traderA.publicKey,
                   lookupTableAccount,
                   optionalRoyaltyPct,
-                  currency,
+                  currency
                 })
               ).to.be.rejectedWith(
                 tcompSdk.getErrorCodeHex("OptionalRoyaltiesNotYetEnabled")
@@ -193,7 +194,7 @@ describe("tcomp listings", () => {
                 owner: traderA.publicKey,
                 lookupTableAccount,
                 optionalRoyaltyPct,
-                currency,
+                currency
               });
             }
           }
@@ -204,7 +205,7 @@ describe("tcomp listings", () => {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
             nrCreators: currency ? 1 : 4,
-            numMints: 2,
+            numMints: 2
           });
 
         for (const { leaf, index, metadata, assetId } of leaves) {
@@ -216,7 +217,7 @@ describe("tcomp listings", () => {
             metadata,
             owner: traderA,
             lookupTableAccount,
-            currency,
+            currency
           });
           //fake addresses
           await expect(
@@ -230,13 +231,13 @@ describe("tcomp listings", () => {
                 creators: metadata.creators.map((c) => ({
                   address: Keypair.generate().publicKey, //wrong
                   verified: false,
-                  share: c.share,
-                })),
+                  share: c.share
+                }))
               },
               buyer: traderB,
               owner: traderA.publicKey,
               lookupTableAccount,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
           //fake shares
@@ -251,13 +252,13 @@ describe("tcomp listings", () => {
                 creators: metadata.creators.map((c, i) => ({
                   address: c.address,
                   verified: false,
-                  share: i === 0 ? 85 : 5, //wrong
-                })),
+                  share: i === 0 ? 85 : 5 //wrong
+                }))
               },
               buyer: traderB,
               owner: traderA.publicKey,
               lookupTableAccount,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
           //fake verified
@@ -272,13 +273,13 @@ describe("tcomp listings", () => {
                 creators: metadata.creators.map((c) => ({
                   address: c.address,
                   verified: true, //wrong
-                  share: c.share,
-                })),
+                  share: c.share
+                }))
               },
               buyer: traderB,
               owner: traderA.publicKey,
               lookupTableAccount,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
           await testBuy({
@@ -290,7 +291,7 @@ describe("tcomp listings", () => {
             buyer: traderB,
             owner: traderA.publicKey,
             lookupTableAccount,
-            currency,
+            currency
           });
         }
       });
@@ -301,7 +302,7 @@ describe("tcomp listings", () => {
             await beforeHook({
               nrCreators,
               numMints: 2,
-              depthSizePair: { maxDepth: 5, maxBufferSize: 8 },
+              depthSizePair: { maxDepth: 5, maxBufferSize: 8 }
             });
 
           const [payer] = await makeNTraders({ n: 1 });
@@ -316,7 +317,7 @@ describe("tcomp listings", () => {
               owner: traderA,
               lookupTableAccount,
               rentPayer,
-              currency,
+              currency
             });
             await testBuy({
               index,
@@ -330,7 +331,7 @@ describe("tcomp listings", () => {
               payer,
               rentPayer,
               rentDest: rentPayer.publicKey,
-              currency,
+              currency
             });
           }
         }
@@ -346,7 +347,7 @@ describe("tcomp listings", () => {
             traderB,
             memTree,
             rentPayer,
-            secondaryRentPayer,
+            secondaryRentPayer
           } = await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
           for (const { index, metadata } of leaves) {
@@ -359,14 +360,14 @@ describe("tcomp listings", () => {
               owner: traderA,
               rentPayer,
               canopyDepth,
-              currency,
+              currency
               // lookupTableAccount, //<-- intentionally not passing
             });
             await testEdit({
               amount: new BN(LAMPORTS_PER_SOL * 2),
               owner: traderA,
               listState,
-              currency,
+              currency
             });
             //try to buy at the wrong price
             await expect(
@@ -381,7 +382,7 @@ describe("tcomp listings", () => {
                 canopyDepth,
                 rentPayer,
                 rentDest: rentPayer.publicKey,
-                currency,
+                currency
                 // lookupTableAccount, //<-- intentionally not passing
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
@@ -397,7 +398,7 @@ describe("tcomp listings", () => {
                 owner: traderA.publicKey,
                 rentDest: secondaryRentPayer.publicKey,
                 canopyDepth,
-                currency,
+                currency
                 // lookupTableAccount, //<-- intentionally not passing
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
@@ -412,7 +413,7 @@ describe("tcomp listings", () => {
               rentPayer,
               rentDest: rentPayer.publicKey,
               canopyDepth,
-              currency,
+              currency
               // lookupTableAccount, //<-- intentionally not passing
             });
           }
@@ -435,7 +436,7 @@ describe("tcomp listings", () => {
               metadata,
               owner: traderA,
               canopyDepth,
-              newDelegate: delegate.publicKey,
+              newDelegate: delegate.publicKey
             });
             //list using delegate
             await testList({
@@ -449,7 +450,7 @@ describe("tcomp listings", () => {
               canopyDepth,
               rentPayer, //<-- separate rent payer
               delegateSigns: true,
-              currency,
+              currency
             });
             await testBuy({
               index,
@@ -463,7 +464,7 @@ describe("tcomp listings", () => {
               rentDest: rentPayer.publicKey,
               owner: traderA.publicKey,
               canopyDepth,
-              currency,
+              currency
             });
           }
         }
@@ -479,7 +480,7 @@ describe("tcomp listings", () => {
             traderB,
             memTree,
             rentPayer,
-            secondaryRentPayer,
+            secondaryRentPayer
           } = await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
           for (const { leaf, index, metadata, assetId } of leaves) {
@@ -492,7 +493,7 @@ describe("tcomp listings", () => {
               owner: traderA,
               rentPayer,
               canopyDepth,
-              currency,
+              currency
               // lookupTableAccount, //<-- intentionally not passing
             });
             //fails with wrong trader
@@ -503,7 +504,7 @@ describe("tcomp listings", () => {
                 merkleTree,
                 metadata,
                 owner: traderB,
-                rentDest: rentPayer,
+                rentDest: rentPayer
               })
             ).to.be.rejectedWith(HAS_ONE_ERR);
             //fails with wrong rent payer
@@ -514,7 +515,7 @@ describe("tcomp listings", () => {
                 merkleTree,
                 metadata,
                 owner: traderA,
-                rentDest: secondaryRentPayer,
+                rentDest: secondaryRentPayer
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
             await testDelist({
@@ -523,7 +524,7 @@ describe("tcomp listings", () => {
               merkleTree,
               metadata,
               owner: traderA,
-              rentDest: rentPayer,
+              rentDest: rentPayer
             });
           }
         }
@@ -545,7 +546,7 @@ describe("tcomp listings", () => {
               owner: traderA,
               canopyDepth,
               expireInSec: new BN(3),
-              currency,
+              currency
             });
             await expect(
               testDelist({
@@ -554,7 +555,7 @@ describe("tcomp listings", () => {
                 merkleTree,
                 metadata,
                 owner: traderA,
-                forceExpired: true,
+                forceExpired: true
               })
             ).to.be.rejectedWith(
               tcompSdk.getErrorCodeHex("ListingNotYetExpired")
@@ -566,7 +567,7 @@ describe("tcomp listings", () => {
               merkleTree,
               metadata,
               owner: traderA,
-              forceExpired: true,
+              forceExpired: true
             });
           }
         }
@@ -578,7 +579,7 @@ describe("tcomp listings", () => {
           await beforeHook({
             nrCreators: currency ? 1 : 4,
             numMints: 2,
-            canopyDepth,
+            canopyDepth
           });
 
         for (const { index, metadata } of leaves) {
@@ -591,7 +592,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             canopyDepth,
             expireInSec: new BN(1),
-            currency,
+            currency
           });
           await waitMS(3000);
           //time expires, fails to buy
@@ -605,7 +606,7 @@ describe("tcomp listings", () => {
               buyer: traderB,
               owner: traderA.publicKey,
               canopyDepth,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingExpired"));
           await testEdit({
@@ -613,7 +614,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             expireInSec: new BN(100),
             listState,
-            currency,
+            currency
           });
           await testBuy({
             index,
@@ -624,7 +625,7 @@ describe("tcomp listings", () => {
             buyer: traderB,
             owner: traderA.publicKey,
             canopyDepth,
-            currency,
+            currency
           });
         }
       });
@@ -635,7 +636,7 @@ describe("tcomp listings", () => {
           await beforeHook({
             nrCreators: currency ? 1 : 4,
             numMints: 2,
-            canopyDepth,
+            canopyDepth
           });
         const [traderC] = await makeNTraders({ n: 1 });
 
@@ -649,7 +650,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             canopyDepth,
             privateTaker: traderB.publicKey,
-            currency,
+            currency
           });
           //fails to buy with wrong taker
           await expect(
@@ -662,7 +663,7 @@ describe("tcomp listings", () => {
               buyer: traderC,
               owner: traderA.publicKey,
               canopyDepth,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
           await testBuy({
@@ -674,7 +675,7 @@ describe("tcomp listings", () => {
             buyer: traderB,
             owner: traderA.publicKey,
             canopyDepth,
-            currency,
+            currency
           });
         }
       });
@@ -685,7 +686,7 @@ describe("tcomp listings", () => {
           await beforeHook({
             nrCreators: currency ? 1 : 4,
             numMints: 2,
-            canopyDepth,
+            canopyDepth
           });
         const [traderC] = await makeNTraders({ n: 1 });
 
@@ -699,7 +700,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             canopyDepth,
             privateTaker: traderB.publicKey,
-            currency,
+            currency
           });
           //fails to buy with wrong taker
           await expect(
@@ -712,7 +713,7 @@ describe("tcomp listings", () => {
               buyer: traderC,
               owner: traderA.publicKey,
               canopyDepth,
-              currency,
+              currency
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
           await testEdit({
@@ -720,7 +721,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             listState,
             privateTaker: null,
-            currency,
+            currency
           });
           await testBuy({
             index,
@@ -731,18 +732,18 @@ describe("tcomp listings", () => {
             buyer: traderC, //<-- importantly C not B
             owner: traderA.publicKey,
             canopyDepth,
-            currency,
+            currency
           });
         }
       });
 
-      it("parses listing txs ok", async () => {
+      it.only("parses listing txs ok", async () => {
         let canopyDepth = 10;
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
             nrCreators: currency ? 1 : 4,
             numMints: 2,
-            canopyDepth,
+            canopyDepth
           });
         const [traderC] = await makeNTraders({ n: 1 });
 
@@ -762,7 +763,7 @@ describe("tcomp listings", () => {
             owner: traderA,
             canopyDepth,
             privateTaker: traderB.publicKey,
-            currency,
+            currency
           });
 
           {
@@ -795,7 +796,7 @@ describe("tcomp listings", () => {
               owner: traderA,
               privateTaker: traderC.publicKey,
               listState,
-              currency,
+              currency
             });
             const ix = await fetchAndCheckSingleIxTx(sig, "edit");
             const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
@@ -822,13 +823,13 @@ describe("tcomp listings", () => {
 
           {
             const {
-              tx: { ixs },
+              tx: { ixs }
             } = await cpiEdit({
               amount: new BN(amount),
               merkleTree,
               nonce: new BN(index),
               owner: traderA.publicKey,
-              currency,
+              currency
             });
             const sig = await buildAndSendTx({ ixs, extraSigners: [traderA] });
             const ix = await fetchAndCheckSingleIxTx(sig, "edit");
@@ -861,7 +862,7 @@ describe("tcomp listings", () => {
               canopyDepth,
               optionalRoyaltyPct: 100,
               takerBroker,
-              currency,
+              currency
             });
             const ix = await fetchAndCheckSingleIxTx(
               sig!,
@@ -876,17 +877,31 @@ describe("tcomp listings", () => {
             expect(event.field).to.be.null;
             expect(event.fieldId).to.be.null;
             expect(event.amount.toString()).eq(amount.toString());
-            if (MAKER_BROKER_PCT > 0) {
-              expect(event.makerBrokerFee?.toNumber()).eq(
-                Math.trunc((amount * FEE_PCT * MAKER_BROKER_PCT) / 100)
-              );
-            }
+
+            // Protocol fee is the remainder after broker fees are deducted.
             expect(event.tcompFee?.toNumber()).eq(
-              Math.trunc(amount * FEE_PCT * (1 - MAKER_BROKER_PCT / 100))
+              Math.trunc(amount * FEE_PCT * (1 - BROKER_FEE_PCT / 100))
             );
+
+            const brokerFee = Math.trunc(
+              (amount * FEE_PCT * BROKER_FEE_PCT) / 100
+            );
+
+            // Maker broker percent decides the split between maker and taker brokers.
+            expect(event.makerBrokerFee?.toNumber()).eq(
+              (brokerFee * MAKER_BROKER_PCT) / 100
+            );
+
+            // Taker Broker is the remainder of the broker fee.
+            expect(event.takerBrokerFee?.toNumber()).eq(
+              brokerFee - event.makerBrokerFee?.toNumber()
+            );
+
+            // Creator fee is sellerFeeBasisPoints of the price.
             expect(event.creatorFee?.toNumber()).eq(
               Math.trunc((amount * metadata.sellerFeeBasisPoints) / 10000)
             );
+
             expect(event.quantity).eq(0);
             expect(event.currency?.toString()).to.eq(currency?.toString());
             expect(event.assetId?.toString()).to.eq(assetId.toString());

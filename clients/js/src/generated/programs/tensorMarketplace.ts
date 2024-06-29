@@ -53,6 +53,7 @@ export const TENSOR_MARKETPLACE_PROGRAM_ADDRESS =
 export enum TensorMarketplaceAccount {
   ListState,
   BidState,
+  BidTa,
 }
 
 export function identifyTensorMarketplaceAccount(
@@ -80,6 +81,17 @@ export function identifyTensorMarketplaceAccount(
     )
   ) {
     return TensorMarketplaceAccount.BidState;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([186, 230, 110, 26, 235, 24, 211, 156])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceAccount.BidTa;
   }
   throw new Error(
     'The provided account could not be identified as a tensorMarketplace account.'

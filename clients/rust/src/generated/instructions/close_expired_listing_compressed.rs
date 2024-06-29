@@ -28,7 +28,7 @@ pub struct CloseExpiredListingCompressed {
 
     pub bubblegum_program: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl CloseExpiredListingCompressed {
@@ -81,7 +81,7 @@ impl CloseExpiredListingCompressed {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -141,7 +141,7 @@ pub struct CloseExpiredListingCompressedInstructionArgs {
 ///   6. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
 ///   7. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
 ///   8. `[optional]` bubblegum_program (default to `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY`)
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct CloseExpiredListingCompressedBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
@@ -153,7 +153,7 @@ pub struct CloseExpiredListingCompressedBuilder {
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
     bubblegum_program: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -226,8 +226,11 @@ impl CloseExpiredListingCompressedBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -295,7 +298,7 @@ impl CloseExpiredListingCompressedBuilder {
             bubblegum_program: self.bubblegum_program.unwrap_or(solana_program::pubkey!(
                 "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
             )),
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = CloseExpiredListingCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -329,7 +332,7 @@ pub struct CloseExpiredListingCompressedCpiAccounts<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `close_expired_listing_compressed` CPI instruction.
@@ -355,7 +358,7 @@ pub struct CloseExpiredListingCompressedCpi<'a, 'b> {
 
     pub bubblegum_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: CloseExpiredListingCompressedInstructionArgs,
 }
@@ -377,7 +380,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
             log_wrapper: accounts.log_wrapper,
             compression_program: accounts.compression_program,
             bubblegum_program: accounts.bubblegum_program,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             __args: args,
         }
     }
@@ -452,7 +455,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -484,7 +487,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
         account_infos.push(self.bubblegum_program.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -510,7 +513,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpi<'a, 'b> {
 ///   6. `[]` log_wrapper
 ///   7. `[]` compression_program
 ///   8. `[]` bubblegum_program
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 #[derive(Clone, Debug)]
 pub struct CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
     instruction: Box<CloseExpiredListingCompressedCpiBuilderInstruction<'a, 'b>>,
@@ -529,7 +532,7 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
             log_wrapper: None,
             compression_program: None,
             bubblegum_program: None,
-            rent_dest: None,
+            rent_destination: None,
             nonce: None,
             index: None,
             root: None,
@@ -609,11 +612,11 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -739,7 +742,10 @@ impl<'a, 'b> CloseExpiredListingCompressedCpiBuilder<'a, 'b> {
                 .bubblegum_program
                 .expect("bubblegum_program is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -761,7 +767,7 @@ struct CloseExpiredListingCompressedCpiBuilderInstruction<'a, 'b> {
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bubblegum_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

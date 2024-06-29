@@ -28,7 +28,7 @@ pub struct DelistCompressed {
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl DelistCompressed {
@@ -81,7 +81,7 @@ impl DelistCompressed {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -139,7 +139,7 @@ pub struct DelistCompressedInstructionArgs {
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct DelistCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -151,7 +151,7 @@ pub struct DelistCompressedBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -224,8 +224,11 @@ impl DelistCompressedBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -293,7 +296,7 @@ impl DelistCompressedBuilder {
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = DelistCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -327,7 +330,7 @@ pub struct DelistCompressedCpiAccounts<'a, 'b> {
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `delist_compressed` CPI instruction.
@@ -353,7 +356,7 @@ pub struct DelistCompressedCpi<'a, 'b> {
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: DelistCompressedInstructionArgs,
 }
@@ -375,7 +378,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
             list_state: accounts.list_state,
             owner: accounts.owner,
             marketplace_program: accounts.marketplace_program,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             __args: args,
         }
     }
@@ -450,7 +453,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -480,7 +483,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
         account_infos.push(self.list_state.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.marketplace_program.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -506,7 +509,7 @@ impl<'a, 'b> DelistCompressedCpi<'a, 'b> {
 ///   6. `[writable]` list_state
 ///   7. `[signer]` owner
 ///   8. `[]` marketplace_program
-///   9. `[writable]` rent_dest
+///   9. `[writable]` rent_destination
 #[derive(Clone, Debug)]
 pub struct DelistCompressedCpiBuilder<'a, 'b> {
     instruction: Box<DelistCompressedCpiBuilderInstruction<'a, 'b>>,
@@ -525,7 +528,7 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
             list_state: None,
             owner: None,
             marketplace_program: None,
-            rent_dest: None,
+            rent_destination: None,
             nonce: None,
             index: None,
             root: None,
@@ -605,11 +608,11 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -735,7 +738,10 @@ impl<'a, 'b> DelistCompressedCpiBuilder<'a, 'b> {
                 .marketplace_program
                 .expect("marketplace_program is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -757,7 +763,7 @@ struct DelistCompressedCpiBuilderInstruction<'a, 'b> {
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

@@ -7,14 +7,14 @@ use crate::*;
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
 /// NB: (!!) sync with TRoll
 #[constant]
-pub const TCOMP_FEE_BPS: u16 = 150;
+pub const TCOMP_FEE_BPS: u64 = 200;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/w liquidity disappears too early)
 
 // TODO: currently disabled
 /// NB: (!!) sync with TRoll
 #[constant]
-pub const MAKER_BROKER_PCT: u16 = 0; // Out of 100
+pub const MAKER_BROKER_PCT: u64 = 80; // Out of 100
 
 //(!!) sync with sdk.ts:getRentPayer()
 #[inline(always)]
@@ -167,3 +167,7 @@ impl BidState {
         Ok(())
     }
 }
+
+// Dummy account to allow generating findPda client function.
+#[account]
+pub struct BidTa {}

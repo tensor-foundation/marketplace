@@ -88,7 +88,7 @@ export type TakeBidCompressedMetaHashInstruction<
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -149,9 +149,9 @@ export type TakeBidCompressedMetaHashInstruction<
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -259,7 +259,7 @@ export type TakeBidCompressedMetaHashAsyncInput<
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
@@ -279,7 +279,7 @@ export type TakeBidCompressedMetaHashAsyncInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
@@ -313,7 +313,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: TakeBidCompressedMetaHashAsyncInput<
     TAccountFeeVault,
@@ -334,7 +334,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): Promise<
   TakeBidCompressedMetaHashInstruction<
@@ -363,7 +363,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 > {
   // Program address.
@@ -401,7 +401,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -457,9 +457,6 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
       ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
     };
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -500,7 +497,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -533,7 +530,7 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -558,7 +555,7 @@ export type TakeBidCompressedMetaHashInput<
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
@@ -578,7 +575,7 @@ export type TakeBidCompressedMetaHashInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
@@ -612,7 +609,7 @@ export function getTakeBidCompressedMetaHashInstruction<
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: TakeBidCompressedMetaHashInput<
     TAccountFeeVault,
@@ -633,7 +630,7 @@ export function getTakeBidCompressedMetaHashInstruction<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): TakeBidCompressedMetaHashInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -660,7 +657,7 @@ export function getTakeBidCompressedMetaHashInstruction<
   TAccountMarginAccount,
   TAccountWhitelist,
   TAccountCosigner,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -697,7 +694,7 @@ export function getTakeBidCompressedMetaHashInstruction<
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -747,9 +744,6 @@ export function getTakeBidCompressedMetaHashInstruction<
       ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
     };
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectSome(accounts.owner.value);
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -790,7 +784,7 @@ export function getTakeBidCompressedMetaHashInstruction<
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -823,7 +817,7 @@ export function getTakeBidCompressedMetaHashInstruction<
     TAccountMarginAccount,
     TAccountWhitelist,
     TAccountCosigner,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -853,7 +847,7 @@ export type ParsedTakeBidCompressedMetaHashInstruction<
     marginAccount: TAccountMetas[15];
     whitelist: TAccountMetas[16];
     cosigner?: TAccountMetas[17] | undefined;
-    rentDest: TAccountMetas[18];
+    rentDestination: TAccountMetas[18];
   };
   data: TakeBidCompressedMetaHashInstructionData;
 };
@@ -903,7 +897,7 @@ export function parseTakeBidCompressedMetaHashInstruction<
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
       cosigner: getNextOptionalAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getTakeBidCompressedMetaHashInstructionDataDecoder().decode(
       instruction.data

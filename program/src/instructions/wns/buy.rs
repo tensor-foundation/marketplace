@@ -6,11 +6,9 @@ use anchor_spl::{
 };
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees,
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
-    transfer_lamports, transfer_lamports_checked,
+    transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -21,16 +19,14 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyWns<'info> {
-    /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
             shard_num!(list_state),
         ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
+        bump,
+        seeds::program = fees::ID,
     )]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -122,6 +118,11 @@ pub struct BuyWns<'info> {
 
 impl<'info> Validate<'info> for BuyWns<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -146,7 +147,7 @@ impl<'info> Validate<'info> for BuyWns<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
+        // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
@@ -168,13 +169,13 @@ pub fn process_buy_wns<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
 
     // validate mint account
     let seller_fee_basis_points = validate_mint(&ctx.accounts.mint.to_account_info())?;
@@ -191,14 +192,14 @@ pub fn process_buy_wns<'info, 'b>(
         mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve.to_account_info(),
         payment_mint: None,
-        authority_token_account: ctx.accounts.payer.to_account_info(),
+        authority_token_account: None,
         distribution_account: ctx.accounts.distribution.to_account_info(),
-        distribution_token_account: ctx.accounts.distribution.to_account_info(),
+        distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
         distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
-        associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
+        payment_token_program: None,
     };
     // royalty payment
     approve(approve_accounts, amount, creator_fee)?;

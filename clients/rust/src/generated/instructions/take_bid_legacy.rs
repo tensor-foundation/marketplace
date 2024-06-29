@@ -27,7 +27,7 @@ pub struct TakeBidLegacy {
 
     pub whitelist: Option<solana_program::pubkey::Pubkey>,
 
-    pub seller_ata: solana_program::pubkey::Pubkey,
+    pub seller_ta: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
 
@@ -47,7 +47,7 @@ pub struct TakeBidLegacy {
 
     pub authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
     /// Implicitly checked via transfer. Will fail if wrong account
-    pub bid_ata: solana_program::pubkey::Pubkey,
+    pub bid_ta: solana_program::pubkey::Pubkey,
 
     pub bid_token_record: Option<solana_program::pubkey::Pubkey>,
 
@@ -136,7 +136,7 @@ impl TakeBidLegacy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller_ata,
+            self.seller_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -210,7 +210,7 @@ impl TakeBidLegacy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.bid_ata,
+            self.bid_ta,
             false,
         ));
         if let Some(bid_token_record) = self.bid_token_record {
@@ -332,7 +332,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist (default to `11111111111111111111111111111111`)
-///   8. `[writable]` seller_ata
+///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
 ///   11. `[writable]` owner_ata
@@ -342,7 +342,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   15. `[optional]` token_metadata_program
 ///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
-///   18. `[writable]` bid_ata
+///   18. `[writable]` bid_ta
 ///   19. `[writable, optional]` bid_token_record
 ///   20. `[optional]` authorization_rules
 ///   21. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
@@ -363,7 +363,7 @@ pub struct TakeBidLegacyBuilder {
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     shared_escrow: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
-    seller_ata: Option<solana_program::pubkey::Pubkey>,
+    seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     owner_ata: Option<solana_program::pubkey::Pubkey>,
@@ -373,7 +373,7 @@ pub struct TakeBidLegacyBuilder {
     token_metadata_program: Option<solana_program::pubkey::Pubkey>,
     sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
     authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
-    bid_ata: Option<solana_program::pubkey::Pubkey>,
+    bid_ta: Option<solana_program::pubkey::Pubkey>,
     bid_token_record: Option<solana_program::pubkey::Pubkey>,
     authorization_rules: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -445,8 +445,8 @@ impl TakeBidLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller_ata(&mut self, seller_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.seller_ata = Some(seller_ata);
+    pub fn seller_ta(&mut self, seller_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller_ta = Some(seller_ta);
         self
     }
     #[inline(always)]
@@ -516,8 +516,8 @@ impl TakeBidLegacyBuilder {
     }
     /// Implicitly checked via transfer. Will fail if wrong account
     #[inline(always)]
-    pub fn bid_ata(&mut self, bid_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.bid_ata = Some(bid_ata);
+    pub fn bid_ta(&mut self, bid_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.bid_ta = Some(bid_ta);
         self
     }
     /// `[optional account]`
@@ -647,7 +647,7 @@ impl TakeBidLegacyBuilder {
             maker_broker: self.maker_broker,
             shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
             whitelist: self.whitelist,
-            seller_ata: self.seller_ata.expect("seller_ata is not set"),
+            seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             metadata: self.metadata.expect("metadata is not set"),
             owner_ata: self.owner_ata.expect("owner_ata is not set"),
@@ -657,7 +657,7 @@ impl TakeBidLegacyBuilder {
             token_metadata_program: self.token_metadata_program,
             sysvar_instructions: self.sysvar_instructions,
             authorization_rules_program: self.authorization_rules_program,
-            bid_ata: self.bid_ata.expect("bid_ata is not set"),
+            bid_ta: self.bid_ta.expect("bid_ta is not set"),
             bid_token_record: self.bid_token_record,
             authorization_rules: self.authorization_rules,
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
@@ -708,7 +708,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -728,7 +728,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Implicitly checked via transfer. Will fail if wrong account
-    pub bid_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub bid_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -772,7 +772,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -792,7 +792,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Implicitly checked via transfer. Will fail if wrong account
-    pub bid_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub bid_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -833,7 +833,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             maker_broker: accounts.maker_broker,
             shared_escrow: accounts.shared_escrow,
             whitelist: accounts.whitelist,
-            seller_ata: accounts.seller_ata,
+            seller_ta: accounts.seller_ta,
             mint: accounts.mint,
             metadata: accounts.metadata,
             owner_ata: accounts.owner_ata,
@@ -843,7 +843,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             token_metadata_program: accounts.token_metadata_program,
             sysvar_instructions: accounts.sysvar_instructions,
             authorization_rules_program: accounts.authorization_rules_program,
-            bid_ata: accounts.bid_ata,
+            bid_ta: accounts.bid_ta,
             bid_token_record: accounts.bid_token_record,
             authorization_rules: accounts.authorization_rules,
             token_program: accounts.token_program,
@@ -945,7 +945,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller_ata.key,
+            *self.seller_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1020,7 +1020,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.bid_ata.key,
+            *self.bid_ta.key,
             false,
         ));
         if let Some(bid_token_record) = self.bid_token_record {
@@ -1123,7 +1123,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         if let Some(whitelist) = self.whitelist {
             account_infos.push(whitelist.clone());
         }
-        account_infos.push(self.seller_ata.clone());
+        account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.metadata.clone());
         account_infos.push(self.owner_ata.clone());
@@ -1143,7 +1143,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         if let Some(authorization_rules_program) = self.authorization_rules_program {
             account_infos.push(authorization_rules_program.clone());
         }
-        account_infos.push(self.bid_ata.clone());
+        account_infos.push(self.bid_ta.clone());
         if let Some(bid_token_record) = self.bid_token_record {
             account_infos.push(bid_token_record.clone());
         }
@@ -1186,7 +1186,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist
-///   8. `[writable]` seller_ata
+///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
 ///   11. `[writable]` owner_ata
@@ -1196,7 +1196,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   15. `[optional]` token_metadata_program
 ///   16. `[optional]` sysvar_instructions
 ///   17. `[optional]` authorization_rules_program
-///   18. `[writable]` bid_ata
+///   18. `[writable]` bid_ta
 ///   19. `[writable, optional]` bid_token_record
 ///   20. `[optional]` authorization_rules
 ///   21. `[]` token_program
@@ -1224,7 +1224,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             maker_broker: None,
             shared_escrow: None,
             whitelist: None,
-            seller_ata: None,
+            seller_ta: None,
             mint: None,
             metadata: None,
             owner_ata: None,
@@ -1234,7 +1234,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             token_metadata_program: None,
             sysvar_instructions: None,
             authorization_rules_program: None,
-            bid_ata: None,
+            bid_ta: None,
             bid_token_record: None,
             authorization_rules: None,
             token_program: None,
@@ -1318,11 +1318,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn seller_ata(
+    pub fn seller_ta(
         &mut self,
-        seller_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        seller_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.seller_ata = Some(seller_ata);
+        self.instruction.seller_ta = Some(seller_ta);
         self
     }
     #[inline(always)]
@@ -1401,11 +1401,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
     }
     /// Implicitly checked via transfer. Will fail if wrong account
     #[inline(always)]
-    pub fn bid_ata(
+    pub fn bid_ta(
         &mut self,
-        bid_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        bid_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.bid_ata = Some(bid_ata);
+        self.instruction.bid_ta = Some(bid_ta);
         self
     }
     /// `[optional account]`
@@ -1589,7 +1589,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist,
 
-            seller_ata: self.instruction.seller_ata.expect("seller_ata is not set"),
+            seller_ta: self.instruction.seller_ta.expect("seller_ta is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -1609,7 +1609,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             authorization_rules_program: self.instruction.authorization_rules_program,
 
-            bid_ata: self.instruction.bid_ata.expect("bid_ata is not set"),
+            bid_ta: self.instruction.bid_ta.expect("bid_ta is not set"),
 
             bid_token_record: self.instruction.bid_token_record,
 
@@ -1668,7 +1668,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     shared_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1678,7 +1678,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    bid_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    bid_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authorization_rules: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

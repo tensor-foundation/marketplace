@@ -6,33 +6,26 @@ use metaplex_core::{
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
 use tensor_toolbox::{
-    fees::ID as TFEE_PROGRAM_ID,
+    assert_fee_account,
     metaplex_core::{validate_asset, MetaplexCore},
-    shard_num,
 };
-use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
+use whitelist_program::{
+    assert_decode_mint_proof_generic, assert_decode_whitelist_generic, FullMerkleProof,
+    MintProofType, WhitelistType, ZERO_ARRAY,
+};
 
 use crate::{
     program::MarketplaceProgram,
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid_common::{take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
 pub struct TakeBidCore<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -90,15 +83,20 @@ pub struct TakeBidCore<'info> {
 
     /// CHECK: bid_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == bid_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
 
 impl<'info> Validate<'info> for TakeBidCore<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(
@@ -175,51 +173,91 @@ pub fn process_take_bid_core<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
+            let mint_proof_acc = &ctx.accounts.mint_proof;
 
-            //prioritize merkle tree if proof present
-            if whitelist.root_hash != ZERO_ARRAY {
-                let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof = assert_decode_mint_proof(
+            // Check if actual mint proof and not a dummy account.
+            let mint_proof = if ctx.accounts.mint_proof.owner == &whitelist_program::ID {
+                let mint_proof_type = assert_decode_mint_proof_generic(
                     ctx.accounts.whitelist.key,
                     &asset_id,
                     mint_proof_acc,
                 )?;
-                let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
-                let proof = &mut mint_proof.proof.to_vec();
-                proof.truncate(mint_proof.proof_len as usize);
-                whitelist.verify_whitelist(
-                    None,
-                    Some(FullMerkleProof {
-                        proof: proof.clone(),
-                        leaf: leaf.0,
-                    }),
-                )?;
-            } else if let Some(collection) = &ctx.accounts.collection {
-                let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
 
-                if let UpdateAuthority::Collection(c) = asset.update_authority {
-                    if c != *collection.key {
-                        msg!("Asset collection account does not match the provided collection account");
+                let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
+
+                let proof = match mint_proof_type {
+                    MintProofType::V1(mint_proof) => {
+                        let mut proof = mint_proof.proof.to_vec();
+                        proof.truncate(mint_proof.proof_len as usize);
+                        proof
+                    }
+                    MintProofType::V2(mint_proof) => {
+                        let mut proof = mint_proof.proof.to_vec();
+                        proof.truncate(mint_proof.proof_len as usize);
+                        proof
+                    }
+                };
+
+                Some(FullMerkleProof {
+                    proof: proof.clone(),
+                    leaf: leaf.0,
+                })
+            } else {
+                None
+            };
+
+            let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
+
+            match whitelist_type {
+                WhitelistType::V1(whitelist) => {
+                    //prioritize merkle tree if proof present
+                    if whitelist.root_hash != ZERO_ARRAY {
+                        require!(mint_proof.is_some(), TcompError::BadMintProof);
+
+                        whitelist.verify_whitelist(None, mint_proof)?;
+                    } else if let Some(collection) = &ctx.accounts.collection {
+                        let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+
+                        if let UpdateAuthority::Collection(c) = asset.update_authority {
+                            if c != *collection.key {
+                                msg!("Asset collection account does not match the provided collection account");
+                                return Err(TcompError::MissingCollection.into());
+                            }
+
+                            whitelist.verify_whitelist_tcomp(
+                                Some(Collection {
+                                    key: collection.key(),
+                                    // there is no verify flag on Core, but only the collection update authority
+                                    // can set a collection
+                                    verified: true,
+                                }),
+                                // creators have no verified flag on Core, they can't be used
+                                None,
+                            )?;
+                        } else {
+                            msg!("Asset has no collection set");
+                            return Err(TcompError::MissingCollection.into());
+                        }
+                    } else {
                         return Err(TcompError::MissingCollection.into());
                     }
-
-                    whitelist.verify_whitelist_tcomp(
-                        Some(Collection {
-                            key: collection.key(),
-                            // there is no verify flag on Core, but only the collection update authority
-                            // can set a collection
-                            verified: true,
-                        }),
-                        // creators have no verified flag on Core, they can't be used
-                        None,
-                    )?;
-                } else {
-                    msg!("Asset has no collection set");
-                    return Err(TcompError::MissingCollection.into());
                 }
-            } else {
-                return Err(TcompError::MissingCollection.into());
+                WhitelistType::V2(whitelist) => {
+                    let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
+
+                    let collection = match asset.update_authority {
+                        UpdateAuthority::Collection(address) => Some(Collection {
+                            key: address,
+                            verified: true, // Only the collection update authority can set a collection, so this is always verified.
+                        }),
+                        _ => None,
+                    };
+
+                    // creators have no verified flag on Core, they can't be used
+                    let creators = None;
+
+                    whitelist.verify(&collection, &creators, &mint_proof)?;
+                }
             }
         }
     }
@@ -255,7 +293,7 @@ pub fn process_take_bid_core<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_dest,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),

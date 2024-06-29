@@ -3,13 +3,13 @@ import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  PublicKey
 } from "@solana/web3.js";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { makeNTraders } from "./account";
 import { beforeAllHook, tcompSdk, testBid, testTakeBidWns } from "./shared";
-import { wnsMint, wnsTokenAccount } from "./wns";
+import { initManager, wnsMint, wnsTokenAccount } from "./wns";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -27,7 +27,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
     // TODO: Add cosigner tests.
     for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
-        n: 2,
+        n: 2
       });
 
       const cosigner = cosigned ? Keypair.generate() : undefined;
@@ -35,7 +35,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
       const {
         mint,
         token: ata,
-        collection: collectionMint,
+        collection: collectionMint
       } = await wnsMint(traderA.publicKey, undefined, 0);
 
       await wnsTokenAccount(traderB.publicKey, mint);
@@ -50,14 +50,14 @@ describe("[WNS Token 2022] tcomp bids", () => {
         amount: new BN(LAMPORTS_PER_SOL),
         targetId: mint,
         owner: traderB,
-        cosigner,
+        cosigner
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL / 2),
         targetId: mint,
         owner: traderB,
         prevBidAmount: LAMPORTS_PER_SOL,
-        cosigner,
+        cosigner
       });
 
       const common = {
@@ -66,7 +66,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
         nftSellerAcc: ata,
         owner: traderB.publicKey,
         seller: traderA,
-        lookupTableAccount,
+        lookupTableAccount
       };
 
       if (cosigned) {
@@ -74,7 +74,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
           testTakeBidWns({
             ...common,
             minAmount: new BN(LAMPORTS_PER_SOL),
-            collectionMint,
+            collectionMint
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
       }
@@ -85,7 +85,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
           ...common,
           minAmount: new BN(LAMPORTS_PER_SOL),
           cosigner,
-          collectionMint,
+          collectionMint
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
@@ -97,7 +97,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
           nftSellerAcc: badAta,
           minAmount: new BN(LAMPORTS_PER_SOL / 2),
           cosigner,
-          collectionMint,
+          collectionMint
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
 
@@ -106,7 +106,7 @@ describe("[WNS Token 2022] tcomp bids", () => {
         ...common,
         minAmount: new BN(LAMPORTS_PER_SOL / 2),
         cosigner,
-        collectionMint,
+        collectionMint
       });
     }
   });

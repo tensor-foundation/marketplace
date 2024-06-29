@@ -60,7 +60,7 @@ export type CloseExpiredListingCompressedInstruction<
   TAccountBubblegumProgram extends
     | string
     | IAccountMeta<string> = 'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY',
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -93,9 +93,9 @@ export type CloseExpiredListingCompressedInstruction<
       TAccountBubblegumProgram extends string
         ? ReadonlyAccount<TAccountBubblegumProgram>
         : TAccountBubblegumProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -174,7 +174,7 @@ export type CloseExpiredListingCompressedAsyncInput<
   TAccountLogWrapper extends string = string,
   TAccountCompressionProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   listState: Address<TAccountListState>;
   owner: Address<TAccountOwner>;
@@ -185,7 +185,7 @@ export type CloseExpiredListingCompressedAsyncInput<
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
   index: CloseExpiredListingCompressedInstructionDataArgs['index'];
   root: CloseExpiredListingCompressedInstructionDataArgs['root'];
@@ -206,7 +206,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
   TAccountLogWrapper extends string,
   TAccountCompressionProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: CloseExpiredListingCompressedAsyncInput<
     TAccountListState,
@@ -218,7 +218,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountLogWrapper,
     TAccountCompressionProgram,
     TAccountBubblegumProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): Promise<
   CloseExpiredListingCompressedInstruction<
@@ -232,7 +232,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountLogWrapper,
     TAccountCompressionProgram,
     TAccountBubblegumProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 > {
   // Program address.
@@ -258,7 +258,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -326,7 +326,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
       getAccountMeta(accounts.logWrapper),
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -344,7 +344,7 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     TAccountLogWrapper,
     TAccountCompressionProgram,
     TAccountBubblegumProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -360,7 +360,7 @@ export type CloseExpiredListingCompressedInput<
   TAccountLogWrapper extends string = string,
   TAccountCompressionProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   listState: Address<TAccountListState>;
   owner: Address<TAccountOwner>;
@@ -371,7 +371,7 @@ export type CloseExpiredListingCompressedInput<
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
   index: CloseExpiredListingCompressedInstructionDataArgs['index'];
   root: CloseExpiredListingCompressedInstructionDataArgs['root'];
@@ -392,7 +392,7 @@ export function getCloseExpiredListingCompressedInstruction<
   TAccountLogWrapper extends string,
   TAccountCompressionProgram extends string,
   TAccountBubblegumProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: CloseExpiredListingCompressedInput<
     TAccountListState,
@@ -404,7 +404,7 @@ export function getCloseExpiredListingCompressedInstruction<
     TAccountLogWrapper,
     TAccountCompressionProgram,
     TAccountBubblegumProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): CloseExpiredListingCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -417,7 +417,7 @@ export function getCloseExpiredListingCompressedInstruction<
   TAccountLogWrapper,
   TAccountCompressionProgram,
   TAccountBubblegumProgram,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -442,7 +442,7 @@ export function getCloseExpiredListingCompressedInstruction<
       value: input.bubblegumProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -504,7 +504,7 @@ export function getCloseExpiredListingCompressedInstruction<
       getAccountMeta(accounts.logWrapper),
       getAccountMeta(accounts.compressionProgram),
       getAccountMeta(accounts.bubblegumProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -522,7 +522,7 @@ export function getCloseExpiredListingCompressedInstruction<
     TAccountLogWrapper,
     TAccountCompressionProgram,
     TAccountBubblegumProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -543,7 +543,7 @@ export type ParsedCloseExpiredListingCompressedInstruction<
     logWrapper: TAccountMetas[6];
     compressionProgram: TAccountMetas[7];
     bubblegumProgram: TAccountMetas[8];
-    rentDest: TAccountMetas[9];
+    rentDestination: TAccountMetas[9];
   };
   data: CloseExpiredListingCompressedInstructionData;
 };
@@ -578,7 +578,7 @@ export function parseCloseExpiredListingCompressedInstruction<
       logWrapper: getNextAccount(),
       compressionProgram: getNextAccount(),
       bubblegumProgram: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getCloseExpiredListingCompressedInstructionDataDecoder().decode(
       instruction.data

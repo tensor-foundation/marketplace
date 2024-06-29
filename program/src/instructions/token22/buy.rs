@@ -5,10 +5,10 @@ use anchor_spl::{
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::{validate_mint, RoyaltyInfo},
-    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
-    FromExternal, TCreator,
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
+    CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -19,8 +19,15 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyT22<'info> {
-    /// CHECK: seeds (fee account)
-    #[account(mut, seeds=[], bump)]
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
+            shard_num!(list_state),
+        ],
+        bump,
+        seeds::program = fees::ID,
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -86,7 +93,6 @@ pub struct BuyT22<'info> {
 
     pub system_program: Program<'info, System>,
 
-    // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
     //
     // ---- [0..n] remaining accounts for royalties transfer hook
@@ -94,6 +100,11 @@ pub struct BuyT22<'info> {
 
 impl<'info> Validate<'info> for BuyT22<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -118,7 +129,7 @@ impl<'info> Validate<'info> for BuyT22<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
+        // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
@@ -134,24 +145,24 @@ pub fn process_buy_t22<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyT22<'info>>,
     max_amount: u64,
 ) -> Result<()> {
-    // validate mint account
+    let list_state = &ctx.accounts.list_state;
 
+    // validate mint account
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
 
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
 
     // transfer the NFT
 

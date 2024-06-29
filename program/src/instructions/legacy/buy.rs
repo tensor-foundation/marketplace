@@ -6,12 +6,10 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees,
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
-    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
-    FromExternal,
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
+    CreatorFeeMode, FromAcc, FromExternal, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -23,16 +21,14 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyLegacy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
             shard_num!(list_state),
         ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
+        bump,
+        seeds::program = fees::ID,
     )]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -139,7 +135,6 @@ pub struct BuyLegacy<'info> {
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub sysvar_instructions: Option<UncheckedAccount<'info>>,
 
-    // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
@@ -149,6 +144,11 @@ pub struct BuyLegacy<'info> {
 
 impl<'info> Validate<'info> for BuyLegacy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -173,7 +173,7 @@ impl<'info> Validate<'info> for BuyLegacy<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
+        // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
@@ -194,20 +194,21 @@ pub fn process_buy_legacy<'info, 'b>(
     // validate the mint
     let mint = ctx.accounts.mint.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
-
     let list_state = &ctx.accounts.list_state;
+
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
+
     let creator_fee = calc_creators_fee(
         metadata.seller_fee_basis_points,
         amount,

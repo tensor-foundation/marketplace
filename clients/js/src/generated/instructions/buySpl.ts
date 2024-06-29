@@ -84,15 +84,17 @@ export type BuySplInstruction<
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountPayerSource extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountOwnerDest extends string | IAccountMeta<string> = string,
+  TAccountOwnerDestination extends string | IAccountMeta<string> = string,
   TAccountCurrency extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountTakerBrokerAta extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBrokerAta extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -147,9 +149,9 @@ export type BuySplInstruction<
       TAccountOwner extends string
         ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
-      TAccountOwnerDest extends string
-        ? WritableAccount<TAccountOwnerDest>
-        : TAccountOwnerDest,
+      TAccountOwnerDestination extends string
+        ? WritableAccount<TAccountOwnerDestination>
+        : TAccountOwnerDestination,
       TAccountCurrency extends string
         ? ReadonlyAccount<TAccountCurrency>
         : TAccountCurrency,
@@ -165,9 +167,9 @@ export type BuySplInstruction<
       TAccountMakerBrokerAta extends string
         ? WritableAccount<TAccountMakerBrokerAta>
         : TAccountMakerBrokerAta,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       TAccountRentPayer extends string
         ? WritableSignerAccount<TAccountRentPayer> &
             IAccountSignerMeta<TAccountRentPayer>
@@ -272,13 +274,13 @@ export type BuySplAsyncInput<
   TAccountPayer extends string = string,
   TAccountPayerSource extends string = string,
   TAccountOwner extends string = string,
-  TAccountOwnerDest extends string = string,
+  TAccountOwnerDestination extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountTakerBrokerAta extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountMakerBrokerAta extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
@@ -298,13 +300,13 @@ export type BuySplAsyncInput<
   payer: TransactionSigner<TAccountPayer>;
   payerSource: Address<TAccountPayerSource>;
   owner: Address<TAccountOwner>;
-  ownerDest: Address<TAccountOwnerDest>;
+  ownerDestination: Address<TAccountOwnerDestination>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerAta?: Address<TAccountTakerBrokerAta>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
@@ -335,13 +337,13 @@ export async function getBuySplInstructionAsync<
   TAccountPayer extends string,
   TAccountPayerSource extends string,
   TAccountOwner extends string,
-  TAccountOwnerDest extends string,
+  TAccountOwnerDestination extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
   TAccountTakerBrokerAta extends string,
   TAccountMakerBroker extends string,
   TAccountMakerBrokerAta extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
@@ -362,13 +364,13 @@ export async function getBuySplInstructionAsync<
     TAccountPayer,
     TAccountPayerSource,
     TAccountOwner,
-    TAccountOwnerDest,
+    TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
     TAccountTakerBrokerAta,
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
   >
@@ -391,13 +393,13 @@ export async function getBuySplInstructionAsync<
     TAccountPayer,
     TAccountPayerSource,
     TAccountOwner,
-    TAccountOwnerDest,
+    TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
     TAccountTakerBrokerAta,
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
   >
@@ -435,13 +437,16 @@ export async function getBuySplInstructionAsync<
     payer: { value: input.payer ?? null, isWritable: false },
     payerSource: { value: input.payerSource ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerDest: { value: input.ownerDest ?? null, isWritable: true },
+    ownerDestination: {
+      value: input.ownerDestination ?? null,
+      isWritable: true,
+    },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     takerBrokerAta: { value: input.takerBrokerAta ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
@@ -491,6 +496,10 @@ export async function getBuySplInstructionAsync<
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -511,13 +520,13 @@ export async function getBuySplInstructionAsync<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.payerSource),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerDest),
+      getAccountMeta(accounts.ownerDestination),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.takerBrokerAta),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.makerBrokerAta),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
     ],
@@ -543,13 +552,13 @@ export async function getBuySplInstructionAsync<
     TAccountPayer,
     TAccountPayerSource,
     TAccountOwner,
-    TAccountOwnerDest,
+    TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
     TAccountTakerBrokerAta,
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
   >;
@@ -574,13 +583,13 @@ export type BuySplInput<
   TAccountPayer extends string = string,
   TAccountPayerSource extends string = string,
   TAccountOwner extends string = string,
-  TAccountOwnerDest extends string = string,
+  TAccountOwnerDestination extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountTakerBrokerAta extends string = string,
   TAccountMakerBroker extends string = string,
   TAccountMakerBrokerAta extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
@@ -600,13 +609,13 @@ export type BuySplInput<
   payer: TransactionSigner<TAccountPayer>;
   payerSource: Address<TAccountPayerSource>;
   owner: Address<TAccountOwner>;
-  ownerDest: Address<TAccountOwnerDest>;
+  ownerDestination: Address<TAccountOwnerDestination>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerAta?: Address<TAccountTakerBrokerAta>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce: BuySplInstructionDataArgs['nonce'];
@@ -637,13 +646,13 @@ export function getBuySplInstruction<
   TAccountPayer extends string,
   TAccountPayerSource extends string,
   TAccountOwner extends string,
-  TAccountOwnerDest extends string,
+  TAccountOwnerDestination extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
   TAccountTakerBrokerAta extends string,
   TAccountMakerBroker extends string,
   TAccountMakerBrokerAta extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
@@ -664,13 +673,13 @@ export function getBuySplInstruction<
     TAccountPayer,
     TAccountPayerSource,
     TAccountOwner,
-    TAccountOwnerDest,
+    TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
     TAccountTakerBrokerAta,
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
   >
@@ -692,13 +701,13 @@ export function getBuySplInstruction<
   TAccountPayer,
   TAccountPayerSource,
   TAccountOwner,
-  TAccountOwnerDest,
+  TAccountOwnerDestination,
   TAccountCurrency,
   TAccountTakerBroker,
   TAccountTakerBrokerAta,
   TAccountMakerBroker,
   TAccountMakerBrokerAta,
-  TAccountRentDest,
+  TAccountRentDestination,
   TAccountRentPayer,
   TAccountCosigner
 > {
@@ -735,13 +744,16 @@ export function getBuySplInstruction<
     payer: { value: input.payer ?? null, isWritable: false },
     payerSource: { value: input.payerSource ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerDest: { value: input.ownerDest ?? null, isWritable: true },
+    ownerDestination: {
+      value: input.ownerDestination ?? null,
+      isWritable: true,
+    },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     takerBrokerAta: { value: input.takerBrokerAta ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
@@ -782,6 +794,10 @@ export function getBuySplInstruction<
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -802,13 +818,13 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.payerSource),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerDest),
+      getAccountMeta(accounts.ownerDestination),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.takerBrokerAta),
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.makerBrokerAta),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
     ],
@@ -834,13 +850,13 @@ export function getBuySplInstruction<
     TAccountPayer,
     TAccountPayerSource,
     TAccountOwner,
-    TAccountOwnerDest,
+    TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
     TAccountTakerBrokerAta,
     TAccountMakerBroker,
     TAccountMakerBrokerAta,
-    TAccountRentDest,
+    TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
   >;
@@ -870,13 +886,13 @@ export type ParsedBuySplInstruction<
     payer: TAccountMetas[13];
     payerSource: TAccountMetas[14];
     owner: TAccountMetas[15];
-    ownerDest: TAccountMetas[16];
+    ownerDestination: TAccountMetas[16];
     currency: TAccountMetas[17];
     takerBroker?: TAccountMetas[18] | undefined;
     takerBrokerAta?: TAccountMetas[19] | undefined;
     makerBroker?: TAccountMetas[20] | undefined;
     makerBrokerAta?: TAccountMetas[21] | undefined;
-    rentDest: TAccountMetas[22];
+    rentDestination: TAccountMetas[22];
     rentPayer: TAccountMetas[23];
     cosigner?: TAccountMetas[24] | undefined;
   };
@@ -926,13 +942,13 @@ export function parseBuySplInstruction<
       payer: getNextAccount(),
       payerSource: getNextAccount(),
       owner: getNextAccount(),
-      ownerDest: getNextAccount(),
+      ownerDestination: getNextAccount(),
       currency: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       takerBrokerAta: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
       makerBrokerAta: getNextOptionalAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
       rentPayer: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },

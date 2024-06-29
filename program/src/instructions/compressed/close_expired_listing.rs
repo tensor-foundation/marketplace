@@ -8,7 +8,7 @@ pub struct CloseExpiredListing<'info> {
         mut,
         seeds=[b"list_state".as_ref(), list_state.asset_id.as_ref()],
         bump = list_state.bump[0],
-        close = rent_dest,
+        close = rent_destination,
         has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
@@ -26,9 +26,9 @@ pub struct CloseExpiredListing<'info> {
     pub bubblegum_program: Program<'info, Bubblegum>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 }
 
 pub fn process_close_expired_listing<'info>(

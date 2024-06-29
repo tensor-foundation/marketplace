@@ -9,8 +9,8 @@
     },
     {
       "name": "TCOMP_FEE_BPS",
-      "type": "u16",
-      "value": "150"
+      "type": "u64",
+      "value": "200"
     },
     {
       "name": "MAX_EXPIRY_SEC",
@@ -19,8 +19,8 @@
     },
     {
       "name": "MAKER_BROKER_PCT",
-      "type": "u16",
-      "value": "0"
+      "type": "u64",
+      "value": "80"
     },
     {
       "name": "LIST_STATE_SIZE",
@@ -347,14 +347,14 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -495,7 +495,7 @@
           "isSigner": false
         },
         {
-          "name": "ownerDest",
+          "name": "ownerDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -529,7 +529,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -541,7 +541,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -647,7 +647,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -751,7 +751,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -870,7 +870,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1010,7 +1010,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1165,7 +1165,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -1784,7 +1784,7 @@
           "isOptional": true
         },
         {
-          "name": "sellerAta",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },
@@ -1844,7 +1844,7 @@
           ]
         },
         {
-          "name": "bidAta",
+          "name": "bidTa",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -2287,7 +2287,7 @@
           "isSigner": false
         },
         {
-          "name": "sellerAta",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },
@@ -2806,17 +2806,17 @@
           "isSigner": false
         },
         {
-          "name": "nftSellerAcc",
+          "name": "sellerTa",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "nftMint",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "ownerAtaAcc",
+          "name": "ownerAta",
           "isMut": true,
           "isSigner": false
         },
@@ -2841,7 +2841,7 @@
           "isSigner": false
         },
         {
-          "name": "tensorswapProgram",
+          "name": "escrowProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2860,7 +2860,7 @@
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -2949,7 +2949,7 @@
           "isOptional": true
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         },
@@ -2971,7 +2971,7 @@
         {
           "name": "cosigner",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "isOptional": true
         }
       ],
@@ -3022,7 +3022,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -3069,7 +3069,7 @@
           "isSigner": false
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": true
         }
@@ -3249,7 +3249,7 @@
           ]
         },
         {
-          "name": "rentDest",
+          "name": "rentDestination",
           "isMut": true,
           "isSigner": false
         }
@@ -3485,6 +3485,13 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "BidTa",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
     }
   ],
@@ -4189,6 +4196,11 @@
       "code": 6139,
       "name": "WrongTokenRecordDerivation",
       "msg": "token record derivation is wrong"
+    },
+    {
+      "code": 6140,
+      "name": "InvalidFeeAccount",
+      "msg": "invalid fee account"
     }
   ],
   "metadata": {

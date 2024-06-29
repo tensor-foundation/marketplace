@@ -7,33 +7,23 @@ use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
+    assert_fee_account,
     token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
     TCreator,
 };
-use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
+use whitelist_program::verify_whitelist_generic;
 
 use crate::{
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid_common::{take_bid_shared, TakeBidArgs},
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
 pub struct TakeBidT22<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -69,9 +59,9 @@ pub struct TakeBidT22<'info> {
     pub whitelist: UncheckedAccount<'info>,
 
     #[account(mut, token::mint = mint, token::authority = seller)]
-    pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
@@ -110,6 +100,11 @@ pub struct TakeBidT22<'info> {
 
 impl<'info> Validate<'info> for TakeBidT22<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(
@@ -156,11 +151,14 @@ pub fn process_take_bid_t22<'info>(
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.mint.key();
+    let mint_pubkey = ctx.accounts.mint.key();
 
     match bid_state.target {
         Target::AssetId => {
-            require!(bid_state.target_id == mint, TcompError::WrongTargetId);
+            require!(
+                bid_state.target_id == mint_pubkey,
+                TcompError::WrongTargetId
+            );
         }
         Target::Whitelist => {
             // Ensure the correct whitelist is passed in
@@ -169,28 +167,12 @@ pub fn process_take_bid_t22<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(&ctx.accounts.whitelist)?;
-            let nft_mint = &ctx.accounts.mint;
-
-            // must have merkle tree; otherwise fail
-            if whitelist.root_hash != ZERO_ARRAY {
-                let mint_proof_acc = &ctx.accounts.mint_proof;
-                let mint_proof =
-                    assert_decode_mint_proof(ctx.accounts.whitelist.key, &mint, mint_proof_acc)?;
-                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
-                let proof = &mut mint_proof.proof.to_vec();
-                proof.truncate(mint_proof.proof_len as usize);
-                whitelist.verify_whitelist(
-                    None,
-                    Some(FullMerkleProof {
-                        proof: proof.clone(),
-                        leaf: leaf.0,
-                    }),
-                )?;
-            } else {
-                // TODO: update this logic once T22 support collection and creator verification
-                return Err(TcompError::BadWhitelist.into());
-            }
+            verify_whitelist_generic(
+                &ctx.accounts.whitelist.to_account_info(),
+                Some(&ctx.accounts.mint_proof.to_account_info()),
+                &ctx.accounts.mint.to_account_info(),
+                None, // Collection and Creator verification not supported on T22 standards yet.
+            )?;
         }
     }
 
@@ -221,7 +203,7 @@ pub fn process_take_bid_t22<'info>(
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.seller_ata.to_account_info(),
+            from: ctx.accounts.seller_ta.to_account_info(),
             to: ctx.accounts.owner_ata.to_account_info(),
             authority: ctx.accounts.seller.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
@@ -275,11 +257,11 @@ pub fn process_take_bid_t22<'info>(
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.margin_account,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_destination,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
-        asset_id: mint,
+        asset_id: mint_pubkey,
         token_standard: Some(if royalties.is_some() {
             TokenStandard::ProgrammableNonFungible
         } else {

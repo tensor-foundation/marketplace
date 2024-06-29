@@ -48,7 +48,7 @@ export type DelistCoreInstruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -76,10 +76,10 @@ export type DelistCoreInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountRentDest extends string
-        ? WritableSignerAccount<TAccountRentDest> &
-            IAccountSignerMeta<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableSignerAccount<TAccountRentDestination> &
+            IAccountSignerMeta<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -122,7 +122,7 @@ export type DelistCoreInput<
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -131,7 +131,7 @@ export type DelistCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  rentDest: TransactionSigner<TAccountRentDest>;
+  rentDestination: TransactionSigner<TAccountRentDestination>;
 };
 
 export function getDelistCoreInstruction<
@@ -142,7 +142,7 @@ export function getDelistCoreInstruction<
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: DelistCoreInput<
     TAccountAsset,
@@ -152,7 +152,7 @@ export function getDelistCoreInstruction<
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): DelistCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -163,7 +163,7 @@ export function getDelistCoreInstruction<
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -180,7 +180,7 @@ export function getDelistCoreInstruction<
       isWritable: false,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -211,7 +211,7 @@ export function getDelistCoreInstruction<
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getDelistCoreInstructionDataEncoder().encode({}),
@@ -224,7 +224,7 @@ export function getDelistCoreInstruction<
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -243,7 +243,7 @@ export type ParsedDelistCoreInstruction<
     mplCoreProgram: TAccountMetas[4];
     marketplaceProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
-    rentDest: TAccountMetas[7];
+    rentDestination: TAccountMetas[7];
   };
   data: DelistCoreInstructionData;
 };
@@ -282,7 +282,7 @@ export function parseDelistCoreInstruction<
       mplCoreProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getDelistCoreInstructionDataDecoder().decode(instruction.data),
   };

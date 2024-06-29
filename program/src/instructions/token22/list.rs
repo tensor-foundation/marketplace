@@ -66,12 +66,12 @@ pub fn process_list_t22<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    // validates the mint
+    let remaining_accounts = ctx.remaining_accounts.to_vec();
 
+    // validates the mint
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
     // transfer the NFT
-
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -85,7 +85,7 @@ pub fn process_list_t22<'info>(
     // this will only add the remaining accounts required by a transfer hook if we
     // recognize the hook as a royalty one
     if royalties.is_some() {
-        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        transfer_cpi = transfer_cpi.with_remaining_accounts(remaining_accounts);
     }
 
     transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0

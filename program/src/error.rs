@@ -3,6 +3,8 @@ use crate::*;
 #[error_code]
 pub enum TcompError {
     // Start at 100 so we don't conflict with bubblegum + compression error codes.
+    // TODO: AnchorLang ErrorCode has 100-103, we should start at 104 or better yet start at 7000 to
+    // avoid any potential conflicts with AnchorLang and other programs.
     #[msg("arithmetic error")]
     ArithmeticError = 100,
     #[msg("expiry too large")]
@@ -83,4 +85,6 @@ pub enum TcompError {
     MakerBrokerNotYetWhitelisted = 138,
     #[msg("token record derivation is wrong")]
     WrongTokenRecordDerivation = 139,
+    #[msg("invalid fee account")]
+    InvalidFeeAccount = 140,
 }

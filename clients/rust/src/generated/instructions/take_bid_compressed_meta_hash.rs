@@ -46,7 +46,7 @@ pub struct TakeBidCompressedMetaHash {
 
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl TakeBidCompressedMetaHash {
@@ -155,7 +155,7 @@ impl TakeBidCompressedMetaHash {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -228,7 +228,7 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
-///   18. `[writable]` rent_dest
+///   18. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct TakeBidCompressedMetaHashBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -249,7 +249,7 @@ pub struct TakeBidCompressedMetaHashBuilder {
     margin_account: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -388,8 +388,11 @@ impl TakeBidCompressedMetaHashBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -489,7 +492,7 @@ impl TakeBidCompressedMetaHashBuilder {
             margin_account: self.margin_account.expect("margin_account is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
             cosigner: self.cosigner,
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = TakeBidCompressedMetaHashInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
@@ -554,7 +557,7 @@ pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `take_bid_compressed_meta_hash` CPI instruction.
@@ -598,7 +601,7 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: TakeBidCompressedMetaHashInstructionArgs,
 }
@@ -629,7 +632,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             margin_account: accounts.margin_account,
             whitelist: accounts.whitelist,
             cosigner: accounts.cosigner,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             __args: args,
         }
     }
@@ -761,7 +764,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -808,7 +811,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
         }
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -843,7 +846,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///   15. `[writable]` margin_account
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
-///   18. `[writable]` rent_dest
+///   18. `[writable]` rent_destination
 #[derive(Clone, Debug)]
 pub struct TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b>>,
@@ -871,7 +874,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
             margin_account: None,
             whitelist: None,
             cosigner: None,
-            rent_dest: None,
+            rent_destination: None,
             nonce: None,
             index: None,
             root: None,
@@ -1032,11 +1035,11 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -1223,7 +1226,10 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
 
             cosigner: self.instruction.cosigner,
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1254,7 +1260,7 @@ struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

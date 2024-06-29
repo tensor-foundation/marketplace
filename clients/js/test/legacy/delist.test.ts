@@ -99,6 +99,7 @@ test('it can delist a legacy Programmable NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(delistLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

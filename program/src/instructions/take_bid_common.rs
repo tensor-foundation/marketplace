@@ -1,7 +1,7 @@
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
-    CreatorFeeMode, FromAcc, TCreator,
+    CalcFeesArgs, CreatorFeeMode, FromAcc, TCreator, BROKER_FEE_PCT,
 };
 use tensor_whitelist::MintProof;
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
@@ -13,7 +13,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub seller: &'a AccountInfo<'info>,
     pub margin_account: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
-    pub rent_dest: &'a UncheckedAccount<'info>,
+    pub rent_destination: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
     pub taker_broker: &'a Option<UncheckedAccount<'info>>,
     pub fee_vault: &'a AccountInfo<'info>,
@@ -35,7 +35,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         seller,
         margin_account,
         owner,
-        rent_dest,
+        rent_destination,
         maker_broker,
         taker_broker,
         fee_vault,
@@ -59,13 +59,14 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let currency = bid_state.currency;
     require!(amount >= min_amount, TcompError::PriceMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        maker_broker.as_ref().map(|acc| acc.key()),
-        taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
+
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
@@ -173,7 +174,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         BidState::verify_empty_balance(bid_state)?;
         close_account(
             &mut bid_state.to_account_info(),
-            &mut rent_dest.to_account_info(),
+            &mut rent_destination.to_account_info(),
         )?;
     }
 
@@ -198,14 +199,14 @@ fn transfer_lamports_from_pda_min_balance<'info>(
 #[inline(never)]
 pub fn assert_decode_mint_proof(
     whitelist_pubkey: &Pubkey,
-    nft_mint: &Pubkey,
+    mint: &Pubkey,
     mint_proof: &UncheckedAccount,
 ) -> Result<MintProof> {
     let program_id = &tensor_whitelist::id();
     let (key, _) = Pubkey::find_program_address(
         &[
             b"mint_proof".as_ref(),
-            nft_mint.as_ref(),
+            mint.as_ref(),
             whitelist_pubkey.as_ref(),
         ],
         program_id,

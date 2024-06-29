@@ -12,3 +12,37 @@ pub fn find_neutral_broker() -> (Pubkey, u8) {
 pub fn maker_broker_is_whitelisted(maker_broker: Option<Pubkey>) -> bool {
     maker_broker.is_none() || maker_broker == Some(tensor_toolbox::gameshift::ID)
 }
+
+/// Checks if cosigner is deliberately passed in or if it should be a remaining account instead.
+/// Used whenever an optional cosigner account was added to an instruction with remaining accounts
+/// to avoid breaking changes. Validates the cosigner account against if one is expected and returns an Option storing
+/// the remaining account to be added to the remaining acounts array, if applicable.
+pub fn validate_cosigner<'info>(
+    cosigner: &Option<UncheckedAccount<'info>>,
+    list_state: &ListState,
+) -> Result<Option<AccountInfo<'info>>> {
+    // If an account is at the cosigner position we need to check if it was deliberately passed in by the client or if it's
+    // actually a remaining account sent by an old client.
+    let (maybe_cosigner, maybe_remaining) = if let Some(account) = cosigner {
+        // This was deliberately passed in by the client if it was a signer, as the creators will never be signers.
+        // If it's the crate it will be a `None` variant on the Option.
+        if account.is_signer {
+            // all the remaining accounts are there
+            (Some(account.to_account_info()), None)
+        } else {
+            // We have a cosigner account but it's not a signer or the crate id so it must be a remaining account.
+            (None, Some(account.to_account_info()))
+        }
+    } else {
+        (None, None)
+    };
+
+    // check if the cosigner is required
+    if let Some(cosigner) = list_state.cosigner.value() {
+        let signer = maybe_cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
+
+        require!(cosigner == signer.key, TcompError::BadCosigner);
+    }
+
+    Ok(maybe_remaining)
+}

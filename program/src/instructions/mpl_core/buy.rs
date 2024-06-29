@@ -2,11 +2,10 @@ use anchor_lang::solana_program::{program::invoke, system_instruction};
 use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees,
-    fees::ID as TFEE_PROGRAM_ID,
+    assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_asset, MetaplexCore},
-    shard_num, transfer_creators_fee, transfer_lamports_from_pda, CreatorFeeMode, FromAcc,
-    FromExternal,
+    transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, FromAcc,
+    FromExternal, BROKER_FEE_PCT,
 };
 
 use crate::*;
@@ -16,19 +15,10 @@ use self::program::MarketplaceProgram;
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(list_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             asset.key.as_ref(),
@@ -67,9 +57,9 @@ pub struct BuyCore<'info> {
 
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     pub mpl_core_program: Program<'info, MetaplexCore>,
 
@@ -78,7 +68,7 @@ pub struct BuyCore<'info> {
     pub system_program: Program<'info, System>,
 
     // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
+    pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
 }
@@ -115,6 +105,11 @@ impl<'info> BuyCore<'info> {
 
 impl<'info> Validate<'info> for BuyCore<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -139,13 +134,6 @@ impl<'info> Validate<'info> for BuyCore<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
-        if let Some(cosigner) = list_state.cosigner.value() {
-            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
-
-            require!(cosigner == signer.key, TcompError::BadCosigner);
-        }
-
         Ok(())
     }
 }
@@ -155,6 +143,22 @@ pub fn process_buy_core<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyCore<'info>>,
     max_amount: u64,
 ) -> Result<()> {
+    let list_state = &ctx.accounts.list_state;
+
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
     // validate the asset account
     let royalties = validate_asset(
         &ctx.accounts.asset,
@@ -166,19 +170,19 @@ pub fn process_buy_core<'info, 'b>(
         (0, TokenStandard::NonFungible)
     };
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
+
     // No optional royalties.
     let creator_fee = calc_creators_fee(seller_fee, amount, None, Some(100))?;
 
@@ -244,7 +248,7 @@ pub fn process_buy_core<'info, 'b>(
     if let Some(Royalties { creators, .. }) = royalties {
         transfer_creators_fee(
             &creators.into_iter().map(Into::into).collect(),
-            &mut ctx.remaining_accounts.iter(),
+            &mut remaining_accounts.iter(),
             creator_fee,
             &CreatorFeeMode::Sol {
                 from: &FromAcc::External(&FromExternal {
