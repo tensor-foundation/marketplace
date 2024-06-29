@@ -21,7 +21,7 @@ program-dependencies = [
     "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
     "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
 ]
-account-dependencies = ["9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"]
+# account-dependencies = ["9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"]
 
 [lib]
 crate-type = ["cdylib", "lib"]

@@ -174,30 +174,36 @@ pub fn process_take_bid_core<'info>(
             );
 
             let mint_proof_acc = &ctx.accounts.mint_proof;
-            let mint_proof_type = assert_decode_mint_proof_generic(
-                ctx.accounts.whitelist.key,
-                &asset_id,
-                mint_proof_acc,
-            )?;
 
-            let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
+            // Check if actual mint proof and not a dummy account.
+            let mint_proof = if ctx.accounts.mint_proof.owner == &whitelist_program::ID {
+                let mint_proof_type = assert_decode_mint_proof_generic(
+                    ctx.accounts.whitelist.key,
+                    &asset_id,
+                    mint_proof_acc,
+                )?;
 
-            let proof = match mint_proof_type {
-                MintProofType::V1(mint_proof) => {
-                    let mut proof = mint_proof.proof.to_vec();
-                    proof.truncate(mint_proof.proof_len as usize);
-                    proof
-                }
-                MintProofType::V2(mint_proof) => {
-                    let mut proof = mint_proof.proof.to_vec();
-                    proof.truncate(mint_proof.proof_len as usize);
-                    proof
-                }
-            };
+                let leaf = anchor_lang::solana_program::keccak::hash(asset_id.as_ref());
 
-            let mint_proof = FullMerkleProof {
-                proof: proof.clone(),
-                leaf: leaf.0,
+                let proof = match mint_proof_type {
+                    MintProofType::V1(mint_proof) => {
+                        let mut proof = mint_proof.proof.to_vec();
+                        proof.truncate(mint_proof.proof_len as usize);
+                        proof
+                    }
+                    MintProofType::V2(mint_proof) => {
+                        let mut proof = mint_proof.proof.to_vec();
+                        proof.truncate(mint_proof.proof_len as usize);
+                        proof
+                    }
+                };
+
+                Some(FullMerkleProof {
+                    proof: proof.clone(),
+                    leaf: leaf.0,
+                })
+            } else {
+                None
             };
 
             let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
@@ -206,7 +212,9 @@ pub fn process_take_bid_core<'info>(
                 WhitelistType::V1(whitelist) => {
                     //prioritize merkle tree if proof present
                     if whitelist.root_hash != ZERO_ARRAY {
-                        whitelist.verify_whitelist(None, Some(mint_proof))?;
+                        require!(mint_proof.is_some(), TcompError::BadMintProof);
+
+                        whitelist.verify_whitelist(None, mint_proof)?;
                     } else if let Some(collection) = &ctx.accounts.collection {
                         let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
 
@@ -248,7 +256,7 @@ pub fn process_take_bid_core<'info>(
                     // creators have no verified flag on Core, they can't be used
                     let creators = None;
 
-                    whitelist.verify(&collection, &creators, &Some(mint_proof))?;
+                    whitelist.verify(&collection, &creators, &mint_proof)?;
                 }
             }
         }

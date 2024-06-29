@@ -126,6 +126,7 @@ import {
   transferLamports
 } from "./account";
 import { testInitWLAuthority } from "./tswap";
+import { initManager } from "./wns";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -950,6 +951,10 @@ export const makeCNftMeta = ({
 
 export const beforeAllHook = async () => {
   await fundTestWallets();
+
+  // Init manager instead of cloning account, because the one on mainnet currently has 8 bytes
+  // instead of the required 9 bytes.
+  await initManager();
 
   // WL authority
   const wl = testInitWLAuthority();

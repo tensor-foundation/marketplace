@@ -4,7 +4,7 @@ import {
   getAtaAddress,
   getGroupAccountPda,
   getManagerAccountPda,
-  getMetadataProgram,
+  getMetadataProgram
 } from "../utils/core";
 import { SystemProgram } from "@solana/web3.js";
 import { type Provider } from "@coral-xyz/anchor";
@@ -27,12 +27,14 @@ export const getCreateGroupIx = async (
   const managerAccount = getManagerAccountPda();
   const groupAccount = getGroupAccountPda(args.groupMint);
 
+  console.log("managerAccount", managerAccount.toString());
+
   const ix = await metadataProgram.methods
     .createGroupAccount({
       name: args.name,
       symbol: args.symbol,
       uri: args.uri,
-      maxSize: args.maxSize,
+      maxSize: args.maxSize
     })
     .accountsStrict({
       payer: args.payer,
@@ -44,7 +46,7 @@ export const getCreateGroupIx = async (
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       tokenProgram: tokenProgramId,
       group: groupAccount,
-      manager: managerAccount,
+      manager: managerAccount
     })
     .instruction();
 
@@ -60,7 +62,7 @@ export const getInitManagerIx = async (provider: Provider, payer: string) => {
     .accountsStrict({
       payer,
       systemProgram: SystemProgram.programId,
-      manager: managerAccount,
+      manager: managerAccount
     })
     .instruction();
 
