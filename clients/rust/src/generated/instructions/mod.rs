@@ -8,6 +8,7 @@
 pub(crate) mod r#bid;
 pub(crate) mod r#buy_compressed;
 pub(crate) mod r#buy_core;
+pub(crate) mod r#buy_core_spl;
 pub(crate) mod r#buy_legacy;
 pub(crate) mod r#buy_spl;
 pub(crate) mod r#buy_t22;
@@ -41,6 +42,7 @@ pub(crate) mod r#tcomp_noop;
 pub use self::r#bid::*;
 pub use self::r#buy_compressed::*;
 pub use self::r#buy_core::*;
+pub use self::r#buy_core_spl::*;
 pub use self::r#buy_legacy::*;
 pub use self::r#buy_spl::*;
 pub use self::r#buy_t22::*;

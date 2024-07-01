@@ -9,6 +9,7 @@
 export * from './bid';
 export * from './buyCompressed';
 export * from './buyCore';
+export * from './buyCoreSpl';
 export * from './buyLegacy';
 export * from './buySpl';
 export * from './buyT22';

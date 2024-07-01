@@ -16,6 +16,7 @@ import {
   ParsedBidInstruction,
   ParsedBuyCompressedInstruction,
   ParsedBuyCoreInstruction,
+  ParsedBuyCoreSplInstruction,
   ParsedBuyLegacyInstruction,
   ParsedBuySplInstruction,
   ParsedBuyT22Instruction,
@@ -127,6 +128,7 @@ export enum TensorMarketplaceInstruction {
   ListWns,
   TakeBidWns,
   BuyCore,
+  BuyCoreSpl,
   CloseExpiredListingCore,
   DelistCore,
   ListCore,
@@ -450,6 +452,17 @@ export function identifyTensorMarketplaceInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([234, 28, 37, 122, 114, 239, 233, 208])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceInstruction.BuyCoreSpl;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([89, 171, 78, 80, 74, 188, 63, 58])
       ),
       0
@@ -582,6 +595,9 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.BuyCore;
     } & ParsedBuyCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuyCoreSpl;
+    } & ParsedBuyCoreSplInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingCore;
     } & ParsedCloseExpiredListingCoreInstruction<TProgram>)

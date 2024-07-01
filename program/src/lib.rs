@@ -434,6 +434,13 @@ pub mod marketplace_program {
         instructions::mpl_core::process_buy_core(ctx, max_amount)
     }
 
+    pub fn buy_core_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyCoreSpl<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::mpl_core::process_buy_core_spl(ctx, max_amount)
+    }
+
     pub fn close_expired_listing_core<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
     ) -> Result<()> {
