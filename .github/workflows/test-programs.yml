@@ -9,6 +9,7 @@ on:
 env:
   CACHE: true
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  RPC: ${{ secrets.SOLANA_MAINNET_RPC_URL }}
 
 jobs:
   test_programs:
@@ -27,7 +28,7 @@ jobs:
           key: |
             ${{ secrets.ESCROW_KEY }}
             ${{ secrets.TOOLBOX_KEY }}
-            ${{ secrets.WHITELIST_KEY }} 
+            ${{ secrets.WHITELIST_KEY }}
 
       - name: Load environment variables
         run: cat .github/.env >> $GITHUB_ENV
@@ -54,7 +55,7 @@ jobs:
         if: env.CACHE == 'true'
         uses: tensor-foundation/actions/cache-crate@v2
         with:
-          folder: '.'
+          folder: "."
           key: programs
 
       - name: Run tests
