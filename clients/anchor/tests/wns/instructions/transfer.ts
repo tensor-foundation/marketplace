@@ -1,17 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import {
-  PublicKey,
-  SystemProgram,
-  type TransactionInstruction,
-} from "@solana/web3.js";
+import { BN, type Provider } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   createTransferCheckedInstruction,
 } from "@solana/spl-token";
+import {
+  PublicKey,
+  SystemProgram,
+  type TransactionInstruction,
+} from "@solana/web3.js";
+import { type CommonArgs } from "../utils";
+import {
+  distributionProgramId,
+  tokenProgramId,
+  wnsProgramId,
+} from "../utils/constants";
 import {
   getApproveAccountPda,
   getAtaAddress,
@@ -19,13 +25,6 @@ import {
   getExtraMetasAccountPda,
   getMetadataProgram,
 } from "../utils/core";
-import {
-  distributionProgramId,
-  tokenProgramId,
-  wnsProgramId,
-} from "../utils/constants";
-import { type CommonArgs } from "../utils";
-import { BN, type Provider } from "@coral-xyz/anchor";
 
 export type ApproveTransferNftArgs = {
   buyAmount: number;
