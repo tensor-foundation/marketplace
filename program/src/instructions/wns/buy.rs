@@ -252,10 +252,12 @@ pub fn process_buy_wns<'info, 'b>(
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // pay fees
+    // --Pay fees in SOL--
 
+    // Protocol fee.
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.fee_vault, tcomp_fee)?;
 
+    // Maker broker fee.
     transfer_lamports_checked(
         &ctx.accounts.payer,
         &ctx.accounts
@@ -266,6 +268,7 @@ pub fn process_buy_wns<'info, 'b>(
         maker_broker_fee,
     )?;
 
+    // Taker broker fee.
     transfer_lamports_checked(
         &ctx.accounts.payer,
         &ctx.accounts
@@ -275,6 +278,8 @@ pub fn process_buy_wns<'info, 'b>(
             .to_account_info(),
         taker_broker_fee,
     )?;
+
+    // Creator royalties are handled by WNS' distribution mechanism.
 
     // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;

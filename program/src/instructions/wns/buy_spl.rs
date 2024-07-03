@@ -38,7 +38,7 @@ pub struct BuyWnsSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
-    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -49,14 +49,14 @@ pub struct BuyWnsSpl<'info> {
         associated_token::mint = mint,
         associated_token::authority = buyer,
     )]
-    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -71,9 +71,10 @@ pub struct BuyWnsSpl<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    /// WNS asset mint.
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// CHECK: list_state.currency
+    /// SPL token mint of the currency.
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -87,7 +88,7 @@ pub struct BuyWnsSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = owner,
     )]
-    pub owner_currency_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -100,7 +101,7 @@ pub struct BuyWnsSpl<'info> {
 
     /// CHECK: none, can be anything
     #[account(mut,
-        constraint = taker_broker_ata.is_some()
+        constraint = taker_broker_ta.is_some() @ TcompError::MissingBrokerTokenAccount
     )]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
@@ -108,12 +109,13 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
+        constraint = taker_broker.is_some() @ TcompError::MissingBroker
     )]
-    pub taker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: none, can be anything
     #[account(mut,
-        constraint = maker_broker_ata.is_some()
+        constraint = maker_broker_ta.is_some() @ TcompError::MissingBrokerTokenAccount
     )]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -121,8 +123,9 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
+        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
-    pub maker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: list_state.get_rent_payer()
     #[account(
@@ -198,7 +201,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
 }
 
 impl<'info> BuyWnsSpl<'info> {
-    fn transfer_ata(
+    fn transfer_ta(
         &self,
         to: &AccountInfo<'info>,
         mint: &AccountInfo<'info>,
@@ -255,6 +258,8 @@ pub fn process_buy_wns_spl<'info, 'b>(
         None,
     )?;
 
+    // Approve the transfer using WNS' approval ix. This will CPI into the distribution program
+    // to update the royalty distribution state.
     let approve_accounts = ApproveAccounts {
         payer: ctx.accounts.payer.to_account_info(),
         authority: ctx.accounts.payer.to_account_info(),
@@ -277,8 +282,8 @@ pub fn process_buy_wns_spl<'info, 'b>(
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.list_ata.to_account_info(),
-            to: ctx.accounts.buyer_ata.to_account_info(),
+            from: ctx.accounts.list_ta.to_account_info(),
+            to: ctx.accounts.buyer_ta.to_account_info(),
             authority: ctx.accounts.list_state.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -322,19 +327,19 @@ pub fn process_buy_wns_spl<'info, 'b>(
     // --Pay fees in currency--
 
     // Protocol fee.
-    ctx.accounts.transfer_ata(
-        ctx.accounts.fee_vault_ata.deref().as_ref(),
+    ctx.accounts.transfer_ta(
+        ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
         ctx.accounts.currency.decimals,
     )?;
 
     // Maker broker fee.
-    ctx.accounts.transfer_ata(
+    ctx.accounts.transfer_ta(
         ctx.accounts
-            .maker_broker_ata
+            .maker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -343,11 +348,11 @@ pub fn process_buy_wns_spl<'info, 'b>(
     )?;
 
     // Taker broker fee.
-    ctx.accounts.transfer_ata(
+    ctx.accounts.transfer_ta(
         ctx.accounts
-            .taker_broker_ata
+            .taker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -356,8 +361,8 @@ pub fn process_buy_wns_spl<'info, 'b>(
     )?;
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts.transfer_ata(
-        ctx.accounts.owner_currency_ata.deref().as_ref(),
+    ctx.accounts.transfer_ta(
+        ctx.accounts.owner_currency_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         amount,
         ctx.accounts.currency.decimals,
@@ -368,7 +373,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_ata.to_account_info(),
+                account: ctx.accounts.list_ta.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

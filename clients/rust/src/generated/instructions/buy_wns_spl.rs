@@ -9,19 +9,21 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct BuyCoreSpl {
+pub struct BuyWnsSpl {
     pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub fee_vault_currency_ta: solana_program::pubkey::Pubkey,
 
     pub buyer: solana_program::pubkey::Pubkey,
 
+    pub buyer_ta: solana_program::pubkey::Pubkey,
+
+    pub list_ta: solana_program::pubkey::Pubkey,
+
     pub list_state: solana_program::pubkey::Pubkey,
-
-    pub asset: solana_program::pubkey::Pubkey,
-
-    pub collection: Option<solana_program::pubkey::Pubkey>,
-
+    /// WNS asset mint.
+    pub mint: solana_program::pubkey::Pubkey,
+    /// SPL token mint of the currency.
     pub currency: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
@@ -46,29 +48,37 @@ pub struct BuyCoreSpl {
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
-    pub mpl_core_program: solana_program::pubkey::Pubkey,
-
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
+    pub approve: solana_program::pubkey::Pubkey,
+
+    pub distribution: solana_program::pubkey::Pubkey,
+
+    pub wns_program: solana_program::pubkey::Pubkey,
+
+    pub wns_distribution_program: solana_program::pubkey::Pubkey,
+
+    pub extra_metas: solana_program::pubkey::Pubkey,
+
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
-impl BuyCoreSpl {
+impl BuyWnsSpl {
     pub fn instruction(
         &self,
-        args: BuyCoreSplInstructionArgs,
+        args: BuyWnsSplInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: BuyCoreSplInstructionArgs,
+        args: BuyWnsSplInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(22 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.fee_vault,
             false,
@@ -81,22 +91,20 @@ impl BuyCoreSpl {
             self.buyer, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+            self.buyer_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.asset, false,
+            self.list_ta,
+            false,
         ));
-        if let Some(collection) = self.collection {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                collection, false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.list_state,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.mint, false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.currency,
             false,
@@ -172,15 +180,31 @@ impl BuyCoreSpl {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.mpl_core_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.marketplace_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.approve,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.distribution,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.wns_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.wns_distribution_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.extra_metas,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -194,7 +218,7 @@ impl BuyCoreSpl {
             ));
         }
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = BuyCoreSplInstructionData::new().try_to_vec().unwrap();
+        let mut data = BuyWnsSplInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -207,19 +231,19 @@ impl BuyCoreSpl {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct BuyCoreSplInstructionData {
+pub struct BuyWnsSplInstructionData {
     discriminator: [u8; 8],
 }
 
-impl BuyCoreSplInstructionData {
+impl BuyWnsSplInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [234, 28, 37, 122, 114, 239, 233, 208],
+            discriminator: [113, 137, 57, 23, 186, 196, 217, 210],
         }
     }
 }
 
-impl Default for BuyCoreSplInstructionData {
+impl Default for BuyWnsSplInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -227,44 +251,50 @@ impl Default for BuyCoreSplInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BuyCoreSplInstructionArgs {
+pub struct BuyWnsSplInstructionArgs {
     pub max_amount: u64,
 }
 
-/// Instruction builder for `BuyCoreSpl`.
+/// Instruction builder for `BuyWnsSpl`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[writable]` fee_vault_currency_ta
 ///   2. `[]` buyer
-///   3. `[writable]` list_state
-///   4. `[writable]` asset
-///   5. `[optional]` collection
-///   6. `[]` currency
-///   7. `[writable]` owner
-///   8. `[writable]` owner_currency_ta
-///   9. `[writable, signer]` payer
-///   10. `[writable]` payer_currency_ta
-///   11. `[writable, optional]` taker_broker
-///   12. `[writable, optional]` taker_broker_ta
-///   13. `[writable, optional]` maker_broker
-///   14. `[writable, optional]` maker_broker_ta
-///   15. `[writable]` rent_destination
-///   16. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   17. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   18. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
+///   3. `[writable]` buyer_ta
+///   4. `[writable]` list_ta
+///   5. `[writable]` list_state
+///   6. `[]` mint
+///   7. `[]` currency
+///   8. `[writable]` owner
+///   9. `[writable]` owner_currency_ta
+///   10. `[writable, signer]` payer
+///   11. `[writable]` payer_currency_ta
+///   12. `[writable, optional]` taker_broker
+///   13. `[writable, optional]` taker_broker_ta
+///   14. `[writable, optional]` maker_broker
+///   15. `[writable, optional]` maker_broker_ta
+///   16. `[writable]` rent_destination
+///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   18. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   19. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   20. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   21. `[signer, optional]` cosigner
+///   21. `[writable]` approve
+///   22. `[writable]` distribution
+///   23. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
+///   24. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   25. `[]` extra_metas
+///   26. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
-pub struct BuyCoreSplBuilder {
+pub struct BuyWnsSplBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
     fee_vault_currency_ta: Option<solana_program::pubkey::Pubkey>,
     buyer: Option<solana_program::pubkey::Pubkey>,
+    buyer_ta: Option<solana_program::pubkey::Pubkey>,
+    list_ta: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
-    asset: Option<solana_program::pubkey::Pubkey>,
-    collection: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     currency: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     owner_currency_ta: Option<solana_program::pubkey::Pubkey>,
@@ -277,15 +307,19 @@ pub struct BuyCoreSplBuilder {
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
-    mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    approve: Option<solana_program::pubkey::Pubkey>,
+    distribution: Option<solana_program::pubkey::Pubkey>,
+    wns_program: Option<solana_program::pubkey::Pubkey>,
+    wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
+    extra_metas: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     max_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl BuyCoreSplBuilder {
+impl BuyWnsSplBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -308,21 +342,27 @@ impl BuyCoreSplBuilder {
         self
     }
     #[inline(always)]
+    pub fn buyer_ta(&mut self, buyer_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.buyer_ta = Some(buyer_ta);
+        self
+    }
+    #[inline(always)]
+    pub fn list_ta(&mut self, list_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ta = Some(list_ta);
+        self
+    }
+    #[inline(always)]
     pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
         self.list_state = Some(list_state);
         self
     }
+    /// WNS asset mint.
     #[inline(always)]
-    pub fn asset(&mut self, asset: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.asset = Some(asset);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn collection(&mut self, collection: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.collection = collection;
-        self
-    }
+    /// SPL token mint of the currency.
     #[inline(always)]
     pub fn currency(&mut self, currency: solana_program::pubkey::Pubkey) -> &mut Self {
         self.currency = Some(currency);
@@ -413,15 +453,6 @@ impl BuyCoreSplBuilder {
         self.associated_token_program = Some(associated_token_program);
         self
     }
-    /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
-    #[inline(always)]
-    pub fn mpl_core_program(
-        &mut self,
-        mpl_core_program: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.mpl_core_program = Some(mpl_core_program);
-        self
-    }
     /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn marketplace_program(
@@ -435,6 +466,36 @@ impl BuyCoreSplBuilder {
     #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn approve(&mut self, approve: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.approve = Some(approve);
+        self
+    }
+    #[inline(always)]
+    pub fn distribution(&mut self, distribution: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.distribution = Some(distribution);
+        self
+    }
+    /// `[optional account, default to 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM']`
+    #[inline(always)]
+    pub fn wns_program(&mut self, wns_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.wns_program = Some(wns_program);
+        self
+    }
+    /// `[optional account, default to 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay']`
+    #[inline(always)]
+    pub fn wns_distribution_program(
+        &mut self,
+        wns_distribution_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.wns_distribution_program = Some(wns_distribution_program);
+        self
+    }
+    #[inline(always)]
+    pub fn extra_metas(&mut self, extra_metas: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.extra_metas = Some(extra_metas);
         self
     }
     /// `[optional account]`
@@ -468,15 +529,16 @@ impl BuyCoreSplBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = BuyCoreSpl {
+        let accounts = BuyWnsSpl {
             fee_vault: self.fee_vault.expect("fee_vault is not set"),
             fee_vault_currency_ta: self
                 .fee_vault_currency_ta
                 .expect("fee_vault_currency_ta is not set"),
             buyer: self.buyer.expect("buyer is not set"),
+            buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
+            list_ta: self.list_ta.expect("list_ta is not set"),
             list_state: self.list_state.expect("list_state is not set"),
-            asset: self.asset.expect("asset is not set"),
-            collection: self.collection,
+            mint: self.mint.expect("mint is not set"),
             currency: self.currency.expect("currency is not set"),
             owner: self.owner.expect("owner is not set"),
             owner_currency_ta: self
@@ -497,18 +559,24 @@ impl BuyCoreSplBuilder {
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
             ),
-            mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
-                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
-            )),
             marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            approve: self.approve.expect("approve is not set"),
+            distribution: self.distribution.expect("distribution is not set"),
+            wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
+                "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
+            )),
+            wns_distribution_program: self.wns_distribution_program.unwrap_or(
+                solana_program::pubkey!("diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"),
+            ),
+            extra_metas: self.extra_metas.expect("extra_metas is not set"),
             cosigner: self.cosigner,
         };
-        let args = BuyCoreSplInstructionArgs {
+        let args = BuyWnsSplInstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
         };
 
@@ -516,20 +584,22 @@ impl BuyCoreSplBuilder {
     }
 }
 
-/// `buy_core_spl` CPI accounts.
-pub struct BuyCoreSplCpiAccounts<'a, 'b> {
+/// `buy_wns_spl` CPI accounts.
+pub struct BuyWnsSplCpiAccounts<'a, 'b> {
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub fee_vault_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub asset: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
+    /// WNS asset mint.
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// SPL token mint of the currency.
     pub currency: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
@@ -554,17 +624,25 @@ pub struct BuyCoreSplCpiAccounts<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub approve: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub distribution: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
-/// `buy_core_spl` CPI instruction.
-pub struct BuyCoreSplCpi<'a, 'b> {
+/// `buy_wns_spl` CPI instruction.
+pub struct BuyWnsSplCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -574,12 +652,14 @@ pub struct BuyCoreSplCpi<'a, 'b> {
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub asset: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-
+    /// WNS asset mint.
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// SPL token mint of the currency.
     pub currency: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
@@ -604,31 +684,40 @@ pub struct BuyCoreSplCpi<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub approve: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub distribution: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
-    pub __args: BuyCoreSplInstructionArgs,
+    pub __args: BuyWnsSplInstructionArgs,
 }
 
-impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
+impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: BuyCoreSplCpiAccounts<'a, 'b>,
-        args: BuyCoreSplInstructionArgs,
+        accounts: BuyWnsSplCpiAccounts<'a, 'b>,
+        args: BuyWnsSplInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             fee_vault: accounts.fee_vault,
             fee_vault_currency_ta: accounts.fee_vault_currency_ta,
             buyer: accounts.buyer,
+            buyer_ta: accounts.buyer_ta,
+            list_ta: accounts.list_ta,
             list_state: accounts.list_state,
-            asset: accounts.asset,
-            collection: accounts.collection,
+            mint: accounts.mint,
             currency: accounts.currency,
             owner: accounts.owner,
             owner_currency_ta: accounts.owner_currency_ta,
@@ -641,9 +730,13 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
             rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
-            mpl_core_program: accounts.mpl_core_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
+            approve: accounts.approve,
+            distribution: accounts.distribution,
+            wns_program: accounts.wns_program,
+            wns_distribution_program: accounts.wns_distribution_program,
+            extra_metas: accounts.extra_metas,
             cosigner: accounts.cosigner,
             __args: args,
         }
@@ -681,7 +774,7 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(22 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.fee_vault.key,
             false,
@@ -695,24 +788,21 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
+            *self.buyer_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.asset.key,
+            *self.list_ta.key,
             false,
         ));
-        if let Some(collection) = self.collection {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *collection.key,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TENSOR_MARKETPLACE_ID,
-                false,
-            ));
-        }
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.list_state.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.mint.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.currency.key,
             false,
@@ -790,15 +880,31 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.mpl_core_program.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.marketplace_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.approve.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.distribution.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.wns_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.wns_distribution_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.extra_metas.key,
             false,
         ));
         if let Some(cosigner) = self.cosigner {
@@ -819,7 +925,7 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = BuyCoreSplInstructionData::new().try_to_vec().unwrap();
+        let mut data = BuyWnsSplInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -828,16 +934,15 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(22 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(27 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.fee_vault_currency_ta.clone());
         account_infos.push(self.buyer.clone());
+        account_infos.push(self.buyer_ta.clone());
+        account_infos.push(self.list_ta.clone());
         account_infos.push(self.list_state.clone());
-        account_infos.push(self.asset.clone());
-        if let Some(collection) = self.collection {
-            account_infos.push(collection.clone());
-        }
+        account_infos.push(self.mint.clone());
         account_infos.push(self.currency.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_currency_ta.clone());
@@ -858,9 +963,13 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
         account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
-        account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
+        account_infos.push(self.approve.clone());
+        account_infos.push(self.distribution.clone());
+        account_infos.push(self.wns_program.clone());
+        account_infos.push(self.wns_distribution_program.clone());
+        account_infos.push(self.extra_metas.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
         }
@@ -876,47 +985,53 @@ impl<'a, 'b> BuyCoreSplCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `BuyCoreSpl` via CPI.
+/// Instruction builder for `BuyWnsSpl` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[writable]` fee_vault_currency_ta
 ///   2. `[]` buyer
-///   3. `[writable]` list_state
-///   4. `[writable]` asset
-///   5. `[optional]` collection
-///   6. `[]` currency
-///   7. `[writable]` owner
-///   8. `[writable]` owner_currency_ta
-///   9. `[writable, signer]` payer
-///   10. `[writable]` payer_currency_ta
-///   11. `[writable, optional]` taker_broker
-///   12. `[writable, optional]` taker_broker_ta
-///   13. `[writable, optional]` maker_broker
-///   14. `[writable, optional]` maker_broker_ta
-///   15. `[writable]` rent_destination
-///   16. `[]` token_program
-///   17. `[]` associated_token_program
-///   18. `[]` mpl_core_program
+///   3. `[writable]` buyer_ta
+///   4. `[writable]` list_ta
+///   5. `[writable]` list_state
+///   6. `[]` mint
+///   7. `[]` currency
+///   8. `[writable]` owner
+///   9. `[writable]` owner_currency_ta
+///   10. `[writable, signer]` payer
+///   11. `[writable]` payer_currency_ta
+///   12. `[writable, optional]` taker_broker
+///   13. `[writable, optional]` taker_broker_ta
+///   14. `[writable, optional]` maker_broker
+///   15. `[writable, optional]` maker_broker_ta
+///   16. `[writable]` rent_destination
+///   17. `[]` token_program
+///   18. `[]` associated_token_program
 ///   19. `[]` marketplace_program
 ///   20. `[]` system_program
-///   21. `[signer, optional]` cosigner
+///   21. `[writable]` approve
+///   22. `[writable]` distribution
+///   23. `[]` wns_program
+///   24. `[]` wns_distribution_program
+///   25. `[]` extra_metas
+///   26. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
-pub struct BuyCoreSplCpiBuilder<'a, 'b> {
-    instruction: Box<BuyCoreSplCpiBuilderInstruction<'a, 'b>>,
+pub struct BuyWnsSplCpiBuilder<'a, 'b> {
+    instruction: Box<BuyWnsSplCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
+impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(BuyCoreSplCpiBuilderInstruction {
+        let instruction = Box::new(BuyWnsSplCpiBuilderInstruction {
             __program: program,
             fee_vault: None,
             fee_vault_currency_ta: None,
             buyer: None,
+            buyer_ta: None,
+            list_ta: None,
             list_state: None,
-            asset: None,
-            collection: None,
+            mint: None,
             currency: None,
             owner: None,
             owner_currency_ta: None,
@@ -929,9 +1044,13 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
             rent_destination: None,
             token_program: None,
             associated_token_program: None,
-            mpl_core_program: None,
             marketplace_program: None,
             system_program: None,
+            approve: None,
+            distribution: None,
+            wns_program: None,
+            wns_distribution_program: None,
+            extra_metas: None,
             cosigner: None,
             max_amount: None,
             __remaining_accounts: Vec::new(),
@@ -960,6 +1079,22 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn buyer_ta(
+        &mut self,
+        buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.buyer_ta = Some(buyer_ta);
+        self
+    }
+    #[inline(always)]
+    pub fn list_ta(
+        &mut self,
+        list_ta: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ta = Some(list_ta);
+        self
+    }
+    #[inline(always)]
     pub fn list_state(
         &mut self,
         list_state: &'b solana_program::account_info::AccountInfo<'a>,
@@ -967,20 +1102,13 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         self.instruction.list_state = Some(list_state);
         self
     }
+    /// WNS asset mint.
     #[inline(always)]
-    pub fn asset(&mut self, asset: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.asset = Some(asset);
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
-    /// `[optional account]`
-    #[inline(always)]
-    pub fn collection(
-        &mut self,
-        collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.collection = collection;
-        self
-    }
+    /// SPL token mint of the currency.
     #[inline(always)]
     pub fn currency(
         &mut self,
@@ -1076,14 +1204,6 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn mpl_core_program(
-        &mut self,
-        mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.mpl_core_program = Some(mpl_core_program);
-        self
-    }
-    #[inline(always)]
     pub fn marketplace_program(
         &mut self,
         marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -1097,6 +1217,46 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn approve(
+        &mut self,
+        approve: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.approve = Some(approve);
+        self
+    }
+    #[inline(always)]
+    pub fn distribution(
+        &mut self,
+        distribution: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.distribution = Some(distribution);
+        self
+    }
+    #[inline(always)]
+    pub fn wns_program(
+        &mut self,
+        wns_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.wns_program = Some(wns_program);
+        self
+    }
+    #[inline(always)]
+    pub fn wns_distribution_program(
+        &mut self,
+        wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.wns_distribution_program = Some(wns_distribution_program);
+        self
+    }
+    #[inline(always)]
+    pub fn extra_metas(
+        &mut self,
+        extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.extra_metas = Some(extra_metas);
         self
     }
     /// `[optional account]`
@@ -1154,14 +1314,14 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = BuyCoreSplInstructionArgs {
+        let args = BuyWnsSplInstructionArgs {
             max_amount: self
                 .instruction
                 .max_amount
                 .clone()
                 .expect("max_amount is not set"),
         };
-        let instruction = BuyCoreSplCpi {
+        let instruction = BuyWnsSplCpi {
             __program: self.instruction.__program,
 
             fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
@@ -1173,11 +1333,13 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
 
             buyer: self.instruction.buyer.expect("buyer is not set"),
 
+            buyer_ta: self.instruction.buyer_ta.expect("buyer_ta is not set"),
+
+            list_ta: self.instruction.list_ta.expect("list_ta is not set"),
+
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
-            asset: self.instruction.asset.expect("asset is not set"),
-
-            collection: self.instruction.collection,
+            mint: self.instruction.mint.expect("mint is not set"),
 
             currency: self.instruction.currency.expect("currency is not set"),
 
@@ -1218,11 +1380,6 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
                 .associated_token_program
                 .expect("associated_token_program is not set"),
 
-            mpl_core_program: self
-                .instruction
-                .mpl_core_program
-                .expect("mpl_core_program is not set"),
-
             marketplace_program: self
                 .instruction
                 .marketplace_program
@@ -1232,6 +1389,28 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
+
+            approve: self.instruction.approve.expect("approve is not set"),
+
+            distribution: self
+                .instruction
+                .distribution
+                .expect("distribution is not set"),
+
+            wns_program: self
+                .instruction
+                .wns_program
+                .expect("wns_program is not set"),
+
+            wns_distribution_program: self
+                .instruction
+                .wns_distribution_program
+                .expect("wns_distribution_program is not set"),
+
+            extra_metas: self
+                .instruction
+                .extra_metas
+                .expect("extra_metas is not set"),
 
             cosigner: self.instruction.cosigner,
             __args: args,
@@ -1244,14 +1423,15 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct BuyCoreSplCpiBuilderInstruction<'a, 'b> {
+struct BuyWnsSplCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     fee_vault_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    buyer_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1264,9 +1444,13 @@ struct BuyCoreSplCpiBuilderInstruction<'a, 'b> {
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    approve: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     max_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

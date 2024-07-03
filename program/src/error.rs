@@ -89,4 +89,8 @@ pub enum TcompError {
     InvalidFeeAccount = 140,
     #[msg("insufficient remaining accounts")]
     InsufficientRemainingAccounts = 141,
+    #[msg("missing broker account")]
+    MissingBroker = 142,
+    #[msg("missing broker token account")]
+    MissingBrokerTokenAccount = 143,
 }

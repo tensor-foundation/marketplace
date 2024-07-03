@@ -136,6 +136,12 @@ pub enum TensorMarketplaceError {
     /// 6141 - insufficient remaining accounts
     #[error("insufficient remaining accounts")]
     InsufficientRemainingAccounts = 0x17FD,
+    /// 6142 - missing broker account
+    #[error("missing broker account")]
+    MissingBroker = 0x17FE,
+    /// 6143 - missing broker token account
+    #[error("missing broker token account")]
+    MissingBrokerTokenAccount = 0x17FF,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

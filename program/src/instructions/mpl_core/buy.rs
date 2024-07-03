@@ -14,7 +14,7 @@ use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: Checked in assert_fee_account() in validate().
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 

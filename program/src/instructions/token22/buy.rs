@@ -5,7 +5,7 @@ use anchor_spl::{
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
+    calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::{validate_mint, RoyaltyInfo},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
@@ -100,11 +100,6 @@ pub struct BuyT22<'info> {
 
 impl<'info> Validate<'info> for BuyT22<'info> {
     fn validate(&self) -> Result<()> {
-        assert_fee_account(
-            &self.fee_vault.to_account_info(),
-            &self.list_state.to_account_info(),
-        )?;
-
         let list_state = &self.list_state;
 
         require!(
@@ -164,8 +159,7 @@ pub fn process_buy_t22<'info, 'b>(
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    // transfer the NFT
-
+    // Transfer the NFT to the buyer.
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {

@@ -36,7 +36,7 @@ pub struct BuyCoreSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
-    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -75,7 +75,7 @@ pub struct BuyCoreSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = owner,
     )]
-    pub owner_currency_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -88,7 +88,7 @@ pub struct BuyCoreSpl<'info> {
 
     /// CHECK: none, can be anything
     #[account(mut,
-        constraint = taker_broker_ata.is_some()
+        constraint = taker_broker_ta.is_some()
     )]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
@@ -97,11 +97,11 @@ pub struct BuyCoreSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
     )]
-    pub taker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: none, can be anything
     #[account(mut,
-        constraint = maker_broker_ata.is_some()
+        constraint = maker_broker_ta.is_some()
     )]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -110,7 +110,7 @@ pub struct BuyCoreSpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
     )]
-    pub maker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: list_state.get_rent_payer()
     #[account(
@@ -173,7 +173,7 @@ impl<'info> Validate<'info> for BuyCoreSpl<'info> {
 }
 
 impl<'info> BuyCoreSpl<'info> {
-    fn transfer_ata(
+    fn transfer_ta(
         &self,
         to: &AccountInfo<'info>,
         mint: &AccountInfo<'info>,
@@ -270,19 +270,19 @@ pub fn process_buy_core_spl<'info, 'b>(
     // --Pay fees in currency--
 
     // Protocol fee.
-    ctx.accounts.transfer_ata(
-        ctx.accounts.fee_vault_ata.deref().as_ref(),
+    ctx.accounts.transfer_ta(
+        ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
         ctx.accounts.currency.decimals,
     )?;
 
     // Maker broker fee.
-    ctx.accounts.transfer_ata(
+    ctx.accounts.transfer_ta(
         ctx.accounts
-            .maker_broker_ata
+            .maker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -291,11 +291,11 @@ pub fn process_buy_core_spl<'info, 'b>(
     )?;
 
     // Taker broker fee.
-    ctx.accounts.transfer_ata(
+    ctx.accounts.transfer_ta(
         ctx.accounts
-            .taker_broker_ata
+            .taker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -310,18 +310,17 @@ pub fn process_buy_core_spl<'info, 'b>(
             throw_err!(TcompError::InsufficientRemainingAccounts);
         }
 
-        let (creator_accounts, creator_ata_accounts) =
-            ctx.remaining_accounts.split_at(creators_len);
+        let (creator_accounts, creator_ta_accounts) = ctx.remaining_accounts.split_at(creators_len);
 
-        let creator_accounts_with_ata = creator_accounts
+        let creator_accounts_with_ta = creator_accounts
             .iter()
-            .zip(creator_ata_accounts.iter())
+            .zip(creator_ta_accounts.iter())
             .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
             .collect::<Vec<_>>();
 
         transfer_creators_fee(
             &creators.into_iter().map(Into::into).collect(),
-            &mut creator_accounts_with_ata.iter(),
+            &mut creator_accounts_with_ta.iter(),
             creator_fee,
             &CreatorFeeMode::Spl {
                 associated_token_program: &ctx.accounts.associated_token_program,
@@ -336,8 +335,8 @@ pub fn process_buy_core_spl<'info, 'b>(
     }
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts.transfer_ata(
-        ctx.accounts.owner_currency_ata.deref().as_ref(),
+    ctx.accounts.transfer_ta(
+        ctx.accounts.owner_currency_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         amount,
         ctx.accounts.currency.decimals,
