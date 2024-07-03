@@ -94,7 +94,7 @@ pub fn process_list_core<'info>(
     list_state.expiry = expiry;
     list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
     list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
-    // seriallizes the account data
+    // serializes the account data
     list_state.exit(ctx.program_id)?;
 
     record_event(

@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@solana/web3.js':
+        specifier: 2.0.0-preview.3
+        version: 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
       '@tensor-foundation/resolvers':
-        specifier: ^0.0.6
-        version: 0.0.6(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
+        specifier: ^0.2.0
+        version: 0.2.0(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
     devDependencies:
       '@ava/typescript':
         specifier: ^4.1.0
@@ -21,9 +24,6 @@ importers:
       '@solana/eslint-config-solana':
         specifier: ^3.0.0
         version: 3.0.3(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-jest@27.9.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-react-hooks@4.6.0(eslint@8.57.0))(eslint-plugin-simple-import-sort@10.0.0(eslint@8.57.0))(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.2.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
-      '@solana/web3.js':
-        specifier: 2.0.0-preview.3
-        version: 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
       '@solana/webcrypto-ed25519-polyfill':
         specifier: 2.0.0-preview.3
         version: 2.0.0-preview.3
@@ -501,8 +501,8 @@ packages:
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
 
-  '@tensor-foundation/resolvers@0.0.6':
-    resolution: {integrity: sha512-mc/wKUxRVxI139aIwjN8WBq/PyTCspAL8o57PMro+T+imkZphZQBzRhorzBqBrA6vPNteadV2tVHuyw25DWpiw==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/resolvers/0.0.6/2bae3d978561b8a88f472b4172aac37c4ca2eabf}
+  '@tensor-foundation/resolvers@0.2.0':
+    resolution: {integrity: sha512-Uzk5Fq8yexkrIMD6IbGaTsFcyGHQPBxSCUgRyUvHb/3vPka3XoH4P0JrAOWL9l1qIJavjgNY4l+SSE8jGpdvhQ==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/resolvers/0.2.0/d585173a41dc04d8c0a94c67d721eccc9598bc75}
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
 
@@ -2443,7 +2443,7 @@ snapshots:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
       '@tensor-foundation/test-helpers': 0.0.4(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
 
-  '@tensor-foundation/resolvers@0.0.6(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
+  '@tensor-foundation/resolvers@0.2.0(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
 

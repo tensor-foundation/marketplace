@@ -54,9 +54,9 @@ export type BuyWnsInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountBuyerAta extends string | IAccountMeta<string> = string,
+  TAccountBuyerTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
@@ -98,15 +98,15 @@ export type BuyWnsInstruction<
       TAccountBuyer extends string
         ? ReadonlyAccount<TAccountBuyer>
         : TAccountBuyer,
-      TAccountBuyerAta extends string
-        ? WritableAccount<TAccountBuyerAta>
-        : TAccountBuyerAta,
+      TAccountBuyerTa extends string
+        ? WritableAccount<TAccountBuyerTa>
+        : TAccountBuyerTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountListAta extends string
-        ? WritableAccount<TAccountListAta>
-        : TAccountListAta,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -206,9 +206,9 @@ export type BuyWnsInstructionExtraArgs = {
 export type BuyWnsAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
+  TAccountBuyerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountOwner extends string = string,
   TAccountPayer extends string = string,
@@ -228,9 +228,9 @@ export type BuyWnsAsyncInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
-  buyerAta?: Address<TAccountBuyerAta>;
+  buyerTa?: Address<TAccountBuyerTa>;
   listState?: Address<TAccountListState>;
-  listAta?: Address<TAccountListAta>;
+  listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
   payer: TransactionSigner<TAccountPayer>;
@@ -255,9 +255,9 @@ export type BuyWnsAsyncInput<
 export async function getBuyWnsInstructionAsync<
   TAccountFeeVault extends string,
   TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
+  TAccountBuyerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountOwner extends string,
   TAccountPayer extends string,
@@ -278,9 +278,9 @@ export async function getBuyWnsInstructionAsync<
   input: BuyWnsAsyncInput<
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
+    TAccountBuyerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountOwner,
     TAccountPayer,
@@ -303,9 +303,9 @@ export async function getBuyWnsInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
+    TAccountBuyerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountOwner,
     TAccountPayer,
@@ -331,9 +331,9 @@ export async function getBuyWnsInstructionAsync<
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
+    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
@@ -381,9 +381,9 @@ export async function getBuyWnsInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.buyerAta.value) {
-    accounts.buyerAta = {
-      ...accounts.buyerAta,
+  if (!accounts.buyerTa.value) {
+    accounts.buyerTa = {
+      ...accounts.buyerTa,
       ...(await resolveBuyerAta(resolverScope)),
     };
   }
@@ -392,9 +392,9 @@ export async function getBuyWnsInstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
-  if (!accounts.listAta.value) {
-    accounts.listAta = {
-      ...accounts.listAta,
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
     };
   }
@@ -453,9 +453,9 @@ export async function getBuyWnsInstructionAsync<
     accounts: [
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
+      getAccountMeta(accounts.buyerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.payer),
@@ -481,9 +481,9 @@ export async function getBuyWnsInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
+    TAccountBuyerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountOwner,
     TAccountPayer,
@@ -508,9 +508,9 @@ export async function getBuyWnsInstructionAsync<
 export type BuyWnsInput<
   TAccountFeeVault extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
+  TAccountBuyerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountOwner extends string = string,
   TAccountPayer extends string = string,
@@ -530,9 +530,9 @@ export type BuyWnsInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
-  buyerAta: Address<TAccountBuyerAta>;
+  buyerTa: Address<TAccountBuyerTa>;
   listState: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
   payer: TransactionSigner<TAccountPayer>;
@@ -557,9 +557,9 @@ export type BuyWnsInput<
 export function getBuyWnsInstruction<
   TAccountFeeVault extends string,
   TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
+  TAccountBuyerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountOwner extends string,
   TAccountPayer extends string,
@@ -580,9 +580,9 @@ export function getBuyWnsInstruction<
   input: BuyWnsInput<
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
+    TAccountBuyerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountOwner,
     TAccountPayer,
@@ -604,9 +604,9 @@ export function getBuyWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountBuyer,
-  TAccountBuyerAta,
+  TAccountBuyerTa,
   TAccountListState,
-  TAccountListAta,
+  TAccountListTa,
   TAccountMint,
   TAccountOwner,
   TAccountPayer,
@@ -631,9 +631,9 @@ export function getBuyWnsInstruction<
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
+    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
@@ -715,9 +715,9 @@ export function getBuyWnsInstruction<
     accounts: [
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
+      getAccountMeta(accounts.buyerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.payer),
@@ -743,9 +743,9 @@ export function getBuyWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
+    TAccountBuyerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountOwner,
     TAccountPayer,
@@ -775,9 +775,9 @@ export type ParsedBuyWnsInstruction<
   accounts: {
     feeVault: TAccountMetas[0];
     buyer: TAccountMetas[1];
-    buyerAta: TAccountMetas[2];
+    buyerTa: TAccountMetas[2];
     listState: TAccountMetas[3];
-    listAta: TAccountMetas[4];
+    listTa: TAccountMetas[4];
     mint: TAccountMetas[5];
     owner: TAccountMetas[6];
     payer: TAccountMetas[7];
@@ -827,9 +827,9 @@ export function parseBuyWnsInstruction<
     accounts: {
       feeVault: getNextAccount(),
       buyer: getNextAccount(),
-      buyerAta: getNextAccount(),
+      buyerTa: getNextAccount(),
       listState: getNextAccount(),
-      listAta: getNextAccount(),
+      listTa: getNextAccount(),
       mint: getNextAccount(),
       owner: getNextAccount(),
       payer: getNextAccount(),

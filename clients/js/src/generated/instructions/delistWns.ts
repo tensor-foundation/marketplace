@@ -50,9 +50,9 @@ import {
 export type DelistWnsInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
@@ -86,15 +86,15 @@ export type DelistWnsInstruction<
         ? ReadonlySignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountListAta extends string
-        ? WritableAccount<TAccountListAta>
-        : TAccountListAta,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -174,9 +174,9 @@ export type DelistWnsInstructionExtraArgs = {
 
 export type DelistWnsAsyncInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
   TAccountPayer extends string = string,
@@ -191,9 +191,9 @@ export type DelistWnsAsyncInput<
   TAccountExtraMetas extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
-  ownerAta?: Address<TAccountOwnerAta>;
+  ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
-  listAta?: Address<TAccountListAta>;
+  listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: TransactionSigner<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
@@ -212,9 +212,9 @@ export type DelistWnsAsyncInput<
 
 export async function getDelistWnsInstructionAsync<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
   TAccountPayer extends string,
@@ -230,9 +230,9 @@ export async function getDelistWnsInstructionAsync<
 >(
   input: DelistWnsAsyncInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
     TAccountPayer,
@@ -250,9 +250,9 @@ export async function getDelistWnsInstructionAsync<
   DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
     TAccountPayer,
@@ -273,9 +273,9 @@ export async function getDelistWnsInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
@@ -314,9 +314,9 @@ export async function getDelistWnsInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.ownerAta.value) {
-    accounts.ownerAta = {
-      ...accounts.ownerAta,
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
       ...(await resolveOwnerAta(resolverScope)),
     };
   }
@@ -325,9 +325,9 @@ export async function getDelistWnsInstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
-  if (!accounts.listAta.value) {
-    accounts.listAta = {
-      ...accounts.listAta,
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
     };
   }
@@ -384,9 +384,9 @@ export async function getDelistWnsInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.payer),
@@ -405,9 +405,9 @@ export async function getDelistWnsInstructionAsync<
   } as DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
     TAccountPayer,
@@ -427,9 +427,9 @@ export async function getDelistWnsInstructionAsync<
 
 export type DelistWnsInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountRentDestination extends string = string,
   TAccountPayer extends string = string,
@@ -444,9 +444,9 @@ export type DelistWnsInput<
   TAccountExtraMetas extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: TransactionSigner<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
@@ -465,9 +465,9 @@ export type DelistWnsInput<
 
 export function getDelistWnsInstruction<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountRentDestination extends string,
   TAccountPayer extends string,
@@ -483,9 +483,9 @@ export function getDelistWnsInstruction<
 >(
   input: DelistWnsInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
     TAccountPayer,
@@ -502,9 +502,9 @@ export function getDelistWnsInstruction<
 ): DelistWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountListState,
-  TAccountListAta,
+  TAccountListTa,
   TAccountMint,
   TAccountRentDestination,
   TAccountPayer,
@@ -524,9 +524,9 @@ export function getDelistWnsInstruction<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
@@ -597,9 +597,9 @@ export function getDelistWnsInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.payer),
@@ -618,9 +618,9 @@ export function getDelistWnsInstruction<
   } as DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
     TAccountPayer,
@@ -645,9 +645,9 @@ export type ParsedDelistWnsInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     owner: TAccountMetas[0];
-    ownerAta: TAccountMetas[1];
+    ownerTa: TAccountMetas[1];
     listState: TAccountMetas[2];
-    listAta: TAccountMetas[3];
+    listTa: TAccountMetas[3];
     mint: TAccountMetas[4];
     rentDestination: TAccountMetas[5];
     payer: TAccountMetas[6];
@@ -686,9 +686,9 @@ export function parseDelistWnsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       owner: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       listState: getNextAccount(),
-      listAta: getNextAccount(),
+      listTa: getNextAccount(),
       mint: getNextAccount(),
       rentDestination: getNextAccount(),
       payer: getNextAccount(),

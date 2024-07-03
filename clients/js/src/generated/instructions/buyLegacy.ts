@@ -75,8 +75,8 @@ export type BuyLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
-  TAccountBuyerAta extends string | IAccountMeta<string> = string,
-  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountBuyerTa extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -120,12 +120,12 @@ export type BuyLegacyInstruction<
       TAccountBuyer extends string
         ? ReadonlyAccount<TAccountBuyer>
         : TAccountBuyer,
-      TAccountBuyerAta extends string
-        ? WritableAccount<TAccountBuyerAta>
-        : TAccountBuyerAta,
-      TAccountListAta extends string
-        ? WritableAccount<TAccountListAta>
-        : TAccountListAta,
+      TAccountBuyerTa extends string
+        ? WritableAccount<TAccountBuyerTa>
+        : TAccountBuyerTa,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
@@ -251,8 +251,8 @@ export type BuyLegacyInstructionExtraArgs = {
 export type BuyLegacyAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
-  TAccountListAta extends string = string,
+  TAccountBuyerTa extends string = string,
+  TAccountListTa extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
   TAccountOwner extends string = string,
@@ -276,8 +276,8 @@ export type BuyLegacyAsyncInput<
 > = {
   feeVault?: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
-  buyerAta?: Address<TAccountBuyerAta>;
-  listAta?: Address<TAccountListAta>;
+  buyerTa?: Address<TAccountBuyerTa>;
+  listTa?: Address<TAccountListTa>;
   listState?: Address<TAccountListState>;
   mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
@@ -308,8 +308,8 @@ export type BuyLegacyAsyncInput<
 export async function getBuyLegacyInstructionAsync<
   TAccountFeeVault extends string,
   TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
-  TAccountListAta extends string,
+  TAccountBuyerTa extends string,
+  TAccountListTa extends string,
   TAccountListState extends string,
   TAccountMint extends string,
   TAccountOwner extends string,
@@ -334,8 +334,8 @@ export async function getBuyLegacyInstructionAsync<
   input: BuyLegacyAsyncInput<
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountListAta,
+    TAccountBuyerTa,
+    TAccountListTa,
     TAccountListState,
     TAccountMint,
     TAccountOwner,
@@ -362,8 +362,8 @@ export async function getBuyLegacyInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountListAta,
+    TAccountBuyerTa,
+    TAccountListTa,
     TAccountListState,
     TAccountMint,
     TAccountOwner,
@@ -393,8 +393,8 @@ export async function getBuyLegacyInstructionAsync<
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -469,15 +469,15 @@ export async function getBuyLegacyInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.buyerAta.value) {
-    accounts.buyerAta = {
-      ...accounts.buyerAta,
+  if (!accounts.buyerTa.value) {
+    accounts.buyerTa = {
+      ...accounts.buyerTa,
       ...(await resolveBuyerAta(resolverScope)),
     };
   }
-  if (!accounts.listAta.value) {
-    accounts.listAta = {
-      ...accounts.listAta,
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
     };
   }
@@ -503,7 +503,7 @@ export async function getBuyLegacyInstructionAsync<
     };
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.edition.value) {
     accounts.edition = {
@@ -556,8 +556,8 @@ export async function getBuyLegacyInstructionAsync<
     accounts: [
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.buyerTa),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
@@ -588,8 +588,8 @@ export async function getBuyLegacyInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountListAta,
+    TAccountBuyerTa,
+    TAccountListTa,
     TAccountListState,
     TAccountMint,
     TAccountOwner,
@@ -618,8 +618,8 @@ export async function getBuyLegacyInstructionAsync<
 export type BuyLegacyInput<
   TAccountFeeVault extends string = string,
   TAccountBuyer extends string = string,
-  TAccountBuyerAta extends string = string,
-  TAccountListAta extends string = string,
+  TAccountBuyerTa extends string = string,
+  TAccountListTa extends string = string,
   TAccountListState extends string = string,
   TAccountMint extends string = string,
   TAccountOwner extends string = string,
@@ -643,8 +643,8 @@ export type BuyLegacyInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   buyer?: Address<TAccountBuyer>;
-  buyerAta: Address<TAccountBuyerAta>;
-  listAta: Address<TAccountListAta>;
+  buyerTa: Address<TAccountBuyerTa>;
+  listTa: Address<TAccountListTa>;
   listState: Address<TAccountListState>;
   mint: Address<TAccountMint>;
   owner: Address<TAccountOwner>;
@@ -675,8 +675,8 @@ export type BuyLegacyInput<
 export function getBuyLegacyInstruction<
   TAccountFeeVault extends string,
   TAccountBuyer extends string,
-  TAccountBuyerAta extends string,
-  TAccountListAta extends string,
+  TAccountBuyerTa extends string,
+  TAccountListTa extends string,
   TAccountListState extends string,
   TAccountMint extends string,
   TAccountOwner extends string,
@@ -701,8 +701,8 @@ export function getBuyLegacyInstruction<
   input: BuyLegacyInput<
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountListAta,
+    TAccountBuyerTa,
+    TAccountListTa,
     TAccountListState,
     TAccountMint,
     TAccountOwner,
@@ -728,8 +728,8 @@ export function getBuyLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountBuyer,
-  TAccountBuyerAta,
-  TAccountListAta,
+  TAccountBuyerTa,
+  TAccountListTa,
   TAccountListState,
   TAccountMint,
   TAccountOwner,
@@ -758,8 +758,8 @@ export function getBuyLegacyInstruction<
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerAta: { value: input.buyerAta ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -839,7 +839,7 @@ export function getBuyLegacyInstruction<
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.authorizationRulesProgram.value) {
     accounts.authorizationRulesProgram = {
@@ -874,8 +874,8 @@ export function getBuyLegacyInstruction<
     accounts: [
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerAta),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.buyerTa),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.owner),
@@ -906,8 +906,8 @@ export function getBuyLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountBuyer,
-    TAccountBuyerAta,
-    TAccountListAta,
+    TAccountBuyerTa,
+    TAccountListTa,
     TAccountListState,
     TAccountMint,
     TAccountOwner,
@@ -941,8 +941,8 @@ export type ParsedBuyLegacyInstruction<
   accounts: {
     feeVault: TAccountMetas[0];
     buyer: TAccountMetas[1];
-    buyerAta: TAccountMetas[2];
-    listAta: TAccountMetas[3];
+    buyerTa: TAccountMetas[2];
+    listTa: TAccountMetas[3];
     listState: TAccountMetas[4];
     mint: TAccountMetas[5];
     owner: TAccountMetas[6];
@@ -996,8 +996,8 @@ export function parseBuyLegacyInstruction<
     accounts: {
       feeVault: getNextAccount(),
       buyer: getNextAccount(),
-      buyerAta: getNextAccount(),
-      listAta: getNextAccount(),
+      buyerTa: getNextAccount(),
+      listTa: getNextAccount(),
       listState: getNextAccount(),
       mint: getNextAccount(),
       owner: getNextAccount(),

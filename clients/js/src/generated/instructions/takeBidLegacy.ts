@@ -88,7 +88,7 @@ export type TakeBidLegacyInstruction<
   TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountMetadata extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountEdition extends string | IAccountMeta<string> = string,
   TAccountSellerTokenRecord extends string | IAccountMeta<string> = string,
   TAccountOwnerTokenRecord extends string | IAccountMeta<string> = string,
@@ -157,9 +157,9 @@ export type TakeBidLegacyInstruction<
       TAccountMetadata extends string
         ? WritableAccount<TAccountMetadata>
         : TAccountMetadata,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountEdition extends string
         ? ReadonlyAccount<TAccountEdition>
         : TAccountEdition,
@@ -289,7 +289,7 @@ export type TakeBidLegacyAsyncInput<
   TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
   TAccountMetadata extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountEdition extends string = string,
   TAccountSellerTokenRecord extends string = string,
   TAccountOwnerTokenRecord extends string = string,
@@ -319,7 +319,7 @@ export type TakeBidLegacyAsyncInput<
   sellerTa?: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   metadata?: Address<TAccountMetadata>;
-  ownerAta?: Address<TAccountOwnerAta>;
+  ownerTa?: Address<TAccountOwnerTa>;
   edition?: Address<TAccountEdition>;
   sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -359,7 +359,7 @@ export async function getTakeBidLegacyInstructionAsync<
   TAccountSellerTa extends string,
   TAccountMint extends string,
   TAccountMetadata extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountEdition extends string,
   TAccountSellerTokenRecord extends string,
   TAccountOwnerTokenRecord extends string,
@@ -390,7 +390,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
@@ -423,7 +423,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
@@ -459,7 +459,7 @@ export async function getTakeBidLegacyInstructionAsync<
     sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     metadata: { value: input.metadata ?? null, isWritable: true },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     sellerTokenRecord: {
       value: input.sellerTokenRecord ?? null,
@@ -549,14 +549,14 @@ export async function getTakeBidLegacyInstructionAsync<
       ...(await resolveMetadata(resolverScope)),
     };
   }
-  if (!accounts.ownerAta.value) {
-    accounts.ownerAta = {
-      ...accounts.ownerAta,
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
       ...(await resolveOwnerAta(resolverScope)),
     };
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.edition.value) {
     accounts.edition = {
@@ -645,7 +645,7 @@ export async function getTakeBidLegacyInstructionAsync<
       getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.metadata),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.sellerTokenRecord),
       getAccountMeta(accounts.ownerTokenRecord),
@@ -682,7 +682,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
@@ -717,7 +717,7 @@ export type TakeBidLegacyInput<
   TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
   TAccountMetadata extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountEdition extends string = string,
   TAccountSellerTokenRecord extends string = string,
   TAccountOwnerTokenRecord extends string = string,
@@ -747,7 +747,7 @@ export type TakeBidLegacyInput<
   sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   metadata: Address<TAccountMetadata>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   edition: Address<TAccountEdition>;
   sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -787,7 +787,7 @@ export function getTakeBidLegacyInstruction<
   TAccountSellerTa extends string,
   TAccountMint extends string,
   TAccountMetadata extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountEdition extends string,
   TAccountSellerTokenRecord extends string,
   TAccountOwnerTokenRecord extends string,
@@ -818,7 +818,7 @@ export function getTakeBidLegacyInstruction<
     TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
@@ -850,7 +850,7 @@ export function getTakeBidLegacyInstruction<
   TAccountSellerTa,
   TAccountMint,
   TAccountMetadata,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountEdition,
   TAccountSellerTokenRecord,
   TAccountOwnerTokenRecord,
@@ -885,7 +885,7 @@ export function getTakeBidLegacyInstruction<
     sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     metadata: { value: input.metadata ?? null, isWritable: true },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     sellerTokenRecord: {
       value: input.sellerTokenRecord ?? null,
@@ -952,7 +952,7 @@ export function getTakeBidLegacyInstruction<
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.tokenMetadataProgram.value) {
     accounts.tokenMetadataProgram = {
@@ -1011,7 +1011,7 @@ export function getTakeBidLegacyInstruction<
       getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.metadata),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.sellerTokenRecord),
       getAccountMeta(accounts.ownerTokenRecord),
@@ -1048,7 +1048,7 @@ export function getTakeBidLegacyInstruction<
     TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
@@ -1088,7 +1088,7 @@ export type ParsedTakeBidLegacyInstruction<
     sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
     metadata: TAccountMetas[10];
-    ownerAta: TAccountMetas[11];
+    ownerTa: TAccountMetas[11];
     edition: TAccountMetas[12];
     sellerTokenRecord?: TAccountMetas[13] | undefined;
     ownerTokenRecord?: TAccountMetas[14] | undefined;
@@ -1150,7 +1150,7 @@ export function parseTakeBidLegacyInstruction<
       sellerTa: getNextAccount(),
       mint: getNextAccount(),
       metadata: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       edition: getNextAccount(),
       sellerTokenRecord: getNextOptionalAccount(),
       ownerTokenRecord: getNextOptionalAccount(),

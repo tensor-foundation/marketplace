@@ -24,7 +24,7 @@ pub struct ListWns<'info> {
     pub owner: Signer<'info>,
 
     #[account(mut, token::mint = mint, token::authority = owner)]
-    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -44,7 +44,7 @@ pub struct ListWns<'info> {
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -120,8 +120,8 @@ pub fn process_list_wns<'info>(
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.owner_ata.to_account_info(),
-            to: ctx.accounts.list_ata.to_account_info(),
+            from: ctx.accounts.owner_ta.to_account_info(),
+            to: ctx.accounts.list_ta.to_account_info(),
             authority: ctx.accounts.owner.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -189,7 +189,7 @@ pub fn process_list_wns<'info>(
     close_account(CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         CloseAccount {
-            account: ctx.accounts.owner_ata.to_account_info(),
+            account: ctx.accounts.owner_ta.to_account_info(),
             destination: ctx.accounts.payer.to_account_info(),
             authority: ctx.accounts.owner.to_account_info(),
         },

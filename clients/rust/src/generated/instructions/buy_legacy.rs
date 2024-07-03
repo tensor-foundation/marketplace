@@ -15,9 +15,9 @@ pub struct BuyLegacy {
 
     pub buyer: solana_program::pubkey::Pubkey,
 
-    pub buyer_ata: solana_program::pubkey::Pubkey,
+    pub buyer_ta: solana_program::pubkey::Pubkey,
 
-    pub list_ata: solana_program::pubkey::Pubkey,
+    pub list_ta: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -82,11 +82,11 @@ impl BuyLegacy {
             self.buyer, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.buyer_ata,
+            self.buyer_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_ata,
+            self.list_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -274,8 +274,8 @@ pub struct BuyLegacyInstructionArgs {
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[]` buyer
-///   2. `[writable]` buyer_ata
-///   3. `[writable]` list_ata
+///   2. `[writable]` buyer_ta
+///   3. `[writable]` list_ta
 ///   4. `[writable]` list_state
 ///   5. `[]` mint
 ///   6. `[writable]` owner
@@ -300,8 +300,8 @@ pub struct BuyLegacyInstructionArgs {
 pub struct BuyLegacyBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
     buyer: Option<solana_program::pubkey::Pubkey>,
-    buyer_ata: Option<solana_program::pubkey::Pubkey>,
-    list_ata: Option<solana_program::pubkey::Pubkey>,
+    buyer_ta: Option<solana_program::pubkey::Pubkey>,
+    list_ta: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -343,13 +343,13 @@ impl BuyLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn buyer_ata(&mut self, buyer_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.buyer_ata = Some(buyer_ata);
+    pub fn buyer_ta(&mut self, buyer_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.buyer_ta = Some(buyer_ta);
         self
     }
     #[inline(always)]
-    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_ata = Some(list_ata);
+    pub fn list_ta(&mut self, list_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ta = Some(list_ta);
         self
     }
     #[inline(always)]
@@ -538,8 +538,8 @@ impl BuyLegacyBuilder {
         let accounts = BuyLegacy {
             fee_vault: self.fee_vault.expect("fee_vault is not set"),
             buyer: self.buyer.expect("buyer is not set"),
-            buyer_ata: self.buyer_ata.expect("buyer_ata is not set"),
-            list_ata: self.list_ata.expect("list_ata is not set"),
+            buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
+            list_ta: self.list_ta.expect("list_ta is not set"),
             list_state: self.list_state.expect("list_state is not set"),
             mint: self.mint.expect("mint is not set"),
             owner: self.owner.expect("owner is not set"),
@@ -585,9 +585,9 @@ pub struct BuyLegacyCpiAccounts<'a, 'b> {
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -639,9 +639,9 @@ pub struct BuyLegacyCpi<'a, 'b> {
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -696,8 +696,8 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             __program: program,
             fee_vault: accounts.fee_vault,
             buyer: accounts.buyer,
-            buyer_ata: accounts.buyer_ata,
-            list_ata: accounts.list_ata,
+            buyer_ta: accounts.buyer_ta,
+            list_ta: accounts.list_ta,
             list_state: accounts.list_state,
             mint: accounts.mint,
             owner: accounts.owner,
@@ -764,11 +764,11 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.buyer_ata.key,
+            *self.buyer_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_ata.key,
+            *self.list_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -934,8 +934,8 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.buyer.clone());
-        account_infos.push(self.buyer_ata.clone());
-        account_infos.push(self.list_ata.clone());
+        account_infos.push(self.buyer_ta.clone());
+        account_infos.push(self.list_ta.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.owner.clone());
@@ -992,8 +992,8 @@ impl<'a, 'b> BuyLegacyCpi<'a, 'b> {
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[]` buyer
-///   2. `[writable]` buyer_ata
-///   3. `[writable]` list_ata
+///   2. `[writable]` buyer_ta
+///   3. `[writable]` list_ta
 ///   4. `[writable]` list_state
 ///   5. `[]` mint
 ///   6. `[writable]` owner
@@ -1025,8 +1025,8 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
             __program: program,
             fee_vault: None,
             buyer: None,
-            buyer_ata: None,
-            list_ata: None,
+            buyer_ta: None,
+            list_ta: None,
             list_state: None,
             mint: None,
             owner: None,
@@ -1068,19 +1068,19 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn buyer_ata(
+    pub fn buyer_ta(
         &mut self,
-        buyer_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.buyer_ata = Some(buyer_ata);
+        self.instruction.buyer_ta = Some(buyer_ta);
         self
     }
     #[inline(always)]
-    pub fn list_ata(
+    pub fn list_ta(
         &mut self,
-        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        list_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_ata = Some(list_ata);
+        self.instruction.list_ta = Some(list_ta);
         self
     }
     #[inline(always)]
@@ -1317,9 +1317,9 @@ impl<'a, 'b> BuyLegacyCpiBuilder<'a, 'b> {
 
             buyer: self.instruction.buyer.expect("buyer is not set"),
 
-            buyer_ata: self.instruction.buyer_ata.expect("buyer_ata is not set"),
+            buyer_ta: self.instruction.buyer_ta.expect("buyer_ta is not set"),
 
-            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
+            list_ta: self.instruction.list_ta.expect("list_ta is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
@@ -1389,8 +1389,8 @@ struct BuyLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    buyer_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    buyer_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

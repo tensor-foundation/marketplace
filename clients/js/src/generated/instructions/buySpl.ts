@@ -55,7 +55,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type BuySplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
-  TAccountFeeVaultAta extends string | IAccountMeta<string> = string,
+  TAccountFeeVaultTa extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends
@@ -87,9 +87,9 @@ export type BuySplInstruction<
   TAccountOwnerDestination extends string | IAccountMeta<string> = string,
   TAccountCurrency extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountTakerBrokerAta extends string | IAccountMeta<string> = string,
+  TAccountTakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBrokerAta extends string | IAccountMeta<string> = string,
+  TAccountMakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
   TAccountCosigner extends
@@ -103,9 +103,9 @@ export type BuySplInstruction<
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
-      TAccountFeeVaultAta extends string
-        ? WritableAccount<TAccountFeeVaultAta>
-        : TAccountFeeVaultAta,
+      TAccountFeeVaultTa extends string
+        ? WritableAccount<TAccountFeeVaultTa>
+        : TAccountFeeVaultTa,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -158,15 +158,15 @@ export type BuySplInstruction<
       TAccountTakerBroker extends string
         ? WritableAccount<TAccountTakerBroker>
         : TAccountTakerBroker,
-      TAccountTakerBrokerAta extends string
-        ? WritableAccount<TAccountTakerBrokerAta>
-        : TAccountTakerBrokerAta,
+      TAccountTakerBrokerTa extends string
+        ? WritableAccount<TAccountTakerBrokerTa>
+        : TAccountTakerBrokerTa,
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMakerBrokerAta extends string
-        ? WritableAccount<TAccountMakerBrokerAta>
-        : TAccountMakerBrokerAta,
+      TAccountMakerBrokerTa extends string
+        ? WritableAccount<TAccountMakerBrokerTa>
+        : TAccountMakerBrokerTa,
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
@@ -259,7 +259,7 @@ export function getBuySplInstructionDataCodec(): Codec<
 
 export type BuySplAsyncInput<
   TAccountFeeVault extends string = string,
-  TAccountFeeVaultAta extends string = string,
+  TAccountFeeVaultTa extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -277,15 +277,15 @@ export type BuySplAsyncInput<
   TAccountOwnerDestination extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
-  TAccountTakerBrokerAta extends string = string,
+  TAccountTakerBrokerTa extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMakerBrokerAta extends string = string,
+  TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  feeVaultAta: Address<TAccountFeeVaultAta>;
+  feeVaultTa: Address<TAccountFeeVaultTa>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -303,9 +303,9 @@ export type BuySplAsyncInput<
   ownerDestination: Address<TAccountOwnerDestination>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
-  takerBrokerAta?: Address<TAccountTakerBrokerAta>;
+  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  makerBrokerAta?: Address<TAccountMakerBrokerAta>;
+  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
@@ -322,7 +322,7 @@ export type BuySplAsyncInput<
 
 export async function getBuySplInstructionAsync<
   TAccountFeeVault extends string,
-  TAccountFeeVaultAta extends string,
+  TAccountFeeVaultTa extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -340,16 +340,16 @@ export async function getBuySplInstructionAsync<
   TAccountOwnerDestination extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
-  TAccountTakerBrokerAta extends string,
+  TAccountTakerBrokerTa extends string,
   TAccountMakerBroker extends string,
-  TAccountMakerBrokerAta extends string,
+  TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
   input: BuySplAsyncInput<
     TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountFeeVaultTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -367,9 +367,9 @@ export async function getBuySplInstructionAsync<
     TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerAta,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerAta,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -378,7 +378,7 @@ export async function getBuySplInstructionAsync<
   BuySplInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountFeeVaultTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -396,9 +396,9 @@ export async function getBuySplInstructionAsync<
     TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerAta,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerAta,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -410,7 +410,7 @@ export async function getBuySplInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
+    feeVaultTa: { value: input.feeVaultTa ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -443,9 +443,9 @@ export async function getBuySplInstructionAsync<
     },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    takerBrokerAta: { value: input.takerBrokerAta ?? null, isWritable: true },
+    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
+    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
@@ -505,7 +505,7 @@ export async function getBuySplInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultAta),
+      getAccountMeta(accounts.feeVaultTa),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -523,9 +523,9 @@ export async function getBuySplInstructionAsync<
       getAccountMeta(accounts.ownerDestination),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.takerBrokerAta),
+      getAccountMeta(accounts.takerBrokerTa),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.makerBrokerAta),
+      getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
@@ -537,7 +537,7 @@ export async function getBuySplInstructionAsync<
   } as BuySplInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountFeeVaultTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -555,9 +555,9 @@ export async function getBuySplInstructionAsync<
     TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerAta,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerAta,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -568,7 +568,7 @@ export async function getBuySplInstructionAsync<
 
 export type BuySplInput<
   TAccountFeeVault extends string = string,
-  TAccountFeeVaultAta extends string = string,
+  TAccountFeeVaultTa extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -586,15 +586,15 @@ export type BuySplInput<
   TAccountOwnerDestination extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
-  TAccountTakerBrokerAta extends string = string,
+  TAccountTakerBrokerTa extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMakerBrokerAta extends string = string,
+  TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  feeVaultAta: Address<TAccountFeeVaultAta>;
+  feeVaultTa: Address<TAccountFeeVaultTa>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -612,9 +612,9 @@ export type BuySplInput<
   ownerDestination: Address<TAccountOwnerDestination>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
-  takerBrokerAta?: Address<TAccountTakerBrokerAta>;
+  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  makerBrokerAta?: Address<TAccountMakerBrokerAta>;
+  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
@@ -631,7 +631,7 @@ export type BuySplInput<
 
 export function getBuySplInstruction<
   TAccountFeeVault extends string,
-  TAccountFeeVaultAta extends string,
+  TAccountFeeVaultTa extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -649,16 +649,16 @@ export function getBuySplInstruction<
   TAccountOwnerDestination extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
-  TAccountTakerBrokerAta extends string,
+  TAccountTakerBrokerTa extends string,
   TAccountMakerBroker extends string,
-  TAccountMakerBrokerAta extends string,
+  TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
   input: BuySplInput<
     TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountFeeVaultTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -676,9 +676,9 @@ export function getBuySplInstruction<
     TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerAta,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerAta,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -686,7 +686,7 @@ export function getBuySplInstruction<
 ): BuySplInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
-  TAccountFeeVaultAta,
+  TAccountFeeVaultTa,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -704,9 +704,9 @@ export function getBuySplInstruction<
   TAccountOwnerDestination,
   TAccountCurrency,
   TAccountTakerBroker,
-  TAccountTakerBrokerAta,
+  TAccountTakerBrokerTa,
   TAccountMakerBroker,
-  TAccountMakerBrokerAta,
+  TAccountMakerBrokerTa,
   TAccountRentDestination,
   TAccountRentPayer,
   TAccountCosigner
@@ -717,7 +717,7 @@ export function getBuySplInstruction<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
+    feeVaultTa: { value: input.feeVaultTa ?? null, isWritable: true },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -750,9 +750,9 @@ export function getBuySplInstruction<
     },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    takerBrokerAta: { value: input.takerBrokerAta ?? null, isWritable: true },
+    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    makerBrokerAta: { value: input.makerBrokerAta ?? null, isWritable: true },
+    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
@@ -803,7 +803,7 @@ export function getBuySplInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultAta),
+      getAccountMeta(accounts.feeVaultTa),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -821,9 +821,9 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.ownerDestination),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.takerBrokerAta),
+      getAccountMeta(accounts.takerBrokerTa),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.makerBrokerAta),
+      getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
@@ -835,7 +835,7 @@ export function getBuySplInstruction<
   } as BuySplInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountFeeVaultTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -853,9 +853,9 @@ export function getBuySplInstruction<
     TAccountOwnerDestination,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerAta,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerAta,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -871,7 +871,7 @@ export type ParsedBuySplInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     feeVault: TAccountMetas[0];
-    feeVaultAta: TAccountMetas[1];
+    feeVaultTa: TAccountMetas[1];
     treeAuthority: TAccountMetas[2];
     merkleTree: TAccountMetas[3];
     logWrapper: TAccountMetas[4];
@@ -889,9 +889,9 @@ export type ParsedBuySplInstruction<
     ownerDestination: TAccountMetas[16];
     currency: TAccountMetas[17];
     takerBroker?: TAccountMetas[18] | undefined;
-    takerBrokerAta?: TAccountMetas[19] | undefined;
+    takerBrokerTa?: TAccountMetas[19] | undefined;
     makerBroker?: TAccountMetas[20] | undefined;
-    makerBrokerAta?: TAccountMetas[21] | undefined;
+    makerBrokerTa?: TAccountMetas[21] | undefined;
     rentDestination: TAccountMetas[22];
     rentPayer: TAccountMetas[23];
     cosigner?: TAccountMetas[24] | undefined;
@@ -927,7 +927,7 @@ export function parseBuySplInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       feeVault: getNextAccount(),
-      feeVaultAta: getNextAccount(),
+      feeVaultTa: getNextAccount(),
       treeAuthority: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),
@@ -945,9 +945,9 @@ export function parseBuySplInstruction<
       ownerDestination: getNextAccount(),
       currency: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
-      takerBrokerAta: getNextOptionalAccount(),
+      takerBrokerTa: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      makerBrokerAta: getNextOptionalAccount(),
+      makerBrokerTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       rentPayer: getNextAccount(),
       cosigner: getNextOptionalAccount(),

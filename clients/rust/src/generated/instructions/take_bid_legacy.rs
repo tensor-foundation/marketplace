@@ -33,7 +33,7 @@ pub struct TakeBidLegacy {
 
     pub metadata: solana_program::pubkey::Pubkey,
 
-    pub owner_ata: solana_program::pubkey::Pubkey,
+    pub owner_ta: solana_program::pubkey::Pubkey,
 
     pub edition: solana_program::pubkey::Pubkey,
 
@@ -147,7 +147,7 @@ impl TakeBidLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_ata,
+            self.owner_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -335,7 +335,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
-///   11. `[writable]` owner_ata
+///   11. `[writable]` owner_ta
 ///   12. `[]` edition
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
@@ -366,7 +366,7 @@ pub struct TakeBidLegacyBuilder {
     seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
-    owner_ata: Option<solana_program::pubkey::Pubkey>,
+    owner_ta: Option<solana_program::pubkey::Pubkey>,
     edition: Option<solana_program::pubkey::Pubkey>,
     seller_token_record: Option<solana_program::pubkey::Pubkey>,
     owner_token_record: Option<solana_program::pubkey::Pubkey>,
@@ -460,8 +460,8 @@ impl TakeBidLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_ata = Some(owner_ata);
+    pub fn owner_ta(&mut self, owner_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ta = Some(owner_ta);
         self
     }
     #[inline(always)]
@@ -650,7 +650,7 @@ impl TakeBidLegacyBuilder {
             seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             metadata: self.metadata.expect("metadata is not set"),
-            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.owner_ta.expect("owner_ta is not set"),
             edition: self.edition.expect("edition is not set"),
             seller_token_record: self.seller_token_record,
             owner_token_record: self.owner_token_record,
@@ -714,7 +714,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub edition: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -778,7 +778,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub edition: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -836,7 +836,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             seller_ta: accounts.seller_ta,
             mint: accounts.mint,
             metadata: accounts.metadata,
-            owner_ata: accounts.owner_ata,
+            owner_ta: accounts.owner_ta,
             edition: accounts.edition,
             seller_token_record: accounts.seller_token_record,
             owner_token_record: accounts.owner_token_record,
@@ -957,7 +957,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_ata.key,
+            *self.owner_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1126,7 +1126,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.metadata.clone());
-        account_infos.push(self.owner_ata.clone());
+        account_infos.push(self.owner_ta.clone());
         account_infos.push(self.edition.clone());
         if let Some(seller_token_record) = self.seller_token_record {
             account_infos.push(seller_token_record.clone());
@@ -1189,7 +1189,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
-///   11. `[writable]` owner_ata
+///   11. `[writable]` owner_ta
 ///   12. `[]` edition
 ///   13. `[writable, optional]` seller_token_record
 ///   14. `[writable, optional]` owner_token_record
@@ -1227,7 +1227,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             seller_ta: None,
             mint: None,
             metadata: None,
-            owner_ata: None,
+            owner_ta: None,
             edition: None,
             seller_token_record: None,
             owner_token_record: None,
@@ -1339,11 +1339,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(
+    pub fn owner_ta(
         &mut self,
-        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.owner_ata = Some(owner_ata);
+        self.instruction.owner_ta = Some(owner_ta);
         self
     }
     #[inline(always)]
@@ -1595,7 +1595,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             metadata: self.instruction.metadata.expect("metadata is not set"),
 
-            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.instruction.owner_ta.expect("owner_ta is not set"),
 
             edition: self.instruction.edition.expect("edition is not set"),
 
@@ -1671,7 +1671,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     edition: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_token_record: Option<&'b solana_program::account_info::AccountInfo<'a>>,

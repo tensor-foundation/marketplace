@@ -30,7 +30,7 @@ pub struct TakeBidWns {
 
     pub mint: solana_program::pubkey::Pubkey,
 
-    pub owner_ata: solana_program::pubkey::Pubkey,
+    pub owner_ta: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
@@ -126,7 +126,7 @@ impl TakeBidWns {
             self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_ata,
+            self.owner_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -239,7 +239,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   7. `[]` whitelist
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
-///   10. `[writable]` owner_ata
+///   10. `[writable]` owner_ta
 ///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -265,7 +265,7 @@ pub struct TakeBidWnsBuilder {
     whitelist: Option<solana_program::pubkey::Pubkey>,
     seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    owner_ata: Option<solana_program::pubkey::Pubkey>,
+    owner_ta: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -346,8 +346,8 @@ impl TakeBidWnsBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_ata = Some(owner_ata);
+    pub fn owner_ta(&mut self, owner_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ta = Some(owner_ta);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -474,7 +474,7 @@ impl TakeBidWnsBuilder {
             whitelist: self.whitelist.expect("whitelist is not set"),
             seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
-            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.owner_ta.expect("owner_ta is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -533,7 +533,7 @@ pub struct TakeBidWnsCpiAccounts<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -587,7 +587,7 @@ pub struct TakeBidWnsCpi<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -636,7 +636,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
             whitelist: accounts.whitelist,
             seller_ta: accounts.seller_ta,
             mint: accounts.mint,
-            owner_ata: accounts.owner_ata,
+            owner_ta: accounts.owner_ta,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
@@ -742,7 +742,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_ata.key,
+            *self.owner_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -836,7 +836,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
         account_infos.push(self.whitelist.clone());
         account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.owner_ata.clone());
+        account_infos.push(self.owner_ta.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
@@ -878,7 +878,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
 ///   7. `[]` whitelist
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
-///   10. `[writable]` owner_ata
+///   10. `[writable]` owner_ta
 ///   11. `[]` token_program
 ///   12. `[]` associated_token_program
 ///   13. `[]` system_program
@@ -911,7 +911,7 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
             whitelist: None,
             seller_ta: None,
             mint: None,
-            owner_ata: None,
+            owner_ta: None,
             token_program: None,
             associated_token_program: None,
             system_program: None,
@@ -1007,11 +1007,11 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(
+    pub fn owner_ta(
         &mut self,
-        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.owner_ata = Some(owner_ata);
+        self.instruction.owner_ta = Some(owner_ta);
         self
     }
     #[inline(always)]
@@ -1199,7 +1199,7 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
 
             mint: self.instruction.mint.expect("mint is not set"),
 
-            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.instruction.owner_ta.expect("owner_ta is not set"),
 
             token_program: self
                 .instruction
@@ -1281,7 +1281,7 @@ struct TakeBidWnsCpiBuilderInstruction<'a, 'b> {
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
