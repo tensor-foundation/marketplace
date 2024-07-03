@@ -24,7 +24,7 @@ import {
   getListCoreInstruction,
 } from '../../src';
 
-test('it can buy a listed core asset', async (t) => {
+test('it can buy a listed core asset with SOL', async (t) => {
   const client = createDefaultSolanaClient();
   const payer = await generateKeyPairSignerWithSol(client);
   const updateAuthority = await generateKeyPairSigner();
@@ -32,6 +32,7 @@ test('it can buy a listed core asset', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
 
   const price = 100_000_000n;
+  const royalties = 5_000_000n;
   const maxPrice = 125_000_000n;
 
   // Create a MPL core asset.
@@ -39,7 +40,8 @@ test('it can buy a listed core asset', async (t) => {
     client,
     payer,
     updateAuthority.address,
-    owner.address
+    owner.address,
+    true // withRoyalties
   );
 
   // Owner is the current owner.
@@ -82,6 +84,7 @@ test('it can buy a listed core asset', async (t) => {
     owner: owner.address,
     buyer: buyer.address,
     maxAmount: maxPrice,
+    creators: [updateAuthority.address],
   });
 
   await pipe(
@@ -100,4 +103,10 @@ test('it can buy a listed core asset', async (t) => {
       owner: buyer.address,
     },
   }));
+
+  // Update authority should have received royalties as the creator on the royalty plugin.
+  const updateAuthorityBalance = (
+    await client.rpc.getBalance(updateAuthority.address).send()
+  ).value;
+  t.is(BigInt(updateAuthorityBalance), royalties);
 });

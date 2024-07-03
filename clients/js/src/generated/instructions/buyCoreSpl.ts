@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   Address,
   Codec,
   Decoder,
@@ -34,7 +35,12 @@ import {
   transformEncoder,
 } from '@solana/web3.js';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type BuyCoreSplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -210,7 +216,7 @@ export type BuyCoreSplInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   feeVaultAta: Address<TAccountFeeVaultAta>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   listState: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -223,7 +229,7 @@ export type BuyCoreSplInput<
   takerBrokerAta?: Address<TAccountTakerBrokerAta>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerAta?: Address<TAccountMakerBrokerAta>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
@@ -231,6 +237,8 @@ export type BuyCoreSplInput<
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreSplInstructionDataArgs['maxAmount'];
+  creators?: Array<Address>;
+  creatorsAtas?: Array<Address>;
 };
 
 export function getBuyCoreSplInstruction<
@@ -352,6 +360,14 @@ export function getBuyCoreSplInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
@@ -372,6 +388,18 @@ export function getBuyCoreSplInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.creatorsAtas ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -398,6 +426,7 @@ export function getBuyCoreSplInstruction<
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyCoreSplInstructionDataEncoder().encode(

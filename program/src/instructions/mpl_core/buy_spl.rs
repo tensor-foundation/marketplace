@@ -3,15 +3,15 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use metaplex_core::types::Royalties;
+use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
 use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees,
     metaplex_core::{validate_asset, MetaplexCore},
-    shard_num, CalcFeesArgs, BROKER_FEE_PCT,
+    shard_num, transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use vipers::{throw_err, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
@@ -130,6 +130,9 @@ pub struct BuyCoreSpl<'info> {
     pub system_program: Program<'info, System>,
 
     pub cosigner: Option<Signer<'info>>,
+    // Remaining accounts:
+    // 1. creators (1-5)
+    // 2. creators' atas (1-5)
 }
 
 impl<'info> Validate<'info> for BuyCoreSpl<'info> {
@@ -207,7 +210,7 @@ pub fn process_buy_core_spl<'info, 'b>(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-    let (seller_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
+    let (royalty_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
         (basis_points, TokenStandard::ProgrammableNonFungible)
     } else {
         (0, TokenStandard::NonFungible)
@@ -230,7 +233,16 @@ pub fn process_buy_core_spl<'info, 'b>(
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(seller_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+
+    // Transfer the asset to the buyer.
+    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.asset)
+        .authority(Some(&ctx.accounts.list_state.to_account_info()))
+        .new_owner(&ctx.accounts.buyer)
+        .payer(&ctx.accounts.payer) // pay for what?
+        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
+        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     let asset_id = ctx.accounts.asset.key();
 
@@ -290,6 +302,38 @@ pub fn process_buy_core_spl<'info, 'b>(
         taker_broker_fee,
         ctx.accounts.currency.decimals,
     )?;
+
+    // Pay creator royalties.
+    if let Some(Royalties { creators, .. }) = royalties {
+        let creators_len = creators.len();
+        if ctx.remaining_accounts.len() < creators_len * 2 {
+            throw_err!(TcompError::InsufficientRemainingAccounts);
+        }
+
+        let (creator_accounts, creator_ata_accounts) =
+            ctx.remaining_accounts.split_at(creators_len);
+
+        let creator_accounts_with_ata = creator_accounts
+            .iter()
+            .zip(creator_ata_accounts.iter())
+            .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
+            .collect::<Vec<_>>();
+
+        transfer_creators_fee(
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts_with_ata.iter(),
+            creator_fee,
+            &CreatorFeeMode::Spl {
+                associated_token_program: &ctx.accounts.associated_token_program,
+                token_program: &ctx.accounts.token_program,
+                system_program: &ctx.accounts.system_program,
+                currency: ctx.accounts.currency.deref().as_ref(),
+                from: &ctx.accounts.payer,
+                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                rent_payer: &ctx.accounts.payer,
+            },
+        )?;
+    }
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts.transfer_ata(

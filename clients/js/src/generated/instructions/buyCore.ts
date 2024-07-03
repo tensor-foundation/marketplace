@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   Address,
   Codec,
   Decoder,
@@ -186,6 +187,7 @@ export type BuyCoreInput<
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
+  creators?: Array<Address>;
 };
 
 export function getBuyCoreInstruction<
@@ -294,6 +296,11 @@ export function getBuyCoreInstruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -311,6 +318,7 @@ export function getBuyCoreInstruction<
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyCoreInstructionDataEncoder().encode(

@@ -46,17 +46,71 @@ module.exports = function visitor(options) {
                   k.accountValueNode("asset")
                 ]
               })
+            }
+          },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true
+              }
+            )
+          ]
+        },
+        buyCoreSpl: {
+          accounts: {
+            // feeVault: {
+            //   defaultValue: k.resolverValueNode(
+            //     "resolveFeeVaultPdaFromListState",
+            //     {
+            //       dependsOn: [k.accountValueNode("listState")]
+            //     }
+            //   )
+            // },
+            buyer: {
+              defaultValue: k.accountValueNode("payer")
             },
-            remainingAccounts: [
-              k.instructionRemainingAccountsNode(
-                k.argumentValueNode("creators"),
-                {
-                  isWritable: true,
-                  isOptional: true
-                }
-              )
-            ]
-          }
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner")
+            },
+            buyerAta: {
+              defaultValue: k.resolverValueNode("resolveBuyerAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("buyer"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("asset")
+                ]
+              })
+            },
+            listAta: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("asset")
+                ]
+              })
+            }
+          },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true
+              }
+            ),
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creatorsAtas"),
+              {
+                isWritable: true,
+                isOptional: true
+              }
+            )
+          ]
         }
       })
     );

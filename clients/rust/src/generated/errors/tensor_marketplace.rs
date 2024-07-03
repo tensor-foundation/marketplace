@@ -133,6 +133,9 @@ pub enum TensorMarketplaceError {
     /// 6140 - invalid fee account
     #[error("invalid fee account")]
     InvalidFeeAccount = 0x17FC,
+    /// 6141 - insufficient remaining accounts
+    #[error("insufficient remaining accounts")]
+    InsufficientRemainingAccounts = 0x17FD,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {
