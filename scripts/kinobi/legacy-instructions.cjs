@@ -27,7 +27,7 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            buyerAta: {
+            buyerTa: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -37,7 +37,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -73,7 +73,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("buyerAta"),
+                    k.accountValueNode("buyerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -86,7 +86,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
+                    k.accountValueNode("listTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -120,7 +120,7 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -130,7 +130,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -166,7 +166,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
+                    k.accountValueNode("ownerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -179,7 +179,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
+                    k.accountValueNode("listTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -204,7 +204,7 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -214,7 +214,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -250,7 +250,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
+                    k.accountValueNode("ownerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -263,7 +263,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
+                    k.accountValueNode("listTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -285,7 +285,7 @@ module.exports = function visitor(options) {
             payer: {
               defaultValue: k.accountValueNode("owner"),
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -295,7 +295,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -331,7 +331,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
+                    k.accountValueNode("ownerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -344,7 +344,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
+                    k.accountValueNode("listTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },
@@ -392,7 +392,7 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
                 importFrom: "resolvers",
                 dependsOn: [
@@ -450,7 +450,7 @@ module.exports = function visitor(options) {
                   importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
+                    k.accountValueNode("ownerTa"),
                     k.argumentValueNode("tokenStandard"),
                   ],
                 },

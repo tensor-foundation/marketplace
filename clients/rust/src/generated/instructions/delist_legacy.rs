@@ -13,11 +13,11 @@ use borsh::BorshSerialize;
 pub struct DelistLegacy {
     pub owner: solana_program::pubkey::Pubkey,
 
-    pub owner_ata: solana_program::pubkey::Pubkey,
+    pub owner_ta: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
-    pub list_ata: solana_program::pubkey::Pubkey,
+    pub list_ta: solana_program::pubkey::Pubkey,
 
     pub mint: solana_program::pubkey::Pubkey,
 
@@ -68,7 +68,7 @@ impl DelistLegacy {
             self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner_ata,
+            self.owner_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -76,7 +76,7 @@ impl DelistLegacy {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_ata,
+            self.list_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -222,9 +222,9 @@ pub struct DelistLegacyInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` owner
-///   1. `[writable]` owner_ata
+///   1. `[writable]` owner_ta
 ///   2. `[writable]` list_state
-///   3. `[writable]` list_ata
+///   3. `[writable]` list_ta
 ///   4. `[]` mint
 ///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
@@ -243,9 +243,9 @@ pub struct DelistLegacyInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct DelistLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
-    owner_ata: Option<solana_program::pubkey::Pubkey>,
+    owner_ta: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
-    list_ata: Option<solana_program::pubkey::Pubkey>,
+    list_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -275,8 +275,8 @@ impl DelistLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(&mut self, owner_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner_ata = Some(owner_ata);
+    pub fn owner_ta(&mut self, owner_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner_ta = Some(owner_ta);
         self
     }
     #[inline(always)]
@@ -285,8 +285,8 @@ impl DelistLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn list_ata(&mut self, list_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_ata = Some(list_ata);
+    pub fn list_ta(&mut self, list_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ta = Some(list_ta);
         self
     }
     #[inline(always)]
@@ -429,9 +429,9 @@ impl DelistLegacyBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = DelistLegacy {
             owner: self.owner.expect("owner is not set"),
-            owner_ata: self.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.owner_ta.expect("owner_ta is not set"),
             list_state: self.list_state.expect("list_state is not set"),
-            list_ata: self.list_ata.expect("list_ata is not set"),
+            list_ta: self.list_ta.expect("list_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             payer: self.payer.expect("payer is not set"),
@@ -468,11 +468,11 @@ impl DelistLegacyBuilder {
 pub struct DelistLegacyCpiAccounts<'a, 'b> {
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -512,11 +512,11 @@ pub struct DelistLegacyCpi<'a, 'b> {
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -560,9 +560,9 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
         Self {
             __program: program,
             owner: accounts.owner,
-            owner_ata: accounts.owner_ata,
+            owner_ta: accounts.owner_ta,
             list_state: accounts.list_state,
-            list_ata: accounts.list_ata,
+            list_ta: accounts.list_ta,
             mint: accounts.mint,
             rent_destination: accounts.rent_destination,
             payer: accounts.payer,
@@ -620,7 +620,7 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner_ata.key,
+            *self.owner_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -628,7 +628,7 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_ata.key,
+            *self.list_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -752,9 +752,9 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(19 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.owner_ata.clone());
+        account_infos.push(self.owner_ta.clone());
         account_infos.push(self.list_state.clone());
-        account_infos.push(self.list_ata.clone());
+        account_infos.push(self.list_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.rent_destination.clone());
         account_infos.push(self.payer.clone());
@@ -799,9 +799,9 @@ impl<'a, 'b> DelistLegacyCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` owner
-///   1. `[writable]` owner_ata
+///   1. `[writable]` owner_ta
 ///   2. `[writable]` list_state
-///   3. `[writable]` list_ata
+///   3. `[writable]` list_ta
 ///   4. `[]` mint
 ///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
@@ -827,9 +827,9 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         let instruction = Box::new(DelistLegacyCpiBuilderInstruction {
             __program: program,
             owner: None,
-            owner_ata: None,
+            owner_ta: None,
             list_state: None,
-            list_ata: None,
+            list_ta: None,
             mint: None,
             rent_destination: None,
             payer: None,
@@ -856,11 +856,11 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner_ata(
+    pub fn owner_ta(
         &mut self,
-        owner_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.owner_ata = Some(owner_ata);
+        self.instruction.owner_ta = Some(owner_ta);
         self
     }
     #[inline(always)]
@@ -872,11 +872,11 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn list_ata(
+    pub fn list_ta(
         &mut self,
-        list_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        list_ta: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.list_ata = Some(list_ata);
+        self.instruction.list_ta = Some(list_ta);
         self
     }
     #[inline(always)]
@@ -1054,11 +1054,11 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
 
             owner: self.instruction.owner.expect("owner is not set"),
 
-            owner_ata: self.instruction.owner_ata.expect("owner_ata is not set"),
+            owner_ta: self.instruction.owner_ta.expect("owner_ta is not set"),
 
             list_state: self.instruction.list_state.expect("list_state is not set"),
 
-            list_ata: self.instruction.list_ata.expect("list_ata is not set"),
+            list_ta: self.instruction.list_ta.expect("list_ta is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -1117,9 +1117,9 @@ impl<'a, 'b> DelistLegacyCpiBuilder<'a, 'b> {
 struct DelistLegacyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
