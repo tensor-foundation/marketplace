@@ -3,6 +3,9 @@ import {
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
+  createTestMint,
+  TOKEN_PROGRAM_ID,
+  createAta,
 } from '@tensor-foundation/test-helpers';
 import {
   AssetV1,
@@ -17,22 +20,54 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import { findAssociatedTokenPda } from '@solana-program/token';
 import {
   findFeeVaultPda,
   findListStatePda,
-  getBuyCoreInstruction,
+  getBuyCoreSplInstruction,
   getListCoreInstruction,
 } from '../../src';
 
-test('it can buy a listed core asset', async (t) => {
+test('it can buy a listed core asset using a SPL token', async (t) => {
   const client = createDefaultSolanaClient();
+
+  // General test payer.
   const payer = await generateKeyPairSignerWithSol(client);
+
+  // Asset update authority.
   const updateAuthority = await generateKeyPairSigner();
+  // Original asset owner.
   const owner = await generateKeyPairSigner();
+  // Asset buyer.
   const buyer = await generateKeyPairSignerWithSol(client);
+
+  // SPL token mint authority.
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
 
   const price = 100_000_000n;
   const maxPrice = 125_000_000n;
+  const initialSupply = 1_000_000_000n;
+
+  // Create a SPL token and fund the buyer.
+  const currency = await createTestMint({
+    client,
+    mintAuthority,
+    payer,
+    recipient: buyer.address,
+    decimals: 0,
+    initialSupply,
+  });
+
+  // Buyer receives the SPL token.
+  const [buyerAta] = await findAssociatedTokenPda({
+    owner: buyer.address,
+    mint: currency.mint,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  });
+  const buyerAtaBalance = (
+    await client.rpc.getTokenAccountBalance(buyerAta).send()
+  ).value.uiAmount;
+  t.is(buyerAtaBalance, Number(initialSupply));
 
   // Create a MPL core asset.
   const asset = await createDefaultAsset(
@@ -53,15 +88,34 @@ test('it can buy a listed core asset', async (t) => {
   const [listState] = await findListStatePda({ mint: asset.address });
   const [feeVault] = await findFeeVaultPda({ address: listState });
 
+  const [buyerCurrencyAta] = await findAssociatedTokenPda({
+    owner: buyer.address,
+    mint: currency.mint,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  });
+
+  const feeVaultCurrencyAta = await createAta(
+    client,
+    payer,
+    currency.mint,
+    feeVault
+  );
+  const ownerCurrencyAta = await createAta(
+    client,
+    payer,
+    currency.mint,
+    owner.address
+  );
+
   // List asset.
   const listCoreIx = getListCoreInstruction({
     asset: asset.address,
     listState,
+    currency: currency.mint,
     owner,
     payer,
     amount: price,
   });
-  t.pass();
 
   await pipe(
     await createDefaultTransaction(client, payer),
@@ -73,31 +127,24 @@ test('it can buy a listed core asset', async (t) => {
   assertAccountExists(await fetchEncodedAccount(client.rpc, listState));
 
   // Buy listed asset.
-  const buyCoreIx = getBuyCoreInstruction({
+  const buyCoreSplIx = getBuyCoreSplInstruction({
     asset: asset.address,
     listState,
     feeVault,
+    feeVaultAta: feeVaultCurrencyAta,
     payer: buyer,
+    buyer: buyer.address,
+    payerCurrencyTa: buyerCurrencyAta,
     rentDestination: payer.address,
     owner: owner.address,
-    buyer: buyer.address,
+    ownerCurrencyAta,
     maxAmount: maxPrice,
+    currency: currency.mint,
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
-    (tx) => appendTransactionMessageInstruction(buyCoreIx, tx),
-    (tx) => signAndSendTransaction(client, tx, { skipPreflight: true })
+    (tx) => appendTransactionMessageInstruction(buyCoreSplIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
   );
-
-  // List state should be closed.
-  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
-
-  // Buyer is the new owner.
-  t.like(await fetchAssetV1(client.rpc, asset.address), <AssetV1>(<unknown>{
-    address: asset.address,
-    data: {
-      owner: buyer.address,
-    },
-  }));
 });

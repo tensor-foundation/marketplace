@@ -14,7 +14,10 @@
       "require": "./dist/src/index.js"
     }
   },
-  "files": ["./dist/src", "./dist/types"],
+  "files": [
+    "./dist/src",
+    "./dist/types"
+  ],
   "scripts": {
     "build": "rimraf dist && tsup && tsc -p ./tsconfig.declarations.json",
     "build:docs": "typedoc",
@@ -34,17 +37,18 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@tensor-foundation/resolvers": "^0.0.6"
+    "@tensor-foundation/resolvers": "^0.0.6",
+    "@tensor-foundation/mpl-core": "*"
   },
   "peerDependencies": {
     "@solana/web3.js": "2.0.0-preview.3"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
-    "@metaplex-foundation/mpl-core": "^1.0.2",
     "@solana/eslint-config-solana": "^3.0.0",
     "@solana/web3.js": "2.0.0-preview.3",
     "@solana-program/compute-budget": "^0.3.2",
+    "@solana-program/token": "0.1.4",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
     "@tensor-foundation/test-helpers": "^0.0.5",
     "@tensor-foundation/mpl-token-metadata": "^0.0.1",
@@ -60,8 +64,12 @@
     "typescript": "^5.4.2"
   },
   "ava": {
-    "nodeArguments": ["--no-warnings"],
-    "require": ["@solana/webcrypto-ed25519-polyfill"],
+    "nodeArguments": [
+      "--no-warnings"
+    ],
+    "require": [
+      "@solana/webcrypto-ed25519-polyfill"
+    ],
     "typescript": {
       "compile": false,
       "rewritePaths": {
