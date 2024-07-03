@@ -425,7 +425,7 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     };
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.edition.value) {
     accounts.edition = {
@@ -708,7 +708,7 @@ export function getCloseExpiredListingLegacyInstruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.authorizationRulesProgram.value) {
     accounts.authorizationRulesProgram = {

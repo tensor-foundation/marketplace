@@ -107,7 +107,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible",
+                "ProgrammableNonFungible",
               ),
             },
           },
@@ -191,7 +191,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible",
+                "ProgrammableNonFungible",
               ),
             },
           },
@@ -275,7 +275,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible",
+                "ProgrammableNonFungible",
               ),
             },
           },
@@ -356,7 +356,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible",
+                "ProgrammableNonFungible",
               ),
             },
           },
@@ -484,7 +484,7 @@ module.exports = function visitor(options) {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible",
+                "ProgrammableNonFungible",
               ),
             },
           },
