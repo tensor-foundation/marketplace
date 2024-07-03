@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   Address,
   Codec,
   Decoder,
@@ -34,29 +33,27 @@ import {
   getU64Encoder,
   transformEncoder,
 } from '@solana/web3.js';
-import { resolveBuyerAta, resolveListAta } from '@tensor-foundation/resolvers';
-import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import {
-  ResolvedAccount,
-  expectAddress,
-  expectSome,
-  expectTransactionSigner,
-  getAccountMetaFactory,
-} from '../shared';
+import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type BuyT22Instruction<
+export type BuyWnsSplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
+  TAccountFeeVaultCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
   TAccountBuyerTa extends string | IAccountMeta<string> = string,
-  TAccountListState extends string | IAccountMeta<string> = string,
   TAccountListTa extends string | IAccountMeta<string> = string,
+  TAccountListState extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountCurrency extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountOwnerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountPayerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
+  TAccountTakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
+  TAccountMakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
@@ -70,9 +67,16 @@ export type BuyT22Instruction<
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountCosigner extends
+  TAccountApprove extends string | IAccountMeta<string> = string,
+  TAccountDistribution extends string | IAccountMeta<string> = string,
+  TAccountWnsProgram extends
     | string
-    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+    | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
+  TAccountWnsDistributionProgram extends
+    | string
+    | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
+  TAccountExtraMetas extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -81,34 +85,52 @@ export type BuyT22Instruction<
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
+      TAccountFeeVaultCurrencyTa extends string
+        ? WritableAccount<TAccountFeeVaultCurrencyTa>
+        : TAccountFeeVaultCurrencyTa,
       TAccountBuyer extends string
         ? ReadonlyAccount<TAccountBuyer>
         : TAccountBuyer,
       TAccountBuyerTa extends string
         ? WritableAccount<TAccountBuyerTa>
         : TAccountBuyerTa,
-      TAccountListState extends string
-        ? WritableAccount<TAccountListState>
-        : TAccountListState,
       TAccountListTa extends string
         ? WritableAccount<TAccountListTa>
         : TAccountListTa,
+      TAccountListState extends string
+        ? WritableAccount<TAccountListState>
+        : TAccountListState,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
+      TAccountCurrency extends string
+        ? ReadonlyAccount<TAccountCurrency>
+        : TAccountCurrency,
       TAccountOwner extends string
         ? WritableAccount<TAccountOwner>
         : TAccountOwner,
+      TAccountOwnerCurrencyTa extends string
+        ? WritableAccount<TAccountOwnerCurrencyTa>
+        : TAccountOwnerCurrencyTa,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountPayerCurrencyTa extends string
+        ? WritableAccount<TAccountPayerCurrencyTa>
+        : TAccountPayerCurrencyTa,
       TAccountTakerBroker extends string
         ? WritableAccount<TAccountTakerBroker>
         : TAccountTakerBroker,
+      TAccountTakerBrokerTa extends string
+        ? WritableAccount<TAccountTakerBrokerTa>
+        : TAccountTakerBrokerTa,
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
+      TAccountMakerBrokerTa extends string
+        ? WritableAccount<TAccountMakerBrokerTa>
+        : TAccountMakerBrokerTa,
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
@@ -124,6 +146,21 @@ export type BuyT22Instruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountApprove extends string
+        ? WritableAccount<TAccountApprove>
+        : TAccountApprove,
+      TAccountDistribution extends string
+        ? WritableAccount<TAccountDistribution>
+        : TAccountDistribution,
+      TAccountWnsProgram extends string
+        ? ReadonlyAccount<TAccountWnsProgram>
+        : TAccountWnsProgram,
+      TAccountWnsDistributionProgram extends string
+        ? ReadonlyAccount<TAccountWnsDistributionProgram>
+        : TAccountWnsDistributionProgram,
+      TAccountExtraMetas extends string
+        ? ReadonlyAccount<TAccountExtraMetas>
+        : TAccountExtraMetas,
       TAccountCosigner extends string
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
@@ -132,14 +169,14 @@ export type BuyT22Instruction<
     ]
   >;
 
-export type BuyT22InstructionData = {
+export type BuyWnsSplInstructionData = {
   discriminator: ReadonlyUint8Array;
   maxAmount: bigint;
 };
 
-export type BuyT22InstructionDataArgs = { maxAmount: number | bigint };
+export type BuyWnsSplInstructionDataArgs = { maxAmount: number | bigint };
 
-export function getBuyT22InstructionDataEncoder(): Encoder<BuyT22InstructionDataArgs> {
+export function getBuyWnsSplInstructionDataEncoder(): Encoder<BuyWnsSplInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -147,353 +184,175 @@ export function getBuyT22InstructionDataEncoder(): Encoder<BuyT22InstructionData
     ]),
     (value) => ({
       ...value,
-      discriminator: new Uint8Array([81, 98, 227, 171, 201, 105, 180, 216]),
+      discriminator: new Uint8Array([113, 137, 57, 23, 186, 196, 217, 210]),
     })
   );
 }
 
-export function getBuyT22InstructionDataDecoder(): Decoder<BuyT22InstructionData> {
+export function getBuyWnsSplInstructionDataDecoder(): Decoder<BuyWnsSplInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['maxAmount', getU64Decoder()],
   ]);
 }
 
-export function getBuyT22InstructionDataCodec(): Codec<
-  BuyT22InstructionDataArgs,
-  BuyT22InstructionData
+export function getBuyWnsSplInstructionDataCodec(): Codec<
+  BuyWnsSplInstructionDataArgs,
+  BuyWnsSplInstructionData
 > {
   return combineCodec(
-    getBuyT22InstructionDataEncoder(),
-    getBuyT22InstructionDataDecoder()
+    getBuyWnsSplInstructionDataEncoder(),
+    getBuyWnsSplInstructionDataDecoder()
   );
 }
 
-export type BuyT22AsyncInput<
+export type BuyWnsSplInput<
   TAccountFeeVault extends string = string,
+  TAccountFeeVaultCurrencyTa extends string = string,
   TAccountBuyer extends string = string,
   TAccountBuyerTa extends string = string,
-  TAccountListState extends string = string,
   TAccountListTa extends string = string,
+  TAccountListState extends string = string,
   TAccountMint extends string = string,
+  TAccountCurrency extends string = string,
   TAccountOwner extends string = string,
+  TAccountOwnerCurrencyTa extends string = string,
   TAccountPayer extends string = string,
+  TAccountPayerCurrencyTa extends string = string,
   TAccountTakerBroker extends string = string,
+  TAccountTakerBrokerTa extends string = string,
   TAccountMakerBroker extends string = string,
+  TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountApprove extends string = string,
+  TAccountDistribution extends string = string,
+  TAccountWnsProgram extends string = string,
+  TAccountWnsDistributionProgram extends string = string,
+  TAccountExtraMetas extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  buyer?: Address<TAccountBuyer>;
-  buyerTa?: Address<TAccountBuyerTa>;
-  listState?: Address<TAccountListState>;
-  listTa?: Address<TAccountListTa>;
-  mint: Address<TAccountMint>;
-  owner: Address<TAccountOwner>;
-  payer: TransactionSigner<TAccountPayer>;
-  takerBroker?: Address<TAccountTakerBroker>;
-  makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination?: Address<TAccountRentDestination>;
-  tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
-  maxAmount: BuyT22InstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
-};
-
-export async function getBuyT22InstructionAsync<
-  TAccountFeeVault extends string,
-  TAccountBuyer extends string,
-  TAccountBuyerTa extends string,
-  TAccountListState extends string,
-  TAccountListTa extends string,
-  TAccountMint extends string,
-  TAccountOwner extends string,
-  TAccountPayer extends string,
-  TAccountTakerBroker extends string,
-  TAccountMakerBroker extends string,
-  TAccountRentDestination extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountMarketplaceProgram extends string,
-  TAccountSystemProgram extends string,
-  TAccountCosigner extends string,
->(
-  input: BuyT22AsyncInput<
-    TAccountFeeVault,
-    TAccountBuyer,
-    TAccountBuyerTa,
-    TAccountListState,
-    TAccountListTa,
-    TAccountMint,
-    TAccountOwner,
-    TAccountPayer,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
-    TAccountSystemProgram,
-    TAccountCosigner
-  >
-): Promise<
-  BuyT22Instruction<
-    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountFeeVault,
-    TAccountBuyer,
-    TAccountBuyerTa,
-    TAccountListState,
-    TAccountListTa,
-    TAccountMint,
-    TAccountOwner,
-    TAccountPayer,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
-    TAccountSystemProgram,
-    TAccountCosigner
-  >
-> {
-  // Program address.
-  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
-
-  // Original accounts.
-  const originalAccounts = {
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
-    buyer: { value: input.buyer ?? null, isWritable: false },
-    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
-    listTa: { value: input.listTa ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
-    owner: { value: input.owner ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
-    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
-    marketplaceProgram: {
-      value: input.marketplaceProgram ?? null,
-      isWritable: false,
-    },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    cosigner: { value: input.cosigner ?? null, isWritable: false },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
-
-  // Original args.
-  const args = { ...input };
-
-  // Resolver scope.
-  const resolverScope = { programAddress, accounts, args };
-
-  // Resolve default values.
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
-  if (!accounts.buyerTa.value) {
-    accounts.buyerTa = {
-      ...accounts.buyerTa,
-      ...(await resolveBuyerAta(resolverScope)),
-    };
-  }
-  if (!accounts.listState.value) {
-    accounts.listState.value = await findListStatePda({
-      mint: expectAddress(accounts.mint.value),
-    });
-  }
-  if (!accounts.listTa.value) {
-    accounts.listTa = {
-      ...accounts.listTa,
-      ...(await resolveListAta(resolverScope)),
-    };
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
-  if (!accounts.associatedTokenProgram.value) {
-    accounts.associatedTokenProgram.value =
-      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
-  }
-  if (!accounts.marketplaceProgram.value) {
-    accounts.marketplaceProgram.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
-
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-  const instruction = {
-    accounts: [
-      getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.buyer),
-      getAccountMeta(accounts.buyerTa),
-      getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listTa),
-      getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.rentDestination),
-      getAccountMeta(accounts.tokenProgram),
-      getAccountMeta(accounts.associatedTokenProgram),
-      getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
-    ],
-    programAddress,
-    data: getBuyT22InstructionDataEncoder().encode(
-      args as BuyT22InstructionDataArgs
-    ),
-  } as BuyT22Instruction<
-    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountFeeVault,
-    TAccountBuyer,
-    TAccountBuyerTa,
-    TAccountListState,
-    TAccountListTa,
-    TAccountMint,
-    TAccountOwner,
-    TAccountPayer,
-    TAccountTakerBroker,
-    TAccountMakerBroker,
-    TAccountRentDestination,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountMarketplaceProgram,
-    TAccountSystemProgram,
-    TAccountCosigner
-  >;
-
-  return instruction;
-}
-
-export type BuyT22Input<
-  TAccountFeeVault extends string = string,
-  TAccountBuyer extends string = string,
-  TAccountBuyerTa extends string = string,
-  TAccountListState extends string = string,
-  TAccountListTa extends string = string,
-  TAccountMint extends string = string,
-  TAccountOwner extends string = string,
-  TAccountPayer extends string = string,
-  TAccountTakerBroker extends string = string,
-  TAccountMakerBroker extends string = string,
-  TAccountRentDestination extends string = string,
-  TAccountTokenProgram extends string = string,
-  TAccountAssociatedTokenProgram extends string = string,
-  TAccountMarketplaceProgram extends string = string,
-  TAccountSystemProgram extends string = string,
-  TAccountCosigner extends string = string,
-> = {
-  feeVault: Address<TAccountFeeVault>;
-  buyer?: Address<TAccountBuyer>;
+  feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
+  buyer: Address<TAccountBuyer>;
   buyerTa: Address<TAccountBuyerTa>;
-  listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
+  listState: Address<TAccountListState>;
+  /** WNS asset mint. */
   mint: Address<TAccountMint>;
+  /** SPL token mint of the currency. */
+  currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
+  ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
   payer: TransactionSigner<TAccountPayer>;
+  payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
+  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination?: Address<TAccountRentDestination>;
+  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
+  rentDestination: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  approve: Address<TAccountApprove>;
+  distribution: Address<TAccountDistribution>;
+  wnsProgram?: Address<TAccountWnsProgram>;
+  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  extraMetas: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  maxAmount: BuyT22InstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
+  maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
 };
 
-export function getBuyT22Instruction<
+export function getBuyWnsSplInstruction<
   TAccountFeeVault extends string,
+  TAccountFeeVaultCurrencyTa extends string,
   TAccountBuyer extends string,
   TAccountBuyerTa extends string,
-  TAccountListState extends string,
   TAccountListTa extends string,
+  TAccountListState extends string,
   TAccountMint extends string,
+  TAccountCurrency extends string,
   TAccountOwner extends string,
+  TAccountOwnerCurrencyTa extends string,
   TAccountPayer extends string,
+  TAccountPayerCurrencyTa extends string,
   TAccountTakerBroker extends string,
+  TAccountTakerBrokerTa extends string,
   TAccountMakerBroker extends string,
+  TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountApprove extends string,
+  TAccountDistribution extends string,
+  TAccountWnsProgram extends string,
+  TAccountWnsDistributionProgram extends string,
+  TAccountExtraMetas extends string,
   TAccountCosigner extends string,
 >(
-  input: BuyT22Input<
+  input: BuyWnsSplInput<
     TAccountFeeVault,
+    TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListState,
     TAccountListTa,
+    TAccountListState,
     TAccountMint,
+    TAccountCurrency,
     TAccountOwner,
+    TAccountOwnerCurrencyTa,
     TAccountPayer,
+    TAccountPayerCurrencyTa,
     TAccountTakerBroker,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountApprove,
+    TAccountDistribution,
+    TAccountWnsProgram,
+    TAccountWnsDistributionProgram,
+    TAccountExtraMetas,
     TAccountCosigner
   >
-): BuyT22Instruction<
+): BuyWnsSplInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
+  TAccountFeeVaultCurrencyTa,
   TAccountBuyer,
   TAccountBuyerTa,
-  TAccountListState,
   TAccountListTa,
+  TAccountListState,
   TAccountMint,
+  TAccountCurrency,
   TAccountOwner,
+  TAccountOwnerCurrencyTa,
   TAccountPayer,
+  TAccountPayerCurrencyTa,
   TAccountTakerBroker,
+  TAccountTakerBrokerTa,
   TAccountMakerBroker,
+  TAccountMakerBrokerTa,
   TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
+  TAccountApprove,
+  TAccountDistribution,
+  TAccountWnsProgram,
+  TAccountWnsDistributionProgram,
+  TAccountExtraMetas,
   TAccountCosigner
 > {
   // Program address.
@@ -502,15 +361,24 @@ export function getBuyT22Instruction<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
+    feeVaultCurrencyTa: {
+      value: input.feeVaultCurrencyTa ?? null,
+      isWritable: true,
+    },
     buyer: { value: input.buyer ?? null, isWritable: false },
     buyerTa: { value: input.buyerTa ?? null, isWritable: true },
-    listState: { value: input.listState ?? null, isWritable: true },
     listTa: { value: input.listTa ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
+    currency: { value: input.currency ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
+    ownerCurrencyTa: { value: input.ownerCurrencyTa ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
+    payerCurrencyTa: { value: input.payerCurrencyTa ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -522,6 +390,14 @@ export function getBuyT22Instruction<
       isWritable: false,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    approve: { value: input.approve ?? null, isWritable: true },
+    distribution: { value: input.distribution ?? null, isWritable: true },
+    wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
+    wnsDistributionProgram: {
+      value: input.wnsDistributionProgram ?? null,
+      isWritable: false,
+    },
+    extraMetas: { value: input.extraMetas ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -533,17 +409,9 @@ export function getBuyT22Instruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -557,99 +425,132 @@ export function getBuyT22Instruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  if (!accounts.wnsProgram.value) {
+    accounts.wnsProgram.value =
+      'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
+  if (!accounts.wnsDistributionProgram.value) {
+    accounts.wnsDistributionProgram.value =
+      'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.feeVaultCurrencyTa),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.buyerTa),
-      getAccountMeta(accounts.listState),
       getAccountMeta(accounts.listTa),
+      getAccountMeta(accounts.listState),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.currency),
       getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerCurrencyTa),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.payerCurrencyTa),
       getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.takerBrokerTa),
       getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.approve),
+      getAccountMeta(accounts.distribution),
+      getAccountMeta(accounts.wnsProgram),
+      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
-    data: getBuyT22InstructionDataEncoder().encode(
-      args as BuyT22InstructionDataArgs
+    data: getBuyWnsSplInstructionDataEncoder().encode(
+      args as BuyWnsSplInstructionDataArgs
     ),
-  } as BuyT22Instruction<
+  } as BuyWnsSplInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
+    TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListState,
     TAccountListTa,
+    TAccountListState,
     TAccountMint,
+    TAccountCurrency,
     TAccountOwner,
+    TAccountOwnerCurrencyTa,
     TAccountPayer,
+    TAccountPayerCurrencyTa,
     TAccountTakerBroker,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
+    TAccountApprove,
+    TAccountDistribution,
+    TAccountWnsProgram,
+    TAccountWnsDistributionProgram,
+    TAccountExtraMetas,
     TAccountCosigner
   >;
 
   return instruction;
 }
 
-export type ParsedBuyT22Instruction<
+export type ParsedBuyWnsSplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     feeVault: TAccountMetas[0];
-    buyer: TAccountMetas[1];
-    buyerTa: TAccountMetas[2];
-    listState: TAccountMetas[3];
+    feeVaultCurrencyTa: TAccountMetas[1];
+    buyer: TAccountMetas[2];
+    buyerTa: TAccountMetas[3];
     listTa: TAccountMetas[4];
-    mint: TAccountMetas[5];
-    owner: TAccountMetas[6];
-    payer: TAccountMetas[7];
-    takerBroker?: TAccountMetas[8] | undefined;
-    makerBroker?: TAccountMetas[9] | undefined;
-    rentDestination: TAccountMetas[10];
-    tokenProgram: TAccountMetas[11];
-    associatedTokenProgram: TAccountMetas[12];
-    marketplaceProgram: TAccountMetas[13];
-    systemProgram: TAccountMetas[14];
-    cosigner?: TAccountMetas[15] | undefined;
+    listState: TAccountMetas[5];
+    /** WNS asset mint. */
+    mint: TAccountMetas[6];
+    /** SPL token mint of the currency. */
+    currency: TAccountMetas[7];
+    owner: TAccountMetas[8];
+    ownerCurrencyTa: TAccountMetas[9];
+    payer: TAccountMetas[10];
+    payerCurrencyTa: TAccountMetas[11];
+    takerBroker?: TAccountMetas[12] | undefined;
+    takerBrokerTa?: TAccountMetas[13] | undefined;
+    makerBroker?: TAccountMetas[14] | undefined;
+    makerBrokerTa?: TAccountMetas[15] | undefined;
+    rentDestination: TAccountMetas[16];
+    tokenProgram: TAccountMetas[17];
+    associatedTokenProgram: TAccountMetas[18];
+    marketplaceProgram: TAccountMetas[19];
+    systemProgram: TAccountMetas[20];
+    approve: TAccountMetas[21];
+    distribution: TAccountMetas[22];
+    wnsProgram: TAccountMetas[23];
+    wnsDistributionProgram: TAccountMetas[24];
+    extraMetas: TAccountMetas[25];
+    cosigner?: TAccountMetas[26] | undefined;
   };
-  data: BuyT22InstructionData;
+  data: BuyWnsSplInstructionData;
 };
 
-export function parseBuyT22Instruction<
+export function parseBuyWnsSplInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedBuyT22Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 16) {
+): ParsedBuyWnsSplInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 27) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -669,22 +570,33 @@ export function parseBuyT22Instruction<
     programAddress: instruction.programAddress,
     accounts: {
       feeVault: getNextAccount(),
+      feeVaultCurrencyTa: getNextAccount(),
       buyer: getNextAccount(),
       buyerTa: getNextAccount(),
-      listState: getNextAccount(),
       listTa: getNextAccount(),
+      listState: getNextAccount(),
       mint: getNextAccount(),
+      currency: getNextAccount(),
       owner: getNextAccount(),
+      ownerCurrencyTa: getNextAccount(),
       payer: getNextAccount(),
+      payerCurrencyTa: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
+      takerBrokerTa: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
+      makerBrokerTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),
+      approve: getNextAccount(),
+      distribution: getNextAccount(),
+      wnsProgram: getNextAccount(),
+      wnsDistributionProgram: getNextAccount(),
+      extraMetas: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },
-    data: getBuyT22InstructionDataDecoder().decode(instruction.data),
+    data: getBuyWnsSplInstructionDataDecoder().decode(instruction.data),
   };
 }

@@ -9,7 +9,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees, shard_num,
+    assert_fee_account, calc_creators_fee, calc_fees,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
 };
@@ -23,15 +23,8 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyLegacySpl<'info> {
-    /// CHECK: seeds and program checked here
-    #[account(mut,
-        seeds=[
-            b"fee_vault".as_ref(),
-            shard_num!(list_state),
-        ],
-        bump,
-        seeds::program = fees::ID,
-    )]
+    /// CHECK: Checked in assert_fee_account() in validate().
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(init_if_needed,
@@ -39,7 +32,7 @@ pub struct BuyLegacySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
-    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_currency_ta: InterfaceAccount<'info, TokenAccount>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -100,30 +93,24 @@ pub struct BuyLegacySpl<'info> {
     pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: none, can be anything
-    #[account(mut,
-        constraint = taker_broker_currency_ta.is_some() @ TcompError::MissingBrokerTokenAccount
-    )]
+    #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
     #[account(init_if_needed,
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
-        constraint = taker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: none, can be anything
-    #[account(mut,
-        constraint = maker_broker_currency_ta.is_some() @ TcompError::MissingBrokerTokenAccount
-    )]
+    #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
     #[account(init_if_needed,
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
-        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
@@ -192,6 +179,12 @@ pub struct BuyLegacySpl<'info> {
 
 impl<'info> Validate<'info> for BuyLegacySpl<'info> {
     fn validate(&self) -> Result<()> {
+        msg!("validate");
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -259,6 +252,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     optional_royalty_pct: Option<u16>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
+    msg!("process_buy_legacy_spl");
     // validate the mint
     let mint = ctx.accounts.mint.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
@@ -289,8 +283,8 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         optional_royalty_pct,
     )?;
 
-    // transfer the NFT to the buyer
-
+    // Transfer the NFT to the buyer
+    msg!("transfer");
     transfer(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
@@ -317,9 +311,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     )?;
 
     let asset_id = ctx.accounts.mint.key();
-    // let mut data: &[u8] = &ctx.accounts.currency.try_borrow_data()?;
-    // let currency_mint = Mint::try_deserialize(&mut data)?;
-    let currency_mint = &ctx.accounts.currency;
 
     // NOTE: The event doesn't record
     record_event(
@@ -343,26 +334,31 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // Pay fees.
+    // --Pay fees in currency--
+    msg!("fees");
+
+    // Protocol fee.
     ctx.accounts.transfer_ta(
-        ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
+        &ctx.accounts.fee_vault_currency_ta.to_account_info(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
-        currency_mint.decimals,
+        ctx.accounts.currency.decimals,
     )?;
 
+    // Maker broker fee.
     ctx.accounts.transfer_ta(
         ctx.accounts
             .maker_broker_currency_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info())
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
-        currency_mint.decimals,
+        ctx.accounts.currency.decimals,
     )?;
 
+    // Taker broker fee.
     ctx.accounts.transfer_ta(
         ctx.accounts
             .taker_broker_currency_ta
@@ -372,7 +368,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
-        currency_mint.decimals,
+        ctx.accounts.currency.decimals,
     )?;
 
     // Pay creator royalties.
@@ -410,7 +406,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         ctx.accounts.owner_currency_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         amount,
-        currency_mint.decimals,
+        ctx.accounts.currency.decimals,
     )?;
 
     // Close the list token account.

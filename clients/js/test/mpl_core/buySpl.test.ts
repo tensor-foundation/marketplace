@@ -49,7 +49,7 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
   const maxPrice = 125_000_000n;
   const initialSupply = 1_000_000_000n;
 
-  // Create a SPL token and fund the buyer.
+  // Create a SPL token and fund the buyer with it.
   const currency = await createTestMint({
     client,
     mintAuthority,
@@ -102,13 +102,13 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const feeVaultCurrencyAta = await createAta(
+  const feeVaultCurrencyTa = await createAta(
     client,
     payer,
     currency.mint,
     feeVault
   );
-  const ownerCurrencyAta = await createAta(
+  const ownerCurrencyTa = await createAta(
     client,
     payer,
     currency.mint,
@@ -117,11 +117,11 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
 
   // List asset.
   const listCoreIx = getListCoreInstruction({
-    asset: asset.address,
-    listState,
-    currency: currency.mint,
-    owner,
     payer,
+    owner,
+    listState,
+    asset: asset.address,
+    currency: currency.mint,
     amount: price,
   });
 
@@ -139,13 +139,13 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
     asset: asset.address,
     listState,
     feeVault,
-    feeVaultAta: feeVaultCurrencyAta,
+    feeVaultCurrencyTa,
     payer: buyer,
     buyer: buyer.address,
     payerCurrencyTa: buyerCurrencyAta,
     rentDestination: payer.address,
     owner: owner.address,
-    ownerCurrencyAta,
+    ownerCurrencyTa,
     maxAmount: maxPrice,
     currency: currency.mint,
     creators: [updateAuthority.address],

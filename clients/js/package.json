@@ -38,7 +38,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@tensor-foundation/resolvers": "^0.2.0",
-    "@tensor-foundation/mpl-core": "*",
     "@solana/web3.js": "2.0.0-preview.3"
   },
   "devDependencies": {
@@ -48,8 +47,9 @@
     "@solana-program/compute-budget": "^0.3.2",
     "@solana-program/token": "0.1.4",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
+    "@tensor-foundation/mpl-core": "*",
+    "@tensor-foundation/mpl-token-metadata": "*",
     "@tensor-foundation/test-helpers": "^0.0.5",
-    "@tensor-foundation/mpl-token-metadata": "^0.0.1",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "ava": "^6.1.2",
