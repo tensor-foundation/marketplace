@@ -75,7 +75,7 @@ pub struct TakeBidLegacy<'info> {
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
 
@@ -328,7 +328,7 @@ pub fn process_take_bid_legacy<'info>(
             source: &ctx.accounts.bid_state.to_account_info(),
             payer: &ctx.accounts.seller.to_account_info(),
             source_ata: &ctx.accounts.bid_ta,
-            destination_ata: &ctx.accounts.owner_ata,
+            destination_ata: &ctx.accounts.owner_ta,
             destination: &ctx.accounts.owner.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,

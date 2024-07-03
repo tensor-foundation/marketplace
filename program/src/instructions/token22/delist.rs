@@ -23,7 +23,7 @@ pub struct DelistT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -42,7 +42,7 @@ pub struct DelistT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seed in nft_escrow & nft_receipt
     pub mint: Box<InterfaceAccount<'info, Mint>>,
@@ -78,8 +78,8 @@ pub fn process_delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.list_ata.to_account_info(),
-            to: ctx.accounts.owner_ata.to_account_info(),
+            from: ctx.accounts.list_ta.to_account_info(),
+            to: ctx.accounts.owner_ta.to_account_info(),
             authority: ctx.accounts.list_state.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -122,13 +122,13 @@ pub fn process_delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info
 
     // closes the list token account
 
-    // payer receives the rent from the list_ata (most likely had to pay for
-    // the owner_ata rent)
+    // payer receives the rent from the list_ta (most likely had to pay for
+    // the owner_ta rent)
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_ata.to_account_info(),
+                account: ctx.accounts.list_ta.to_account_info(),
                 destination: ctx.accounts.payer.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

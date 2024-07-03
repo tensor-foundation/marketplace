@@ -47,7 +47,7 @@ pub mod marketplace_program {
 
     // --------------------------------------- Admin
 
-    // Cpi into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
+    // CPI into itself to record an event. Calling tcomp_noop to distinguish with existing noop.
     pub fn tcomp_noop(ctx: Context<TcompNoop>, _event: TcompEvent) -> Result<()> {
         instructions::noop::process_noop(ctx)
     }

@@ -70,7 +70,7 @@ pub struct TakeBidT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token2022>,
 
@@ -204,7 +204,7 @@ pub fn process_take_bid_t22<'info>(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
             from: ctx.accounts.seller_ta.to_account_info(),
-            to: ctx.accounts.owner_ata.to_account_info(),
+            to: ctx.accounts.owner_ta.to_account_info(),
             authority: ctx.accounts.seller.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },

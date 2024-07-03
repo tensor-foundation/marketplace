@@ -37,10 +37,8 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@tensor-foundation/resolvers": "^0.0.6",
-    "@tensor-foundation/mpl-core": "*"
-  },
-  "peerDependencies": {
+    "@tensor-foundation/resolvers": "^0.2.0",
+    "@tensor-foundation/mpl-core": "*",
     "@solana/web3.js": "2.0.0-preview.3"
   },
   "devDependencies": {

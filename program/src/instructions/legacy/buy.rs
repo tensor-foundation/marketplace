@@ -41,14 +41,14 @@ pub struct BuyLegacy<'info> {
         associated_token::mint = mint,
         associated_token::authority = buyer,
     )]
-    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -222,8 +222,8 @@ pub fn process_buy_legacy<'info, 'b>(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
             payer: &ctx.accounts.payer,
-            source_ata: &ctx.accounts.list_ata,
-            destination_ata: &ctx.accounts.buyer_ata,
+            source_ata: &ctx.accounts.list_ta,
+            destination_ata: &ctx.accounts.buyer_ta,
             destination: &ctx.accounts.buyer,
             mint: ctx.accounts.mint.deref(),
             metadata: &ctx.accounts.metadata,
@@ -317,7 +317,7 @@ pub fn process_buy_legacy<'info, 'b>(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_ata.to_account_info(),
+                account: ctx.accounts.list_ta.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

@@ -39,7 +39,7 @@ pub struct BuyT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = buyer,
     )]
-    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -58,7 +58,7 @@ pub struct BuyT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -163,8 +163,8 @@ pub fn process_buy_t22<'info, 'b>(
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.list_ata.to_account_info(),
-            to: ctx.accounts.buyer_ata.to_account_info(),
+            from: ctx.accounts.list_ta.to_account_info(),
+            to: ctx.accounts.buyer_ta.to_account_info(),
             authority: ctx.accounts.list_state.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -288,7 +288,7 @@ pub fn process_buy_t22<'info, 'b>(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_ata.to_account_info(),
+                account: ctx.accounts.list_ta.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

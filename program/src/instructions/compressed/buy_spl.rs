@@ -20,7 +20,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
-    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_ta: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -70,7 +70,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
     )]
-    pub taker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
@@ -79,7 +79,7 @@ pub struct BuySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
     )]
-    pub maker_broker_ata: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
@@ -129,16 +129,16 @@ impl<'info> Validate<'info> for BuySpl<'info> {
         // maker_broker accs are both None or Some
         #[rustfmt::skip]
         require!(
-            (self.maker_broker.is_some() && self.maker_broker_ata.is_some()) ||
-            (self.maker_broker.is_none() && self.maker_broker_ata.is_none()),
+            (self.maker_broker.is_some() && self.maker_broker_ta.is_some()) ||
+            (self.maker_broker.is_none() && self.maker_broker_ta.is_none()),
             TcompError::BrokerMismatch
         );
 
         //taker_broker accs are both None or Some
         #[rustfmt::skip]
         require!(
-            (self.taker_broker.is_some() && self.taker_broker_ata.is_some()) ||
-            (self.taker_broker.is_none() && self.taker_broker_ata.is_none()),
+            (self.taker_broker.is_some() && self.taker_broker_ta.is_some()) ||
+            (self.taker_broker.is_none() && self.taker_broker_ta.is_none()),
             TcompError::BrokerMismatch
         );
 
@@ -308,7 +308,7 @@ pub fn process_buy_spl<'info>(
 
     // Pay fees
     ctx.accounts.transfer_ata(
-        ctx.accounts.fee_vault_ata.deref().as_ref(),
+        ctx.accounts.fee_vault_ta.deref().as_ref(),
         ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
         ctx.accounts.currency.decimals,
@@ -316,9 +316,9 @@ pub fn process_buy_spl<'info>(
 
     ctx.accounts.transfer_ata(
         ctx.accounts
-            .maker_broker_ata
+            .maker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
@@ -328,9 +328,9 @@ pub fn process_buy_spl<'info>(
 
     ctx.accounts.transfer_ata(
         ctx.accounts
-            .taker_broker_ata
+            .taker_broker_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_ata)
+            .unwrap_or(&ctx.accounts.fee_vault_ta)
             .deref()
             .as_ref(),
         ctx.accounts.currency.deref().as_ref(),
