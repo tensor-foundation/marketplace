@@ -1,4 +1,5 @@
 use anchor_spl::token_interface::TokenAccount;
+use tensor_toolbox::{fees, shard_num, TensorError};
 
 use crate::*;
 
@@ -71,4 +72,24 @@ pub fn assert_decode_token_account(
     );
 
     Ok(token_account)
+}
+
+/// Asserts that the account is a valid fee account.
+pub fn assert_fee_vault(fee_vault_info: &AccountInfo, state_info: &AccountInfo) -> Result<()> {
+    let expected_fee_vault = Pubkey::find_program_address(
+        &[
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(state_info),
+        ],
+        &fees::ID,
+    )
+    .0;
+
+    require!(
+        fee_vault_info.key == &expected_fee_vault,
+        TensorError::InvalidFeeAccount
+    );
+
+    Ok(())
 }

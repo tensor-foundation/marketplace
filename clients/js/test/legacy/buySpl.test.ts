@@ -150,14 +150,12 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     units: 400_000,
   });
 
-  const sig = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyLegacySplIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
-
-  console.log(sig);
 
   // List state should be closed.
   t.false((await fetchEncodedAccount(client.rpc, listing)).exists);

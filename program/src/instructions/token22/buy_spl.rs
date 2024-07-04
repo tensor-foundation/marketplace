@@ -135,6 +135,8 @@ pub struct BuyT22Spl<'info> {
 
     pub token_program: Interface<'info, TokenInterface>,
 
+    pub currency_token_program: Interface<'info, TokenInterface>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
@@ -187,13 +189,7 @@ impl<'info> Validate<'info> for BuyT22Spl<'info> {
 }
 
 impl<'info> BuyT22Spl<'info> {
-    fn transfer_ta(
-        &self,
-        to: &AccountInfo<'info>,
-        mint: &AccountInfo<'info>,
-        amount: u64,
-        decimals: u8,
-    ) -> Result<()> {
+    fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
                 self.token_program.to_account_info(),
@@ -201,11 +197,11 @@ impl<'info> BuyT22Spl<'info> {
                     from: self.payer_currency_ta.to_account_info(),
                     to: to.to_account_info(),
                     authority: self.payer.to_account_info(),
-                    mint: mint.to_account_info(),
+                    mint: self.currency.to_account_info(),
                 },
             ),
             amount,
-            decimals,
+            self.currency.decimals,
         )?;
         Ok(())
     }
@@ -327,37 +323,31 @@ pub fn process_buy_t22_spl<'info, 'b>(
     // --Pay fees in currency--
 
     // Protocol fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Maker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts
             .maker_broker_currency_ta
             .as_ref()
             .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Taker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts
             .taker_broker_currency_ta
             .as_ref()
             .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     let (_creator_accounts, creator_ta_accounts) = remaining_accounts.split_at(creators.len());
@@ -387,12 +377,8 @@ pub fn process_buy_t22_spl<'info, 'b>(
     }
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts.transfer_ta(
-        ctx.accounts.owner_currency_ta.deref().as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
-        amount,
-        ctx.accounts.currency.decimals,
-    )?;
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

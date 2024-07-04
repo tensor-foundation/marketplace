@@ -41,7 +41,7 @@ pub struct BuyCoreSpl {
     pub maker_broker_ta: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_destination: solana_program::pubkey::Pubkey,
-
+    /// Token Program used for the currency.
     pub token_program: solana_program::pubkey::Pubkey,
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
@@ -399,6 +399,7 @@ impl BuyCoreSplBuilder {
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// Token Program used for the currency.
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -549,7 +550,7 @@ pub struct BuyCoreSplCpiAccounts<'a, 'b> {
     pub maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Token Program used for the currency.
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -599,7 +600,7 @@ pub struct BuyCoreSplCpi<'a, 'b> {
     pub maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Token Program used for the currency.
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -1059,6 +1060,7 @@ impl<'a, 'b> BuyCoreSplCpiBuilder<'a, 'b> {
         self.instruction.rent_destination = Some(rent_destination);
         self
     }
+    /// Token Program used for the currency.
     #[inline(always)]
     pub fn token_program(
         &mut self,

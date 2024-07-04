@@ -230,6 +230,7 @@ export type BuyCoreSplInput<
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination?: Address<TAccountRentDestination>;
+  /** Token Program used for the currency. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
@@ -483,6 +484,7 @@ export type ParsedBuyCoreSplInstruction<
     makerBroker?: TAccountMetas[13] | undefined;
     makerBrokerTa?: TAccountMetas[14] | undefined;
     rentDestination: TAccountMetas[15];
+    /** Token Program used for the currency. */
     tokenProgram: TAccountMetas[16];
     associatedTokenProgram: TAccountMetas[17];
     mplCoreProgram: TAccountMetas[18];

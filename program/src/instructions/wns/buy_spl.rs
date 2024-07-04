@@ -9,28 +9,21 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees, shard_num,
+    calc_creators_fee, calc_fees,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
     CalcFeesArgs, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_vault, program::MarketplaceProgram, record_event, ListState, TakeEvent, Target,
+    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
 pub struct BuyWnsSpl<'info> {
     /// CHECK: seeds and program checked here
-    #[account(mut,
-        seeds=[
-            b"fee_vault".as_ref(),
-            shard_num!(list_state),
-        ],
-        bump,
-        seeds::program = fees::ID,
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(init_if_needed,
@@ -67,7 +60,6 @@ pub struct BuyWnsSpl<'info> {
         ],
         bump = list_state.bump[0],
         has_one = owner,
-        constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -100,42 +92,34 @@ pub struct BuyWnsSpl<'info> {
     pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: none, can be anything
-    #[account(mut,
-        constraint = taker_broker_ta.is_some() @ TcompError::MissingBrokerTokenAccount
-    )]
+    #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
     #[account(init_if_needed,
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
-        constraint = taker_broker.is_some() @ TcompError::MissingBroker
     )]
-    pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: none, can be anything
-    #[account(mut,
-        constraint = maker_broker_ta.is_some() @ TcompError::MissingBrokerTokenAccount
-    )]
+    #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
     #[account(init_if_needed,
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
-        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
-    pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: list_state.get_rent_payer()
-    #[account(
-        mut,
-        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
-    )]
+    #[account(mut)]
     pub rent_destination: UncheckedAccount<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
+    // pub currency_token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
@@ -151,6 +135,13 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub distribution: UncheckedAccount<'info>,
 
+    #[account(init_if_needed,
+        payer = payer,
+        associated_token::mint = currency,
+        associated_token::authority = distribution,
+    )]
+    pub distribution_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: checked on approve CPI
     pub wns_program: UncheckedAccount<'info>,
 
@@ -165,6 +156,11 @@ pub struct BuyWnsSpl<'info> {
 
 impl<'info> Validate<'info> for BuyWnsSpl<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_vault(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -189,6 +185,16 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             TcompError::BrokerMismatch
         );
 
+        require!(
+            list_state.currency == Some(self.currency.key()),
+            TcompError::CurrencyMismatch
+        );
+
+        require!(
+            self.rent_destination.key() == list_state.get_rent_payer(),
+            TcompError::BadRentDest
+        );
+
         // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
@@ -196,18 +202,28 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             require!(cosigner == signer.key, TcompError::BadCosigner);
         }
 
+        // maker_broker accs are both None or Some
+        #[rustfmt::skip]
+        require!(
+            (self.maker_broker.is_some() && self.maker_broker_currency_ta.is_some()) ||
+            (self.maker_broker.is_none() && self.maker_broker_currency_ta.is_none()),
+            TcompError::BrokerMismatch
+        );
+
+        //taker_broker accs are both None or Some
+        #[rustfmt::skip]
+        require!(
+            (self.taker_broker.is_some() && self.taker_broker_currency_ta.is_some()) ||
+            (self.taker_broker.is_none() && self.taker_broker_currency_ta.is_none()),
+            TcompError::BrokerMismatch
+        );
+
         Ok(())
     }
 }
 
 impl<'info> BuyWnsSpl<'info> {
-    fn transfer_ta(
-        &self,
-        to: &AccountInfo<'info>,
-        mint: &AccountInfo<'info>,
-        amount: u64,
-        decimals: u8,
-    ) -> Result<()> {
+    fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
                 self.token_program.to_account_info(),
@@ -215,11 +231,11 @@ impl<'info> BuyWnsSpl<'info> {
                     from: self.payer_currency_ta.to_account_info(),
                     to: to.to_account_info(),
                     authority: self.payer.to_account_info(),
-                    mint: mint.to_account_info(),
+                    mint: self.currency.to_account_info(),
                 },
             ),
             amount,
-            decimals,
+            self.currency.decimals,
         )?;
         Ok(())
     }
@@ -265,15 +281,15 @@ pub fn process_buy_wns_spl<'info, 'b>(
         authority: ctx.accounts.payer.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve.to_account_info(),
-        payment_mint: None,
-        authority_token_account: None,
+        payment_mint: Some(ctx.accounts.currency.to_account_info()),
+        authority_token_account: Some(ctx.accounts.payer_currency_ta.to_account_info()),
         distribution_account: ctx.accounts.distribution.to_account_info(),
-        distribution_token_account: None,
+        distribution_token_account: Some(ctx.accounts.distribution_currency_ta.to_account_info()),
         system_program: ctx.accounts.system_program.to_account_info(),
         distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
-        payment_token_program: None,
+        payment_token_program: Some(ctx.accounts.token_program.to_account_info()),
     };
     // royalty payment
     approve(approve_accounts, amount, creator_fee)?;
@@ -327,46 +343,36 @@ pub fn process_buy_wns_spl<'info, 'b>(
     // --Pay fees in currency--
 
     // Protocol fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Maker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts
-            .maker_broker_ta
+            .maker_broker_currency_ta
             .as_ref()
             .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Taker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         ctx.accounts
-            .taker_broker_ta
+            .taker_broker_currency_ta
             .as_ref()
             .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
             .deref()
             .as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts.transfer_ta(
-        ctx.accounts.owner_currency_ta.deref().as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
-        amount,
-        ctx.accounts.currency.decimals,
-    )?;
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

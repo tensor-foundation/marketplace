@@ -9,7 +9,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees,
+    calc_creators_fee, calc_fees, fees, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
 };
@@ -23,8 +23,15 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyLegacySpl<'info> {
-    /// CHECK: Checked in assert_fee_account() in validate().
-    #[account(mut)]
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+            seeds=[
+            b"fee_vault".as_ref(),
+            shard_num!(list_state),
+        ],
+        bump,
+        seeds::program = fees::ID,
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(init_if_needed,
@@ -167,12 +174,6 @@ pub struct BuyLegacySpl<'info> {
 impl<'info> Validate<'info> for BuyLegacySpl<'info> {
     #[inline(never)]
     fn validate(&self) -> Result<()> {
-        msg!("validate");
-        assert_fee_account(
-            &self.fee_vault.to_account_info(),
-            &self.list_state.to_account_info(),
-        )?;
-
         let list_state = &self.list_state;
 
         require!(
@@ -210,13 +211,7 @@ impl<'info> Validate<'info> for BuyLegacySpl<'info> {
 
 impl<'info> BuyLegacySpl<'info> {
     #[inline(never)]
-    fn transfer_ta(
-        &self,
-        to: &AccountInfo<'info>,
-        mint: &AccountInfo<'info>,
-        amount: u64,
-        decimals: u8,
-    ) -> Result<()> {
+    fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
                 self.token_program.to_account_info(),
@@ -224,11 +219,11 @@ impl<'info> BuyLegacySpl<'info> {
                     from: self.payer_currency_ta.to_account_info(),
                     to: to.to_account_info(),
                     authority: self.payer.to_account_info(),
-                    mint: mint.to_account_info(),
+                    mint: self.currency.to_account_info(),
                 },
             ),
             amount,
-            decimals,
+            self.currency.decimals,
         )?;
         Ok(())
     }
@@ -357,27 +352,21 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     // --Pay fees in currency--
 
     // Protocol fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         &ctx.accounts.fee_vault_currency_ta.to_account_info(),
-        ctx.accounts.currency.deref().as_ref(),
         tcomp_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Maker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         maker_broker_currency_ta.unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info()),
-        ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Taker broker fee.
-    ctx.accounts.transfer_ta(
+    ctx.accounts.transfer_currency(
         taker_broker_currency_ta.unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info()),
-        ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
-        ctx.accounts.currency.decimals,
     )?;
 
     // Pay creator royalties.
@@ -402,12 +391,8 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     )?;
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts.transfer_ta(
-        ctx.accounts.owner_currency_ta.deref().as_ref(),
-        ctx.accounts.currency.deref().as_ref(),
-        amount,
-        ctx.accounts.currency.decimals,
-    )?;
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

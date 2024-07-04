@@ -51,9 +51,9 @@ export type BuyWnsSplInstruction<
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountPayerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountTakerBrokerTa extends string | IAccountMeta<string> = string,
+  TAccountTakerBrokerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBrokerTa extends string | IAccountMeta<string> = string,
+  TAccountMakerBrokerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
@@ -69,6 +69,7 @@ export type BuyWnsSplInstruction<
     | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountApprove extends string | IAccountMeta<string> = string,
   TAccountDistribution extends string | IAccountMeta<string> = string,
+  TAccountDistributionCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountWnsProgram extends
     | string
     | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
@@ -122,15 +123,15 @@ export type BuyWnsSplInstruction<
       TAccountTakerBroker extends string
         ? WritableAccount<TAccountTakerBroker>
         : TAccountTakerBroker,
-      TAccountTakerBrokerTa extends string
-        ? WritableAccount<TAccountTakerBrokerTa>
-        : TAccountTakerBrokerTa,
+      TAccountTakerBrokerCurrencyTa extends string
+        ? WritableAccount<TAccountTakerBrokerCurrencyTa>
+        : TAccountTakerBrokerCurrencyTa,
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMakerBrokerTa extends string
-        ? WritableAccount<TAccountMakerBrokerTa>
-        : TAccountMakerBrokerTa,
+      TAccountMakerBrokerCurrencyTa extends string
+        ? WritableAccount<TAccountMakerBrokerCurrencyTa>
+        : TAccountMakerBrokerCurrencyTa,
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
@@ -152,6 +153,9 @@ export type BuyWnsSplInstruction<
       TAccountDistribution extends string
         ? WritableAccount<TAccountDistribution>
         : TAccountDistribution,
+      TAccountDistributionCurrencyTa extends string
+        ? WritableAccount<TAccountDistributionCurrencyTa>
+        : TAccountDistributionCurrencyTa,
       TAccountWnsProgram extends string
         ? ReadonlyAccount<TAccountWnsProgram>
         : TAccountWnsProgram,
@@ -220,9 +224,9 @@ export type BuyWnsSplInput<
   TAccountPayer extends string = string,
   TAccountPayerCurrencyTa extends string = string,
   TAccountTakerBroker extends string = string,
-  TAccountTakerBrokerTa extends string = string,
+  TAccountTakerBrokerCurrencyTa extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMakerBrokerTa extends string = string,
+  TAccountMakerBrokerCurrencyTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
@@ -230,6 +234,7 @@ export type BuyWnsSplInput<
   TAccountSystemProgram extends string = string,
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
+  TAccountDistributionCurrencyTa extends string = string,
   TAccountWnsProgram extends string = string,
   TAccountWnsDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
@@ -250,9 +255,9 @@ export type BuyWnsSplInput<
   payer: TransactionSigner<TAccountPayer>;
   payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
-  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
+  takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
+  makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
   rentDestination: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -260,6 +265,7 @@ export type BuyWnsSplInput<
   systemProgram?: Address<TAccountSystemProgram>;
   approve: Address<TAccountApprove>;
   distribution: Address<TAccountDistribution>;
+  distributionCurrencyTa: Address<TAccountDistributionCurrencyTa>;
   wnsProgram?: Address<TAccountWnsProgram>;
   wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
@@ -281,9 +287,9 @@ export function getBuyWnsSplInstruction<
   TAccountPayer extends string,
   TAccountPayerCurrencyTa extends string,
   TAccountTakerBroker extends string,
-  TAccountTakerBrokerTa extends string,
+  TAccountTakerBrokerCurrencyTa extends string,
   TAccountMakerBroker extends string,
-  TAccountMakerBrokerTa extends string,
+  TAccountMakerBrokerCurrencyTa extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
@@ -291,6 +297,7 @@ export function getBuyWnsSplInstruction<
   TAccountSystemProgram extends string,
   TAccountApprove extends string,
   TAccountDistribution extends string,
+  TAccountDistributionCurrencyTa extends string,
   TAccountWnsProgram extends string,
   TAccountWnsDistributionProgram extends string,
   TAccountExtraMetas extends string,
@@ -310,9 +317,9 @@ export function getBuyWnsSplInstruction<
     TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountTakerBroker,
-    TAccountTakerBrokerTa,
+    TAccountTakerBrokerCurrencyTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerTa,
+    TAccountMakerBrokerCurrencyTa,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -320,6 +327,7 @@ export function getBuyWnsSplInstruction<
     TAccountSystemProgram,
     TAccountApprove,
     TAccountDistribution,
+    TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
     TAccountExtraMetas,
@@ -340,9 +348,9 @@ export function getBuyWnsSplInstruction<
   TAccountPayer,
   TAccountPayerCurrencyTa,
   TAccountTakerBroker,
-  TAccountTakerBrokerTa,
+  TAccountTakerBrokerCurrencyTa,
   TAccountMakerBroker,
-  TAccountMakerBrokerTa,
+  TAccountMakerBrokerCurrencyTa,
   TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
@@ -350,6 +358,7 @@ export function getBuyWnsSplInstruction<
   TAccountSystemProgram,
   TAccountApprove,
   TAccountDistribution,
+  TAccountDistributionCurrencyTa,
   TAccountWnsProgram,
   TAccountWnsDistributionProgram,
   TAccountExtraMetas,
@@ -376,9 +385,15 @@ export function getBuyWnsSplInstruction<
     payer: { value: input.payer ?? null, isWritable: true },
     payerCurrencyTa: { value: input.payerCurrencyTa ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
+    takerBrokerCurrencyTa: {
+      value: input.takerBrokerCurrencyTa ?? null,
+      isWritable: true,
+    },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
+    makerBrokerCurrencyTa: {
+      value: input.makerBrokerCurrencyTa ?? null,
+      isWritable: true,
+    },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -392,6 +407,10 @@ export function getBuyWnsSplInstruction<
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
+    distributionCurrencyTa: {
+      value: input.distributionCurrencyTa ?? null,
+      isWritable: true,
+    },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
     wnsDistributionProgram: {
       value: input.wnsDistributionProgram ?? null,
@@ -450,9 +469,9 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.payerCurrencyTa),
       getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.takerBrokerTa),
+      getAccountMeta(accounts.takerBrokerCurrencyTa),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.makerBrokerTa),
+      getAccountMeta(accounts.makerBrokerCurrencyTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
@@ -460,6 +479,7 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
+      getAccountMeta(accounts.distributionCurrencyTa),
       getAccountMeta(accounts.wnsProgram),
       getAccountMeta(accounts.wnsDistributionProgram),
       getAccountMeta(accounts.extraMetas),
@@ -484,9 +504,9 @@ export function getBuyWnsSplInstruction<
     TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountTakerBroker,
-    TAccountTakerBrokerTa,
+    TAccountTakerBrokerCurrencyTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerTa,
+    TAccountMakerBrokerCurrencyTa,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -494,6 +514,7 @@ export function getBuyWnsSplInstruction<
     TAccountSystemProgram,
     TAccountApprove,
     TAccountDistribution,
+    TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
     TAccountWnsDistributionProgram,
     TAccountExtraMetas,
@@ -524,9 +545,9 @@ export type ParsedBuyWnsSplInstruction<
     payer: TAccountMetas[10];
     payerCurrencyTa: TAccountMetas[11];
     takerBroker?: TAccountMetas[12] | undefined;
-    takerBrokerTa?: TAccountMetas[13] | undefined;
+    takerBrokerCurrencyTa?: TAccountMetas[13] | undefined;
     makerBroker?: TAccountMetas[14] | undefined;
-    makerBrokerTa?: TAccountMetas[15] | undefined;
+    makerBrokerCurrencyTa?: TAccountMetas[15] | undefined;
     rentDestination: TAccountMetas[16];
     tokenProgram: TAccountMetas[17];
     associatedTokenProgram: TAccountMetas[18];
@@ -534,10 +555,11 @@ export type ParsedBuyWnsSplInstruction<
     systemProgram: TAccountMetas[20];
     approve: TAccountMetas[21];
     distribution: TAccountMetas[22];
-    wnsProgram: TAccountMetas[23];
-    wnsDistributionProgram: TAccountMetas[24];
-    extraMetas: TAccountMetas[25];
-    cosigner?: TAccountMetas[26] | undefined;
+    distributionCurrencyTa: TAccountMetas[23];
+    wnsProgram: TAccountMetas[24];
+    wnsDistributionProgram: TAccountMetas[25];
+    extraMetas: TAccountMetas[26];
+    cosigner?: TAccountMetas[27] | undefined;
   };
   data: BuyWnsSplInstructionData;
 };
@@ -550,7 +572,7 @@ export function parseBuyWnsSplInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyWnsSplInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 27) {
+  if (instruction.accounts.length < 28) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -582,9 +604,9 @@ export function parseBuyWnsSplInstruction<
       payer: getNextAccount(),
       payerCurrencyTa: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
-      takerBrokerTa: getNextOptionalAccount(),
+      takerBrokerCurrencyTa: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      makerBrokerTa: getNextOptionalAccount(),
+      makerBrokerCurrencyTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
@@ -592,6 +614,7 @@ export function parseBuyWnsSplInstruction<
       systemProgram: getNextAccount(),
       approve: getNextAccount(),
       distribution: getNextAccount(),
+      distributionCurrencyTa: getNextAccount(),
       wnsProgram: getNextAccount(),
       wnsDistributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),

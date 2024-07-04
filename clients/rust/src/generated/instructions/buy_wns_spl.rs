@@ -36,11 +36,11 @@ pub struct BuyWnsSpl {
 
     pub taker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub taker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+    pub taker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub maker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+    pub maker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
@@ -55,6 +55,8 @@ pub struct BuyWnsSpl {
     pub approve: solana_program::pubkey::Pubkey,
 
     pub distribution: solana_program::pubkey::Pubkey,
+
+    pub distribution_currency_ta: solana_program::pubkey::Pubkey,
 
     pub wns_program: solana_program::pubkey::Pubkey,
 
@@ -78,7 +80,7 @@ impl BuyWnsSpl {
         args: BuyWnsSplInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(28 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.fee_vault,
             false,
@@ -134,9 +136,9 @@ impl BuyWnsSpl {
                 false,
             ));
         }
-        if let Some(taker_broker_ta) = self.taker_broker_ta {
+        if let Some(taker_broker_currency_ta) = self.taker_broker_currency_ta {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                taker_broker_ta,
+                taker_broker_currency_ta,
                 false,
             ));
         } else {
@@ -156,9 +158,9 @@ impl BuyWnsSpl {
                 false,
             ));
         }
-        if let Some(maker_broker_ta) = self.maker_broker_ta {
+        if let Some(maker_broker_currency_ta) = self.maker_broker_currency_ta {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                maker_broker_ta,
+                maker_broker_currency_ta,
                 false,
             ));
         } else {
@@ -193,6 +195,10 @@ impl BuyWnsSpl {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.distribution,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.distribution_currency_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -272,9 +278,9 @@ pub struct BuyWnsSplInstructionArgs {
 ///   10. `[writable, signer]` payer
 ///   11. `[writable]` payer_currency_ta
 ///   12. `[writable, optional]` taker_broker
-///   13. `[writable, optional]` taker_broker_ta
+///   13. `[writable, optional]` taker_broker_currency_ta
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable, optional]` maker_broker_ta
+///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
 ///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   18. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
@@ -282,10 +288,11 @@ pub struct BuyWnsSplInstructionArgs {
 ///   20. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   21. `[writable]` approve
 ///   22. `[writable]` distribution
-///   23. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
-///   24. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
-///   25. `[]` extra_metas
-///   26. `[signer, optional]` cosigner
+///   23. `[writable]` distribution_currency_ta
+///   24. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
+///   25. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   26. `[]` extra_metas
+///   27. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyWnsSplBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -301,9 +308,9 @@ pub struct BuyWnsSplBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     payer_currency_ta: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
-    taker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+    taker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    maker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+    maker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
@@ -311,6 +318,7 @@ pub struct BuyWnsSplBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     approve: Option<solana_program::pubkey::Pubkey>,
     distribution: Option<solana_program::pubkey::Pubkey>,
+    distribution_currency_ta: Option<solana_program::pubkey::Pubkey>,
     wns_program: Option<solana_program::pubkey::Pubkey>,
     wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
@@ -405,11 +413,11 @@ impl BuyWnsSplBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn taker_broker_ta(
+    pub fn taker_broker_currency_ta(
         &mut self,
-        taker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+        taker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.taker_broker_ta = taker_broker_ta;
+        self.taker_broker_currency_ta = taker_broker_currency_ta;
         self
     }
     /// `[optional account]`
@@ -423,11 +431,11 @@ impl BuyWnsSplBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn maker_broker_ta(
+    pub fn maker_broker_currency_ta(
         &mut self,
-        maker_broker_ta: Option<solana_program::pubkey::Pubkey>,
+        maker_broker_currency_ta: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
-        self.maker_broker_ta = maker_broker_ta;
+        self.maker_broker_currency_ta = maker_broker_currency_ta;
         self
     }
     #[inline(always)]
@@ -476,6 +484,14 @@ impl BuyWnsSplBuilder {
     #[inline(always)]
     pub fn distribution(&mut self, distribution: solana_program::pubkey::Pubkey) -> &mut Self {
         self.distribution = Some(distribution);
+        self
+    }
+    #[inline(always)]
+    pub fn distribution_currency_ta(
+        &mut self,
+        distribution_currency_ta: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.distribution_currency_ta = Some(distribution_currency_ta);
         self
     }
     /// `[optional account, default to 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM']`
@@ -549,9 +565,9 @@ impl BuyWnsSplBuilder {
                 .payer_currency_ta
                 .expect("payer_currency_ta is not set"),
             taker_broker: self.taker_broker,
-            taker_broker_ta: self.taker_broker_ta,
+            taker_broker_currency_ta: self.taker_broker_currency_ta,
             maker_broker: self.maker_broker,
-            maker_broker_ta: self.maker_broker_ta,
+            maker_broker_currency_ta: self.maker_broker_currency_ta,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
@@ -567,6 +583,9 @@ impl BuyWnsSplBuilder {
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             approve: self.approve.expect("approve is not set"),
             distribution: self.distribution.expect("distribution is not set"),
+            distribution_currency_ta: self
+                .distribution_currency_ta
+                .expect("distribution_currency_ta is not set"),
             wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
                 "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
             )),
@@ -612,11 +631,11 @@ pub struct BuyWnsSplCpiAccounts<'a, 'b> {
 
     pub taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub taker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub taker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub maker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -631,6 +650,8 @@ pub struct BuyWnsSplCpiAccounts<'a, 'b> {
     pub approve: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub distribution: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub distribution_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -672,11 +693,11 @@ pub struct BuyWnsSplCpi<'a, 'b> {
 
     pub taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub taker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub taker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub maker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -691,6 +712,8 @@ pub struct BuyWnsSplCpi<'a, 'b> {
     pub approve: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub distribution: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub distribution_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -724,9 +747,9 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             payer: accounts.payer,
             payer_currency_ta: accounts.payer_currency_ta,
             taker_broker: accounts.taker_broker,
-            taker_broker_ta: accounts.taker_broker_ta,
+            taker_broker_currency_ta: accounts.taker_broker_currency_ta,
             maker_broker: accounts.maker_broker,
-            maker_broker_ta: accounts.maker_broker_ta,
+            maker_broker_currency_ta: accounts.maker_broker_currency_ta,
             rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
@@ -734,6 +757,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             system_program: accounts.system_program,
             approve: accounts.approve,
             distribution: accounts.distribution,
+            distribution_currency_ta: accounts.distribution_currency_ta,
             wns_program: accounts.wns_program,
             wns_distribution_program: accounts.wns_distribution_program,
             extra_metas: accounts.extra_metas,
@@ -774,7 +798,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(27 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(28 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.fee_vault.key,
             false,
@@ -834,9 +858,9 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
                 false,
             ));
         }
-        if let Some(taker_broker_ta) = self.taker_broker_ta {
+        if let Some(taker_broker_currency_ta) = self.taker_broker_currency_ta {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                *taker_broker_ta.key,
+                *taker_broker_currency_ta.key,
                 false,
             ));
         } else {
@@ -856,9 +880,9 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
                 false,
             ));
         }
-        if let Some(maker_broker_ta) = self.maker_broker_ta {
+        if let Some(maker_broker_currency_ta) = self.maker_broker_currency_ta {
             accounts.push(solana_program::instruction::AccountMeta::new(
-                *maker_broker_ta.key,
+                *maker_broker_currency_ta.key,
                 false,
             ));
         } else {
@@ -893,6 +917,10 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.distribution.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.distribution_currency_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -934,7 +962,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(27 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(28 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.fee_vault_currency_ta.clone());
@@ -951,14 +979,14 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
         if let Some(taker_broker) = self.taker_broker {
             account_infos.push(taker_broker.clone());
         }
-        if let Some(taker_broker_ta) = self.taker_broker_ta {
-            account_infos.push(taker_broker_ta.clone());
+        if let Some(taker_broker_currency_ta) = self.taker_broker_currency_ta {
+            account_infos.push(taker_broker_currency_ta.clone());
         }
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        if let Some(maker_broker_ta) = self.maker_broker_ta {
-            account_infos.push(maker_broker_ta.clone());
+        if let Some(maker_broker_currency_ta) = self.maker_broker_currency_ta {
+            account_infos.push(maker_broker_currency_ta.clone());
         }
         account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
@@ -967,6 +995,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
         account_infos.push(self.system_program.clone());
         account_infos.push(self.approve.clone());
         account_infos.push(self.distribution.clone());
+        account_infos.push(self.distribution_currency_ta.clone());
         account_infos.push(self.wns_program.clone());
         account_infos.push(self.wns_distribution_program.clone());
         account_infos.push(self.extra_metas.clone());
@@ -1002,9 +1031,9 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
 ///   10. `[writable, signer]` payer
 ///   11. `[writable]` payer_currency_ta
 ///   12. `[writable, optional]` taker_broker
-///   13. `[writable, optional]` taker_broker_ta
+///   13. `[writable, optional]` taker_broker_currency_ta
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable, optional]` maker_broker_ta
+///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
 ///   17. `[]` token_program
 ///   18. `[]` associated_token_program
@@ -1012,10 +1041,11 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
 ///   20. `[]` system_program
 ///   21. `[writable]` approve
 ///   22. `[writable]` distribution
-///   23. `[]` wns_program
-///   24. `[]` wns_distribution_program
-///   25. `[]` extra_metas
-///   26. `[signer, optional]` cosigner
+///   23. `[writable]` distribution_currency_ta
+///   24. `[]` wns_program
+///   25. `[]` wns_distribution_program
+///   26. `[]` extra_metas
+///   27. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyWnsSplCpiBuilder<'a, 'b> {
     instruction: Box<BuyWnsSplCpiBuilderInstruction<'a, 'b>>,
@@ -1038,9 +1068,9 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
             payer: None,
             payer_currency_ta: None,
             taker_broker: None,
-            taker_broker_ta: None,
+            taker_broker_currency_ta: None,
             maker_broker: None,
-            maker_broker_ta: None,
+            maker_broker_currency_ta: None,
             rent_destination: None,
             token_program: None,
             associated_token_program: None,
@@ -1048,6 +1078,7 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
             system_program: None,
             approve: None,
             distribution: None,
+            distribution_currency_ta: None,
             wns_program: None,
             wns_distribution_program: None,
             extra_metas: None,
@@ -1154,11 +1185,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn taker_broker_ta(
+    pub fn taker_broker_currency_ta(
         &mut self,
-        taker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        taker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.taker_broker_ta = taker_broker_ta;
+        self.instruction.taker_broker_currency_ta = taker_broker_currency_ta;
         self
     }
     /// `[optional account]`
@@ -1172,11 +1203,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn maker_broker_ta(
+    pub fn maker_broker_currency_ta(
         &mut self,
-        maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        maker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.maker_broker_ta = maker_broker_ta;
+        self.instruction.maker_broker_currency_ta = maker_broker_currency_ta;
         self
     }
     #[inline(always)]
@@ -1233,6 +1264,14 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
         distribution: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.distribution = Some(distribution);
+        self
+    }
+    #[inline(always)]
+    pub fn distribution_currency_ta(
+        &mut self,
+        distribution_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.distribution_currency_ta = Some(distribution_currency_ta);
         self
     }
     #[inline(always)]
@@ -1359,11 +1398,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
 
             taker_broker: self.instruction.taker_broker,
 
-            taker_broker_ta: self.instruction.taker_broker_ta,
+            taker_broker_currency_ta: self.instruction.taker_broker_currency_ta,
 
             maker_broker: self.instruction.maker_broker,
 
-            maker_broker_ta: self.instruction.maker_broker_ta,
+            maker_broker_currency_ta: self.instruction.maker_broker_currency_ta,
 
             rent_destination: self
                 .instruction
@@ -1396,6 +1435,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
                 .instruction
                 .distribution
                 .expect("distribution is not set"),
+
+            distribution_currency_ta: self
+                .instruction
+                .distribution_currency_ta
+                .expect("distribution_currency_ta is not set"),
 
             wns_program: self
                 .instruction
@@ -1438,9 +1482,9 @@ struct BuyWnsSplCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    taker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    taker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    maker_broker_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    maker_broker_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1448,6 +1492,7 @@ struct BuyWnsSplCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     approve: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    distribution_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,

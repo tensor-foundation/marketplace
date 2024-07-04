@@ -511,7 +511,7 @@
           "isOptional": true
         },
         {
-          "name": "takerBrokerTa",
+          "name": "takerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -523,7 +523,7 @@
           "isOptional": true
         },
         {
-          "name": "makerBrokerTa",
+          "name": "makerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -2306,6 +2306,11 @@
           "isSigner": false
         },
         {
+          "name": "currencyTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2854,7 +2859,7 @@
           "isOptional": true
         },
         {
-          "name": "takerBrokerTa",
+          "name": "takerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -2866,7 +2871,7 @@
           "isOptional": true
         },
         {
-          "name": "makerBrokerTa",
+          "name": "makerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -2903,6 +2908,11 @@
         },
         {
           "name": "distribution",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distributionCurrencyTa",
           "isMut": true,
           "isSigner": false
         },
@@ -3536,7 +3546,10 @@
         {
           "name": "tokenProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Token Program used for the currency."
+          ]
         },
         {
           "name": "associatedTokenProgram",
