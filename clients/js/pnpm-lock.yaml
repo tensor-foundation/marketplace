@@ -31,14 +31,14 @@ importers:
         specifier: 2.0.0-preview.3
         version: 2.0.0-preview.3
       '@tensor-foundation/mpl-core':
-        specifier: '*'
-        version: link:../../../../Coding/toolkit/mpl-core
+        specifier: 0.0.1
+        version: 0.0.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
       '@tensor-foundation/mpl-token-metadata':
-        specifier: '*'
-        version: link:../../../../Coding/toolkit/mpl-token-metadata
+        specifier: 0.0.3
+        version: 0.0.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
       '@tensor-foundation/test-helpers':
-        specifier: ^0.0.5
-        version: link:../../../../Coding/toolkit/test-helpers
+        specifier: ^0.0.6
+        version: 0.0.6(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.0.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
@@ -385,6 +385,11 @@ packages:
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
 
+  '@solana-program/system@0.3.3':
+    resolution: {integrity: sha512-TBR/NjAOn7kt1g1aZcUka6yk+n70/EcXO0cPL+lXCIfzqL5/3u1ko0UOLmdyCrs13jVheI+zeKmyR4Ft1Yz2fQ==}
+    peerDependencies:
+      '@solana/web3.js': 2.0.0-preview.3
+
   '@solana-program/token@0.1.4':
     resolution: {integrity: sha512-3+9oVY+jie5cXZQM7s6jLui9vtwXO1F7EOdT7sHg/Xh9NT5J+9xWZUdPbOC5sNU+4V3W6RpVm20gqjX7WKbkLg==}
     peerDependencies:
@@ -507,10 +512,24 @@ packages:
   '@solana/webcrypto-ed25519-polyfill@2.0.0-preview.3':
     resolution: {integrity: sha512-MaV4swf8QJr+H7BVr9hJiZxn/nWedvCMSJB53GtHse5/EC+STdBMzfELICKXiQtycWC5V4vC9LKTOHIjx2zXhg==}
 
+  '@tensor-foundation/mpl-core@0.0.1':
+    resolution: {integrity: sha512-DS1+1Gf9w8V33+YVNpyD2xPHt/apgOttzMAx4NHNVn6f6O/SOXnCh2QSOU+Tfy1B2PMx9Ufl1Fv7imRnGBxI+w==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/mpl-core/0.0.1/db91bedc2a78f2e4d508e48e60a246e1b358d96c}
+
+  '@tensor-foundation/mpl-token-metadata@0.0.3':
+    resolution: {integrity: sha512-Gu66jjo/LVK0r/isBNn5vOqXLVv+TaG7SVl/4M6qwiTH6gxSJ2tGEztngfG2/FMPzEXhuOR6B7j8/3xIiIxrlQ==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/mpl-token-metadata/0.0.3/85111aad9c2d74ec6ac46fc1135c8c7157c69afc}
+
   '@tensor-foundation/resolvers@0.2.0':
     resolution: {integrity: sha512-Uzk5Fq8yexkrIMD6IbGaTsFcyGHQPBxSCUgRyUvHb/3vPka3XoH4P0JrAOWL9l1qIJavjgNY4l+SSE8jGpdvhQ==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/resolvers/0.2.0/d585173a41dc04d8c0a94c67d721eccc9598bc75}
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
+
+  '@tensor-foundation/test-helpers@0.0.5':
+    resolution: {integrity: sha512-0nz677l5DjdJVz2oSA1VQk0npPQF+tkFi4LKQvlWxQoVllhCNuGddI7mcD++ARcYM1nIcR0VO1t53mDjZJ/Adw==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/test-helpers/0.0.5/adae61b3fa2402b219071b89b3696281de6a2896}
+    peerDependencies:
+      '@solana/web3.js': 2.0.0-preview.3
+
+  '@tensor-foundation/test-helpers@0.0.6':
+    resolution: {integrity: sha512-rr7SkdA5gXZM6DbMIMBKWX313ytgDJJw+TUExgKdz/wg6Es/wQKsvWvIPWkz9o25kDr0R3M2mmnFCfnY/tPZtA==, tarball: https://npm.pkg.github.com/download/@tensor-foundation/test-helpers/0.0.6/a6558f07da8cc1d469382395d3e79aa91d94cf23}
 
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
@@ -2146,6 +2165,10 @@ snapshots:
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
 
+  '@solana-program/system@0.3.3(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
+    dependencies:
+      '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+
   '@solana-program/token@0.1.4(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
@@ -2438,9 +2461,36 @@ snapshots:
     dependencies:
       '@noble/ed25519': 2.0.0
 
+  '@tensor-foundation/mpl-core@0.0.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
+    dependencies:
+      '@tensor-foundation/test-helpers': 0.0.5(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
+    transitivePeerDependencies:
+      - '@solana/web3.js'
+
+  '@tensor-foundation/mpl-token-metadata@0.0.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
+    dependencies:
+      '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+      '@tensor-foundation/test-helpers': 0.0.6(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+    transitivePeerDependencies:
+      - fastestsmallesttextencoderdecoder
+      - ws
+
   '@tensor-foundation/resolvers@0.2.0(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+
+  '@tensor-foundation/test-helpers@0.0.5(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))':
+    dependencies:
+      '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+
+  '@tensor-foundation/test-helpers@0.0.6(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)':
+    dependencies:
+      '@solana-program/system': 0.3.3(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
+      '@solana-program/token': 0.1.4(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0))
+      '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.16.0)
+    transitivePeerDependencies:
+      - fastestsmallesttextencoderdecoder
+      - ws
 
   '@types/estree@1.0.5': {}
 
