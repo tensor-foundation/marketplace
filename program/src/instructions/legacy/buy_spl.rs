@@ -16,9 +16,9 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, TakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT,
-    TCOMP_FEE_BPS,
+    assert_decode_token_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
+    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
+    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -32,7 +32,7 @@ pub struct BuyLegacySpl<'info> {
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
-    pub fee_vault_currency_ta: InterfaceAccount<'info, TokenAccount>,
+    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -94,25 +94,11 @@ pub struct BuyLegacySpl<'info> {
 
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub taker_broker: Option<UncheckedAccount<'info>>,
-
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = taker_broker,
-    )]
-    pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub maker_broker: Option<UncheckedAccount<'info>>,
 
     /// CHECK: none, can be anything
     #[account(mut)]
-    pub maker_broker: Option<UncheckedAccount<'info>>,
-
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = maker_broker,
-    )]
-    pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub taker_broker: Option<UncheckedAccount<'info>>,
 
     /// CHECK: list_state.get_rent_payer()
     #[account(
@@ -172,12 +158,14 @@ pub struct BuyLegacySpl<'info> {
     pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
-    //
     // 1. creators (1-5)
     // 2. creators' atas (1-5)
+    // 3. maker_broker_currency_ta (optional)
+    // 4. taker_broker_currency_ta (optional)
 }
 
 impl<'info> Validate<'info> for BuyLegacySpl<'info> {
+    #[inline(never)]
     fn validate(&self) -> Result<()> {
         msg!("validate");
         assert_fee_account(
@@ -221,6 +209,7 @@ impl<'info> Validate<'info> for BuyLegacySpl<'info> {
 }
 
 impl<'info> BuyLegacySpl<'info> {
+    #[inline(never)]
     fn transfer_ta(
         &self,
         to: &AccountInfo<'info>,
@@ -246,19 +235,51 @@ impl<'info> BuyLegacySpl<'info> {
 }
 
 #[access_control(ctx.accounts.validate())]
+#[inline(never)]
 pub fn process_buy_legacy_spl<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyLegacySpl<'info>>,
     max_amount: u64,
     optional_royalty_pct: Option<u16>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
-    msg!("process_buy_legacy_spl");
     // validate the mint
     let mint = ctx.accounts.mint.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
     let list_state = &ctx.accounts.list_state;
 
     let remaining_accounts = ctx.remaining_accounts;
+
+    // Parse remaining accounts.
+    let num_creators = metadata.creators.as_ref().map(Vec::len).unwrap_or(0);
+    let (creator_accounts, remaining) = remaining_accounts.split_at(num_creators);
+    let (creator_ta_accounts, remaining) = remaining.split_at(num_creators);
+
+    // If broker acounts are present, we need the currency token accounts from them.
+    let (maker_broker_currency_ta, remaining) =
+        if let Some(maker_broker) = &ctx.accounts.maker_broker {
+            let (account, remaining) = remaining.split_first().unwrap();
+            assert_decode_token_account(&mint, &maker_broker.key(), account)?;
+
+            (Some(account), remaining)
+        } else {
+            (None, remaining)
+        };
+
+    let (taker_broker_currency_ta, _remaining) =
+        if let Some(taker_broker) = &ctx.accounts.taker_broker {
+            let (account, remaining) = remaining.split_first().unwrap();
+            assert_decode_token_account(&mint, &taker_broker.key(), account)?;
+
+            (Some(account), remaining)
+        } else {
+            (None, remaining)
+        };
+
+    let creator_accounts_with_ta = creator_accounts
+        .iter()
+        .zip(creator_ta_accounts.iter())
+        .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
+        .collect::<Vec<_>>();
 
     let amount = list_state.amount;
     let currency = list_state.currency;
@@ -284,7 +305,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     )?;
 
     // Transfer the NFT to the buyer
-    msg!("transfer");
     transfer(
         TransferArgs {
             source: &ctx.accounts.list_state.to_account_info(),
@@ -335,7 +355,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     )?;
 
     // --Pay fees in currency--
-    msg!("fees");
 
     // Protocol fee.
     ctx.accounts.transfer_ta(
@@ -347,12 +366,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
 
     // Maker broker fee.
     ctx.accounts.transfer_ta(
-        ctx.accounts
-            .maker_broker_currency_ta
-            .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info())
-            .deref()
-            .as_ref(),
+        maker_broker_currency_ta.unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info()),
         ctx.accounts.currency.deref().as_ref(),
         maker_broker_fee,
         ctx.accounts.currency.decimals,
@@ -360,27 +374,13 @@ pub fn process_buy_legacy_spl<'info, 'b>(
 
     // Taker broker fee.
     ctx.accounts.transfer_ta(
-        ctx.accounts
-            .taker_broker_currency_ta
-            .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
-            .deref()
-            .as_ref(),
+        taker_broker_currency_ta.unwrap_or(&ctx.accounts.fee_vault_currency_ta.to_account_info()),
         ctx.accounts.currency.deref().as_ref(),
         taker_broker_fee,
         ctx.accounts.currency.decimals,
     )?;
 
     // Pay creator royalties.
-    let num_creators = metadata.creators.as_ref().map(Vec::len).unwrap_or(0);
-    let (creator_accounts, creator_ta_accounts) = remaining_accounts.split_at(num_creators);
-
-    let creator_accounts_with_ta = creator_accounts
-        .iter()
-        .zip(creator_ta_accounts.iter())
-        .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
-        .collect::<Vec<_>>();
-
     transfer_creators_fee(
         &metadata
             .creators

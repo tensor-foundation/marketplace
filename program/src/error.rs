@@ -93,4 +93,6 @@ pub enum TcompError {
     MissingBroker = 142,
     #[msg("missing broker token account")]
     MissingBrokerTokenAccount = 143,
+    #[msg("invalidtoken account")]
+    InvalidTokenAccount = 144,
 }

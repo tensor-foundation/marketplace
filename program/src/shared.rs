@@ -1,4 +1,11 @@
+use anchor_spl::token_interface::TokenAccount;
+
 use crate::*;
+
+const TOKEN_PROGRAMS: [&str; 2] = [
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+];
 
 pub(crate) enum TcompSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
@@ -45,4 +52,23 @@ pub fn validate_cosigner<'info>(
     }
 
     Ok(maybe_remaining)
+}
+
+pub fn assert_decode_token_account(
+    mint: &Pubkey,
+    authority: &Pubkey,
+    account: &AccountInfo,
+) -> Result<TokenAccount> {
+    let mut data: &[u8] = &account.try_borrow_data()?;
+    let token_account = TokenAccount::try_deserialize(&mut data)?;
+    require!(
+        token_account.mint == *mint && token_account.owner == *authority,
+        TcompError::InvalidTokenAccount
+    );
+    require!(
+        TOKEN_PROGRAMS.contains(&account.owner.to_string().as_str()),
+        TcompError::InvalidTokenAccount
+    );
+
+    Ok(token_account)
 }

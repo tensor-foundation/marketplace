@@ -142,6 +142,9 @@ pub enum TensorMarketplaceError {
     /// 6143 - missing broker token account
     #[error("missing broker token account")]
     MissingBrokerTokenAccount = 0x17FF,
+    /// 6144 - invalidtoken account
+    #[error("invalidtoken account")]
+    InvalidTokenAccount = 0x1800,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {
