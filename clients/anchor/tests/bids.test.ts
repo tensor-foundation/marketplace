@@ -62,7 +62,7 @@ describe("tcomp bids", () => {
     ruleSetAddr = res.ruleSetAddr;
   });
 
-  describe.only("compressed nfts", () => {
+  describe("compressed nfts", () => {
     it("bids + edits + accepts bid (with canopy)", async () => {
       let takerBroker = Keypair.generate().publicKey;
       const canopyDepth = 10;
