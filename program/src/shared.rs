@@ -1,4 +1,12 @@
+use anchor_spl::token_interface::TokenAccount;
+use tensor_toolbox::{fees, shard_num, TensorError};
+
 use crate::*;
+
+const TOKEN_PROGRAMS: [&str; 2] = [
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+];
 
 pub(crate) enum TcompSigner<'a, 'info> {
     Bid(&'a Account<'info, BidState>),
@@ -45,4 +53,65 @@ pub fn validate_cosigner<'info>(
     }
 
     Ok(maybe_remaining)
+}
+
+pub fn assert_decode_token_account(
+    mint: &Pubkey,
+    authority: &Pubkey,
+    account: &AccountInfo,
+) -> Result<TokenAccount> {
+    let mut data: &[u8] = &account.try_borrow_data()?;
+    let token_account = TokenAccount::try_deserialize(&mut data)?;
+    require!(
+        token_account.mint == *mint && token_account.owner == *authority,
+        TcompError::InvalidTokenAccount
+    );
+    require!(
+        TOKEN_PROGRAMS.contains(&account.owner.to_string().as_str()),
+        TcompError::InvalidTokenAccount
+    );
+
+    Ok(token_account)
+}
+
+/// Asserts the seeds derivation of the fee vault account.
+pub fn assert_fee_vault_seeds(
+    fee_vault_info: &AccountInfo,
+    state_info: &AccountInfo,
+) -> Result<()> {
+    let expected_fee_vault = Pubkey::find_program_address(
+        &[
+            b"fee_vault",
+            // Use the last byte of the mint as the fee shard number
+            shard_num!(state_info),
+        ],
+        &fees::ID,
+    )
+    .0;
+
+    require!(
+        fee_vault_info.key == &expected_fee_vault,
+        TensorError::InvalidFeeAccount
+    );
+
+    Ok(())
+}
+
+/// Asserts the seeds derivation of the list state account.
+pub fn assert_list_state_seeds(
+    list_state_info: &AccountInfo,
+    mint_info: &AccountInfo,
+) -> Result<()> {
+    let expected_list_state = Pubkey::find_program_address(
+        &[b"list_state".as_ref(), mint_info.key().as_ref()],
+        &crate::ID,
+    )
+    .0;
+
+    require!(
+        list_state_info.key == &expected_list_state,
+        TcompError::BadListState
+    );
+
+    Ok(())
 }

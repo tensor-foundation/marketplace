@@ -14,7 +14,7 @@ use self::program::MarketplaceProgram;
 
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: Checked in assert_fee_account() in validate().
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -164,7 +164,7 @@ pub fn process_buy_core<'info, 'b>(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-    let (seller_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
+    let (royalty_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
         (basis_points, TokenStandard::ProgrammableNonFungible)
     } else {
         (0, TokenStandard::NonFungible)
@@ -172,6 +172,7 @@ pub fn process_buy_core<'info, 'b>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
+
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
@@ -184,10 +185,9 @@ pub fn process_buy_core<'info, 'b>(
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(seller_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
 
-    // transfer the NFT
-
+    // Transfer the asset to the buyer.
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
@@ -220,12 +220,13 @@ pub fn process_buy_core<'info, 'b>(
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // --------------------------------------- sol transfers
+    // --Pay fees in SOL--
 
-    // Pay fees
+    // Protocol fee.
     ctx.accounts
         .transfer_lamports(&ctx.accounts.fee_vault.to_account_info(), tcomp_fee)?;
 
+    // Maker broker fee.
     ctx.accounts.transfer_lamports_min_balance(
         &ctx.accounts
             .maker_broker
@@ -235,6 +236,7 @@ pub fn process_buy_core<'info, 'b>(
         maker_broker_fee,
     )?;
 
+    // Taker broker fee.
     ctx.accounts.transfer_lamports_min_balance(
         &ctx.accounts
             .taker_broker
@@ -244,7 +246,7 @@ pub fn process_buy_core<'info, 'b>(
         taker_broker_fee,
     )?;
 
-    // Pay creators
+    // Pay creator royalties.
     if let Some(Royalties { creators, .. }) = royalties {
         transfer_creators_fee(
             &creators.into_iter().map(Into::into).collect(),

@@ -287,6 +287,20 @@ pub mod marketplace_program {
         )
     }
 
+    pub fn buy_legacy_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyLegacySpl<'info>>,
+        max_amount: u64,
+        optional_royalty_pct: Option<u16>,
+        authorization_data: Option<AuthorizationDataLocal>,
+    ) -> Result<()> {
+        instructions::legacy::process_buy_legacy_spl(
+            ctx,
+            max_amount,
+            optional_royalty_pct,
+            authorization_data,
+        )
+    }
+
     pub fn close_expired_listing_legacy<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingLegacy<'info>>,
         authorization_data: Option<AuthorizationDataLocal>,
@@ -346,6 +360,13 @@ pub mod marketplace_program {
         instructions::token22::process_buy_t22(ctx, max_amount)
     }
 
+    pub fn buy_t22_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyT22Spl<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::token22::process_buy_t22_spl(ctx, max_amount)
+    }
+
     pub fn close_expired_listing_t22<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingT22<'info>>,
     ) -> Result<()> {
@@ -390,6 +411,13 @@ pub mod marketplace_program {
         instructions::wns::process_buy_wns(ctx, max_amount)
     }
 
+    pub fn buy_wns_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyWnsSpl<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::wns::process_buy_wns_spl(ctx, max_amount)
+    }
+
     pub fn close_expired_listing_wns<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseExpiredListingWns<'info>>,
     ) -> Result<()> {
@@ -432,6 +460,13 @@ pub mod marketplace_program {
         max_amount: u64,
     ) -> Result<()> {
         instructions::mpl_core::process_buy_core(ctx, max_amount)
+    }
+
+    pub fn buy_core_spl<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyCoreSpl<'info>>,
+        max_amount: u64,
+    ) -> Result<()> {
+        instructions::mpl_core::process_buy_core_spl(ctx, max_amount)
     }
 
     pub fn close_expired_listing_core<'info>(

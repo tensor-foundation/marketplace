@@ -511,7 +511,7 @@
           "isOptional": true
         },
         {
-          "name": "takerBrokerTa",
+          "name": "takerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -523,7 +523,7 @@
           "isOptional": true
         },
         {
-          "name": "makerBrokerTa",
+          "name": "makerBrokerCurrencyTa",
           "isMut": true,
           "isSigner": false,
           "isOptional": true
@@ -1361,6 +1361,185 @@
       ]
     },
     {
+      "name": "buyLegacySpl",
+      "accounts": [
+        {
+          "name": "feeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeVaultCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "payerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currencyTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "edition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "listTokenRecord",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        },
+        {
+          "name": "optionalRoyaltyPct",
+          "type": {
+            "option": "u16"
+          }
+        },
+        {
+          "name": "authorizationData",
+          "type": {
+            "option": {
+              "defined": "AuthorizationDataLocal"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "closeExpiredListingLegacy",
       "accounts": [
         {
@@ -2029,6 +2208,143 @@
       ]
     },
     {
+      "name": "buyT22Spl",
+      "accounts": [
+        {
+          "name": "feeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeVaultCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "T22 asset mint."
+          ]
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL token mint of the currency."
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "payerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBrokerCurrencyTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBrokerCurrencyTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currencyTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "closeExpiredListingT22",
       "accounts": [
         {
@@ -2440,6 +2756,173 @@
         },
         {
           "name": "distribution",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "wnsProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "wnsDistributionProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "extraMetas",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "buyWnsSpl",
+      "accounts": [
+        {
+          "name": "feeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeVaultCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "WNS asset mint."
+          ]
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL token mint of the currency."
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "payerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBrokerCurrencyTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBrokerCurrencyTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currencyTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "approve",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distribution",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distributionCurrencyTa",
           "isMut": true,
           "isSigner": false
         },
@@ -2972,6 +3455,136 @@
           "name": "cosigner",
           "isMut": false,
           "isSigner": false,
+          "isOptional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "maxAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "buyCoreSpl",
+      "accounts": [
+        {
+          "name": "feeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeVaultCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "listState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "collection",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "payerCurrencyTa",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "takerBrokerTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBroker",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "makerBrokerTa",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "rentDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Token Program used for the currency."
+          ]
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mplCoreProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cosigner",
+          "isMut": false,
+          "isSigner": true,
           "isOptional": true
         }
       ],
@@ -4201,6 +4814,26 @@
       "code": 6140,
       "name": "InvalidFeeAccount",
       "msg": "invalid fee account"
+    },
+    {
+      "code": 6141,
+      "name": "InsufficientRemainingAccounts",
+      "msg": "insufficient remaining accounts"
+    },
+    {
+      "code": 6142,
+      "name": "MissingBroker",
+      "msg": "missing broker account"
+    },
+    {
+      "code": 6143,
+      "name": "MissingBrokerTokenAccount",
+      "msg": "missing broker token account"
+    },
+    {
+      "code": 6144,
+      "name": "InvalidTokenAccount",
+      "msg": "invalidtoken account"
     }
   ],
   "metadata": {

@@ -1,14 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, Token2022, TransferChecked},
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount},
+    token_2022::Token2022,
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
 };
+use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::{validate_mint, RoyaltyInfo},
-    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
-    CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
+    transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, TCreator, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -18,8 +21,8 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct BuyT22<'info> {
-    /// CHECK: Seeds and program checked here, account has no state.
+pub struct BuyT22Spl<'info> {
+    /// CHECK: seeds and program checked here
     #[account(mut,
         seeds=[
             b"fee_vault".as_ref(),
@@ -29,6 +32,14 @@ pub struct BuyT22<'info> {
         seeds::program = fees::ID,
     )]
     pub fee_vault: UncheckedAccount<'info>,
+
+    #[account(init_if_needed,
+        payer = payer,
+        associated_token::mint = currency,
+        associated_token::authority = fee_vault,
+        associated_token::token_program = currency_token_program,
+    )]
+    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -43,40 +54,86 @@ pub struct BuyT22<'info> {
 
     #[account(
         mut,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+    )]
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+        mut,
         close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             mint.key().as_ref(),
         ],
         bump = list_state.bump[0],
-        has_one = owner
+        has_one = owner,
+        constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
-
+    /// T22 asset mint.
     pub mint: Box<InterfaceAccount<'info, Mint>>,
+
+    /// SPL token mint of the currency.
+    #[account(
+        mint::token_program = currency_token_program,
+    )]
+    pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
     /// CHECK: has_one = owner on list_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
 
+    #[account(
+        init_if_needed,
+        payer = payer,
+        associated_token::mint = currency,
+        associated_token::authority = owner,
+        associated_token::token_program = currency_token_program,
+    )]
+    pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: none, can be anything
-    #[account(mut)]
-    pub taker_broker: Option<UncheckedAccount<'info>>,
+    #[account(mut,
+      token::mint = currency,
+      token::authority = payer,
+      token::token_program = currency_token_program,
+    )]
+    pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: none, can be anything
-    #[account(mut)]
+    #[account(mut,
+        constraint = taker_broker_currency_ta.is_some() @ TcompError::MissingBrokerTokenAccount
+    )]
+    pub taker_broker: Option<UncheckedAccount<'info>>,
+
+    #[account(init_if_needed,
+        payer = payer,
+        associated_token::mint = currency,
+        associated_token::authority = taker_broker,
+        associated_token::token_program = currency_token_program,
+        constraint = taker_broker.is_some() @ TcompError::MissingBroker
+    )]
+    pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+
+    /// CHECK: none, can be anything
+    #[account(mut,
+        constraint = maker_broker_currency_ta.is_some() @ TcompError::MissingBrokerTokenAccount
+    )]
     pub maker_broker: Option<UncheckedAccount<'info>>,
+
+    #[account(init_if_needed,
+        payer = payer,
+        associated_token::mint = currency,
+        associated_token::authority = maker_broker,
+        associated_token::token_program = currency_token_program,
+        constraint = maker_broker.is_some() @ TcompError::MissingBroker
+    )]
+    pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: list_state.get_rent_payer()
     #[account(
@@ -88,6 +145,9 @@ pub struct BuyT22<'info> {
     // Always Token2022.
     pub token_program: Program<'info, Token2022>,
 
+    // Supports both Token2022 and legacy SPL Token.
+    pub currency_token_program: Interface<'info, TokenInterface>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub marketplace_program: Program<'info, MarketplaceProgram>,
@@ -96,10 +156,13 @@ pub struct BuyT22<'info> {
 
     pub cosigner: Option<Signer<'info>>,
     //
-    // ---- [0..n] remaining accounts for royalties transfer hook
+    // ----------------------------------------------------- Remaining accounts
+    //
+    // 1. creators (1-5)
+    // 2. creators' atas (1-5)
 }
 
-impl<'info> Validate<'info> for BuyT22<'info> {
+impl<'info> Validate<'info> for BuyT22Spl<'info> {
     fn validate(&self) -> Result<()> {
         let list_state = &self.list_state;
 
@@ -136,12 +199,34 @@ impl<'info> Validate<'info> for BuyT22<'info> {
     }
 }
 
+impl<'info> BuyT22Spl<'info> {
+    fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
+        transfer_checked(
+            CpiContext::new(
+                self.currency_token_program.to_account_info(),
+                TransferChecked {
+                    from: self.payer_currency_ta.to_account_info(),
+                    to: to.to_account_info(),
+                    authority: self.payer.to_account_info(),
+                    mint: self.currency.to_account_info(),
+                },
+            ),
+            amount,
+            self.currency.decimals,
+        )?;
+        Ok(())
+    }
+}
+
 #[access_control(ctx.accounts.validate())]
-pub fn process_buy_t22<'info, 'b>(
-    ctx: Context<'_, 'b, '_, 'info, BuyT22<'info>>,
+pub fn process_buy_t22_spl<'info, 'b>(
+    ctx: Context<'_, 'b, '_, 'info, BuyT22Spl<'info>>,
     max_amount: u64,
 ) -> Result<()> {
+    // validate the mint
     let list_state = &ctx.accounts.list_state;
+
+    let remaining_accounts = ctx.remaining_accounts;
 
     // validate mint account
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
@@ -150,17 +235,21 @@ pub fn process_buy_t22<'info, 'b>(
     let currency = list_state.currency;
 
     require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
+    require!(currency.is_some(), TcompError::CurrencyMismatch);
+
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        tnsr_discount: false,
+        tnsr_discount,
         total_fee_bps: TCOMP_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    // Transfer the NFT to the buyer.
+    // Transfer the NFT
+
+    //  Build transfer context.
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -212,6 +301,7 @@ pub fn process_buy_t22<'info, 'b>(
         (vec![], vec![], 0)
     };
 
+    // Invoke the transfer.
     transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1,
@@ -241,50 +331,67 @@ pub fn process_buy_t22<'info, 'b>(
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
-    // pay fees
+    // --Pay fees in currency--
 
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.fee_vault, tcomp_fee)?;
+    // Protocol fee.
+    ctx.accounts.transfer_currency(
+        ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
+        tcomp_fee,
+    )?;
 
-    transfer_lamports_checked(
-        &ctx.accounts.payer,
-        &ctx.accounts
-            .maker_broker
+    // Maker broker fee.
+    ctx.accounts.transfer_currency(
+        ctx.accounts
+            .maker_broker_currency_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault)
-            .to_account_info(),
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
+            .deref()
+            .as_ref(),
         maker_broker_fee,
     )?;
 
-    transfer_lamports_checked(
-        &ctx.accounts.payer,
-        &ctx.accounts
-            .taker_broker
+    // Taker broker fee.
+    ctx.accounts.transfer_currency(
+        ctx.accounts
+            .taker_broker_currency_ta
             .as_ref()
-            .unwrap_or(&ctx.accounts.fee_vault)
-            .to_account_info(),
+            .unwrap_or(&ctx.accounts.fee_vault_currency_ta)
+            .deref()
+            .as_ref(),
         taker_broker_fee,
     )?;
 
-    // Pay creators
+    let (_creator_accounts, creator_ta_accounts) = remaining_accounts.split_at(creators.len());
+
+    let creator_accounts_with_ta = creator_accounts
+        .iter()
+        .zip(creator_ta_accounts.iter())
+        .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
+        .collect::<Vec<_>>();
+
+    // Pay creator royalties.
     if royalties.is_some() {
         transfer_creators_fee(
-            &creators,
-            &mut creator_accounts.iter(),
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts_with_ta.iter(),
             creator_fee,
-            &CreatorFeeMode::Sol {
-                from: &FromAcc::External(&FromExternal {
-                    from: &ctx.accounts.payer.to_account_info(),
-                    sys_prog: &ctx.accounts.system_program,
-                }),
+            &CreatorFeeMode::Spl {
+                associated_token_program: &ctx.accounts.associated_token_program,
+                token_program: &ctx.accounts.currency_token_program,
+                system_program: &ctx.accounts.system_program,
+                currency: ctx.accounts.currency.deref().as_ref(),
+                from: &ctx.accounts.payer,
+                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                rent_payer: &ctx.accounts.payer,
             },
         )?;
     }
 
-    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
-    // closes the list token account
-
+    // Close the list token account.
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),

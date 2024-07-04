@@ -16,10 +16,14 @@ import {
   ParsedBidInstruction,
   ParsedBuyCompressedInstruction,
   ParsedBuyCoreInstruction,
+  ParsedBuyCoreSplInstruction,
   ParsedBuyLegacyInstruction,
+  ParsedBuyLegacySplInstruction,
   ParsedBuySplInstruction,
   ParsedBuyT22Instruction,
+  ParsedBuyT22SplInstruction,
   ParsedBuyWnsInstruction,
+  ParsedBuyWnsSplInstruction,
   ParsedCancelBidInstruction,
   ParsedCloseExpiredBidInstruction,
   ParsedCloseExpiredListingCompressedInstruction,
@@ -112,21 +116,25 @@ export enum TensorMarketplaceInstruction {
   TakeBidCompressedMetaHash,
   TakeBidCompressedFullMeta,
   BuyLegacy,
+  BuyLegacySpl,
   CloseExpiredListingLegacy,
   DelistLegacy,
   ListLegacy,
   TakeBidLegacy,
   BuyT22,
+  BuyT22Spl,
   CloseExpiredListingT22,
   DelistT22,
   ListT22,
   TakeBidT22,
   BuyWns,
+  BuyWnsSpl,
   CloseExpiredListingWns,
   DelistWns,
   ListWns,
   TakeBidWns,
   BuyCore,
+  BuyCoreSpl,
   CloseExpiredListingCore,
   DelistCore,
   ListCore,
@@ -285,6 +293,17 @@ export function identifyTensorMarketplaceInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([134, 94, 125, 229, 24, 157, 194, 199])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceInstruction.BuyLegacySpl;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([56, 16, 96, 188, 55, 68, 250, 58])
       ),
       0
@@ -335,6 +354,17 @@ export function identifyTensorMarketplaceInstruction(
     )
   ) {
     return TensorMarketplaceInstruction.BuyT22;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([102, 21, 163, 39, 94, 39, 122, 94])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceInstruction.BuyT22Spl;
   }
   if (
     containsBytes(
@@ -395,6 +425,17 @@ export function identifyTensorMarketplaceInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([113, 137, 57, 23, 186, 196, 217, 210])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceInstruction.BuyWnsSpl;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([222, 31, 183, 134, 230, 207, 7, 132])
       ),
       0
@@ -445,6 +486,17 @@ export function identifyTensorMarketplaceInstruction(
     )
   ) {
     return TensorMarketplaceInstruction.BuyCore;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([234, 28, 37, 122, 114, 239, 233, 208])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceInstruction.BuyCoreSpl;
   }
   if (
     containsBytes(
@@ -538,6 +590,9 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.BuyLegacy;
     } & ParsedBuyLegacyInstruction<TProgram>)
   | ({
+      instructionType: TensorMarketplaceInstruction.BuyLegacySpl;
+    } & ParsedBuyLegacySplInstruction<TProgram>)
+  | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingLegacy;
     } & ParsedCloseExpiredListingLegacyInstruction<TProgram>)
   | ({
@@ -552,6 +607,9 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.BuyT22;
     } & ParsedBuyT22Instruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuyT22Spl;
+    } & ParsedBuyT22SplInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingT22;
     } & ParsedCloseExpiredListingT22Instruction<TProgram>)
@@ -568,6 +626,9 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.BuyWns;
     } & ParsedBuyWnsInstruction<TProgram>)
   | ({
+      instructionType: TensorMarketplaceInstruction.BuyWnsSpl;
+    } & ParsedBuyWnsSplInstruction<TProgram>)
+  | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingWns;
     } & ParsedCloseExpiredListingWnsInstruction<TProgram>)
   | ({
@@ -582,6 +643,9 @@ export type ParsedTensorMarketplaceInstruction<
   | ({
       instructionType: TensorMarketplaceInstruction.BuyCore;
     } & ParsedBuyCoreInstruction<TProgram>)
+  | ({
+      instructionType: TensorMarketplaceInstruction.BuyCoreSpl;
+    } & ParsedBuyCoreSplInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingCore;
     } & ParsedCloseExpiredListingCoreInstruction<TProgram>)
