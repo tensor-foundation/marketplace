@@ -1446,6 +1446,11 @@
           "isSigner": false
         },
         {
+          "name": "currencyTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
@@ -2883,6 +2888,11 @@
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currencyTokenProgram",
           "isMut": false,
           "isSigner": false
         },

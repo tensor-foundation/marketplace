@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::TransferChecked,
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_2022::{Token2022, TransferChecked},
+    token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
@@ -86,7 +86,8 @@ pub struct BuyWns<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    // Always Token2022.
+    pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 

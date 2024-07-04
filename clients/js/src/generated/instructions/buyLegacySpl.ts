@@ -91,6 +91,7 @@ export type BuyLegacySplInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountCurrencyTokenProgram extends string | IAccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -165,6 +166,9 @@ export type BuyLegacySplInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountCurrencyTokenProgram extends string
+        ? ReadonlyAccount<TAccountCurrencyTokenProgram>
+        : TAccountCurrencyTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -279,6 +283,7 @@ export type BuyLegacySplAsyncInput<
   TAccountTakerBroker extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -308,6 +313,7 @@ export type BuyLegacySplAsyncInput<
   takerBroker?: Address<TAccountTakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -345,6 +351,7 @@ export async function getBuyLegacySplInstructionAsync<
   TAccountTakerBroker extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
@@ -375,6 +382,7 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountTakerBroker,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -407,6 +415,7 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountTakerBroker,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -445,6 +454,10 @@ export async function getBuyLegacySplInstructionAsync<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -615,6 +628,7 @@ export async function getBuyLegacySplInstructionAsync<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
@@ -651,6 +665,7 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountTakerBroker,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -685,6 +700,7 @@ export type BuyLegacySplInput<
   TAccountTakerBroker extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -714,6 +730,7 @@ export type BuyLegacySplInput<
   takerBroker?: Address<TAccountTakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -751,6 +768,7 @@ export function getBuyLegacySplInstruction<
   TAccountTakerBroker extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
@@ -781,6 +799,7 @@ export function getBuyLegacySplInstruction<
     TAccountTakerBroker,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -812,6 +831,7 @@ export function getBuyLegacySplInstruction<
   TAccountTakerBroker,
   TAccountRentDestination,
   TAccountTokenProgram,
+  TAccountCurrencyTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
@@ -849,6 +869,10 @@ export function getBuyLegacySplInstruction<
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -972,6 +996,7 @@ export function getBuyLegacySplInstruction<
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
@@ -1008,6 +1033,7 @@ export function getBuyLegacySplInstruction<
     TAccountTakerBroker,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -1047,18 +1073,19 @@ export type ParsedBuyLegacySplInstruction<
     takerBroker?: TAccountMetas[13] | undefined;
     rentDestination: TAccountMetas[14];
     tokenProgram: TAccountMetas[15];
-    associatedTokenProgram: TAccountMetas[16];
-    marketplaceProgram: TAccountMetas[17];
-    systemProgram: TAccountMetas[18];
-    metadata: TAccountMetas[19];
-    edition: TAccountMetas[20];
-    buyerTokenRecord?: TAccountMetas[21] | undefined;
-    listTokenRecord?: TAccountMetas[22] | undefined;
-    authorizationRules?: TAccountMetas[23] | undefined;
-    authorizationRulesProgram?: TAccountMetas[24] | undefined;
-    tokenMetadataProgram?: TAccountMetas[25] | undefined;
-    sysvarInstructions?: TAccountMetas[26] | undefined;
-    cosigner?: TAccountMetas[27] | undefined;
+    currencyTokenProgram: TAccountMetas[16];
+    associatedTokenProgram: TAccountMetas[17];
+    marketplaceProgram: TAccountMetas[18];
+    systemProgram: TAccountMetas[19];
+    metadata: TAccountMetas[20];
+    edition: TAccountMetas[21];
+    buyerTokenRecord?: TAccountMetas[22] | undefined;
+    listTokenRecord?: TAccountMetas[23] | undefined;
+    authorizationRules?: TAccountMetas[24] | undefined;
+    authorizationRulesProgram?: TAccountMetas[25] | undefined;
+    tokenMetadataProgram?: TAccountMetas[26] | undefined;
+    sysvarInstructions?: TAccountMetas[27] | undefined;
+    cosigner?: TAccountMetas[28] | undefined;
   };
   data: BuyLegacySplInstructionData;
 };
@@ -1071,7 +1098,7 @@ export function parseBuyLegacySplInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyLegacySplInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 28) {
+  if (instruction.accounts.length < 29) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -1106,6 +1133,7 @@ export function parseBuyLegacySplInstruction<
       takerBroker: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
+      currencyTokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),

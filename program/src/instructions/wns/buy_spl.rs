@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
+    token_2022::Token2022,
     token_interface::{
         close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
         TransferChecked,
@@ -16,8 +17,9 @@ use tensor_toolbox::{
 use vipers::Validate;
 
 use crate::{
-    assert_fee_vault, program::MarketplaceProgram, record_event, ListState, TakeEvent, Target,
-    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_vault_seeds, assert_list_state_seeds, program::MarketplaceProgram, record_event,
+    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
+    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -30,6 +32,7 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
+        associated_token::token_program = currency_token_program,
     )]
     pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -54,11 +57,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(
         mut,
         close = rent_destination,
-        seeds=[
-            b"list_state".as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump = list_state.bump[0],
         has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
@@ -67,6 +65,9 @@ pub struct BuyWnsSpl<'info> {
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// SPL token mint of the currency.
+    #[account(
+        mint::token_program = currency_token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -79,6 +80,7 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = owner,
+        associated_token::token_program = currency_token_program,
     )]
     pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -88,6 +90,7 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut,
       token::mint = currency,
       token::authority = payer,
+      token::token_program = currency_token_program,
     )]
     pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -99,6 +102,7 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
+        associated_token::token_program = currency_token_program,
     )]
     pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
@@ -110,6 +114,7 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
+        associated_token::token_program = currency_token_program,
     )]
     pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
@@ -117,7 +122,11 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub rent_destination: UncheckedAccount<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    // Always Token2022.
+    pub token_program: Program<'info, Token2022>,
+
+    // Supports both Token2022 and legacy SPL Token.
+    pub currency_token_program: Interface<'info, TokenInterface>,
 
     // pub currency_token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -139,6 +148,7 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = distribution,
+        associated_token::token_program = currency_token_program,
     )]
     pub distribution_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -156,9 +166,14 @@ pub struct BuyWnsSpl<'info> {
 
 impl<'info> Validate<'info> for BuyWnsSpl<'info> {
     fn validate(&self) -> Result<()> {
-        assert_fee_vault(
+        assert_fee_vault_seeds(
             &self.fee_vault.to_account_info(),
             &self.list_state.to_account_info(),
+        )?;
+
+        assert_list_state_seeds(
+            &self.list_state.to_account_info(),
+            &self.mint.to_account_info(),
         )?;
 
         let list_state = &self.list_state;
@@ -226,7 +241,7 @@ impl<'info> BuyWnsSpl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
-                self.token_program.to_account_info(),
+                self.currency_token_program.to_account_info(),
                 TransferChecked {
                     from: self.payer_currency_ta.to_account_info(),
                     to: to.to_account_info(),
@@ -289,7 +304,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
         distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
-        payment_token_program: Some(ctx.accounts.token_program.to_account_info()),
+        payment_token_program: Some(ctx.accounts.currency_token_program.to_account_info()),
     };
     // royalty payment
     approve(approve_accounts, amount, creator_fee)?;

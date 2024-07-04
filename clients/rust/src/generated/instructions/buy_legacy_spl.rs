@@ -43,6 +43,8 @@ pub struct BuyLegacySpl {
 
     pub token_program: solana_program::pubkey::Pubkey,
 
+    pub currency_token_program: solana_program::pubkey::Pubkey,
+
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
     pub marketplace_program: solana_program::pubkey::Pubkey,
@@ -81,7 +83,7 @@ impl BuyLegacySpl {
         args: BuyLegacySplInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(28 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.fee_vault,
             false,
@@ -154,6 +156,10 @@ impl BuyLegacySpl {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.currency_token_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -312,18 +318,19 @@ pub struct BuyLegacySplInstructionArgs {
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable]` rent_destination
 ///   15. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   16. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   17. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
-///   18. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   19. `[writable]` metadata
-///   20. `[]` edition
-///   21. `[writable, optional]` buyer_token_record
-///   22. `[writable, optional]` list_token_record
-///   23. `[optional]` authorization_rules
-///   24. `[optional]` authorization_rules_program
-///   25. `[optional]` token_metadata_program
-///   26. `[optional]` sysvar_instructions
-///   27. `[signer, optional]` cosigner
+///   16. `[]` currency_token_program
+///   17. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   18. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   19. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   20. `[writable]` metadata
+///   21. `[]` edition
+///   22. `[writable, optional]` buyer_token_record
+///   23. `[writable, optional]` list_token_record
+///   24. `[optional]` authorization_rules
+///   25. `[optional]` authorization_rules_program
+///   26. `[optional]` token_metadata_program
+///   27. `[optional]` sysvar_instructions
+///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyLegacySplBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -342,6 +349,7 @@ pub struct BuyLegacySplBuilder {
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
+    currency_token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -463,6 +471,14 @@ impl BuyLegacySplBuilder {
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
+        self
+    }
+    #[inline(always)]
+    pub fn currency_token_program(
+        &mut self,
+        currency_token_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.currency_token_program = Some(currency_token_program);
         self
     }
     /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
@@ -621,6 +637,9 @@ impl BuyLegacySplBuilder {
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
+            currency_token_program: self
+                .currency_token_program
+                .expect("currency_token_program is not set"),
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
             ),
@@ -684,6 +703,8 @@ pub struct BuyLegacySplCpiAccounts<'a, 'b> {
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub currency_token_program: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -746,6 +767,8 @@ pub struct BuyLegacySplCpi<'a, 'b> {
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub currency_token_program: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -797,6 +820,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
             taker_broker: accounts.taker_broker,
             rent_destination: accounts.rent_destination,
             token_program: accounts.token_program,
+            currency_token_program: accounts.currency_token_program,
             associated_token_program: accounts.associated_token_program,
             marketplace_program: accounts.marketplace_program,
             system_program: accounts.system_program,
@@ -845,7 +869,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(28 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(29 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.fee_vault.key,
             false,
@@ -922,6 +946,10 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.currency_token_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1037,7 +1065,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(28 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(29 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.fee_vault_currency_ta.clone());
@@ -1059,6 +1087,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
         }
         account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
+        account_infos.push(self.currency_token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
@@ -1117,18 +1146,19 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable]` rent_destination
 ///   15. `[]` token_program
-///   16. `[]` associated_token_program
-///   17. `[]` marketplace_program
-///   18. `[]` system_program
-///   19. `[writable]` metadata
-///   20. `[]` edition
-///   21. `[writable, optional]` buyer_token_record
-///   22. `[writable, optional]` list_token_record
-///   23. `[optional]` authorization_rules
-///   24. `[optional]` authorization_rules_program
-///   25. `[optional]` token_metadata_program
-///   26. `[optional]` sysvar_instructions
-///   27. `[signer, optional]` cosigner
+///   16. `[]` currency_token_program
+///   17. `[]` associated_token_program
+///   18. `[]` marketplace_program
+///   19. `[]` system_program
+///   20. `[writable]` metadata
+///   21. `[]` edition
+///   22. `[writable, optional]` buyer_token_record
+///   23. `[writable, optional]` list_token_record
+///   24. `[optional]` authorization_rules
+///   25. `[optional]` authorization_rules_program
+///   26. `[optional]` token_metadata_program
+///   27. `[optional]` sysvar_instructions
+///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
 pub struct BuyLegacySplCpiBuilder<'a, 'b> {
     instruction: Box<BuyLegacySplCpiBuilderInstruction<'a, 'b>>,
@@ -1154,6 +1184,7 @@ impl<'a, 'b> BuyLegacySplCpiBuilder<'a, 'b> {
             taker_broker: None,
             rent_destination: None,
             token_program: None,
+            currency_token_program: None,
             associated_token_program: None,
             marketplace_program: None,
             system_program: None,
@@ -1289,6 +1320,14 @@ impl<'a, 'b> BuyLegacySplCpiBuilder<'a, 'b> {
         token_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program = Some(token_program);
+        self
+    }
+    #[inline(always)]
+    pub fn currency_token_program(
+        &mut self,
+        currency_token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.currency_token_program = Some(currency_token_program);
         self
     }
     #[inline(always)]
@@ -1511,6 +1550,11 @@ impl<'a, 'b> BuyLegacySplCpiBuilder<'a, 'b> {
                 .token_program
                 .expect("token_program is not set"),
 
+            currency_token_program: self
+                .instruction
+                .currency_token_program
+                .expect("currency_token_program is not set"),
+
             associated_token_program: self
                 .instruction
                 .associated_token_program
@@ -1571,6 +1615,7 @@ struct BuyLegacySplCpiBuilderInstruction<'a, 'b> {
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    currency_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

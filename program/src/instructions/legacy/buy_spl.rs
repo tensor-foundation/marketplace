@@ -38,6 +38,7 @@ pub struct BuyLegacySpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
+        associated_token::token_program = currency_token_program,
     )]
     pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -75,6 +76,9 @@ pub struct BuyLegacySpl<'info> {
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = currency_token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -87,6 +91,7 @@ pub struct BuyLegacySpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = owner,
+        associated_token::token_program = currency_token_program,
     )]
     pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -96,6 +101,7 @@ pub struct BuyLegacySpl<'info> {
     #[account(mut,
       token::mint = currency,
       token::authority = payer,
+      token::token_program = currency_token_program,
     )]
     pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -115,6 +121,8 @@ pub struct BuyLegacySpl<'info> {
     pub rent_destination: UncheckedAccount<'info>,
 
     pub token_program: Interface<'info, TokenInterface>,
+
+    pub currency_token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
@@ -214,7 +222,7 @@ impl<'info> BuyLegacySpl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
-                self.token_program.to_account_info(),
+                self.currency_token_program.to_account_info(),
                 TransferChecked {
                     from: self.payer_currency_ta.to_account_info(),
                     to: to.to_account_info(),
@@ -381,7 +389,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         creator_fee,
         &CreatorFeeMode::Spl {
             associated_token_program: &ctx.accounts.associated_token_program,
-            token_program: &ctx.accounts.token_program,
+            token_program: &ctx.accounts.currency_token_program,
             system_program: &ctx.accounts.system_program,
             currency: ctx.accounts.currency.deref().as_ref(),
             from: &ctx.accounts.payer,

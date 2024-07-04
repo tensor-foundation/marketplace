@@ -58,6 +58,7 @@ export type BuyWnsSplInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountCurrencyTokenProgram extends string | IAccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -138,6 +139,9 @@ export type BuyWnsSplInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountCurrencyTokenProgram extends string
+        ? ReadonlyAccount<TAccountCurrencyTokenProgram>
+        : TAccountCurrencyTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -229,6 +233,7 @@ export type BuyWnsSplInput<
   TAccountMakerBrokerCurrencyTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -260,6 +265,7 @@ export type BuyWnsSplInput<
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
   rentDestination: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -292,6 +298,7 @@ export function getBuyWnsSplInstruction<
   TAccountMakerBrokerCurrencyTa extends string,
   TAccountRentDestination extends string,
   TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountSystemProgram extends string,
@@ -322,6 +329,7 @@ export function getBuyWnsSplInstruction<
     TAccountMakerBrokerCurrencyTa,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -353,6 +361,7 @@ export function getBuyWnsSplInstruction<
   TAccountMakerBrokerCurrencyTa,
   TAccountRentDestination,
   TAccountTokenProgram,
+  TAccountCurrencyTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
@@ -396,6 +405,10 @@ export function getBuyWnsSplInstruction<
     },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -474,6 +487,7 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.makerBrokerCurrencyTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
@@ -509,6 +523,7 @@ export function getBuyWnsSplInstruction<
     TAccountMakerBrokerCurrencyTa,
     TAccountRentDestination,
     TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
@@ -550,16 +565,17 @@ export type ParsedBuyWnsSplInstruction<
     makerBrokerCurrencyTa?: TAccountMetas[15] | undefined;
     rentDestination: TAccountMetas[16];
     tokenProgram: TAccountMetas[17];
-    associatedTokenProgram: TAccountMetas[18];
-    marketplaceProgram: TAccountMetas[19];
-    systemProgram: TAccountMetas[20];
-    approve: TAccountMetas[21];
-    distribution: TAccountMetas[22];
-    distributionCurrencyTa: TAccountMetas[23];
-    wnsProgram: TAccountMetas[24];
-    wnsDistributionProgram: TAccountMetas[25];
-    extraMetas: TAccountMetas[26];
-    cosigner?: TAccountMetas[27] | undefined;
+    currencyTokenProgram: TAccountMetas[18];
+    associatedTokenProgram: TAccountMetas[19];
+    marketplaceProgram: TAccountMetas[20];
+    systemProgram: TAccountMetas[21];
+    approve: TAccountMetas[22];
+    distribution: TAccountMetas[23];
+    distributionCurrencyTa: TAccountMetas[24];
+    wnsProgram: TAccountMetas[25];
+    wnsDistributionProgram: TAccountMetas[26];
+    extraMetas: TAccountMetas[27];
+    cosigner?: TAccountMetas[28] | undefined;
   };
   data: BuyWnsSplInstructionData;
 };
@@ -572,7 +588,7 @@ export function parseBuyWnsSplInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBuyWnsSplInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 28) {
+  if (instruction.accounts.length < 29) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -609,6 +625,7 @@ export function parseBuyWnsSplInstruction<
       makerBrokerCurrencyTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       tokenProgram: getNextAccount(),
+      currencyTokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       systemProgram: getNextAccount(),

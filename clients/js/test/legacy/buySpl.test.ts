@@ -144,6 +144,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     currency: currency.mint,
     creators: [updateAuthority.address],
     creatorsTa: [updateAuthorityCurrencyTa],
+    currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
   const computeIx = getSetComputeUnitLimitInstruction({
@@ -305,6 +306,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     currency: currency.mint,
     creators: creators.map((c) => c.address),
     creatorsTa: creatorsAtas,
+    currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
   const computeIx = getSetComputeUnitLimitInstruction({
