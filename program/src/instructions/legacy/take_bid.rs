@@ -204,7 +204,6 @@ pub fn process_take_bid_legacy<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
-    // TODO: unused, remove on a breaking change
     rules_acc_present: bool,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
