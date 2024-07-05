@@ -10,141 +10,141 @@ use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum TensorMarketplaceError {
-    /// 7000 - arithmetic error
+    /// 6100 - arithmetic error
     #[error("arithmetic error")]
-    ArithmeticError = 0x1B58,
-    /// 7001 - expiry too large
+    ArithmeticError = 0x17D4,
+    /// 6101 - expiry too large
     #[error("expiry too large")]
-    ExpiryTooLarge = 0x1B59,
-    /// 7002 - bad owner
+    ExpiryTooLarge = 0x17D5,
+    /// 6102 - bad owner
     #[error("bad owner")]
-    BadOwner = 0x1B5A,
-    /// 7003 - bad list state
+    BadOwner = 0x17D6,
+    /// 6103 - bad list state
     #[error("bad list state")]
-    BadListState = 0x1B5B,
-    /// 7004 - royalties pct must be between 0 and 100
+    BadListState = 0x17D7,
+    /// 6104 - royalties pct must be between 0 and 100
     #[error("royalties pct must be between 0 and 100")]
-    BadRoyaltiesPct = 0x1B5C,
-    /// 7005 - price mismatch
+    BadRoyaltiesPct = 0x17D8,
+    /// 6105 - price mismatch
     #[error("price mismatch")]
-    PriceMismatch = 0x1B5D,
-    /// 7006 - creator mismatch
+    PriceMismatch = 0x17D9,
+    /// 6106 - creator mismatch
     #[error("creator mismatch")]
-    CreatorMismatch = 0x1B5E,
-    /// 7007 - insufficient balance
+    CreatorMismatch = 0x17DA,
+    /// 6107 - insufficient balance
     #[error("insufficient balance")]
-    InsufficientBalance = 0x1B5F,
-    /// 7008 - bid has expired
+    InsufficientBalance = 0x17DB,
+    /// 6108 - bid has expired
     #[error("bid has expired")]
-    BidExpired = 0x1B60,
-    /// 7009 - taker not allowed
+    BidExpired = 0x17DC,
+    /// 6109 - taker not allowed
     #[error("taker not allowed")]
-    TakerNotAllowed = 0x1B61,
-    /// 7010 - cannot pass bid field
+    TakerNotAllowed = 0x17DD,
+    /// 6110 - cannot pass bid field
     #[error("cannot pass bid field")]
-    BadBidField = 0x1B62,
-    /// 7011 - bid not yet expired
+    BadBidField = 0x17DE,
+    /// 6111 - bid not yet expired
     #[error("bid not yet expired")]
-    BidNotYetExpired = 0x1B63,
-    /// 7012 - bad margin
+    BidNotYetExpired = 0x17DF,
+    /// 6112 - bad margin
     #[error("bad margin")]
-    BadMargin = 0x1B64,
-    /// 7013 - wrong ix for bid target called
+    BadMargin = 0x17E0,
+    /// 6113 - wrong ix for bid target called
     #[error("wrong ix for bid target called")]
-    WrongIxForBidTarget = 0x1B65,
-    /// 7014 - wrong target id
+    WrongIxForBidTarget = 0x17E1,
+    /// 6114 - wrong target id
     #[error("wrong target id")]
-    WrongTargetId = 0x1B66,
-    /// 7015 - creator array missing first verified creator
+    WrongTargetId = 0x17E2,
+    /// 6115 - creator array missing first verified creator
     #[error("creator array missing first verified creator")]
-    MissingFvc = 0x1B67,
-    /// 7016 - metadata missing collection
+    MissingFvc = 0x17E3,
+    /// 6116 - metadata missing collection
     #[error("metadata missing collection")]
-    MissingCollection = 0x1B68,
-    /// 7017 - cannot modify bid target, create a new bid
+    MissingCollection = 0x17E4,
+    /// 6117 - cannot modify bid target, create a new bid
     #[error("cannot modify bid target, create a new bid")]
-    CannotModifyTarget = 0x1B69,
-    /// 7018 - target id and bid id must be the same for single bids
+    CannotModifyTarget = 0x17E5,
+    /// 6118 - target id and bid id must be the same for single bids
     #[error("target id and bid id must be the same for single bids")]
-    TargetIdMustEqualBidId = 0x1B6A,
-    /// 7019 - currency not yet enabled
+    TargetIdMustEqualBidId = 0x17E6,
+    /// 6119 - currency not yet enabled
     #[error("currency not yet enabled")]
-    CurrencyNotYetEnabled = 0x1B6B,
-    /// 7020 - maker broker not yet enabled
+    CurrencyNotYetEnabled = 0x17E7,
+    /// 6120 - maker broker not yet enabled
     #[error("maker broker not yet enabled")]
-    MakerBrokerNotYetEnabled = 0x1B6C,
-    /// 7021 - optional royalties not yet enabled
+    MakerBrokerNotYetEnabled = 0x17E8,
+    /// 6121 - optional royalties not yet enabled
     #[error("optional royalties not yet enabled")]
-    OptionalRoyaltiesNotYetEnabled = 0x1B6D,
-    /// 7022 - wrong state version
+    OptionalRoyaltiesNotYetEnabled = 0x17E9,
+    /// 6122 - wrong state version
     #[error("wrong state version")]
-    WrongStateVersion = 0x1B6E,
-    /// 7023 - wrong field id
+    WrongStateVersion = 0x17EA,
+    /// 6123 - wrong field id
     #[error("wrong field id")]
-    WrongBidFieldId = 0x1B6F,
-    /// 7024 - broker mismatch
+    WrongBidFieldId = 0x17EB,
+    /// 6124 - broker mismatch
     #[error("broker mismatch")]
-    BrokerMismatch = 0x1B70,
-    /// 7025 - asset id mismatch
+    BrokerMismatch = 0x17EC,
+    /// 6125 - asset id mismatch
     #[error("asset id mismatch")]
-    AssetIdMismatch = 0x1B71,
-    /// 7026 - listing has expired
+    AssetIdMismatch = 0x17ED,
+    /// 6126 - listing has expired
     #[error("listing has expired")]
-    ListingExpired = 0x1B72,
-    /// 7027 - listing not yet expired
+    ListingExpired = 0x17EE,
+    /// 6127 - listing not yet expired
     #[error("listing not yet expired")]
-    ListingNotYetExpired = 0x1B73,
-    /// 7028 - bad quantity passed in
+    ListingNotYetExpired = 0x17EF,
+    /// 6128 - bad quantity passed in
     #[error("bad quantity passed in")]
-    BadQuantity = 0x1B74,
-    /// 7029 - bid fully filled
+    BadQuantity = 0x17F0,
+    /// 6129 - bid fully filled
     #[error("bid fully filled")]
-    BidFullyFilled = 0x1B75,
-    /// 7030 - bad whitelist
+    BidFullyFilled = 0x17F1,
+    /// 6130 - bad whitelist
     #[error("bad whitelist")]
-    BadWhitelist = 0x1B76,
-    /// 7031 - forbidden collection
+    BadWhitelist = 0x17F2,
+    /// 6131 - forbidden collection
     #[error("forbidden collection")]
-    ForbiddenCollection = 0x1B77,
-    /// 7032 - bad cosigner
+    ForbiddenCollection = 0x17F3,
+    /// 6132 - bad cosigner
     #[error("bad cosigner")]
-    BadCosigner = 0x1B78,
-    /// 7033 - bad mint proof
+    BadCosigner = 0x17F4,
+    /// 6133 - bad mint proof
     #[error("bad mint proof")]
-    BadMintProof = 0x1B79,
-    /// 7034 - Currency mismatch
+    BadMintProof = 0x17F5,
+    /// 6134 - Currency mismatch
     #[error("Currency mismatch")]
-    CurrencyMismatch = 0x1B7A,
-    /// 7035 - The bid balance was not emptied
+    CurrencyMismatch = 0x17F6,
+    /// 6135 - The bid balance was not emptied
     #[error("The bid balance was not emptied")]
-    BidBalanceNotEmptied = 0x1B7B,
-    /// 7036 - Bad rent dest.
+    BidBalanceNotEmptied = 0x17F7,
+    /// 6136 - Bad rent dest.
     #[error("Bad rent dest.")]
-    BadRentDest = 0x1B7C,
-    /// 7037 - currency not yet whitelisted
+    BadRentDest = 0x17F8,
+    /// 6137 - currency not yet whitelisted
     #[error("currency not yet whitelisted")]
-    CurrencyNotYetWhitelisted = 0x1B7D,
-    /// 7038 - maker broker not yet whitelisted
+    CurrencyNotYetWhitelisted = 0x17F9,
+    /// 6138 - maker broker not yet whitelisted
     #[error("maker broker not yet whitelisted")]
-    MakerBrokerNotYetWhitelisted = 0x1B7E,
-    /// 7039 - token record derivation is wrong
+    MakerBrokerNotYetWhitelisted = 0x17FA,
+    /// 6139 - token record derivation is wrong
     #[error("token record derivation is wrong")]
-    WrongTokenRecordDerivation = 0x1B7F,
-    /// 7040 - invalid fee account
+    WrongTokenRecordDerivation = 0x17FB,
+    /// 6140 - invalid fee account
     #[error("invalid fee account")]
-    InvalidFeeAccount = 0x1B80,
-    /// 7041 - insufficient remaining accounts
+    InvalidFeeAccount = 0x17FC,
+    /// 6141 - insufficient remaining accounts
     #[error("insufficient remaining accounts")]
-    InsufficientRemainingAccounts = 0x1B81,
-    /// 7042 - missing broker account
+    InsufficientRemainingAccounts = 0x17FD,
+    /// 6142 - missing broker account
     #[error("missing broker account")]
-    MissingBroker = 0x1B82,
-    /// 7043 - missing broker token account
+    MissingBroker = 0x17FE,
+    /// 6143 - missing broker token account
     #[error("missing broker token account")]
-    MissingBrokerTokenAccount = 0x1B83,
-    /// 7044 - invalidtoken account
+    MissingBrokerTokenAccount = 0x17FF,
+    /// 6144 - invalidtoken account
     #[error("invalidtoken account")]
-    InvalidTokenAccount = 0x1B84,
+    InvalidTokenAccount = 0x1800,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

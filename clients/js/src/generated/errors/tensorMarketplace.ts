@@ -7,95 +7,95 @@
  */
 
 /** ArithmeticError: arithmetic error */
-export const TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR = 0x1b58; // 7000
+export const TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR = 0x17d4; // 6100
 /** ExpiryTooLarge: expiry too large */
-export const TENSOR_MARKETPLACE_ERROR__EXPIRY_TOO_LARGE = 0x1b59; // 7001
+export const TENSOR_MARKETPLACE_ERROR__EXPIRY_TOO_LARGE = 0x17d5; // 6101
 /** BadOwner: bad owner */
-export const TENSOR_MARKETPLACE_ERROR__BAD_OWNER = 0x1b5a; // 7002
+export const TENSOR_MARKETPLACE_ERROR__BAD_OWNER = 0x17d6; // 6102
 /** BadListState: bad list state */
-export const TENSOR_MARKETPLACE_ERROR__BAD_LIST_STATE = 0x1b5b; // 7003
+export const TENSOR_MARKETPLACE_ERROR__BAD_LIST_STATE = 0x17d7; // 6103
 /** BadRoyaltiesPct: royalties pct must be between 0 and 100 */
-export const TENSOR_MARKETPLACE_ERROR__BAD_ROYALTIES_PCT = 0x1b5c; // 7004
+export const TENSOR_MARKETPLACE_ERROR__BAD_ROYALTIES_PCT = 0x17d8; // 6104
 /** PriceMismatch: price mismatch */
-export const TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH = 0x1b5d; // 7005
+export const TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH = 0x17d9; // 6105
 /** CreatorMismatch: creator mismatch */
-export const TENSOR_MARKETPLACE_ERROR__CREATOR_MISMATCH = 0x1b5e; // 7006
+export const TENSOR_MARKETPLACE_ERROR__CREATOR_MISMATCH = 0x17da; // 6106
 /** InsufficientBalance: insufficient balance */
-export const TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_BALANCE = 0x1b5f; // 7007
+export const TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_BALANCE = 0x17db; // 6107
 /** BidExpired: bid has expired */
-export const TENSOR_MARKETPLACE_ERROR__BID_EXPIRED = 0x1b60; // 7008
+export const TENSOR_MARKETPLACE_ERROR__BID_EXPIRED = 0x17dc; // 6108
 /** TakerNotAllowed: taker not allowed */
-export const TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED = 0x1b61; // 7009
+export const TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED = 0x17dd; // 6109
 /** BadBidField: cannot pass bid field */
-export const TENSOR_MARKETPLACE_ERROR__BAD_BID_FIELD = 0x1b62; // 7010
+export const TENSOR_MARKETPLACE_ERROR__BAD_BID_FIELD = 0x17de; // 6110
 /** BidNotYetExpired: bid not yet expired */
-export const TENSOR_MARKETPLACE_ERROR__BID_NOT_YET_EXPIRED = 0x1b63; // 7011
+export const TENSOR_MARKETPLACE_ERROR__BID_NOT_YET_EXPIRED = 0x17df; // 6111
 /** BadMargin: bad margin */
-export const TENSOR_MARKETPLACE_ERROR__BAD_MARGIN = 0x1b64; // 7012
+export const TENSOR_MARKETPLACE_ERROR__BAD_MARGIN = 0x17e0; // 6112
 /** WrongIxForBidTarget: wrong ix for bid target called */
-export const TENSOR_MARKETPLACE_ERROR__WRONG_IX_FOR_BID_TARGET = 0x1b65; // 7013
+export const TENSOR_MARKETPLACE_ERROR__WRONG_IX_FOR_BID_TARGET = 0x17e1; // 6113
 /** WrongTargetId: wrong target id */
-export const TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID = 0x1b66; // 7014
+export const TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID = 0x17e2; // 6114
 /** MissingFvc: creator array missing first verified creator */
-export const TENSOR_MARKETPLACE_ERROR__MISSING_FVC = 0x1b67; // 7015
+export const TENSOR_MARKETPLACE_ERROR__MISSING_FVC = 0x17e3; // 6115
 /** MissingCollection: metadata missing collection */
-export const TENSOR_MARKETPLACE_ERROR__MISSING_COLLECTION = 0x1b68; // 7016
+export const TENSOR_MARKETPLACE_ERROR__MISSING_COLLECTION = 0x17e4; // 6116
 /** CannotModifyTarget: cannot modify bid target, create a new bid */
-export const TENSOR_MARKETPLACE_ERROR__CANNOT_MODIFY_TARGET = 0x1b69; // 7017
+export const TENSOR_MARKETPLACE_ERROR__CANNOT_MODIFY_TARGET = 0x17e5; // 6117
 /** TargetIdMustEqualBidId: target id and bid id must be the same for single bids */
-export const TENSOR_MARKETPLACE_ERROR__TARGET_ID_MUST_EQUAL_BID_ID = 0x1b6a; // 7018
+export const TENSOR_MARKETPLACE_ERROR__TARGET_ID_MUST_EQUAL_BID_ID = 0x17e6; // 6118
 /** CurrencyNotYetEnabled: currency not yet enabled */
-export const TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_ENABLED = 0x1b6b; // 7019
+export const TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_ENABLED = 0x17e7; // 6119
 /** MakerBrokerNotYetEnabled: maker broker not yet enabled */
-export const TENSOR_MARKETPLACE_ERROR__MAKER_BROKER_NOT_YET_ENABLED = 0x1b6c; // 7020
+export const TENSOR_MARKETPLACE_ERROR__MAKER_BROKER_NOT_YET_ENABLED = 0x17e8; // 6120
 /** OptionalRoyaltiesNotYetEnabled: optional royalties not yet enabled */
-export const TENSOR_MARKETPLACE_ERROR__OPTIONAL_ROYALTIES_NOT_YET_ENABLED = 0x1b6d; // 7021
+export const TENSOR_MARKETPLACE_ERROR__OPTIONAL_ROYALTIES_NOT_YET_ENABLED = 0x17e9; // 6121
 /** WrongStateVersion: wrong state version */
-export const TENSOR_MARKETPLACE_ERROR__WRONG_STATE_VERSION = 0x1b6e; // 7022
+export const TENSOR_MARKETPLACE_ERROR__WRONG_STATE_VERSION = 0x17ea; // 6122
 /** WrongBidFieldId: wrong field id */
-export const TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID = 0x1b6f; // 7023
+export const TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID = 0x17eb; // 6123
 /** BrokerMismatch: broker mismatch */
-export const TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH = 0x1b70; // 7024
+export const TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH = 0x17ec; // 6124
 /** AssetIdMismatch: asset id mismatch */
-export const TENSOR_MARKETPLACE_ERROR__ASSET_ID_MISMATCH = 0x1b71; // 7025
+export const TENSOR_MARKETPLACE_ERROR__ASSET_ID_MISMATCH = 0x17ed; // 6125
 /** ListingExpired: listing has expired */
-export const TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED = 0x1b72; // 7026
+export const TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED = 0x17ee; // 6126
 /** ListingNotYetExpired: listing not yet expired */
-export const TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED = 0x1b73; // 7027
+export const TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED = 0x17ef; // 6127
 /** BadQuantity: bad quantity passed in */
-export const TENSOR_MARKETPLACE_ERROR__BAD_QUANTITY = 0x1b74; // 7028
+export const TENSOR_MARKETPLACE_ERROR__BAD_QUANTITY = 0x17f0; // 6128
 /** BidFullyFilled: bid fully filled */
-export const TENSOR_MARKETPLACE_ERROR__BID_FULLY_FILLED = 0x1b75; // 7029
+export const TENSOR_MARKETPLACE_ERROR__BID_FULLY_FILLED = 0x17f1; // 6129
 /** BadWhitelist: bad whitelist */
-export const TENSOR_MARKETPLACE_ERROR__BAD_WHITELIST = 0x1b76; // 7030
+export const TENSOR_MARKETPLACE_ERROR__BAD_WHITELIST = 0x17f2; // 6130
 /** ForbiddenCollection: forbidden collection */
-export const TENSOR_MARKETPLACE_ERROR__FORBIDDEN_COLLECTION = 0x1b77; // 7031
+export const TENSOR_MARKETPLACE_ERROR__FORBIDDEN_COLLECTION = 0x17f3; // 6131
 /** BadCosigner: bad cosigner */
-export const TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER = 0x1b78; // 7032
+export const TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER = 0x17f4; // 6132
 /** BadMintProof: bad mint proof */
-export const TENSOR_MARKETPLACE_ERROR__BAD_MINT_PROOF = 0x1b79; // 7033
+export const TENSOR_MARKETPLACE_ERROR__BAD_MINT_PROOF = 0x17f5; // 6133
 /** CurrencyMismatch: Currency mismatch */
-export const TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH = 0x1b7a; // 7034
+export const TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH = 0x17f6; // 6134
 /** BidBalanceNotEmptied: The bid balance was not emptied */
-export const TENSOR_MARKETPLACE_ERROR__BID_BALANCE_NOT_EMPTIED = 0x1b7b; // 7035
+export const TENSOR_MARKETPLACE_ERROR__BID_BALANCE_NOT_EMPTIED = 0x17f7; // 6135
 /** BadRentDest: Bad rent dest. */
-export const TENSOR_MARKETPLACE_ERROR__BAD_RENT_DEST = 0x1b7c; // 7036
+export const TENSOR_MARKETPLACE_ERROR__BAD_RENT_DEST = 0x17f8; // 6136
 /** CurrencyNotYetWhitelisted: currency not yet whitelisted */
-export const TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_WHITELISTED = 0x1b7d; // 7037
+export const TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_WHITELISTED = 0x17f9; // 6137
 /** MakerBrokerNotYetWhitelisted: maker broker not yet whitelisted */
-export const TENSOR_MARKETPLACE_ERROR__MAKER_BROKER_NOT_YET_WHITELISTED = 0x1b7e; // 7038
+export const TENSOR_MARKETPLACE_ERROR__MAKER_BROKER_NOT_YET_WHITELISTED = 0x17fa; // 6138
 /** WrongTokenRecordDerivation: token record derivation is wrong */
-export const TENSOR_MARKETPLACE_ERROR__WRONG_TOKEN_RECORD_DERIVATION = 0x1b7f; // 7039
+export const TENSOR_MARKETPLACE_ERROR__WRONG_TOKEN_RECORD_DERIVATION = 0x17fb; // 6139
 /** InvalidFeeAccount: invalid fee account */
-export const TENSOR_MARKETPLACE_ERROR__INVALID_FEE_ACCOUNT = 0x1b80; // 7040
+export const TENSOR_MARKETPLACE_ERROR__INVALID_FEE_ACCOUNT = 0x17fc; // 6140
 /** InsufficientRemainingAccounts: insufficient remaining accounts */
-export const TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_REMAINING_ACCOUNTS = 0x1b81; // 7041
+export const TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_REMAINING_ACCOUNTS = 0x17fd; // 6141
 /** MissingBroker: missing broker account */
-export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER = 0x1b82; // 7042
+export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER = 0x17fe; // 6142
 /** MissingBrokerTokenAccount: missing broker token account */
-export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT = 0x1b83; // 7043
+export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT = 0x17ff; // 6143
 /** InvalidTokenAccount: invalidtoken account */
-export const TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT = 0x1b84; // 7044
+export const TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT = 0x1800; // 6144
 
 export type TensorMarketplaceError =
   | typeof TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR
