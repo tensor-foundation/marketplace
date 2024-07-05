@@ -4611,227 +4611,227 @@
   ],
   "errors": [
     {
-      "code": 13000,
+      "code": 7000,
       "name": "ArithmeticError",
       "msg": "arithmetic error"
     },
     {
-      "code": 13001,
+      "code": 7001,
       "name": "ExpiryTooLarge",
       "msg": "expiry too large"
     },
     {
-      "code": 13002,
+      "code": 7002,
       "name": "BadOwner",
       "msg": "bad owner"
     },
     {
-      "code": 13003,
+      "code": 7003,
       "name": "BadListState",
       "msg": "bad list state"
     },
     {
-      "code": 13004,
+      "code": 7004,
       "name": "BadRoyaltiesPct",
       "msg": "royalties pct must be between 0 and 100"
     },
     {
-      "code": 13005,
+      "code": 7005,
       "name": "PriceMismatch",
       "msg": "price mismatch"
     },
     {
-      "code": 13006,
+      "code": 7006,
       "name": "CreatorMismatch",
       "msg": "creator mismatch"
     },
     {
-      "code": 13007,
+      "code": 7007,
       "name": "InsufficientBalance",
       "msg": "insufficient balance"
     },
     {
-      "code": 13008,
+      "code": 7008,
       "name": "BidExpired",
       "msg": "bid has expired"
     },
     {
-      "code": 13009,
+      "code": 7009,
       "name": "TakerNotAllowed",
       "msg": "taker not allowed"
     },
     {
-      "code": 13010,
+      "code": 7010,
       "name": "BadBidField",
       "msg": "cannot pass bid field"
     },
     {
-      "code": 13011,
+      "code": 7011,
       "name": "BidNotYetExpired",
       "msg": "bid not yet expired"
     },
     {
-      "code": 13012,
+      "code": 7012,
       "name": "BadMargin",
       "msg": "bad margin"
     },
     {
-      "code": 13013,
+      "code": 7013,
       "name": "WrongIxForBidTarget",
       "msg": "wrong ix for bid target called"
     },
     {
-      "code": 13014,
+      "code": 7014,
       "name": "WrongTargetId",
       "msg": "wrong target id"
     },
     {
-      "code": 13015,
+      "code": 7015,
       "name": "MissingFvc",
       "msg": "creator array missing first verified creator"
     },
     {
-      "code": 13016,
+      "code": 7016,
       "name": "MissingCollection",
       "msg": "metadata missing collection"
     },
     {
-      "code": 13017,
+      "code": 7017,
       "name": "CannotModifyTarget",
       "msg": "cannot modify bid target, create a new bid"
     },
     {
-      "code": 13018,
+      "code": 7018,
       "name": "TargetIdMustEqualBidId",
       "msg": "target id and bid id must be the same for single bids"
     },
     {
-      "code": 13019,
+      "code": 7019,
       "name": "CurrencyNotYetEnabled",
       "msg": "currency not yet enabled"
     },
     {
-      "code": 13020,
+      "code": 7020,
       "name": "MakerBrokerNotYetEnabled",
       "msg": "maker broker not yet enabled"
     },
     {
-      "code": 13021,
+      "code": 7021,
       "name": "OptionalRoyaltiesNotYetEnabled",
       "msg": "optional royalties not yet enabled"
     },
     {
-      "code": 13022,
+      "code": 7022,
       "name": "WrongStateVersion",
       "msg": "wrong state version"
     },
     {
-      "code": 13023,
+      "code": 7023,
       "name": "WrongBidFieldId",
       "msg": "wrong field id"
     },
     {
-      "code": 13024,
+      "code": 7024,
       "name": "BrokerMismatch",
       "msg": "broker mismatch"
     },
     {
-      "code": 13025,
+      "code": 7025,
       "name": "AssetIdMismatch",
       "msg": "asset id mismatch"
     },
     {
-      "code": 13026,
+      "code": 7026,
       "name": "ListingExpired",
       "msg": "listing has expired"
     },
     {
-      "code": 13027,
+      "code": 7027,
       "name": "ListingNotYetExpired",
       "msg": "listing not yet expired"
     },
     {
-      "code": 13028,
+      "code": 7028,
       "name": "BadQuantity",
       "msg": "bad quantity passed in"
     },
     {
-      "code": 13029,
+      "code": 7029,
       "name": "BidFullyFilled",
       "msg": "bid fully filled"
     },
     {
-      "code": 13030,
+      "code": 7030,
       "name": "BadWhitelist",
       "msg": "bad whitelist"
     },
     {
-      "code": 13031,
+      "code": 7031,
       "name": "ForbiddenCollection",
       "msg": "forbidden collection"
     },
     {
-      "code": 13032,
+      "code": 7032,
       "name": "BadCosigner",
       "msg": "bad cosigner"
     },
     {
-      "code": 13033,
+      "code": 7033,
       "name": "BadMintProof",
       "msg": "bad mint proof"
     },
     {
-      "code": 13034,
+      "code": 7034,
       "name": "CurrencyMismatch",
       "msg": "Currency mismatch"
     },
     {
-      "code": 13035,
+      "code": 7035,
       "name": "BidBalanceNotEmptied",
       "msg": "The bid balance was not emptied"
     },
     {
-      "code": 13036,
+      "code": 7036,
       "name": "BadRentDest",
       "msg": "Bad rent dest."
     },
     {
-      "code": 13037,
+      "code": 7037,
       "name": "CurrencyNotYetWhitelisted",
       "msg": "currency not yet whitelisted"
     },
     {
-      "code": 13038,
+      "code": 7038,
       "name": "MakerBrokerNotYetWhitelisted",
       "msg": "maker broker not yet whitelisted"
     },
     {
-      "code": 13039,
+      "code": 7039,
       "name": "WrongTokenRecordDerivation",
       "msg": "token record derivation is wrong"
     },
     {
-      "code": 13040,
+      "code": 7040,
       "name": "InvalidFeeAccount",
       "msg": "invalid fee account"
     },
     {
-      "code": 13041,
+      "code": 7041,
       "name": "InsufficientRemainingAccounts",
       "msg": "insufficient remaining accounts"
     },
     {
-      "code": 13042,
+      "code": 7042,
       "name": "MissingBroker",
       "msg": "missing broker account"
     },
     {
-      "code": 13043,
+      "code": 7043,
       "name": "MissingBrokerTokenAccount",
       "msg": "missing broker token account"
     },
     {
-      "code": 13044,
+      "code": 7044,
       "name": "InvalidTokenAccount",
       "msg": "invalidtoken account"
     }

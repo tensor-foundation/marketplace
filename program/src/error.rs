@@ -3,138 +3,139 @@ use crate::*;
 #[error_code]
 pub enum TcompError {
     // Start at 7000 so we don't conflict with bubblegum & compression error codes.
+    // Anchor adds 6000 to all error codes, so we start at 1000.
     #[msg("arithmetic error")]
-    ArithmeticError = 7000,
+    ArithmeticError = 1000,
 
     #[msg("expiry too large")]
-    ExpiryTooLarge = 7001,
+    ExpiryTooLarge = 1001,
 
     #[msg("bad owner")]
-    BadOwner = 7002,
+    BadOwner = 1002,
 
     #[msg("bad list state")]
-    BadListState = 7003,
+    BadListState = 1003,
 
     #[msg("royalties pct must be between 0 and 100")]
-    BadRoyaltiesPct = 7004,
+    BadRoyaltiesPct = 1004,
 
     #[msg("price mismatch")]
-    PriceMismatch = 7005,
+    PriceMismatch = 1005,
 
     #[msg("creator mismatch")]
-    CreatorMismatch = 7006,
+    CreatorMismatch = 1006,
 
     #[msg("insufficient balance")]
-    InsufficientBalance = 7007,
+    InsufficientBalance = 1007,
 
     #[msg("bid has expired")]
-    BidExpired = 7008,
+    BidExpired = 1008,
 
     #[msg("taker not allowed")]
-    TakerNotAllowed = 7009,
+    TakerNotAllowed = 1009,
 
     #[msg("cannot pass bid field")]
-    BadBidField = 7010,
+    BadBidField = 1010,
 
     #[msg("bid not yet expired")]
-    BidNotYetExpired = 7011,
+    BidNotYetExpired = 1011,
 
     #[msg("bad margin")]
-    BadMargin = 7012,
+    BadMargin = 1012,
 
     #[msg("wrong ix for bid target called")]
-    WrongIxForBidTarget = 7013,
+    WrongIxForBidTarget = 1013,
 
     #[msg("wrong target id")]
-    WrongTargetId = 7014,
+    WrongTargetId = 1014,
 
     #[msg("creator array missing first verified creator")]
-    MissingFvc = 7015,
+    MissingFvc = 1015,
 
     #[msg("metadata missing collection")]
-    MissingCollection = 7016,
+    MissingCollection = 1016,
 
     #[msg("cannot modify bid target, create a new bid")]
-    CannotModifyTarget = 7017,
+    CannotModifyTarget = 1017,
 
     #[msg("target id and bid id must be the same for single bids")]
-    TargetIdMustEqualBidId = 7018,
+    TargetIdMustEqualBidId = 1018,
 
     #[msg("currency not yet enabled")]
-    CurrencyNotYetEnabled = 7019,
+    CurrencyNotYetEnabled = 1019,
 
     #[msg("maker broker not yet enabled")]
-    MakerBrokerNotYetEnabled = 7020,
+    MakerBrokerNotYetEnabled = 1020,
 
     #[msg("optional royalties not yet enabled")]
-    OptionalRoyaltiesNotYetEnabled = 7021,
+    OptionalRoyaltiesNotYetEnabled = 1021,
 
     #[msg("wrong state version")]
-    WrongStateVersion = 7022,
+    WrongStateVersion = 1022,
 
     #[msg("wrong field id")]
-    WrongBidFieldId = 7023,
+    WrongBidFieldId = 1023,
 
     #[msg("broker mismatch")]
-    BrokerMismatch = 7024,
+    BrokerMismatch = 1024,
 
     #[msg("asset id mismatch")]
-    AssetIdMismatch = 7025,
+    AssetIdMismatch = 1025,
 
     #[msg("listing has expired")]
-    ListingExpired = 7026,
+    ListingExpired = 1026,
 
     #[msg("listing not yet expired")]
-    ListingNotYetExpired = 7027,
+    ListingNotYetExpired = 1027,
 
     #[msg("bad quantity passed in")]
-    BadQuantity = 7028,
+    BadQuantity = 1028,
 
     #[msg("bid fully filled")]
-    BidFullyFilled = 7029,
+    BidFullyFilled = 1029,
 
     #[msg("bad whitelist")]
-    BadWhitelist = 7030,
+    BadWhitelist = 1030,
 
     #[msg("forbidden collection")]
-    ForbiddenCollection = 7031,
+    ForbiddenCollection = 1031,
 
     #[msg("bad cosigner")]
-    BadCosigner = 7032,
+    BadCosigner = 1032,
 
     #[msg("bad mint proof")]
-    BadMintProof = 7033,
+    BadMintProof = 1033,
 
     #[msg("Currency mismatch")]
-    CurrencyMismatch = 7034,
+    CurrencyMismatch = 1034,
 
     #[msg("The bid balance was not emptied")]
-    BidBalanceNotEmptied = 7035,
+    BidBalanceNotEmptied = 1035,
 
     #[msg("Bad rent dest.")]
-    BadRentDest = 7036,
+    BadRentDest = 1036,
 
     #[msg("currency not yet whitelisted")]
-    CurrencyNotYetWhitelisted = 7037,
+    CurrencyNotYetWhitelisted = 1037,
 
     #[msg("maker broker not yet whitelisted")]
-    MakerBrokerNotYetWhitelisted = 7038,
+    MakerBrokerNotYetWhitelisted = 1038,
 
     #[msg("token record derivation is wrong")]
-    WrongTokenRecordDerivation = 7039,
+    WrongTokenRecordDerivation = 1039,
 
     #[msg("invalid fee account")]
-    InvalidFeeAccount = 7040,
+    InvalidFeeAccount = 1040,
 
     #[msg("insufficient remaining accounts")]
-    InsufficientRemainingAccounts = 7041,
+    InsufficientRemainingAccounts = 1041,
 
     #[msg("missing broker account")]
-    MissingBroker = 7042,
+    MissingBroker = 1042,
 
     #[msg("missing broker token account")]
-    MissingBrokerTokenAccount = 7043,
+    MissingBrokerTokenAccount = 1043,
 
     #[msg("invalidtoken account")]
-    InvalidTokenAccount = 7044,
+    InvalidTokenAccount = 1044,
 }
