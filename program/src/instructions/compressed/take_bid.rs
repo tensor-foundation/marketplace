@@ -178,7 +178,6 @@ pub fn handler_full_meta<'info>(
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    // TODO: for now enforcing
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled
@@ -301,7 +300,6 @@ pub fn handler_meta_hash<'info>(
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    // TODO: for now enforcing
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled

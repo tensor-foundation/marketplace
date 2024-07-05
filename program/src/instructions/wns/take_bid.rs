@@ -263,8 +263,6 @@ pub fn process_take_bid_wns<'info>(
         0, // decimals = 0
     )?;
 
-    // TODO: add royalty value and creators once supported on T22; also, update token standard
-    // in case there are other options in T22
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),

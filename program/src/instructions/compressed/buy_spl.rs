@@ -193,7 +193,6 @@ pub fn process_buy_spl<'info>(
             ctx.remaining_accounts
         };
 
-    // TODO: for now enforcing
     // NB: TRoll hardcodes Some(100) to match
     require!(
         optional_royalty_pct == Some(100),
@@ -246,7 +245,6 @@ pub fn process_buy_spl<'info>(
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    // TODO: pnfts
     let creator_fee =
         calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
 

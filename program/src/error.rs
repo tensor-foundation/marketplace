@@ -2,97 +2,139 @@ use crate::*;
 
 #[error_code]
 pub enum TcompError {
-    // Start at 100 so we don't conflict with bubblegum + compression error codes.
-    // TODO: AnchorLang ErrorCode has 100-103, we should start at 104 or better yet start at 7000 to
-    // avoid any potential conflicts with AnchorLang and other programs.
+    // Start at 7000 so we don't conflict with bubblegum & compression error codes.
     #[msg("arithmetic error")]
-    ArithmeticError = 100,
+    ArithmeticError = 7000,
+
     #[msg("expiry too large")]
-    ExpiryTooLarge = 101,
+    ExpiryTooLarge = 7001,
+
     #[msg("bad owner")]
-    BadOwner = 102,
+    BadOwner = 7002,
+
     #[msg("bad list state")]
-    BadListState = 103,
+    BadListState = 7003,
+
     #[msg("royalties pct must be between 0 and 100")]
-    BadRoyaltiesPct = 104,
+    BadRoyaltiesPct = 7004,
+
     #[msg("price mismatch")]
-    PriceMismatch = 105,
+    PriceMismatch = 7005,
+
     #[msg("creator mismatch")]
-    CreatorMismatch = 106,
+    CreatorMismatch = 7006,
+
     #[msg("insufficient balance")]
-    InsufficientBalance = 107,
+    InsufficientBalance = 7007,
+
     #[msg("bid has expired")]
-    BidExpired = 108,
+    BidExpired = 7008,
+
     #[msg("taker not allowed")]
-    TakerNotAllowed = 109,
+    TakerNotAllowed = 7009,
+
     #[msg("cannot pass bid field")]
-    BadBidField = 110,
+    BadBidField = 7010,
+
     #[msg("bid not yet expired")]
-    BidNotYetExpired = 111,
+    BidNotYetExpired = 7011,
+
     #[msg("bad margin")]
-    BadMargin = 112,
+    BadMargin = 7012,
+
     #[msg("wrong ix for bid target called")]
-    WrongIxForBidTarget = 113,
+    WrongIxForBidTarget = 7013,
+
     #[msg("wrong target id")]
-    WrongTargetId = 114,
+    WrongTargetId = 7014,
+
     #[msg("creator array missing first verified creator")]
-    MissingFvc = 115,
+    MissingFvc = 7015,
+
     #[msg("metadata missing collection")]
-    MissingCollection = 116,
+    MissingCollection = 7016,
+
     #[msg("cannot modify bid target, create a new bid")]
-    CannotModifyTarget = 117,
+    CannotModifyTarget = 7017,
+
     #[msg("target id and bid id must be the same for single bids")]
-    TargetIdMustEqualBidId = 118,
+    TargetIdMustEqualBidId = 7018,
+
     #[msg("currency not yet enabled")]
-    CurrencyNotYetEnabled = 119,
+    CurrencyNotYetEnabled = 7019,
+
     #[msg("maker broker not yet enabled")]
-    MakerBrokerNotYetEnabled = 120,
+    MakerBrokerNotYetEnabled = 7020,
+
     #[msg("optional royalties not yet enabled")]
-    OptionalRoyaltiesNotYetEnabled = 121,
+    OptionalRoyaltiesNotYetEnabled = 7021,
+
     #[msg("wrong state version")]
-    WrongStateVersion = 122,
+    WrongStateVersion = 7022,
+
     #[msg("wrong field id")]
-    WrongBidFieldId = 123,
+    WrongBidFieldId = 7023,
+
     #[msg("broker mismatch")]
-    BrokerMismatch = 124,
+    BrokerMismatch = 7024,
+
     #[msg("asset id mismatch")]
-    AssetIdMismatch = 125,
+    AssetIdMismatch = 7025,
+
     #[msg("listing has expired")]
-    ListingExpired = 126,
+    ListingExpired = 7026,
+
     #[msg("listing not yet expired")]
-    ListingNotYetExpired = 127,
+    ListingNotYetExpired = 7027,
+
     #[msg("bad quantity passed in")]
-    BadQuantity = 128,
+    BadQuantity = 7028,
+
     #[msg("bid fully filled")]
-    BidFullyFilled = 129,
+    BidFullyFilled = 7029,
+
     #[msg("bad whitelist")]
-    BadWhitelist = 130,
+    BadWhitelist = 7030,
+
     #[msg("forbidden collection")]
-    ForbiddenCollection = 131,
+    ForbiddenCollection = 7031,
+
     #[msg("bad cosigner")]
-    BadCosigner = 132,
+    BadCosigner = 7032,
+
     #[msg("bad mint proof")]
-    BadMintProof = 133,
+    BadMintProof = 7033,
+
     #[msg("Currency mismatch")]
-    CurrencyMismatch = 134,
+    CurrencyMismatch = 7034,
+
     #[msg("The bid balance was not emptied")]
-    BidBalanceNotEmptied = 135,
+    BidBalanceNotEmptied = 7035,
+
     #[msg("Bad rent dest.")]
-    BadRentDest = 136,
+    BadRentDest = 7036,
+
     #[msg("currency not yet whitelisted")]
-    CurrencyNotYetWhitelisted = 137,
+    CurrencyNotYetWhitelisted = 7037,
+
     #[msg("maker broker not yet whitelisted")]
-    MakerBrokerNotYetWhitelisted = 138,
+    MakerBrokerNotYetWhitelisted = 7038,
+
     #[msg("token record derivation is wrong")]
-    WrongTokenRecordDerivation = 139,
+    WrongTokenRecordDerivation = 7039,
+
     #[msg("invalid fee account")]
-    InvalidFeeAccount = 140,
+    InvalidFeeAccount = 7040,
+
     #[msg("insufficient remaining accounts")]
-    InsufficientRemainingAccounts = 141,
+    InsufficientRemainingAccounts = 7041,
+
     #[msg("missing broker account")]
-    MissingBroker = 142,
+    MissingBroker = 7042,
+
     #[msg("missing broker token account")]
-    MissingBrokerTokenAccount = 143,
+    MissingBrokerTokenAccount = 7043,
+
     #[msg("invalidtoken account")]
-    InvalidTokenAccount = 144,
+    InvalidTokenAccount = 7044,
 }

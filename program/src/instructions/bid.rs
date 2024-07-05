@@ -59,8 +59,6 @@ pub fn process_bid<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    // TODO: temp while we enable them
-    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
     require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
 
     let bid_state = &mut ctx.accounts.bid_state;

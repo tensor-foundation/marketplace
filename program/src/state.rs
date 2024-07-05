@@ -11,7 +11,6 @@ pub const TCOMP_FEE_BPS: u64 = 200;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/w liquidity disappears too early)
 
-// TODO: currently disabled
 /// NB: (!!) sync with TRoll
 #[constant]
 pub const MAKER_BROKER_PCT: u64 = 80; // Out of 100

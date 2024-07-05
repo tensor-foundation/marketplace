@@ -97,8 +97,6 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     // --------------------------------------- sol transfers
 
-    // TODO: handle currency (not v1)
-
     //if margin is used, move money into bid first
     if let Some(margin) = bid_state.margin {
         let decoded_margin_account = assert_decode_margin_account(margin_account, owner)?;
