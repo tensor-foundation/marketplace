@@ -49,6 +49,7 @@ import {
 } from '@solana/web3.js';
 import {
   resolveCreatorPath,
+  resolveFeeVaultPdaFromListState,
   resolveProofPath,
   resolveTreeAuthorityPda,
 } from '../../hooked';
@@ -251,7 +252,7 @@ export type BuyCompressedAsyncInput<
   TAccountRentDestination extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -381,6 +382,12 @@ export async function getBuyCompressedInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;

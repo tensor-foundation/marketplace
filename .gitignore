@@ -11,3 +11,4 @@ dist
 docs
 node_modules
 test-ledger
+.vscode
