@@ -64,7 +64,7 @@ async function buyCompressedListing(mint: string) {
     listState: listStateAddress,
     payer: keypairSigner,
     owner: owner,
-    rentDest: rentDest,
+    rentDestination: rentDest,
     index: index,
     root: root,
     metaHash: metaHash,

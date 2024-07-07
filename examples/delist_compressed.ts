@@ -31,7 +31,7 @@ async function delistCompressedListing(mint: string) {
   const root = getAddressEncoder().encode(address(proofFields.root));
 
   // retrieve list state and retrieve related input fields
-  const [listStatePda, listStateBump] = await findListStatePda({
+  const [listStatePda] = await findListStatePda({
     mint: address(mint),
   });
   const listState = await fetchListState(rpc, listStatePda);
@@ -57,7 +57,7 @@ async function delistCompressedListing(mint: string) {
     merkleTree: address(merkleTree),
     listState: listStateAddress,
     owner: keypairSigner,
-    rentDest: rentDest,
+    rentDestination: rentDest,
     index: index,
     root: root,
     dataHash: dataHash,

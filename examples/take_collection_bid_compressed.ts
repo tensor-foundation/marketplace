@@ -61,7 +61,7 @@ async function takeCompressedCollectionBid(
       owner: owner,
       marginAccount: marginAccount,
       whitelist: whitelist,
-      rentDest: rentDest,
+      rentDestination: rentDest,
       index: index,
       root: root,
       ...metadataArgs,

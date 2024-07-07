@@ -16,7 +16,7 @@ async function editCompressedListing(mint: string, amountLamports: number) {
   );
 
   // retrieve list state and related input fields
-  const [listStatePda, listStateBump] = await findListStatePda({
+  const [listStatePda] = await findListStatePda({
     mint: address(mint),
   });
   const listState = await fetchListState(rpc, listStatePda);
