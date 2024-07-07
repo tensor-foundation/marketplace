@@ -7,6 +7,7 @@ import {
   getExternalAccountAddresses,
   getExternalProgramAddresses,
   getExternalProgramOutputDir,
+  getOffchainProgramAddresses,
   getProgramFolders,
 } from "./utils.mjs";
 
@@ -22,7 +23,11 @@ if (!restart && isValidatorRunning) {
 
 // Initial message.
 const verb = isValidatorRunning ? "Restarting" : "Starting";
-const programs = [...getPrograms(), ...getExternalPrograms()];
+const programs = [
+  ...getPrograms(),
+  ...getExternalPrograms(),
+  ...getOffchainPrograms(),
+];
 const programPluralized = programs.length === 1 ? "program" : "programs";
 const accounts = [...getExternalAccounts()];
 const accountsPluralized = accounts.length === 1 ? "account" : "accounts";
@@ -31,7 +36,7 @@ echo(
   `${verb} local validator with ${programs.length} custom ${programPluralized}` +
     (accounts.length > 0
       ? ` and ${accounts.length} external ${accountsPluralized}...`
-      : `...`)
+      : `...`),
 );
 
 // Kill the validator if it's already running.
@@ -77,7 +82,7 @@ const waitForValidator = spinner(
           resolve();
         }
       }, 1000);
-    })
+    }),
 );
 
 try {
@@ -106,6 +111,14 @@ function getPrograms() {
 function getExternalPrograms() {
   const binaryDir = getExternalProgramOutputDir();
   return getExternalProgramAddresses().map((address) => ({
+    programId: address,
+    deployPath: path.join(binaryDir, `${address}.so`),
+  }));
+}
+
+function getOffchainPrograms() {
+  const binaryDir = getExternalProgramOutputDir();
+  return getOffchainProgramAddresses().map((address) => ({
     programId: address,
     deployPath: path.join(binaryDir, `${address}.so`),
   }));

@@ -22,6 +22,12 @@ program-dependencies = [
     "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
 ]
 account-dependencies = ["9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"]
+external-programs-repositories = [
+    [
+        "tensor-foundation/whitelist",
+        "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW",
+    ]
+]
 
 [lib]
 crate-type = ["cdylib", "lib"]
