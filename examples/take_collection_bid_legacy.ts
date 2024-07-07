@@ -66,6 +66,7 @@ async function takeLegacyCollectionBid(mint: string, bidStateAccount: string) {
         seller: keypairSigner,
         owner: owner,
         mint: address(mint),
+        bidState: address(bidStateAccount),
         minAmount: minAmount,
         makerBroker: unwrapOption(makerBroker) ?? undefined,
         creators: creators,
