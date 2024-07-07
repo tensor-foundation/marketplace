@@ -4,15 +4,15 @@ import {
   findListStatePda,
   getDelistCompressedInstructionAsync,
 } from "@tensor-foundation/marketplace";
-import { getAddressEncoder, address } from "@solana/addresses";
 import {
-  retrieveDASAssetFields,
-  retrieveDASProofFields,
+  retrieveAssetFields,
+  retrieveProofFields,
   getCanopyDepth,
   simulateTxWithIxs,
-} from "./helpers";
-import { SYSTEM_PROGRAM, rpc, keypairBytes } from "./common";
-import { KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+} from "@tensor-foundation/common-helpers";
+import { rpc, keypairBytes, helius_url } from "./common";
+import { getAddressEncoder, address, KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/web3.js";
+import { Address } from "@solana/web3.js";
 
 // delist given mint (needs to be a valid compressed NFT already listed (!) on Tensor)
 async function delistCompressedListing(mint: string) {
@@ -22,13 +22,13 @@ async function delistCompressedListing(mint: string) {
   );
 
   // query DAS for assetProof and asset info
-  const proofFields = await retrieveDASProofFields(mint);
-  const assetFields = await retrieveDASAssetFields(mint);
+  const proofFields = await retrieveProofFields(helius_url, mint);
+  const assetFields = await retrieveAssetFields(helius_url, mint);
 
   // get merkleTree related input fields
   const merkleTree = proofFields.tree_id;
-  const index = assetFields.compression.leaf_id;
-  const root = getAddressEncoder().encode(proofFields.root);
+  const index = assetFields.compression!.leaf_id;
+  const root = getAddressEncoder().encode(address(proofFields.root));
 
   // retrieve list state and retrieve related input fields
   const [listStatePda, listStateBump] = await findListStatePda({
@@ -37,16 +37,16 @@ async function delistCompressedListing(mint: string) {
   const listState = await fetchListState(rpc, listStatePda);
   const listStateAddress = listState.address;
   const rentDest =
-    listState.data.rentPayer == SYSTEM_PROGRAM
-      ? listState.data.owner
-      : listState.data.rentPayer;
+    listState.data.rentPayer
+      ? listState.data.rentPayer as Address
+      : listState.data.owner;
 
   // get dataHash and creatorHash from DAS fetched asset fields (encoded as UInt8Array)
   const dataHash = getAddressEncoder().encode(
-    assetFields.compression.data_hash,
+    address(assetFields.compression!.data_hash),
   );
   const creatorHash = getAddressEncoder().encode(
-    assetFields.compression.creator_hash,
+    address(assetFields.compression!.creator_hash),
   );
 
   // get canopyDepth for shortened proofPath (w/o that most constructed ixs will be too large)
@@ -54,7 +54,7 @@ async function delistCompressedListing(mint: string) {
 
   // build delist input accounts incl. data args
   const delistCompressedAsyncInput: DelistCompressedAsyncInput = {
-    merkleTree: merkleTree,
+    merkleTree: address(merkleTree),
     listState: listStateAddress,
     owner: keypairSigner,
     rentDest: rentDest,
@@ -62,7 +62,7 @@ async function delistCompressedListing(mint: string) {
     root: root,
     dataHash: dataHash,
     creatorHash: creatorHash,
-    proof: proofFields.proof,
+    proof: proofFields.proof.map((proof: string) => address(proof)),
     canopyDepth: canopyDepth,
   };
 

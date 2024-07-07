@@ -1,14 +1,12 @@
-import { getAddressEncoder, address } from "@solana/addresses";
 import {
-  retrieveDASAssetFields,
-  retrieveDASProofFields,
+  retrieveAssetFields,
+  retrieveProofFields,
   getCanopyDepth,
   getTMetadataArgsArgs,
   simulateTxWithIxs,
-} from "./helpers";
-import { SYSTEM_PROGRAM, rpc, keypairBytes } from "./common";
-import { isNone } from "@solana/options";
-import { KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+} from "@tensor-foundation/common-helpers";
+import { rpc, keypairBytes, helius_url } from "./common";
+import { getAddressEncoder, address, KeyPairSigner, createKeyPairSignerFromBytes, isNone } from "@solana/web3.js";
 import {
   TakeBidCompressedFullMetaAsyncInput,
   fetchBidState,
@@ -26,8 +24,8 @@ async function takeCompressedCollectionBid(
   );
 
   // query DAS for assetProof and asset info
-  const proofFields = await retrieveDASProofFields(mint);
-  const assetFields = await retrieveDASAssetFields(mint);
+  const proofFields = await retrieveProofFields(helius_url, mint);
+  const assetFields = await retrieveAssetFields(helius_url, mint);
 
   // retrieve bid state w/ related input fields
   const bidState = await fetchBidState(rpc, address(bidStateAccount));
@@ -38,15 +36,15 @@ async function takeCompressedCollectionBid(
     ? undefined
     : bidState.data.margin.value;
   const rentDest =
-    bidState.data.rentPayer == SYSTEM_PROGRAM
-      ? bidState.data.owner
-      : bidState.data.rentPayer;
+    bidState.data.rentPayer
+      ? bidState.data.rentPayer
+      : bidState.data.owner;
   const minAmount = bidState.data.amount;
 
   // get merkleTree related input fields
   const merkleTree = proofFields.tree_id;
-  const index = assetFields.compression.leaf_id;
-  const root = getAddressEncoder().encode(proofFields.root);
+  const index = assetFields.compression!.leaf_id;
+  const root = getAddressEncoder().encode(address(proofFields.root));
 
   // get canopyDepth for shortened proofPath (w/o that most constructed ixs will be too large)
   const canopyDepth = await getCanopyDepth(rpc, address(merkleTree));
@@ -58,7 +56,7 @@ async function takeCompressedCollectionBid(
   const takeBidCompressedFullMetaAsyncInput: TakeBidCompressedFullMetaAsyncInput =
     {
       seller: keypairSigner,
-      merkleTree: merkleTree,
+      merkleTree: address(merkleTree),
       bidState: bidStateAddress,
       owner: owner,
       marginAccount: marginAccount,
@@ -68,8 +66,8 @@ async function takeCompressedCollectionBid(
       root: root,
       ...metadataArgs,
       minAmount: minAmount,
-      creators: assetFields.creators.map((c: any) => [c.address, c.share]),
-      proof: proofFields.proof,
+      creators: assetFields.creators?.map((c: any) => [c.address, c.share]),
+      proof: proofFields.proof.map((proof: string) => address(proof)),
       canopyDepth: canopyDepth,
     };
   // retrieve take bid instruction

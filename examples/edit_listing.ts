@@ -4,10 +4,9 @@ import {
   fetchListState,
   findListStatePda,
 } from "@tensor-foundation/marketplace";
-import { KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+import { KeyPairSigner, createKeyPairSignerFromBytes, address } from "@solana/web3.js";
 import { rpc, keypairBytes } from "./common";
-import { address } from "@solana/addresses";
-import { simulateTxWithIxs } from "./helpers";
+import { simulateTxWithIxs } from "@tensor-foundation/common-helpers";
 
 // edits listing price of mint to amountLamports (mint needs to be a valid NFT already listed (!) on Tensor)
 async function editCompressedListing(mint: string, amountLamports: number) {

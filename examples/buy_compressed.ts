@@ -4,17 +4,15 @@ import {
   BuyCompressedAsyncInput,
   getBuyCompressedInstructionAsync,
 } from "@tensor-foundation/marketplace";
-import { getAddressEncoder } from "@solana/addresses";
 import {
-  retrieveDASAssetFields,
-  retrieveDASProofFields,
-  constructMetaHash,
+  retrieveAssetFields,
+  retrieveProofFields,
+  getMetaHash,
   getCanopyDepth,
   simulateTxWithIxs,
-} from "./helpers";
-import { rpc, keypairBytes, SYSTEM_PROGRAM } from "./common";
-import { address } from "@solana/addresses";
-import { KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+} from "@tensor-foundation/common-helpers";
+import { rpc, keypairBytes, helius_url} from "./common";
+import { address, getAddressEncoder, KeyPairSigner, createKeyPairSignerFromBytes, Address } from "@solana/web3.js";
 
 // constructs tx to buy NFT specified by mint (needs to be a valid compressed NFT listed on tensor)
 async function buyCompressedListing(mint: string) {
@@ -24,8 +22,8 @@ async function buyCompressedListing(mint: string) {
   );
 
   // query DAS for assetProof and asset info
-  const proofFields = await retrieveDASProofFields(mint);
-  const assetFields = await retrieveDASAssetFields(mint);
+  const proofFields = await retrieveProofFields(helius_url, mint);
+  const assetFields = await retrieveAssetFields(helius_url, mint);
 
   // retrieve list state
   const [listStatePda, listStateBump] = await findListStatePda({
@@ -35,33 +33,34 @@ async function buyCompressedListing(mint: string) {
 
   // get merkleTree related input fields
   const merkleTree = proofFields.tree_id;
-  const index = assetFields.compression.leaf_id;
-  const root = getAddressEncoder().encode(proofFields.root);
+  const index = assetFields.compression!.leaf_id;
+  const root = getAddressEncoder().encode(address(proofFields.root));
 
   // get listState related input fields
   const listStateAddress = listState.address;
   const owner = listState.data.owner;
   const rentDest =
-    listState.data.rentPayer == SYSTEM_PROGRAM
-      ? undefined
-      : listState.data.rentPayer;
+    listState.data.rentPayer
+      ? listState.data.rentPayer as Address
+      : listState.data.owner;
+      
   const maxAmount = listState.data.amount;
 
   // get metaHash, creator and royalty based fields
-  const metaHash = constructMetaHash(assetFields);
+  const metaHash = getMetaHash(assetFields);
   if (!metaHash) {
     throw new Error("couldn't construct a valid meta hash");
   }
 
-  const creatorShares = Buffer.from(
+  const creatorShares = assetFields.creators ? Buffer.from(
     assetFields.creators.map((c: any) => c.share),
-  );
-  const creatorVerified = assetFields.creators.map((c: any) => c.verified);
-  const sellerFeeBasisPoints = assetFields.royalty.basis_points;
-  const canopyDepth = await getCanopyDepth(rpc, merkleTree);
+  ) : Buffer.alloc(0);
+  const creatorVerified = assetFields.creators?.map((c: any) => c.verified) ?? [];
+  const sellerFeeBasisPoints = assetFields.royalty?.basis_points ?? 0;
+  const canopyDepth = await getCanopyDepth(rpc, address(merkleTree));
 
   const buyCompressedAsyncInput: BuyCompressedAsyncInput = {
-    merkleTree: merkleTree,
+    merkleTree: address(merkleTree),
     listState: listStateAddress,
     payer: keypairSigner,
     owner: owner,
@@ -73,8 +72,8 @@ async function buyCompressedListing(mint: string) {
     creatorVerified: creatorVerified,
     sellerFeeBasisPoints: sellerFeeBasisPoints,
     maxAmount: maxAmount,
-    creators: assetFields.creators.map((c: any) => [c.address, c.share]),
-    proof: proofFields.proof,
+    creators: assetFields.creators?.map((c: any) => [c.address, c.share]),
+    proof: proofFields.proof.map((proof: string) => address(proof)),
     canopyDepth: canopyDepth,
   };
 
