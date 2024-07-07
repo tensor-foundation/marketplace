@@ -1,15 +1,14 @@
 import type { EditInput } from "@tensor-foundation/marketplace";
 import {
   getEditInstruction,
-  fetchListState,
   findListStatePda,
 } from "@tensor-foundation/marketplace";
 import { KeyPairSigner, createKeyPairSignerFromBytes, address } from "@solana/web3.js";
 import { rpc, keypairBytes } from "./common";
 import { simulateTxWithIxs } from "@tensor-foundation/common-helpers";
 
-// edits listing price of mint to amountLamports (mint needs to be a valid NFT already listed (!) on Tensor)
-async function editCompressedListing(mint: string, amountLamports: number) {
+// edits listing price of mint to amountLamports ( 1 sol == 1_000_000_000 lamports )
+async function editListing(mint: string, amountLamports: number) {
   const keypairSigner: KeyPairSigner = await createKeyPairSignerFromBytes(
     Buffer.from(keypairBytes),
     false,
@@ -19,11 +18,10 @@ async function editCompressedListing(mint: string, amountLamports: number) {
   const [listStatePda] = await findListStatePda({
     mint: address(mint),
   });
-  const listState = await fetchListState(rpc, listStatePda);
 
   // build edit input accounts incl. data args
   const editInput: EditInput = {
-    listState: listState.address,
+    listState: listStatePda,
     owner: keypairSigner,
     amount: amountLamports,
   };
@@ -32,7 +30,7 @@ async function editCompressedListing(mint: string, amountLamports: number) {
   const editIx = getEditInstruction(editInput);
   await simulateTxWithIxs(rpc, [editIx], keypairSigner);
 }
-editCompressedListing(
+editListing(
   "511edGtZmyp7K5nHwPxum5hEL2ZxpYzQbGWgGq6s6XCC",
   0.5 * 1_000_000_000,
 );
