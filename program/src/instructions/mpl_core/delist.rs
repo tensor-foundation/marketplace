@@ -19,7 +19,7 @@ pub struct DelistCore<'info> {
     pub owner: Signer<'info>,
 
     /// CHECK: this ensures that specific asset_id belongs to specific owner
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             asset.key.as_ref(),
@@ -37,9 +37,9 @@ pub struct DelistCore<'info> {
 
     //separate payer so that a program can list with owner being a PDA
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: Signer<'info>,
+    pub rent_destination: Signer<'info>,
 }
 
 pub fn process_delist_core<'info>(
@@ -54,7 +54,7 @@ pub fn process_delist_core<'info>(
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
         .new_owner(&ctx.accounts.owner.to_account_info())
-        .payer(&ctx.accounts.rent_dest) // pay for what?
+        .payer(&ctx.accounts.rent_destination) // pay for what?
         .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
         .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 

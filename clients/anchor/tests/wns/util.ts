@@ -13,12 +13,13 @@ import {
   getAtaCreateIx,
   getCreateGroupIx,
   getGroupAccountPda,
-  getMintNftIx,
+  getInitManagerIx,
+  getMintNftIx
 } from ".";
 import { TEST_CONN_PAYER, TEST_PROVIDER, buildAndSendTx } from "../shared";
 import {
   getAssociatedTokenAddressSync,
-  TOKEN_2022_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID
 } from "@solana/spl-token";
 
 export const createCollectionWithRoyalties = async (
@@ -39,7 +40,7 @@ export const createCollectionWithRoyalties = async (
     maxSize: args.maxSize,
     receiver: authorityPubkey.toString(),
     payer: authorityPubkey.toString(),
-    authority: authorityPubkey.toString(),
+    authority: authorityPubkey.toString()
   };
   const createGroupIx = await getCreateGroupIx(provider, groupArgs);
 
@@ -47,7 +48,7 @@ export const createCollectionWithRoyalties = async (
     groupMint: collectionPubkey.toString(),
     paymentMint: PublicKey.default.toString(),
     payer: authorityPubkey.toString(),
-    authority: authorityPubkey.toString(),
+    authority: authorityPubkey.toString()
   };
   const addDistributionIx = await getAddDistributionIx(
     provider,
@@ -56,13 +57,13 @@ export const createCollectionWithRoyalties = async (
 
   const signature = await buildAndSendTx({
     ixs: [createGroupIx, addDistributionIx],
-    extraSigners: [authority, collectionMint, payer],
+    extraSigners: [authority, collectionMint, payer]
   });
 
   return {
     signature,
     group: getGroupAccountPda(collectionMint.publicKey.toString()),
-    collection: collectionMint.publicKey,
+    collection: collectionMint.publicKey
   };
 };
 
@@ -96,7 +97,7 @@ export const mintNft = async (
     mint: mintPubkey.toString(),
     receiver: minter.toString(),
     payer: payer.publicKey.toString(),
-    authority: nftAuthPubkey.toString(),
+    authority: nftAuthPubkey.toString()
   };
   const mintIx = await getMintNftIx(provider, mintDetails);
 
@@ -104,7 +105,7 @@ export const mintNft = async (
     mint: mintPubkey.toString(),
     group: getGroupAccountPda(collectionPubkey.toString()).toString(),
     payer: nftAuthority.publicKey.toString(),
-    authority: nftAuthPubkey.toString(),
+    authority: nftAuthPubkey.toString()
   };
   const addToGroupIx = await getAddNftToGroupIx(provider, groupDetails);
 
@@ -113,7 +114,7 @@ export const mintNft = async (
     royaltyBasisPoints: args.royaltyBasisPoints,
     creators: args.creators,
     payer: nftAuthority.publicKey.toString(),
-    authority: nftAuthPubkey.toString(),
+    authority: nftAuthPubkey.toString()
   };
   const addRoyaltiesToMintIx = await getAddRoyaltiesIx(
     provider,
@@ -122,7 +123,7 @@ export const mintNft = async (
 
   const signature = await buildAndSendTx({
     ixs: [mintIx, addToGroupIx, addRoyaltiesToMintIx],
-    extraSigners: [groupAuthority, nftAuthority, mint],
+    extraSigners: [groupAuthority, nftAuthority, mint]
   });
 
   return {
@@ -133,7 +134,7 @@ export const mintNft = async (
       minter,
       false,
       TOKEN_2022_PROGRAM_ID
-    ),
+    )
   };
 };
 
@@ -154,7 +155,7 @@ export const wnsMint = async (
         name: "WNS Collection",
         symbol: "WNS C",
         uri: "https://wns.collection",
-        maxSize: 10,
+        maxSize: 10
       }
     );
     collection = newCollection;
@@ -170,13 +171,13 @@ export const wnsMint = async (
       creators: [
         {
           address: authority.publicKey.toString(),
-          share: 100,
-        },
+          share: 100
+        }
       ],
       name: "WNS Mint",
       symbol: "WNS M",
       royaltyBasisPoints: royaltyBasisPoints ?? 10000,
-      uri: "https://wns.mint",
+      uri: "https://wns.mint"
     }
   );
 
@@ -187,12 +188,12 @@ export const wnsTokenAccount = async (owner: PublicKey, mint: PublicKey) => {
   const createAtaIx = await getAtaCreateIx({
     mint: mint.toString(),
     authority: owner.toString(),
-    payer: TEST_CONN_PAYER.payer.publicKey.toString(),
+    payer: TEST_CONN_PAYER.payer.publicKey.toString()
   });
 
   await buildAndSendTx({
     ixs: [createAtaIx],
-    extraSigners: [TEST_CONN_PAYER.payer],
+    extraSigners: [TEST_CONN_PAYER.payer]
   });
 
   return {
@@ -201,6 +202,18 @@ export const wnsTokenAccount = async (owner: PublicKey, mint: PublicKey) => {
       owner,
       false,
       TOKEN_2022_PROGRAM_ID
-    ),
+    )
   };
+};
+
+export const initManager = async () => {
+  const ix = await getInitManagerIx(
+    TEST_PROVIDER,
+    TEST_CONN_PAYER.payer.publicKey.toString()
+  );
+
+  const signature = await buildAndSendTx({
+    ixs: [ix]
+  });
+  return signature;
 };

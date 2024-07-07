@@ -59,9 +59,9 @@ import {
 export type ListWnsInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -95,15 +95,15 @@ export type ListWnsInstruction<
         ? ReadonlySignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountListAta extends string
-        ? WritableAccount<TAccountListAta>
-        : TAccountListAta,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -212,9 +212,9 @@ export type ListWnsInstructionExtraArgs = {
 
 export type ListWnsAsyncInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
@@ -229,9 +229,9 @@ export type ListWnsAsyncInput<
   TAccountCosigner extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
-  ownerAta?: Address<TAccountOwnerAta>;
+  ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
-  listAta?: Address<TAccountListAta>;
+  listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -255,9 +255,9 @@ export type ListWnsAsyncInput<
 
 export async function getListWnsInstructionAsync<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
   TAccountTokenProgram extends string,
@@ -273,9 +273,9 @@ export async function getListWnsInstructionAsync<
 >(
   input: ListWnsAsyncInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountTokenProgram,
@@ -293,9 +293,9 @@ export async function getListWnsInstructionAsync<
   ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountTokenProgram,
@@ -316,9 +316,9 @@ export async function getListWnsInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -357,9 +357,9 @@ export async function getListWnsInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.ownerAta.value) {
-    accounts.ownerAta = {
-      ...accounts.ownerAta,
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
       ...(await resolveOwnerAta(resolverScope)),
     };
   }
@@ -368,9 +368,9 @@ export async function getListWnsInstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
-  if (!accounts.listAta.value) {
-    accounts.listAta = {
-      ...accounts.listAta,
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
     };
   }
@@ -424,9 +424,9 @@ export async function getListWnsInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
@@ -447,9 +447,9 @@ export async function getListWnsInstructionAsync<
   } as ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountTokenProgram,
@@ -469,9 +469,9 @@ export async function getListWnsInstructionAsync<
 
 export type ListWnsInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
   TAccountTokenProgram extends string = string,
@@ -486,9 +486,9 @@ export type ListWnsInput<
   TAccountCosigner extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -512,9 +512,9 @@ export type ListWnsInput<
 
 export function getListWnsInstruction<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
   TAccountTokenProgram extends string,
@@ -530,9 +530,9 @@ export function getListWnsInstruction<
 >(
   input: ListWnsInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountTokenProgram,
@@ -549,9 +549,9 @@ export function getListWnsInstruction<
 ): ListWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountListState,
-  TAccountListAta,
+  TAccountListTa,
   TAccountMint,
   TAccountPayer,
   TAccountTokenProgram,
@@ -571,9 +571,9 @@ export function getListWnsInstruction<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -641,9 +641,9 @@ export function getListWnsInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenProgram),
@@ -664,9 +664,9 @@ export function getListWnsInstruction<
   } as ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountTokenProgram,
@@ -691,9 +691,9 @@ export type ParsedListWnsInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     owner: TAccountMetas[0];
-    ownerAta: TAccountMetas[1];
+    ownerTa: TAccountMetas[1];
     listState: TAccountMetas[2];
-    listAta: TAccountMetas[3];
+    listTa: TAccountMetas[3];
     mint: TAccountMetas[4];
     payer: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];
@@ -738,9 +738,9 @@ export function parseListWnsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       owner: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       listState: getNextAccount(),
-      listAta: getNextAccount(),
+      listTa: getNextAccount(),
       mint: getNextAccount(),
       payer: getNextAccount(),
       tokenProgram: getNextAccount(),

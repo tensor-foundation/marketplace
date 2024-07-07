@@ -1,24 +1,15 @@
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees::ID as TFEE_PROGRAM_ID, make_cnft_args, shard_num,
-    transfer_cnft, transfer_creators_fee, CnftArgs, CreatorFeeMode, DataHashArgs, FromAcc,
-    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs,
+    assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
+    transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, FromAcc,
+    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
 };
 
 use crate::*;
 
 #[derive(Accounts)]
 pub struct Buy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(list_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    /// CHECK: Checked in assert_fee_account().
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: downstream
@@ -38,7 +29,7 @@ pub struct Buy<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    #[account(mut, close = rent_dest,
+    #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
             list_state.asset_id.as_ref(),
@@ -70,12 +61,12 @@ pub struct Buy<'info> {
 
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
-        constraint = rent_dest.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
+        constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_dest: UncheckedAccount<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
-    // cosigner is checked in validate()
-    pub cosigner: Option<Signer<'info>>,
+    // cosigner is checked in handler
+    pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
     // 2. proof accounts (less canopy)
@@ -83,6 +74,11 @@ pub struct Buy<'info> {
 
 impl<'info> Validate<'info> for Buy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.list_state.to_account_info(),
+        )?;
+
         let list_state = &self.list_state;
 
         require!(
@@ -106,13 +102,6 @@ impl<'info> Validate<'info> for Buy<'info> {
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
-
-        // check if the cosigner is required
-        if let Some(cosigner) = list_state.cosigner.value() {
-            let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
-
-            require!(cosigner == signer.key, TcompError::BadCosigner);
-        }
 
         Ok(())
     }
@@ -159,14 +148,29 @@ pub fn process_buy<'info>(
     max_amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
-    // TODO: for now enforcing
+    let list_state = &ctx.accounts.list_state;
+
+    // In case we have an extra remaining account.
+    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+
+    // Validate the cosigner and fetch additional remaining account if it exists.
+    // Cosigner could be a remaining account from an old client.
+    let remaining_accounts =
+        if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
+            v.push(remaining_account);
+            v.extend_from_slice(ctx.remaining_accounts);
+            v.as_slice()
+        } else {
+            ctx.remaining_accounts
+        };
+
     // NB: TRoll hardcodes Some(100) to match
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled
     );
 
-    let (creator_accounts, proof_accounts) = ctx.remaining_accounts.split_at(creator_shares.len());
+    let (creator_accounts, proof_accounts) = remaining_accounts.split_at(creator_shares.len());
 
     // Verification occurs during transfer_cnft (ie creator_shares/verified/royalty checked via creator_hash).
     let CnftArgs {
@@ -186,7 +190,6 @@ pub fn process_buy<'info>(
         creator_accounts,
     })?;
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
     require!(amount <= max_amount, TcompError::PriceMismatch);
@@ -194,14 +197,14 @@ pub fn process_buy<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
-    // TODO: pnfts
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
+
     let creator_fee =
         calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
 

@@ -14,484 +14,589 @@ module.exports = function visitor(options) {
         buyLegacy: {
           accounts: {
             feeVault: {
-              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromListState", {
-                dependsOn: [
-                  k.accountValueNode("listState"),
-                ],
-              }),
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")]
+                }
+              )
             },
             buyer: {
-              defaultValue: k.accountValueNode("payer"),
+              defaultValue: k.accountValueNode("payer")
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
-            buyerAta: {
+            buyerTa: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             edition: {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             buyerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveBuyerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("buyerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("buyerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("listTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
-            },
+              )
+            }
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true,
+                isOptional: true
               }
-            ),
+            )
           ],
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
-              ),
+                "ProgrammableNonFungible"
+              )
+            }
+          }
+        },
+        buyLegacySpl: {
+          accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")]
+                }
+              )
             },
+            buyer: {
+              defaultValue: k.accountValueNode("payer")
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner")
+            },
+            buyerTa: {
+              defaultValue: k.resolverValueNode("resolveBuyerAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("buyer"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint")
+                ]
+              })
+            },
+            listTa: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint")
+                ]
+              })
+            },
+            listState: { defaultValue: k.pdaValueNode("listState") },
+            metadata: {
+              defaultValue: k.resolverValueNode("resolveMetadata", {
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
+            },
+            edition: {
+              defaultValue: k.resolverValueNode(
+                "resolveEditionFromTokenStandard",
+                {
+                  importFrom: "resolvers",
+                  dependsOn: [
+                    k.accountValueNode("mint"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
+                }
+              )
+            },
+            buyerTokenRecord: {
+              defaultValue: k.resolverValueNode(
+                "resolveBuyerTokenRecordFromTokenStandard",
+                {
+                  importFrom: "resolvers",
+                  dependsOn: [
+                    k.accountValueNode("mint"),
+                    k.accountValueNode("buyerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
+                }
+              )
+            },
+            listTokenRecord: {
+              defaultValue: k.resolverValueNode(
+                "resolveListTokenRecordFromTokenStandard",
+                {
+                  importFrom: "resolvers",
+                  dependsOn: [
+                    k.accountValueNode("mint"),
+                    k.accountValueNode("listTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
+                }
+              )
+            }
           },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true
+              }
+            ),
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creatorsTa"),
+              {
+                isWritable: true,
+                isOptional: true
+              }
+            )
+          ],
+          arguments: {
+            tokenStandard: {
+              type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
+              defaultValue: k.enumValueNode(
+                k.definedTypeLinkNode("TokenStandard", "resolvers"),
+                "ProgrammableNonFungible"
+              )
+            }
+          }
         },
         closeExpiredListingLegacy: {
           accounts: {
             owner: {
-              defaultValue: k.accountValueNode("payer"),
+              defaultValue: k.accountValueNode("payer")
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             edition: {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("ownerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("listTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
-            },
+              )
+            }
           },
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
-              ),
-            },
-          },
+                "ProgrammableNonFungible"
+              )
+            }
+          }
         },
         delistLegacy: {
           accounts: {
             payer: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             edition: {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("ownerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("listTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
-            },
+              )
+            }
           },
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
-              ),
-            },
-          },
+                "ProgrammableNonFungible"
+              )
+            }
+          }
         },
         listLegacy: {
           accounts: {
             payer: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            listAta: {
+            listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             edition: {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("ownerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             listTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveListTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("listAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("listTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
-            },
+              )
+            }
           },
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
-              ),
-            },
-          },
+                "ProgrammableNonFungible"
+              )
+            }
+          }
         },
         takeBidLegacy: {
           accounts: {
             feeVault: {
-              defaultValue: k.resolverValueNode("resolveFeeVaultPdaFromBidState", {
-                dependsOn: [
-                  k.accountValueNode("bidState"),
-                ],
-              }),
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")]
+                }
+              )
             },
             sharedEscrow: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner"),
+              defaultValue: k.accountValueNode("owner")
             },
             whitelist: {
               defaultValue: k.publicKeyValueNode(
                 "11111111111111111111111111111111"
-              ),
+              )
             },
-            sellerAta: {
+            sellerTa: {
               defaultValue: k.resolverValueNode("resolveSellerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("seller"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            ownerAta: {
+            ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+                  k.accountValueNode("mint")
+                ]
+              })
             },
-            bidAta: {
-              defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom:"resolvers",
-                dependsOn: [
-                  k.accountValueNode("bidState"),
-                  k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("mint"),
-                ],
-              }),
+            bidTa: {
+              defaultValue: k.resolverValueNode("resolveBidTa", {
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             bidState: {
               defaultValue: k.pdaValueNode("bidState", [
-                k.pdaSeedValueNode("bidId", k.accountValueNode("mint")),
-              ]),
+                k.pdaSeedValueNode("bidId", k.accountValueNode("mint"))
+              ])
             },
             metadata: {
               defaultValue: k.resolverValueNode("resolveMetadata", {
-                importFrom:"resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")]
+              })
             },
             edition: {
               defaultValue: k.resolverValueNode(
                 "resolveEditionFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             sellerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveSellerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("sellerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("sellerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             ownerTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveOwnerTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("ownerAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("ownerTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
+              )
             },
             bidTokenRecord: {
               defaultValue: k.resolverValueNode(
                 "resolveBidTokenRecordFromTokenStandard",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
-                    k.accountValueNode("bidAta"),
-                    k.argumentValueNode("tokenStandard"),
-                  ],
+                    k.accountValueNode("bidTa"),
+                    k.argumentValueNode("tokenStandard")
+                  ]
                 }
-              ),
-            },
+              )
+            }
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true,
+                isOptional: true
               }
-            ),
+            )
           ],
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
-                "NonFungible"
-              ),
-            },
-          },
-        },
+                "ProgrammableNonFungible"
+              )
+            }
+          }
+        }
       })
     );
 

@@ -67,9 +67,9 @@ import {
 export type CloseExpiredListingLegacyInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
-  TAccountListAta extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
@@ -103,15 +103,15 @@ export type CloseExpiredListingLegacyInstruction<
       TAccountOwner extends string
         ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
-      TAccountListAta extends string
-        ? WritableAccount<TAccountListAta>
-        : TAccountListAta,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -211,9 +211,9 @@ export type CloseExpiredListingLegacyInstructionExtraArgs = {
 
 export type CloseExpiredListingLegacyAsyncInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
   TAccountRentDestination extends string = string,
@@ -231,9 +231,9 @@ export type CloseExpiredListingLegacyAsyncInput<
   TAccountSysvarInstructions extends string = string,
 > = {
   owner?: Address<TAccountOwner>;
-  ownerAta?: Address<TAccountOwnerAta>;
+  ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
-  listAta?: Address<TAccountListAta>;
+  listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   payer: TransactionSigner<TAccountPayer>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -255,9 +255,9 @@ export type CloseExpiredListingLegacyAsyncInput<
 
 export async function getCloseExpiredListingLegacyInstructionAsync<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
   TAccountRentDestination extends string,
@@ -276,9 +276,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
 >(
   input: CloseExpiredListingLegacyAsyncInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountRentDestination,
@@ -299,9 +299,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountRentDestination,
@@ -325,9 +325,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -386,9 +386,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.ownerAta.value) {
-    accounts.ownerAta = {
-      ...accounts.ownerAta,
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
       ...(await resolveOwnerAta(resolverScope)),
     };
   }
@@ -397,9 +397,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
-  if (!accounts.listAta.value) {
-    accounts.listAta = {
-      ...accounts.listAta,
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
     };
   }
@@ -425,7 +425,7 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     };
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.edition.value) {
     accounts.edition = {
@@ -468,9 +468,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.rentDestination),
@@ -494,9 +494,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
   } as CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountRentDestination,
@@ -519,9 +519,9 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
 
 export type CloseExpiredListingLegacyInput<
   TAccountOwner extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountListState extends string = string,
-  TAccountListAta extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountPayer extends string = string,
   TAccountRentDestination extends string = string,
@@ -539,9 +539,9 @@ export type CloseExpiredListingLegacyInput<
   TAccountSysvarInstructions extends string = string,
 > = {
   owner?: Address<TAccountOwner>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
-  listAta: Address<TAccountListAta>;
+  listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   payer: TransactionSigner<TAccountPayer>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -563,9 +563,9 @@ export type CloseExpiredListingLegacyInput<
 
 export function getCloseExpiredListingLegacyInstruction<
   TAccountOwner extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountListState extends string,
-  TAccountListAta extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountPayer extends string,
   TAccountRentDestination extends string,
@@ -584,9 +584,9 @@ export function getCloseExpiredListingLegacyInstruction<
 >(
   input: CloseExpiredListingLegacyInput<
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountRentDestination,
@@ -606,9 +606,9 @@ export function getCloseExpiredListingLegacyInstruction<
 ): CloseExpiredListingLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountOwner,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountListState,
-  TAccountListAta,
+  TAccountListTa,
   TAccountMint,
   TAccountPayer,
   TAccountRentDestination,
@@ -631,9 +631,9 @@ export function getCloseExpiredListingLegacyInstruction<
   // Original accounts.
   const originalAccounts = {
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
-    listAta: { value: input.listAta ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -708,7 +708,7 @@ export function getCloseExpiredListingLegacyInstruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.authorizationRulesProgram.value) {
     accounts.authorizationRulesProgram = {
@@ -733,9 +733,9 @@ export function getCloseExpiredListingLegacyInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.listState),
-      getAccountMeta(accounts.listAta),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.rentDestination),
@@ -759,9 +759,9 @@ export function getCloseExpiredListingLegacyInstruction<
   } as CloseExpiredListingLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountOwner,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountListState,
-    TAccountListAta,
+    TAccountListTa,
     TAccountMint,
     TAccountPayer,
     TAccountRentDestination,
@@ -789,9 +789,9 @@ export type ParsedCloseExpiredListingLegacyInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     owner: TAccountMetas[0];
-    ownerAta: TAccountMetas[1];
+    ownerTa: TAccountMetas[1];
     listState: TAccountMetas[2];
-    listAta: TAccountMetas[3];
+    listTa: TAccountMetas[3];
     mint: TAccountMetas[4];
     payer: TAccountMetas[5];
     rentDestination: TAccountMetas[6];
@@ -839,9 +839,9 @@ export function parseCloseExpiredListingLegacyInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       owner: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       listState: getNextAccount(),
-      listAta: getNextAccount(),
+      listTa: getNextAccount(),
       mint: getNextAccount(),
       payer: getNextAccount(),
       rentDestination: getNextAccount(),

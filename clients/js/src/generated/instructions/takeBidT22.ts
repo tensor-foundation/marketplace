@@ -46,9 +46,9 @@ export type TakeBidT22Instruction<
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountMarginAccount extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountSellerAta extends string | IAccountMeta<string> = string,
+  TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -97,15 +97,15 @@ export type TakeBidT22Instruction<
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountSellerAta extends string
-        ? WritableAccount<TAccountSellerAta>
-        : TAccountSellerAta,
+      TAccountSellerTa extends string
+        ? WritableAccount<TAccountSellerTa>
+        : TAccountSellerTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -181,9 +181,9 @@ export type TakeBidT22Input<
   TAccountMakerBroker extends string = string,
   TAccountMarginAccount extends string = string,
   TAccountWhitelist extends string = string,
-  TAccountSellerAta extends string = string,
+  TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -201,9 +201,9 @@ export type TakeBidT22Input<
   makerBroker?: Address<TAccountMakerBroker>;
   marginAccount: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
-  sellerAta: Address<TAccountSellerAta>;
+  sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -225,9 +225,9 @@ export function getTakeBidT22Instruction<
   TAccountMakerBroker extends string,
   TAccountMarginAccount extends string,
   TAccountWhitelist extends string,
-  TAccountSellerAta extends string,
+  TAccountSellerTa extends string,
   TAccountMint extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -246,9 +246,9 @@ export function getTakeBidT22Instruction<
     TAccountMakerBroker,
     TAccountMarginAccount,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -268,9 +268,9 @@ export function getTakeBidT22Instruction<
   TAccountMakerBroker,
   TAccountMarginAccount,
   TAccountWhitelist,
-  TAccountSellerAta,
+  TAccountSellerTa,
   TAccountMint,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountSystemProgram,
@@ -293,9 +293,9 @@ export function getTakeBidT22Instruction<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     marginAccount: { value: input.marginAccount ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    sellerAta: { value: input.sellerAta ?? null, isWritable: true },
+    sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -352,9 +352,9 @@ export function getTakeBidT22Instruction<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.marginAccount),
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.sellerAta),
+      getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
@@ -378,9 +378,9 @@ export function getTakeBidT22Instruction<
     TAccountMakerBroker,
     TAccountMarginAccount,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -408,9 +408,9 @@ export type ParsedTakeBidT22Instruction<
     makerBroker?: TAccountMetas[5] | undefined;
     marginAccount: TAccountMetas[6];
     whitelist: TAccountMetas[7];
-    sellerAta: TAccountMetas[8];
+    sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
-    ownerAta: TAccountMetas[10];
+    ownerTa: TAccountMetas[10];
     tokenProgram: TAccountMetas[11];
     associatedTokenProgram: TAccountMetas[12];
     systemProgram: TAccountMetas[13];
@@ -459,9 +459,9 @@ export function parseTakeBidT22Instruction<
       makerBroker: getNextOptionalAccount(),
       marginAccount: getNextAccount(),
       whitelist: getNextAccount(),
-      sellerAta: getNextAccount(),
+      sellerTa: getNextAccount(),
       mint: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),

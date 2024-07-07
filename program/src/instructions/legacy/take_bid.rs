@@ -5,8 +5,7 @@ use anchor_spl::{
 };
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::{
-    fees::ID as TFEE_PROGRAM_ID,
-    shard_num,
+    assert_fee_account,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
 };
 use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
@@ -23,16 +22,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
     /// CHECK: Seeds checked here, account has no state.
-    #[account(
-        mut,
-        seeds = [
-            b"fee_vault",
-            // Use the last byte of the mint as the fee shard number
-            shard_num!(bid_state),
-        ],
-        seeds::program = TFEE_PROGRAM_ID,
-        bump
-    )]
+    #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -69,9 +59,9 @@ pub struct TakeBidLegacy<'info> {
 
     // --------------------------------------- nft
     #[account(mut, token::mint = mint, token::authority = seller)]
-    pub seller_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: whitelist, token::mint in nft_seller_acc, associated_token::mint in owner_ata_acc
+    /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //can't deserialize directly coz Anchor traits not implemented
@@ -85,7 +75,7 @@ pub struct TakeBidLegacy<'info> {
         associated_token::mint = mint,
         associated_token::authority = owner,
     )]
-    pub owner_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
 
@@ -108,11 +98,16 @@ pub struct TakeBidLegacy<'info> {
     #[account(
         init_if_needed,
         payer = seller,
-        associated_token::mint = mint,
+        seeds=[
+            b"nft_escrow".as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump,
+        token::mint = mint,
         // NB: super important this is a PDA w/ data, o/w ProgramOwnedList rulesets break.
-        associated_token::authority = bid_state,
+        token::authority = bid_state,
     )]
-    pub bid_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub bid_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seeds checked on Token Metadata CPI
     #[account(mut)]
@@ -150,6 +145,11 @@ pub struct TakeBidLegacy<'info> {
 
 impl<'info> Validate<'info> for TakeBidLegacy<'info> {
     fn validate(&self) -> Result<()> {
+        assert_fee_account(
+            &self.fee_vault.to_account_info(),
+            &self.bid_state.to_account_info(),
+        )?;
+
         let bid_state = &self.bid_state;
 
         require!(
@@ -186,11 +186,11 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
 }
 
 impl<'info> TakeBidLegacy<'info> {
-    fn close_bid_ata_ctx(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
+    fn close_bid_ta_ctx(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
             CloseAccount {
-                account: self.bid_ata.to_account_info(),
+                account: self.bid_ta.to_account_info(),
                 destination: self.seller.to_account_info(),
                 authority: self.bid_state.to_account_info(),
             },
@@ -204,7 +204,6 @@ pub fn process_take_bid_legacy<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
-    // TODO: unused, remove on a breaking change
     rules_acc_present: bool,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
@@ -294,8 +293,8 @@ pub fn process_take_bid_legacy<'info>(
         TransferArgs {
             source: &ctx.accounts.seller,
             payer: &ctx.accounts.seller,
-            source_ata: &ctx.accounts.seller_ata,
-            destination_ata: &ctx.accounts.bid_ata,
+            source_ata: &ctx.accounts.seller_ta,
+            destination_ata: &ctx.accounts.bid_ta,
             destination: &ctx.accounts.bid_state.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,
@@ -327,8 +326,8 @@ pub fn process_take_bid_legacy<'info>(
         TransferArgs {
             source: &ctx.accounts.bid_state.to_account_info(),
             payer: &ctx.accounts.seller.to_account_info(),
-            source_ata: &ctx.accounts.bid_ata,
-            destination_ata: &ctx.accounts.owner_ata,
+            source_ata: &ctx.accounts.bid_ta,
+            destination_ata: &ctx.accounts.owner_ta,
             destination: &ctx.accounts.owner.to_account_info(),
             mint: &ctx.accounts.mint,
             metadata: &ctx.accounts.metadata,
@@ -353,14 +352,14 @@ pub fn process_take_bid_legacy<'info>(
     )?;
 
     // close temp nft escrow account, so it's not dangling
-    token_interface::close_account(ctx.accounts.close_bid_ata_ctx().with_signer(seeds))?;
+    token_interface::close_account(ctx.accounts.close_bid_ta_ctx().with_signer(seeds))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
         margin_account: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
-        rent_dest: &ctx.accounts.rent_destination,
+        rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),

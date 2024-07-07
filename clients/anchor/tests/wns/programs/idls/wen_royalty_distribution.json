@@ -4,9 +4,7 @@
   "instructions": [
     {
       "name": "initializeDistribution",
-      "docs": [
-        "Initializes a new distribution account."
-      ],
+      "docs": ["Initializes a new distribution account."],
       "accounts": [
         {
           "name": "payer",
@@ -38,9 +36,7 @@
     },
     {
       "name": "updateDistribution",
-      "docs": [
-        "Update royalty amount for creators a distribution account."
-      ],
+      "docs": ["Update royalty amount for creators a distribution account."],
       "accounts": [
         {
           "name": "authority",
@@ -53,12 +49,12 @@
           "isSigner": false
         },
         {
-          "name": "distributionAccount",
-          "isMut": true,
+          "name": "paymentMint",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "authorityTokenAccount",
+          "name": "distributionAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -68,17 +64,27 @@
           "isSigner": false
         },
         {
+          "name": "authorityTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "associatedTokenProgram",
+          "name": "paymentTokenProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -94,9 +100,7 @@
     },
     {
       "name": "claimDistribution",
-      "docs": [
-        "Claim royalties from a distribution account."
-      ],
+      "docs": ["Claim royalties from a distribution account."],
       "accounts": [
         {
           "name": "creator",
@@ -140,23 +144,17 @@
         "fields": [
           {
             "name": "version",
-            "docs": [
-              "distribution version"
-            ],
+            "docs": ["distribution version"],
             "type": "u8"
           },
           {
             "name": "groupMint",
-            "docs": [
-              "group to which the distribution account belongs to"
-            ],
+            "docs": ["group to which the distribution account belongs to"],
             "type": "publicKey"
           },
           {
             "name": "paymentMint",
-            "docs": [
-              "payment mint for the distribution account"
-            ],
+            "docs": ["payment mint for the distribution account"],
             "type": "publicKey"
           },
           {
@@ -179,16 +177,12 @@
         "fields": [
           {
             "name": "address",
-            "docs": [
-              "creator address"
-            ],
+            "docs": ["creator address"],
             "type": "publicKey"
           },
           {
             "name": "pct",
-            "docs": [
-              "creator share percentage"
-            ],
+            "docs": ["creator share percentage"],
             "type": "u8"
           }
         ]
@@ -217,16 +211,12 @@
         "fields": [
           {
             "name": "address",
-            "docs": [
-              "creator address"
-            ],
+            "docs": ["creator address"],
             "type": "publicKey"
           },
           {
             "name": "claimAmount",
-            "docs": [
-              "token amount that creator can claim"
-            ],
+            "docs": ["token amount that creator can claim"],
             "type": "u64"
           }
         ]

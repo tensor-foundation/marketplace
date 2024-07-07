@@ -5,6 +5,7 @@ import {
   ProgramDerivedAddressBump,
   TransactionSigner,
 } from '@solana/web3.js';
+import { findBidTaPda } from '../generated';
 import {
   ResolvedAccount,
   expectAddress,
@@ -137,4 +138,16 @@ export const resolveRemainingSignerWithSellerOrDelegate = ({
   throw new Error(
     'Either seller or delegate has to be provided as TransactionSigner.'
   );
+};
+
+export const resolveBidTa = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findBidTaPda({
+      mint: expectAddress(accounts.mint?.value),
+    }),
+  };
 };

@@ -42,7 +42,7 @@ pub struct TakeBidCore {
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: solana_program::pubkey::Pubkey,
 
-    pub rent_dest: solana_program::pubkey::Pubkey,
+    pub rent_destination: solana_program::pubkey::Pubkey,
 }
 
 impl TakeBidCore {
@@ -148,7 +148,7 @@ impl TakeBidCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.rent_dest,
+            self.rent_destination,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -209,7 +209,7 @@ pub struct TakeBidCoreInstructionArgs {
 ///   13. `[optional]` escrow_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   14. `[signer, optional]` cosigner
 ///   15. `[]` mint_proof
-///   16. `[writable]` rent_dest
+///   16. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct TakeBidCoreBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
@@ -228,7 +228,7 @@ pub struct TakeBidCoreBuilder {
     escrow_program: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     mint_proof: Option<solana_program::pubkey::Pubkey>,
-    rent_dest: Option<solana_program::pubkey::Pubkey>,
+    rent_destination: Option<solana_program::pubkey::Pubkey>,
     min_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -339,8 +339,11 @@ impl TakeBidCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(&mut self, rent_dest: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.rent_dest = Some(rent_dest);
+    pub fn rent_destination(
+        &mut self,
+        rent_destination: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -393,7 +396,7 @@ impl TakeBidCoreBuilder {
             )),
             cosigner: self.cosigner,
             mint_proof: self.mint_proof.expect("mint_proof is not set"),
-            rent_dest: self.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = TakeBidCoreInstructionArgs {
             min_amount: self.min_amount.clone().expect("min_amount is not set"),
@@ -437,7 +440,7 @@ pub struct TakeBidCoreCpiAccounts<'a, 'b> {
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `take_bid_core` CPI instruction.
@@ -477,7 +480,7 @@ pub struct TakeBidCoreCpi<'a, 'b> {
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+    pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: TakeBidCoreInstructionArgs,
 }
@@ -506,7 +509,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             escrow_program: accounts.escrow_program,
             cosigner: accounts.cosigner,
             mint_proof: accounts.mint_proof,
-            rent_dest: accounts.rent_dest,
+            rent_destination: accounts.rent_destination,
             __args: args,
         }
     }
@@ -637,7 +640,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.rent_dest.key,
+            *self.rent_destination.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -682,7 +685,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             account_infos.push(cosigner.clone());
         }
         account_infos.push(self.mint_proof.clone());
-        account_infos.push(self.rent_dest.clone());
+        account_infos.push(self.rent_destination.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -715,7 +718,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
 ///   13. `[]` escrow_program
 ///   14. `[signer, optional]` cosigner
 ///   15. `[]` mint_proof
-///   16. `[writable]` rent_dest
+///   16. `[writable]` rent_destination
 #[derive(Clone, Debug)]
 pub struct TakeBidCoreCpiBuilder<'a, 'b> {
     instruction: Box<TakeBidCoreCpiBuilderInstruction<'a, 'b>>,
@@ -741,7 +744,7 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
             escrow_program: None,
             cosigner: None,
             mint_proof: None,
-            rent_dest: None,
+            rent_destination: None,
             min_amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -875,11 +878,11 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn rent_dest(
+    pub fn rent_destination(
         &mut self,
-        rent_dest: &'b solana_program::account_info::AccountInfo<'a>,
+        rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.rent_dest = Some(rent_dest);
+        self.instruction.rent_destination = Some(rent_destination);
         self
     }
     #[inline(always)]
@@ -985,7 +988,10 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
 
             mint_proof: self.instruction.mint_proof.expect("mint_proof is not set"),
 
-            rent_dest: self.instruction.rent_dest.expect("rent_dest is not set"),
+            rent_destination: self
+                .instruction
+                .rent_destination
+                .expect("rent_destination is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -1014,7 +1020,7 @@ struct TakeBidCoreCpiBuilderInstruction<'a, 'b> {
     escrow_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint_proof: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rent_dest: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     min_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

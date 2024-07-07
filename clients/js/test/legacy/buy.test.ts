@@ -298,11 +298,12 @@ test('it can buy an NFT with a cosigner', async (t) => {
 test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
+  const cosigner = await generateKeyPairSigner();
+
   // We create an NFT.
   const { mint } = await createDefaultpNft(client, owner, owner, owner);
 
   // And we list the NFT with a cosigner.
-  const cosigner = await generateKeyPairSigner();
   const listLegacyIx = await getListLegacyInstructionAsync({
     owner,
     mint,
@@ -325,7 +326,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
   const [listing] = await findListStatePda({ mint });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
-  // When a buyer tries to buy the NFT with a lower amount.
+  // When a buyer tries to buy the NFT without passing in a cosigner.
   const buyer = await generateKeyPairSignerWithSol(client);
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,

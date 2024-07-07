@@ -45,7 +45,7 @@ export type CloseExpiredListingCoreInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -72,9 +72,9 @@ export type CloseExpiredListingCoreInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -119,7 +119,7 @@ export type CloseExpiredListingCoreInput<
   TAccountMplCoreProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   listState: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
@@ -128,7 +128,7 @@ export type CloseExpiredListingCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
 };
 
 export function getCloseExpiredListingCoreInstruction<
@@ -139,7 +139,7 @@ export function getCloseExpiredListingCoreInstruction<
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: CloseExpiredListingCoreInput<
     TAccountListState,
@@ -149,7 +149,7 @@ export function getCloseExpiredListingCoreInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): CloseExpiredListingCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -160,7 +160,7 @@ export function getCloseExpiredListingCoreInstruction<
   TAccountMplCoreProgram,
   TAccountSystemProgram,
   TAccountMarketplaceProgram,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -177,7 +177,7 @@ export function getCloseExpiredListingCoreInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -208,7 +208,7 @@ export function getCloseExpiredListingCoreInstruction<
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getCloseExpiredListingCoreInstructionDataEncoder().encode({}),
@@ -221,7 +221,7 @@ export function getCloseExpiredListingCoreInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -240,7 +240,7 @@ export type ParsedCloseExpiredListingCoreInstruction<
     mplCoreProgram: TAccountMetas[4];
     systemProgram: TAccountMetas[5];
     marketplaceProgram: TAccountMetas[6];
-    rentDest: TAccountMetas[7];
+    rentDestination: TAccountMetas[7];
   };
   data: CloseExpiredListingCoreInstructionData;
 };
@@ -279,7 +279,7 @@ export function parseCloseExpiredListingCoreInstruction<
       mplCoreProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getCloseExpiredListingCoreInstructionDataDecoder().decode(
       instruction.data

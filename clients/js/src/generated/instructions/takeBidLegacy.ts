@@ -47,7 +47,6 @@ import {
   TokenStandard,
   TokenStandardArgs,
   resolveAuthorizationRulesProgramFromTokenStandard,
-  resolveBidAta,
   resolveBidTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveMetadata,
@@ -58,7 +57,7 @@ import {
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromBidState } from '../../hooked';
+import { resolveBidTa, resolveFeeVaultPdaFromBidState } from '../../hooked';
 import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -86,10 +85,10 @@ export type TakeBidLegacyInstruction<
   TAccountWhitelist extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountSellerAta extends string | IAccountMeta<string> = string,
+  TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountMetadata extends string | IAccountMeta<string> = string,
-  TAccountOwnerAta extends string | IAccountMeta<string> = string,
+  TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountEdition extends string | IAccountMeta<string> = string,
   TAccountSellerTokenRecord extends string | IAccountMeta<string> = string,
   TAccountOwnerTokenRecord extends string | IAccountMeta<string> = string,
@@ -98,7 +97,7 @@ export type TakeBidLegacyInstruction<
   TAccountAuthorizationRulesProgram extends
     | string
     | IAccountMeta<string> = string,
-  TAccountBidAta extends string | IAccountMeta<string> = string,
+  TAccountBidTa extends string | IAccountMeta<string> = string,
   TAccountBidTokenRecord extends string | IAccountMeta<string> = string,
   TAccountAuthorizationRules extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -149,18 +148,18 @@ export type TakeBidLegacyInstruction<
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountSellerAta extends string
-        ? WritableAccount<TAccountSellerAta>
-        : TAccountSellerAta,
+      TAccountSellerTa extends string
+        ? WritableAccount<TAccountSellerTa>
+        : TAccountSellerTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountMetadata extends string
         ? WritableAccount<TAccountMetadata>
         : TAccountMetadata,
-      TAccountOwnerAta extends string
-        ? WritableAccount<TAccountOwnerAta>
-        : TAccountOwnerAta,
+      TAccountOwnerTa extends string
+        ? WritableAccount<TAccountOwnerTa>
+        : TAccountOwnerTa,
       TAccountEdition extends string
         ? ReadonlyAccount<TAccountEdition>
         : TAccountEdition,
@@ -179,9 +178,9 @@ export type TakeBidLegacyInstruction<
       TAccountAuthorizationRulesProgram extends string
         ? ReadonlyAccount<TAccountAuthorizationRulesProgram>
         : TAccountAuthorizationRulesProgram,
-      TAccountBidAta extends string
-        ? WritableAccount<TAccountBidAta>
-        : TAccountBidAta,
+      TAccountBidTa extends string
+        ? WritableAccount<TAccountBidTa>
+        : TAccountBidTa,
       TAccountBidTokenRecord extends string
         ? WritableAccount<TAccountBidTokenRecord>
         : TAccountBidTokenRecord,
@@ -287,17 +286,17 @@ export type TakeBidLegacyAsyncInput<
   TAccountMakerBroker extends string = string,
   TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
-  TAccountSellerAta extends string = string,
+  TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
   TAccountMetadata extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountEdition extends string = string,
   TAccountSellerTokenRecord extends string = string,
   TAccountOwnerTokenRecord extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
-  TAccountBidAta extends string = string,
+  TAccountBidTa extends string = string,
   TAccountBidTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountTokenProgram extends string = string,
@@ -317,10 +316,10 @@ export type TakeBidLegacyAsyncInput<
   makerBroker?: Address<TAccountMakerBroker>;
   sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
-  sellerAta?: Address<TAccountSellerAta>;
+  sellerTa?: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   metadata?: Address<TAccountMetadata>;
-  ownerAta?: Address<TAccountOwnerAta>;
+  ownerTa?: Address<TAccountOwnerTa>;
   edition?: Address<TAccountEdition>;
   sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -328,7 +327,7 @@ export type TakeBidLegacyAsyncInput<
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  bidAta?: Address<TAccountBidAta>;
+  bidTa?: Address<TAccountBidTa>;
   bidTokenRecord?: Address<TAccountBidTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -357,17 +356,17 @@ export async function getTakeBidLegacyInstructionAsync<
   TAccountMakerBroker extends string,
   TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
-  TAccountSellerAta extends string,
+  TAccountSellerTa extends string,
   TAccountMint extends string,
   TAccountMetadata extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountEdition extends string,
   TAccountSellerTokenRecord extends string,
   TAccountOwnerTokenRecord extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
   TAccountAuthorizationRulesProgram extends string,
-  TAccountBidAta extends string,
+  TAccountBidTa extends string,
   TAccountBidTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountTokenProgram extends string,
@@ -388,17 +387,17 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountMakerBroker,
     TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -421,17 +420,17 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountMakerBroker,
     TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -457,10 +456,10 @@ export async function getTakeBidLegacyInstructionAsync<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    sellerAta: { value: input.sellerAta ?? null, isWritable: true },
+    sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     metadata: { value: input.metadata ?? null, isWritable: true },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     sellerTokenRecord: {
       value: input.sellerTokenRecord ?? null,
@@ -482,7 +481,7 @@ export async function getTakeBidLegacyInstructionAsync<
       value: input.authorizationRulesProgram ?? null,
       isWritable: false,
     },
-    bidAta: { value: input.bidAta ?? null, isWritable: true },
+    bidTa: { value: input.bidTa ?? null, isWritable: true },
     bidTokenRecord: { value: input.bidTokenRecord ?? null, isWritable: true },
     authorizationRules: {
       value: input.authorizationRules ?? null,
@@ -538,9 +537,9 @@ export async function getTakeBidLegacyInstructionAsync<
     accounts.tokenProgram.value =
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
-  if (!accounts.sellerAta.value) {
-    accounts.sellerAta = {
-      ...accounts.sellerAta,
+  if (!accounts.sellerTa.value) {
+    accounts.sellerTa = {
+      ...accounts.sellerTa,
       ...(await resolveSellerAta(resolverScope)),
     };
   }
@@ -550,14 +549,14 @@ export async function getTakeBidLegacyInstructionAsync<
       ...(await resolveMetadata(resolverScope)),
     };
   }
-  if (!accounts.ownerAta.value) {
-    accounts.ownerAta = {
-      ...accounts.ownerAta,
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
       ...(await resolveOwnerAta(resolverScope)),
     };
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.edition.value) {
     accounts.edition = {
@@ -595,10 +594,10 @@ export async function getTakeBidLegacyInstructionAsync<
       ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
     };
   }
-  if (!accounts.bidAta.value) {
-    accounts.bidAta = {
-      ...accounts.bidAta,
-      ...(await resolveBidAta(resolverScope)),
+  if (!accounts.bidTa.value) {
+    accounts.bidTa = {
+      ...accounts.bidTa,
+      ...(await resolveBidTa(resolverScope)),
     };
   }
   if (!accounts.bidTokenRecord.value) {
@@ -643,17 +642,17 @@ export async function getTakeBidLegacyInstructionAsync<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.sellerAta),
+      getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.metadata),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.sellerTokenRecord),
       getAccountMeta(accounts.ownerTokenRecord),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
       getAccountMeta(accounts.authorizationRulesProgram),
-      getAccountMeta(accounts.bidAta),
+      getAccountMeta(accounts.bidTa),
       getAccountMeta(accounts.bidTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.tokenProgram),
@@ -680,17 +679,17 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountMakerBroker,
     TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -715,17 +714,17 @@ export type TakeBidLegacyInput<
   TAccountMakerBroker extends string = string,
   TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
-  TAccountSellerAta extends string = string,
+  TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
   TAccountMetadata extends string = string,
-  TAccountOwnerAta extends string = string,
+  TAccountOwnerTa extends string = string,
   TAccountEdition extends string = string,
   TAccountSellerTokenRecord extends string = string,
   TAccountOwnerTokenRecord extends string = string,
   TAccountTokenMetadataProgram extends string = string,
   TAccountSysvarInstructions extends string = string,
   TAccountAuthorizationRulesProgram extends string = string,
-  TAccountBidAta extends string = string,
+  TAccountBidTa extends string = string,
   TAccountBidTokenRecord extends string = string,
   TAccountAuthorizationRules extends string = string,
   TAccountTokenProgram extends string = string,
@@ -745,10 +744,10 @@ export type TakeBidLegacyInput<
   makerBroker?: Address<TAccountMakerBroker>;
   sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
-  sellerAta: Address<TAccountSellerAta>;
+  sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   metadata: Address<TAccountMetadata>;
-  ownerAta: Address<TAccountOwnerAta>;
+  ownerTa: Address<TAccountOwnerTa>;
   edition: Address<TAccountEdition>;
   sellerTokenRecord?: Address<TAccountSellerTokenRecord>;
   ownerTokenRecord?: Address<TAccountOwnerTokenRecord>;
@@ -756,7 +755,7 @@ export type TakeBidLegacyInput<
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  bidAta: Address<TAccountBidAta>;
+  bidTa: Address<TAccountBidTa>;
   bidTokenRecord?: Address<TAccountBidTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -785,17 +784,17 @@ export function getTakeBidLegacyInstruction<
   TAccountMakerBroker extends string,
   TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
-  TAccountSellerAta extends string,
+  TAccountSellerTa extends string,
   TAccountMint extends string,
   TAccountMetadata extends string,
-  TAccountOwnerAta extends string,
+  TAccountOwnerTa extends string,
   TAccountEdition extends string,
   TAccountSellerTokenRecord extends string,
   TAccountOwnerTokenRecord extends string,
   TAccountTokenMetadataProgram extends string,
   TAccountSysvarInstructions extends string,
   TAccountAuthorizationRulesProgram extends string,
-  TAccountBidAta extends string,
+  TAccountBidTa extends string,
   TAccountBidTokenRecord extends string,
   TAccountAuthorizationRules extends string,
   TAccountTokenProgram extends string,
@@ -816,17 +815,17 @@ export function getTakeBidLegacyInstruction<
     TAccountMakerBroker,
     TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -848,17 +847,17 @@ export function getTakeBidLegacyInstruction<
   TAccountMakerBroker,
   TAccountSharedEscrow,
   TAccountWhitelist,
-  TAccountSellerAta,
+  TAccountSellerTa,
   TAccountMint,
   TAccountMetadata,
-  TAccountOwnerAta,
+  TAccountOwnerTa,
   TAccountEdition,
   TAccountSellerTokenRecord,
   TAccountOwnerTokenRecord,
   TAccountTokenMetadataProgram,
   TAccountSysvarInstructions,
   TAccountAuthorizationRulesProgram,
-  TAccountBidAta,
+  TAccountBidTa,
   TAccountBidTokenRecord,
   TAccountAuthorizationRules,
   TAccountTokenProgram,
@@ -883,10 +882,10 @@ export function getTakeBidLegacyInstruction<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    sellerAta: { value: input.sellerAta ?? null, isWritable: true },
+    sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     metadata: { value: input.metadata ?? null, isWritable: true },
-    ownerAta: { value: input.ownerAta ?? null, isWritable: true },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
     edition: { value: input.edition ?? null, isWritable: false },
     sellerTokenRecord: {
       value: input.sellerTokenRecord ?? null,
@@ -908,7 +907,7 @@ export function getTakeBidLegacyInstruction<
       value: input.authorizationRulesProgram ?? null,
       isWritable: false,
     },
-    bidAta: { value: input.bidAta ?? null, isWritable: true },
+    bidTa: { value: input.bidTa ?? null, isWritable: true },
     bidTokenRecord: { value: input.bidTokenRecord ?? null, isWritable: true },
     authorizationRules: {
       value: input.authorizationRules ?? null,
@@ -953,7 +952,7 @@ export function getTakeBidLegacyInstruction<
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!args.tokenStandard) {
-    args.tokenStandard = TokenStandard.NonFungible;
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
   if (!accounts.tokenMetadataProgram.value) {
     accounts.tokenMetadataProgram = {
@@ -1009,17 +1008,17 @@ export function getTakeBidLegacyInstruction<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.sellerAta),
+      getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.metadata),
-      getAccountMeta(accounts.ownerAta),
+      getAccountMeta(accounts.ownerTa),
       getAccountMeta(accounts.edition),
       getAccountMeta(accounts.sellerTokenRecord),
       getAccountMeta(accounts.ownerTokenRecord),
       getAccountMeta(accounts.tokenMetadataProgram),
       getAccountMeta(accounts.sysvarInstructions),
       getAccountMeta(accounts.authorizationRulesProgram),
-      getAccountMeta(accounts.bidAta),
+      getAccountMeta(accounts.bidTa),
       getAccountMeta(accounts.bidTokenRecord),
       getAccountMeta(accounts.authorizationRules),
       getAccountMeta(accounts.tokenProgram),
@@ -1046,17 +1045,17 @@ export function getTakeBidLegacyInstruction<
     TAccountMakerBroker,
     TAccountSharedEscrow,
     TAccountWhitelist,
-    TAccountSellerAta,
+    TAccountSellerTa,
     TAccountMint,
     TAccountMetadata,
-    TAccountOwnerAta,
+    TAccountOwnerTa,
     TAccountEdition,
     TAccountSellerTokenRecord,
     TAccountOwnerTokenRecord,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
     TAccountAuthorizationRulesProgram,
-    TAccountBidAta,
+    TAccountBidTa,
     TAccountBidTokenRecord,
     TAccountAuthorizationRules,
     TAccountTokenProgram,
@@ -1086,10 +1085,10 @@ export type ParsedTakeBidLegacyInstruction<
     makerBroker?: TAccountMetas[5] | undefined;
     sharedEscrow: TAccountMetas[6];
     whitelist?: TAccountMetas[7] | undefined;
-    sellerAta: TAccountMetas[8];
+    sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
     metadata: TAccountMetas[10];
-    ownerAta: TAccountMetas[11];
+    ownerTa: TAccountMetas[11];
     edition: TAccountMetas[12];
     sellerTokenRecord?: TAccountMetas[13] | undefined;
     ownerTokenRecord?: TAccountMetas[14] | undefined;
@@ -1097,7 +1096,7 @@ export type ParsedTakeBidLegacyInstruction<
     sysvarInstructions?: TAccountMetas[16] | undefined;
     authorizationRulesProgram?: TAccountMetas[17] | undefined;
     /** Implicitly checked via transfer. Will fail if wrong account */
-    bidAta: TAccountMetas[18];
+    bidTa: TAccountMetas[18];
     bidTokenRecord?: TAccountMetas[19] | undefined;
     authorizationRules?: TAccountMetas[20] | undefined;
     tokenProgram: TAccountMetas[21];
@@ -1148,17 +1147,17 @@ export function parseTakeBidLegacyInstruction<
       makerBroker: getNextOptionalAccount(),
       sharedEscrow: getNextAccount(),
       whitelist: getNextOptionalAccount(),
-      sellerAta: getNextAccount(),
+      sellerTa: getNextAccount(),
       mint: getNextAccount(),
       metadata: getNextAccount(),
-      ownerAta: getNextAccount(),
+      ownerTa: getNextAccount(),
       edition: getNextAccount(),
       sellerTokenRecord: getNextOptionalAccount(),
       ownerTokenRecord: getNextOptionalAccount(),
       tokenMetadataProgram: getNextOptionalAccount(),
       sysvarInstructions: getNextOptionalAccount(),
       authorizationRulesProgram: getNextOptionalAccount(),
-      bidAta: getNextAccount(),
+      bidTa: getNextAccount(),
       bidTokenRecord: getNextOptionalAccount(),
       authorizationRules: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),

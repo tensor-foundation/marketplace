@@ -36,12 +36,7 @@ import {
 } from '@solana/web3.js';
 import { resolveProofPath, resolveTreeAuthorityPda } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import {
-  ResolvedAccount,
-  expectSome,
-  expectTransactionSigner,
-  getAccountMetaFactory,
-} from '../shared';
+import { ResolvedAccount, expectSome, getAccountMetaFactory } from '../shared';
 
 export type DelistCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -64,7 +59,7 @@ export type DelistCompressedInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -98,9 +93,9 @@ export type DelistCompressedInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -177,7 +172,7 @@ export type DelistCompressedAsyncInput<
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
@@ -188,7 +183,7 @@ export type DelistCompressedAsyncInput<
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
   index: DelistCompressedInstructionDataArgs['index'];
   root: DelistCompressedInstructionDataArgs['root'];
@@ -208,7 +203,7 @@ export async function getDelistCompressedInstructionAsync<
   TAccountListState extends string,
   TAccountOwner extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: DelistCompressedAsyncInput<
     TAccountTreeAuthority,
@@ -220,7 +215,7 @@ export async function getDelistCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): Promise<
   DelistCompressedInstruction<
@@ -234,7 +229,7 @@ export async function getDelistCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 > {
   // Program address.
@@ -260,7 +255,7 @@ export async function getDelistCompressedInstructionAsync<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -300,11 +295,6 @@ export async function getDelistCompressedInstructionAsync<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -330,7 +320,7 @@ export async function getDelistCompressedInstructionAsync<
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -348,7 +338,7 @@ export async function getDelistCompressedInstructionAsync<
     TAccountListState,
     TAccountOwner,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -364,7 +354,7 @@ export type DelistCompressedInput<
   TAccountListState extends string = string,
   TAccountOwner extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
@@ -375,7 +365,7 @@ export type DelistCompressedInput<
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDest?: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
   index: DelistCompressedInstructionDataArgs['index'];
   root: DelistCompressedInstructionDataArgs['root'];
@@ -395,7 +385,7 @@ export function getDelistCompressedInstruction<
   TAccountListState extends string,
   TAccountOwner extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: DelistCompressedInput<
     TAccountTreeAuthority,
@@ -407,7 +397,7 @@ export function getDelistCompressedInstruction<
     TAccountListState,
     TAccountOwner,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): DelistCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -420,7 +410,7 @@ export function getDelistCompressedInstruction<
   TAccountListState,
   TAccountOwner,
   TAccountMarketplaceProgram,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -445,7 +435,7 @@ export function getDelistCompressedInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -479,11 +469,6 @@ export function getDelistCompressedInstruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.rentDest.value) {
-    accounts.rentDest.value = expectTransactionSigner(
-      accounts.owner.value
-    ).address;
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -509,7 +494,7 @@ export function getDelistCompressedInstruction<
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
       ...remainingAccounts,
     ],
     programAddress,
@@ -527,7 +512,7 @@ export function getDelistCompressedInstruction<
     TAccountListState,
     TAccountOwner,
     TAccountMarketplaceProgram,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -548,7 +533,7 @@ export type ParsedDelistCompressedInstruction<
     listState: TAccountMetas[6];
     owner: TAccountMetas[7];
     marketplaceProgram: TAccountMetas[8];
-    rentDest: TAccountMetas[9];
+    rentDestination: TAccountMetas[9];
   };
   data: DelistCompressedInstructionData;
 };
@@ -583,7 +568,7 @@ export function parseDelistCompressedInstruction<
       listState: getNextAccount(),
       owner: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getDelistCompressedInstructionDataDecoder().decode(instruction.data),
   };

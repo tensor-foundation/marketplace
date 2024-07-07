@@ -1,14 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, TransferChecked},
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_2022::{transfer_checked, Token2022, TransferChecked},
+    token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees,
+    calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::{validate_mint, RoyaltyInfo},
-    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CreatorFeeMode, FromAcc,
-    FromExternal, TCreator,
+    transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
+    CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
 use vipers::Validate;
 
@@ -19,8 +19,15 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct BuyT22<'info> {
-    /// CHECK: seeds (fee account)
-    #[account(mut, seeds=[], bump)]
+    /// CHECK: Seeds and program checked here, account has no state.
+    #[account(mut,
+        seeds=[
+            b"fee_vault".as_ref(),
+            shard_num!(list_state),
+        ],
+        bump,
+        seeds::program = fees::ID,
+    )]
     pub fee_vault: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
@@ -32,7 +39,7 @@ pub struct BuyT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = buyer,
     )]
-    pub buyer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -51,7 +58,7 @@ pub struct BuyT22<'info> {
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
-    pub list_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -78,7 +85,8 @@ pub struct BuyT22<'info> {
     )]
     pub rent_destination: UncheckedAccount<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    // Always Token2022.
+    pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
@@ -86,7 +94,6 @@ pub struct BuyT22<'info> {
 
     pub system_program: Program<'info, System>,
 
-    // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
     //
     // ---- [0..n] remaining accounts for royalties transfer hook
@@ -118,7 +125,7 @@ impl<'info> Validate<'info> for BuyT22<'info> {
             TcompError::BrokerMismatch
         );
 
-        // check if the cosigner is required
+        // Validate the cosigner if it's required.
         if let Some(cosigner) = list_state.cosigner.value() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
@@ -134,32 +141,31 @@ pub fn process_buy_t22<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyT22<'info>>,
     max_amount: u64,
 ) -> Result<()> {
-    // validate mint account
+    let list_state = &ctx.accounts.list_state;
 
+    // validate mint account
     let royalties = validate_mint(&ctx.accounts.mint.to_account_info())?;
 
-    let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
 
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(
+    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
         amount,
-        TCOMP_FEE_BPS,
-        MAKER_BROKER_PCT,
-        list_state.maker_broker,
-        ctx.accounts.taker_broker.as_ref().map(|acc| acc.key()),
-    )?;
+        tnsr_discount: false,
+        total_fee_bps: TCOMP_FEE_BPS,
+        broker_fee_pct: BROKER_FEE_PCT,
+        maker_broker_pct: MAKER_BROKER_PCT,
+    })?;
 
-    // transfer the NFT
-
+    // Transfer the NFT to the buyer.
     let mut transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.list_ata.to_account_info(),
-            to: ctx.accounts.buyer_ata.to_account_info(),
+            from: ctx.accounts.list_ta.to_account_info(),
+            to: ctx.accounts.buyer_ta.to_account_info(),
             authority: ctx.accounts.list_state.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
@@ -283,7 +289,7 @@ pub fn process_buy_t22<'info, 'b>(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
-                account: ctx.accounts.list_ata.to_account_info(),
+                account: ctx.accounts.list_ta.to_account_info(),
                 destination: ctx.accounts.rent_destination.to_account_info(),
                 authority: ctx.accounts.list_state.to_account_info(),
             },

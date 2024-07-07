@@ -62,7 +62,7 @@ export type TakeBidCoreInstruction<
     | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountMintProof extends string | IAccountMeta<string> = string,
-  TAccountRentDest extends string | IAccountMeta<string> = string,
+  TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -118,9 +118,9 @@ export type TakeBidCoreInstruction<
       TAccountMintProof extends string
         ? ReadonlyAccount<TAccountMintProof>
         : TAccountMintProof,
-      TAccountRentDest extends string
-        ? WritableAccount<TAccountRentDest>
-        : TAccountRentDest,
+      TAccountRentDestination extends string
+        ? WritableAccount<TAccountRentDestination>
+        : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
   >;
@@ -179,7 +179,7 @@ export type TakeBidCoreInput<
   TAccountEscrowProgram extends string = string,
   TAccountCosigner extends string = string,
   TAccountMintProof extends string = string,
-  TAccountRentDest extends string = string,
+  TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   seller: TransactionSigner<TAccountSeller>;
@@ -198,7 +198,7 @@ export type TakeBidCoreInput<
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
-  rentDest: Address<TAccountRentDest>;
+  rentDestination: Address<TAccountRentDestination>;
   minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
 };
 
@@ -219,7 +219,7 @@ export function getTakeBidCoreInstruction<
   TAccountEscrowProgram extends string,
   TAccountCosigner extends string,
   TAccountMintProof extends string,
-  TAccountRentDest extends string,
+  TAccountRentDestination extends string,
 >(
   input: TakeBidCoreInput<
     TAccountFeeVault,
@@ -238,7 +238,7 @@ export function getTakeBidCoreInstruction<
     TAccountEscrowProgram,
     TAccountCosigner,
     TAccountMintProof,
-    TAccountRentDest
+    TAccountRentDestination
   >
 ): TakeBidCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -258,7 +258,7 @@ export function getTakeBidCoreInstruction<
   TAccountEscrowProgram,
   TAccountCosigner,
   TAccountMintProof,
-  TAccountRentDest
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -284,7 +284,7 @@ export function getTakeBidCoreInstruction<
     escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     mintProof: { value: input.mintProof ?? null, isWritable: false },
-    rentDest: { value: input.rentDest ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -331,7 +331,7 @@ export function getTakeBidCoreInstruction<
       getAccountMeta(accounts.escrowProgram),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
-      getAccountMeta(accounts.rentDest),
+      getAccountMeta(accounts.rentDestination),
     ],
     programAddress,
     data: getTakeBidCoreInstructionDataEncoder().encode(
@@ -355,7 +355,7 @@ export function getTakeBidCoreInstruction<
     TAccountEscrowProgram,
     TAccountCosigner,
     TAccountMintProof,
-    TAccountRentDest
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -384,7 +384,7 @@ export type ParsedTakeBidCoreInstruction<
     cosigner?: TAccountMetas[14] | undefined;
     /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
     mintProof: TAccountMetas[15];
-    rentDest: TAccountMetas[16];
+    rentDestination: TAccountMetas[16];
   };
   data: TakeBidCoreInstructionData;
 };
@@ -432,7 +432,7 @@ export function parseTakeBidCoreInstruction<
       escrowProgram: getNextAccount(),
       cosigner: getNextOptionalAccount(),
       mintProof: getNextAccount(),
-      rentDest: getNextAccount(),
+      rentDestination: getNextAccount(),
     },
     data: getTakeBidCoreInstructionDataDecoder().decode(instruction.data),
   };
