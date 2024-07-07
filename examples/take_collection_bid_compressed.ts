@@ -48,7 +48,7 @@ async function takeCompressedCollectionBid(
 
   // get canopyDepth for shortened proofPath (w/o that most constructed ixs will be too large)
   const canopyDepth = await getCanopyDepth(rpc, address(merkleTree));
-  // for cNFT collections, VOC field of whitelist can never be null, so takeBidMetaHash route isn't possible
+  // for cNFT collection bids, VOC field of whitelist can never be null, so takeBidMetaHash route isn't possible
   // => takeBidFullMeta route with full metadata args
   const metadataArgs = getTMetadataArgsArgs(assetFields);
 
