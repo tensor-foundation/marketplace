@@ -31,6 +31,7 @@ env:
   CACHE: true
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
   RPC: ${{ secrets.SOLANA_MAINNET_RPC_URL }}
+  ARTIFACTS_TOKEN: ${{ secrets.ARTIFACTS_TOKEN }}
 
 jobs:
   build_programs:

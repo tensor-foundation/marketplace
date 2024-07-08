@@ -5,6 +5,7 @@ on:
 
 env:
   CACHE: true
+  ARTIFACTS_TOKEN: ${{ secrets.ARTIFACTS_TOKEN }}
 
 jobs:
   test:
