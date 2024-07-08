@@ -22,7 +22,7 @@ async function takeLegacyCollectionBid(mint: string, bidStateAccount: string) {
 
     // fetch bidState for needed fields
     const bidState = await fetchBidState(rpc, address(bidStateAccount)).then(resp => resp.data);
-    const { owner, amount: minAmount, target, targetId, makerBroker, cosigner } = bidState;
+    const { owner, amount: minAmount, targetId, makerBroker, margin } = bidState;
 
     // fetch metadata for additional relevant fields
     const [ metadataPda ] = await findMetadataPda({mint: address(mint)});
@@ -39,6 +39,7 @@ async function takeLegacyCollectionBid(mint: string, bidStateAccount: string) {
         whitelist: targetId,
         minAmount: minAmount,
         makerBroker: unwrapOption(makerBroker) ?? undefined,
+        sharedEscrow: unwrapOption(margin) ?? undefined,
         rulesAccPresent: !!ruleSet,
         authorizationRules: ruleSet,
         tokenStandard: tokenStandard,
