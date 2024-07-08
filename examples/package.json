@@ -3,7 +3,7 @@
         "@solana/web3.js": "2.0.0-preview.3",
         "@tensor-foundation/marketplace": "file:../clients/js",
         "@tensor-foundation/common-helpers": "file:../../toolkit/common-helpers",
-        "@tensor-foundation/whitelist": "^0.1.0",
+        "@tensor-foundation/resolvers": "^0.2.0",
         "tsx": "^4.11.0"
     }
 }
