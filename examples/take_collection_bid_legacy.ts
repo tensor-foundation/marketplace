@@ -61,12 +61,14 @@ async function takeLegacyCollectionBid(mint: string, bidStateAccount: string) {
                 .forEach(condition => creators.push(condition.value));
         }
     }
+    else throw new Error(`${bidStateAccount} is not a collection bid.`);
 
     const takeBidLegacyAsyncInput: TakeBidLegacyAsyncInput = {
         seller: keypairSigner,
         owner: owner,
         mint: address(mint),
         bidState: address(bidStateAccount),
+        whitelist: targetId,
         minAmount: minAmount,
         makerBroker: unwrapOption(makerBroker) ?? undefined,
         creators: creators,
