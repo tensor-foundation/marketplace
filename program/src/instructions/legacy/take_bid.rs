@@ -237,7 +237,7 @@ pub fn process_take_bid_legacy<'info>(
                     .map(|a| a.to_account_info())
                     .as_ref(),
                 &ctx.accounts.mint.to_account_info(),
-                None, // Collection and Creator verification not supported on T22 standards yet.
+                Some(&ctx.accounts.metadata.to_account_info()),
             )?;
         }
     }
