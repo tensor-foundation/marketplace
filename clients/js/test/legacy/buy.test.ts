@@ -8,6 +8,11 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import {
+  createDefaultNft,
+  createDefaultpNft,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
@@ -15,11 +20,6 @@ import {
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  createDefaultpNft,
-  findAtaPda,
-} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
   TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
@@ -109,8 +109,13 @@ test('it can buy a Programmable NFT', async (t) => {
     tokenStandard: TokenStandard.ProgrammableNonFungible,
   });
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
+
   await pipe(
     await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -127,10 +132,6 @@ test('it can buy a Programmable NFT', async (t) => {
     maxAmount: 1,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [owner.address],
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   await pipe(

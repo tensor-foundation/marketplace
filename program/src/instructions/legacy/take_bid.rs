@@ -8,13 +8,13 @@ use tensor_toolbox::{
     assert_fee_account,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
 };
-use tensor_whitelist::{assert_decode_whitelist, FullMerkleProof, ZERO_ARRAY};
+use tensor_whitelist::verify_whitelist_generic;
 use tensorswap::program::EscrowProgram;
 use vipers::Validate;
 
 use crate::{
     pnft_adapter::*,
-    take_bid_common::{assert_decode_mint_proof, take_bid_shared, TakeBidArgs},
+    take_bid_common::{take_bid_shared, TakeBidArgs},
     AuthorizationDataLocal, BidState, Field, ProgNftShared, Target, TcompError,
     CURRENT_TCOMP_VERSION,
 };
@@ -229,34 +229,16 @@ pub fn process_take_bid_legacy<'info>(
                 TcompError::WrongTargetId
             );
 
-            let whitelist = assert_decode_whitelist(whitelist_info)?;
-            let nft_mint = &ctx.accounts.mint;
-
-            //prioritize merkle tree if proof present
-            if whitelist.root_hash != ZERO_ARRAY {
-                let mint_proof_acc = ctx
-                    .accounts
+            verify_whitelist_generic(
+                &whitelist_info.to_account_info(),
+                ctx.accounts
                     .mint_proof
                     .as_ref()
-                    .ok_or(ProgramError::NotEnoughAccountKeys)?;
-
-                let mint_proof =
-                    assert_decode_mint_proof(whitelist_info.key, &mint, mint_proof_acc)?;
-
-                let leaf = anchor_lang::solana_program::keccak::hash(nft_mint.key().as_ref());
-                let proof = &mut mint_proof.proof.to_vec();
-                proof.truncate(mint_proof.proof_len as usize);
-
-                whitelist.verify_whitelist(
-                    None,
-                    Some(FullMerkleProof {
-                        proof: proof.clone(),
-                        leaf: leaf.0,
-                    }),
-                )?;
-            } else {
-                whitelist.verify_whitelist(Some(&metadata), None)?;
-            }
+                    .map(|a| a.to_account_info())
+                    .as_ref(),
+                &ctx.accounts.mint.to_account_info(),
+                None, // Collection and Creator verification not supported on T22 standards yet.
+            )?;
         }
     }
 
