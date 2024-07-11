@@ -44,6 +44,14 @@ module.exports = function visitor(options) {
             rentDest: {
               defaultValue: k.accountValueNode("owner"),
             },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")]
+                }
+              )
+            }
           },
           arguments: {
             optionalRoyaltyPct: {
@@ -130,6 +138,14 @@ module.exports = function visitor(options) {
             marginAccount: {
               defaultValue: k.accountValueNode("tensorswapProgram"),
             },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")]
+                }
+              )
+            }
           },
           arguments: {
             optionalRoyaltyPct: {
@@ -166,6 +182,14 @@ module.exports = function visitor(options) {
             marginAccount: {
               defaultValue: k.accountValueNode("tensorswapProgram"),
             },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")]
+                }
+              )
+            }
           },
           arguments: {
             optionalRoyaltyPct: {

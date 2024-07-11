@@ -1,12 +1,11 @@
-import { getAddressEncoder, address } from "@solana/addresses";
 import {
-  retrieveDASAssetFields,
-  retrieveDASProofFields,
+  retrieveAssetFields,
+  retrieveProofFields,
   getCanopyDepth,
   simulateTxWithIxs,
-} from "./helpers";
-import { rpc, keypairBytes } from "./common";
-import { KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+} from "@tensor-foundation/common-helpers";
+import { rpc, keypairBytes, helius_url } from "./common";
+import { getAddressEncoder, address, KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/web3.js";
 import {
   ListCompressedAsyncInput,
   findListStatePda,
@@ -21,13 +20,13 @@ async function listCompressedMint(mint: string, amountLamports: number) {
   );
 
   // query DAS for assetProof and asset info
-  const proofFields = await retrieveDASProofFields(mint);
-  const assetFields = await retrieveDASAssetFields(mint);
+  const proofFields = await retrieveProofFields(helius_url, mint);
+  const assetFields = await retrieveAssetFields(helius_url, mint);
 
   // get merkleTree related input fields
   const merkleTree = proofFields.tree_id;
-  const index = assetFields.compression.leaf_id;
-  const root = getAddressEncoder().encode(proofFields.root);
+  const index = assetFields.compression!.leaf_id;
+  const root = getAddressEncoder().encode(address(proofFields.root));
 
   // retrieve list state
   const [listStatePda, listStateBump] = await findListStatePda({
@@ -36,10 +35,10 @@ async function listCompressedMint(mint: string, amountLamports: number) {
 
   // get dataHash and creatorHash from DAS fetched asset fields
   const dataHash = getAddressEncoder().encode(
-    assetFields.compression.data_hash,
+    address(assetFields.compression!.data_hash),
   );
   const creatorHash = getAddressEncoder().encode(
-    assetFields.compression.creator_hash,
+    address(assetFields.compression!.creator_hash),
   );
 
   // get canopyDepth for shortened proofPath (w/o that most constructed ixs will be too large)
@@ -48,14 +47,17 @@ async function listCompressedMint(mint: string, amountLamports: number) {
   // build list input accounts incl. data args
   const listCompressedAsyncInput: ListCompressedAsyncInput = {
     owner: keypairSigner,
-    merkleTree: merkleTree,
+    merkleTree: address(merkleTree),
     listState: listStatePda,
     index: index,
     root: root,
     dataHash: dataHash,
     creatorHash: creatorHash,
+    // get maker broker fees of the price back to your own wallet
+    // when the listing gets sold!
+    makerBroker: keypairSigner.address,
     amount: amountLamports,
-    proof: proofFields.proof,
+    proof: proofFields.proof.map((proof: string) => address(proof)),
     canopyDepth: canopyDepth,
   };
 

@@ -1,12 +1,9 @@
 {
     "dependencies": {
-        "@solana/web3.js": "2.0.0-preview.2",
+        "@solana/web3.js": "2.0.0-preview.3",
         "@tensor-foundation/marketplace": "file:../clients/js",
-        "@types/node": "18.11.18",
-        "@types/bn.js": "5.1.5",
-        "axios": "1.6.8",
-        "bn.js": "^5.2.1",
-        "js-sha3": "0.9.3",
-        "ts-node": "^10.9.2"
+        "@tensor-foundation/common-helpers": "file:../../toolkit/common-helpers",
+        "@tensor-foundation/resolvers": "^0.2.0",
+        "tsx": "^4.11.0"
     }
 }

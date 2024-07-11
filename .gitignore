@@ -11,3 +11,5 @@ dist
 docs
 node_modules
 test-ledger
+.vscode
+examples/pnpm-lock.yaml

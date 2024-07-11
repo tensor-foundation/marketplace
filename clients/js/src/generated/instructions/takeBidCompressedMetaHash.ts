@@ -49,6 +49,7 @@ import {
 } from '@solana/web3.js';
 import {
   resolveCreatorPath,
+  resolveFeeVaultPdaFromBidState,
   resolveProofPath,
   resolveRemainingSignerWithSellerOrDelegate,
   resolveTreeAuthorityPda,
@@ -261,7 +262,7 @@ export type TakeBidCompressedMetaHashAsyncInput<
   TAccountCosigner extends string = string,
   TAccountRentDestination extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
   delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
@@ -415,6 +416,12 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
+    };
+  }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
