@@ -12,7 +12,7 @@ import {
   simulateTxWithIxs,
 } from "@tensor-foundation/common-helpers";
 import { rpc, keypairBytes, helius_url} from "./common";
-import { address, getAddressEncoder, KeyPairSigner, createKeyPairSignerFromBytes, Address } from "@solana/web3.js";
+import { address, getAddressEncoder, KeyPairSigner, createKeyPairSignerFromBytes, Address, unwrapOption } from "@solana/web3.js";
 
 // constructs tx to buy NFT specified by mint (needs to be a valid compressed NFT listed on tensor)
 async function buyCompressedListing(mint: string) {
@@ -67,6 +67,9 @@ async function buyCompressedListing(mint: string) {
     rentDestination: rentDest,
     index: index,
     root: root,
+    makerBroker: unwrapOption(listState.data.makerBroker) ?? undefined,
+    // get 50 BPS of the price back to your own wallet by being the takerBroker!
+    takerBroker: keypairSigner.address,
     metaHash: metaHash,
     creatorShares: creatorShares,
     creatorVerified: creatorVerified,

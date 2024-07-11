@@ -6,7 +6,7 @@ import {
   simulateTxWithIxs,
 } from "@tensor-foundation/common-helpers";
 import { rpc, keypairBytes, helius_url } from "./common";
-import { getAddressEncoder, address, KeyPairSigner, createKeyPairSignerFromBytes, isNone } from "@solana/web3.js";
+import { getAddressEncoder, address, KeyPairSigner, createKeyPairSignerFromBytes, isNone, unwrapOption } from "@solana/web3.js";
 import {
   TakeBidCompressedFullMetaAsyncInput,
   fetchBidState,
@@ -64,6 +64,9 @@ async function takeCompressedCollectionBid(
       rentDestination: rentDest,
       index: index,
       root: root,
+      makerBroker: unwrapOption(bidState.data.makerBroker) ?? undefined,
+      // get 50 BPS of the price back to your own wallet by being the takerBroker!
+      takerBroker: keypairSigner.address,
       ...metadataArgs,
       minAmount: minAmount,
       creators: assetFields.creators?.map((c: any) => [c.address, c.share]),

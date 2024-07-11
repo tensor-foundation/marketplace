@@ -21,7 +21,10 @@ async function makeSingleNftBid(mint: string, amountLamports: number) {
         owner: keypairSigner,
         target: Target.AssetId,
         targetId: address(mint),
-        amount: amountLamports
+        amount: amountLamports,
+        // get 50 BPS of the price back to your own wallet by being the makerBroker
+        // when the bid gets accepted!
+        makerBroker: keypairSigner.address
     }
     // retrieve bid instruction
     const bidIx = await getBidInstructionAsync(bidAsyncInput);

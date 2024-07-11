@@ -53,6 +53,9 @@ async function listCompressedMint(mint: string, amountLamports: number) {
     root: root,
     dataHash: dataHash,
     creatorHash: creatorHash,
+    // get 50 BPS of the price back to your own wallet by being the makerBroker
+    // when the listing gets sold!
+    makerBroker: keypairSigner.address,
     amount: amountLamports,
     proof: proofFields.proof.map((proof: string) => address(proof)),
     canopyDepth: canopyDepth,

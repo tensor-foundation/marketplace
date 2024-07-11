@@ -39,6 +39,8 @@ async function takeLegacyCollectionBid(mint: string, bidStateAccount: string) {
         whitelist: targetId,
         minAmount: minAmount,
         makerBroker: unwrapOption(makerBroker) ?? undefined,
+        // get 50 BPS of the price back to your own wallet by being the takerBroker!
+        takerBroker: keypairSigner.address,
         sharedEscrow: unwrapOption(margin) ?? undefined,
         rulesAccPresent: !!ruleSet,
         authorizationRules: ruleSet,

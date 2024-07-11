@@ -16,6 +16,9 @@ async function listLegacyMint(mint: string, amountLamports: number) {
         owner: keypairSigner,
         mint: address(mint),
         amount: amountLamports,
+        // get 50 BPS of the price back to your own wallet by being the makerBroker
+        // when the listing gets sold!
+        makerBroker: keypairSigner.address,
     }
     // retrieve list instruction
     const listIx = await getListLegacyInstructionAsync(listLegacyAsyncInput);

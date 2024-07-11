@@ -48,6 +48,8 @@ async function buyLegacy(mint: string, whitelist: string) {
         maxAmount: maxAmount,
         rentDestination: rentPayer ?? undefined,
         makerBroker: unwrapOption(makerBroker) ?? undefined,
+        // get 50 BPS of the price back to your own wallet by being the takerBroker!
+        takerBroker: keypairSigner.address,
         authorizationRules: ruleSet,
         tokenStandard: tokenStandard,
         creators: creators,
