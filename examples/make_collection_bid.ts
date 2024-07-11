@@ -24,7 +24,7 @@ async function makeCollectionBid(whitelist: string, amountLamports: number, quan
         targetId: address(whitelist),
         amount: amountLamports,
         quantity: quantity,
-        // get 50 BPS of the price back to your own wallet by being the makerBroker
+        // get maker broker fees of the price back to your own wallet
         // when the bid gets accepted!
         makerBroker: keypairSigner.address,
     }

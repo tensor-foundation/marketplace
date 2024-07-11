@@ -65,7 +65,7 @@ async function takeCompressedCollectionBid(
       index: index,
       root: root,
       makerBroker: unwrapOption(bidState.data.makerBroker) ?? undefined,
-      // get 50 BPS of the price back to your own wallet by being the takerBroker!
+      // get taker broker fees of the price back to your own wallet!
       takerBroker: keypairSigner.address,
       ...metadataArgs,
       minAmount: minAmount,

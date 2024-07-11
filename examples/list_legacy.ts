@@ -16,7 +16,7 @@ async function listLegacyMint(mint: string, amountLamports: number) {
         owner: keypairSigner,
         mint: address(mint),
         amount: amountLamports,
-        // get 50 BPS of the price back to your own wallet by being the makerBroker
+        // get maker broker fees of the price back to your own wallet
         // when the listing gets sold!
         makerBroker: keypairSigner.address,
     }

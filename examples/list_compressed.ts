@@ -53,7 +53,7 @@ async function listCompressedMint(mint: string, amountLamports: number) {
     root: root,
     dataHash: dataHash,
     creatorHash: creatorHash,
-    // get 50 BPS of the price back to your own wallet by being the makerBroker
+    // get maker broker fees of the price back to your own wallet
     // when the listing gets sold!
     makerBroker: keypairSigner.address,
     amount: amountLamports,

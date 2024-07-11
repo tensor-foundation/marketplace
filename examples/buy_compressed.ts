@@ -68,7 +68,7 @@ async function buyCompressedListing(mint: string) {
     index: index,
     root: root,
     makerBroker: unwrapOption(listState.data.makerBroker) ?? undefined,
-    // get 50 BPS of the price back to your own wallet by being the takerBroker!
+    // get taker broker fees of the price back to your own wallet!
     takerBroker: keypairSigner.address,
     metaHash: metaHash,
     creatorShares: creatorShares,

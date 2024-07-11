@@ -22,7 +22,7 @@ async function makeSingleNftBid(mint: string, amountLamports: number) {
         target: Target.AssetId,
         targetId: address(mint),
         amount: amountLamports,
-        // get 50 BPS of the price back to your own wallet by being the makerBroker
+        // get maker broker fees of the price back to your own wallet
         // when the bid gets accepted!
         makerBroker: keypairSigner.address
     }
