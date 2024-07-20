@@ -70,5 +70,5 @@ jobs:
         with:
           name: rust-client-builds
           # First wildcard ensures exported paths are consistently under the clients folder.
-          path: ./targe*/release/*marketplace*
+          path: ./clients/rust/targe*/release/*marketplace*
           if-no-files-found: error
