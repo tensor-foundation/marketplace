@@ -1,6 +1,6 @@
 {
   "name": "@tensor-foundation/marketplace",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Your one-stop-shop for your NFT needs.",
   "sideEffects": false,
   "module": "./dist/src/index.mjs",
@@ -29,8 +29,7 @@
     "format:fix": "prettier --write src test"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://npm.pkg.github.com"
   },
   "homepage": "https://github.com/tensor-foundation",
   "repository": "https://github.com/tensor-foundation/marketplace.git",
