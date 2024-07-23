@@ -212,7 +212,7 @@ pub fn process_buy_legacy<'info, 'b>(
     let creator_fee = calc_creators_fee(
         metadata.seller_fee_basis_points,
         amount,
-        None,
+        metadata.token_standard,
         optional_royalty_pct,
     )?;
 
