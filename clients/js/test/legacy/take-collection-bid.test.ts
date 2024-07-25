@@ -191,3 +191,101 @@ test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) 
     FAILED_FVC_VERIFICATION_ERROR_CODE
   );
 });
+
+test('it cannot take a bid on a legacy collection w/o correct cosigner', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidOwner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const cosigner = await generateKeyPairSignerWithSol(client);
+  const notCosigner = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creatorKeypair,
+    owner: seller,
+  });
+
+  // Create whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
+  });
+
+  const price = 500_000_000n;
+
+  // Create collection bid w/ cosigner
+  const bidId = (await generateKeyPairSigner()).address;
+  const bidIx = await getBidInstructionAsync({
+    owner: bidOwner,
+    amount: price,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId: bidId,
+    cosigner: cosigner,
+  });
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [bidState] = await findBidStatePda({
+    owner: bidOwner.address,
+    bidId,
+  });
+
+  // When the seller tries to take the bid without specifying the cosigner
+  const takeBidIxWithoutCosigner = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: price,
+    bidState,
+    creators: [creatorKeypair.address],
+  });
+
+  const promiseNoCosigner = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIxWithoutCosigner, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const BAD_COSIGNER_ERROR_CODE = 6132;
+
+  // Then a custom error gets thrown
+  await expectCustomError(
+    t,
+    promiseNoCosigner,
+    BAD_COSIGNER_ERROR_CODE
+  );
+
+  // When the seller tries to take the bid with specifying an incorrect cosigner
+  const takeBidIxIncorrectCosigner = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: price,
+    bidState,
+    cosigner: notCosigner,
+    creators: [creatorKeypair.address],
+  });
+
+  const promiseIncorrectCosigner = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIxIncorrectCosigner, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Then a custom error gets thrown
+  await expectCustomError(
+    t,
+    promiseIncorrectCosigner,
+    BAD_COSIGNER_ERROR_CODE
+  );
+});
