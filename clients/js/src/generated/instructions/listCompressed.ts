@@ -73,7 +73,9 @@ export type ListCompressedInstruction<
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCosigner extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -372,10 +374,8 @@ export async function getListCompressedInstructionAsync<
     };
   }
   if (!accounts.cosigner.value) {
-    accounts.cosigner = {
-      ...accounts.cosigner,
-      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
-    };
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
@@ -592,10 +592,8 @@ export function getListCompressedInstruction<
     };
   }
   if (!accounts.cosigner.value) {
-    accounts.cosigner = {
-      ...accounts.cosigner,
-      ...resolveRemainingSignerWithOwnerOrDelegate(resolverScope),
-    };
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
