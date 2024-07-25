@@ -106,13 +106,13 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
     client,
     payer,
     mint: currency.mint,
-    owner: feeVault
+    owner: feeVault,
   });
   const ownerCurrencyTa = await createAta({
     client,
     payer,
     mint: currency.mint,
-    owner: owner.address
+    owner: owner.address,
   });
 
   // List asset.

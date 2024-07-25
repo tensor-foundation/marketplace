@@ -28,7 +28,12 @@ test('it can take a bid on a legacy NFT', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({client, payer: seller, authority: seller, owner: seller});
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: seller,
+    owner: seller,
+  });
 
   const bidIx = await getBidInstructionAsync({
     owner: buyer,

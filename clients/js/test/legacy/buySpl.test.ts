@@ -54,7 +54,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
   const initialSupply = 1_000_000_000n;
 
   // Create a SPL token and fund the buyer with it.
-  const [{mint: currency }] = await createAndMintTo({
+  const [{ mint: currency }] = await createAndMintTo({
     client,
     mintAuthority,
     payer,
@@ -79,7 +79,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     client,
     payer,
     authority: updateAuthority,
-    owner
+    owner,
   });
 
   // List the NFT.
@@ -114,20 +114,20 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     client,
     payer,
     mint: currency,
-    owner: updateAuthority.address
+    owner: updateAuthority.address,
   });
 
   const feeVaultCurrencyTa = await createAta({
     client,
     payer,
     mint: currency,
-    owner: feeVault
+    owner: feeVault,
   });
   const ownerCurrencyTa = await createAta({
     client,
     payer,
     mint: currency,
-    owner: owner.address
+    owner: owner.address,
   });
 
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
@@ -215,7 +215,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
   const initialSupply = 1_000_000_000n;
 
   // Create a SPL token and fund the buyer with it.
-  const [{mint: currency }] = await createAndMintTo({
+  const [{ mint: currency }] = await createAndMintTo({
     client,
     mintAuthority,
     payer,
@@ -241,7 +241,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     payer,
     authority: updateAuthority,
     owner,
-    creators
+    creators,
   });
 
   // List the NFT.
@@ -275,7 +275,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
   const creatorsAtas = [];
   for (const creator of creators) {
     creatorsAtas.push(
-      await createAta({client, payer, mint: currency, owner: creator.address})
+      await createAta({ client, payer, mint: currency, owner: creator.address })
     );
   }
 
@@ -283,13 +283,13 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     client,
     payer,
     mint: currency,
-    owner: feeVault
+    owner: feeVault,
   });
   const ownerCurrencyTa = await createAta({
     client,
     payer,
     mint: currency,
-    owner: owner.address
+    owner: owner.address,
   });
 
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
