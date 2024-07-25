@@ -51,7 +51,8 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
   // And we wait for the listing to expire.
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  const preCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send()).value;
+  const preCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send())
+    .value;
 
   const closeExpiredBidIx = await getCloseExpiredBidInstructionAsync({
     owner: owner.address,
@@ -76,9 +77,11 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
     ).exists
   );
 
-    // And the owner got his sol back (+ account rent)
-    const postCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send()).value;
-    t.assert(postCloseOwnerFunds >= preCloseOwnerFunds + price);
+  // And the owner got his sol back (+ account rent)
+  const postCloseOwnerFunds = (
+    await client.rpc.getBalance(owner.address).send()
+  ).value;
+  t.assert(postCloseOwnerFunds >= preCloseOwnerFunds + price);
 });
 
 test('it cannot close an active bid on a legacy NFT', async (t) => {
@@ -139,9 +142,9 @@ test('it can close an expired a bid on a legacy collection', async (t) => {
 
   // Create whitelist
   const { whitelist } = await createWhitelistV2({
-      client,
-      updateAuthority: creatorKeypair,
-      conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
+    client,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
   });
 
   const bidId = (await generateKeyPairSigner()).address;
@@ -164,7 +167,8 @@ test('it can close an expired a bid on a legacy collection', async (t) => {
   // And we wait for the listing to expire.
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  const preCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send()).value;
+  const preCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send())
+    .value;
 
   const closeExpiredBidIx = await getCloseExpiredBidInstructionAsync({
     owner: owner.address,
@@ -190,6 +194,8 @@ test('it can close an expired a bid on a legacy collection', async (t) => {
   );
 
   // And the owner got his sol back (+ account rent)
-  const postCloseOwnerFunds = (await client.rpc.getBalance(owner.address).send()).value;
+  const postCloseOwnerFunds = (
+    await client.rpc.getBalance(owner.address).send()
+  ).value;
   t.assert(postCloseOwnerFunds >= preCloseOwnerFunds + price);
 });

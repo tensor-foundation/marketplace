@@ -258,11 +258,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
   const BAD_COSIGNER_ERROR_CODE = 6132;
 
   // Then a custom error gets thrown
-  await expectCustomError(
-    t,
-    promiseNoCosigner,
-    BAD_COSIGNER_ERROR_CODE
-  );
+  await expectCustomError(t, promiseNoCosigner, BAD_COSIGNER_ERROR_CODE);
 
   // When the seller tries to take the bid with specifying an incorrect cosigner
   const takeBidIxIncorrectCosigner = await getTakeBidLegacyInstructionAsync({
@@ -283,9 +279,5 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
   );
 
   // Then a custom error gets thrown
-  await expectCustomError(
-    t,
-    promiseIncorrectCosigner,
-    BAD_COSIGNER_ERROR_CODE
-  );
+  await expectCustomError(t, promiseIncorrectCosigner, BAD_COSIGNER_ERROR_CODE);
 });
