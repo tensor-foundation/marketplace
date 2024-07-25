@@ -266,7 +266,7 @@ export type BuyCompressedAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
@@ -419,6 +419,9 @@ export async function getBuyCompressedInstructionAsync<
       accounts.payer.value
     ).address;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.cosigner.value) {
     accounts.cosigner.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
@@ -522,7 +525,7 @@ export type BuyCompressedInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
@@ -660,6 +663,9 @@ export function getBuyCompressedInstruction<
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
     ).address;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.cosigner.value) {
     accounts.cosigner.value =
