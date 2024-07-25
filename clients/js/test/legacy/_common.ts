@@ -7,6 +7,8 @@ import {
   lamports,
   pipe,
   KeyPairSigner,
+  isSolanaError,
+  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from '@solana/web3.js';
 import {
   Client,
@@ -20,6 +22,7 @@ import {
   findWhitelistV2Pda,
   getCreateWhitelistV2Instruction,
 } from '@tensor-foundation/whitelist';
+import { ExecutionContext } from 'ava';
 import { v4 } from 'uuid';
 
 const OWNER_BYTES = [
@@ -117,3 +120,22 @@ export async function createWhitelistV2({
 
   return { whitelist, uuid, conditions };
 }
+
+export const expectCustomError = async (
+  t: ExecutionContext,
+  promise: Promise<unknown>,
+  code: number
+) => {
+  const error = await t.throwsAsync<Error & { data: { logs: string[] } }>(
+    promise
+  );
+
+  if (isSolanaError(error.cause, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM)) {
+    t.assert(
+      error.cause.context.code === code,
+      `expected error code ${code}, received ${error.cause.context.code}`
+    );
+  } else {
+    t.fail("expected a custom error, but didn't get one");
+  }
+};

@@ -19,7 +19,7 @@ import {
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
-import { createWhitelistV2 } from './_common.js';
+import { createWhitelistV2, expectCustomError } from './_common.js';
 import { Mode } from '@tensor-foundation/whitelist';
 import {
   createDefaultNft,
@@ -118,5 +118,76 @@ test('it can take a bid on a legacy collection', async (t) => {
   t.assert(
     postSellerBalance >=
       preSellerBalance + BigInt(Number(price) * 0.98) - 3_500_000n
+  );
+});
+
+test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidOwner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair = await generateKeyPairSignerWithSol(client);
+  const notCreator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: notCreator,
+    owner: seller,
+  });
+
+  // Create whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
+  });
+
+  const price = 500_000_000n;
+
+  // Create collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const bidIx = await getBidInstructionAsync({
+    owner: bidOwner,
+    amount: price,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId: bidId,
+  });
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [bidState] = await findBidStatePda({
+    owner: bidOwner.address,
+    bidId,
+  });
+
+  // When the seller tries to take the bid
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: price,
+    bidState,
+    creators: [creatorKeypair.address],
+  });
+
+  const promiseIncorrectWhitelist = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const FAILED_FVC_VERIFICATION_ERROR_CODE = 6007;
+
+  // Then a custom error gets thrown
+  await expectCustomError(
+    t,
+    promiseIncorrectWhitelist,
+    FAILED_FVC_VERIFICATION_ERROR_CODE
   );
 });
