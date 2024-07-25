@@ -23,7 +23,7 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   const bidIx = await getBidInstructionAsync({
     owner,
@@ -71,7 +71,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   const bidIx = await getBidInstructionAsync({
     owner,

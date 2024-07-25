@@ -3,9 +3,9 @@ import {
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
-  createTestMint,
   TOKEN_PROGRAM_ID,
   createAta,
+  createAndMintTo,
 } from '@tensor-foundation/test-helpers';
 import {
   AssetV1,
@@ -50,7 +50,7 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
   const initialSupply = 1_000_000_000n;
 
   // Create a SPL token and fund the buyer with it.
-  const currency = await createTestMint({
+  const [currency] = await createAndMintTo({
     client,
     mintAuthority,
     payer,
@@ -102,18 +102,18 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const feeVaultCurrencyTa = await createAta(
+  const feeVaultCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    feeVault
-  );
-  const ownerCurrencyTa = await createAta(
+    mint: currency.mint,
+    owner: feeVault
+  });
+  const ownerCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    owner.address
-  );
+    mint: currency.mint,
+    owner: owner.address
+  });
 
   // List asset.
   const listCoreIx = getListCoreInstruction({

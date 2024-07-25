@@ -10,7 +10,6 @@ import {
 } from '@solana/web3.js';
 import {
   createDefaultNft,
-  createDefaultpNft,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
@@ -34,7 +33,7 @@ test('it can buy an NFT', async (t) => {
   const owner = await generateKeyPairSignerWithSol(client);
 
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   // And we list the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -99,7 +98,7 @@ test('it can buy a Programmable NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultpNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner, standard: TokenStandard.ProgrammableNonFungible});
 
   // And we list the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -172,7 +171,7 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultpNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner, standard: TokenStandard.ProgrammableNonFungible});
 
   const computeIx = getSetComputeUnitLimitInstruction({
     units: 300_000,
@@ -232,7 +231,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
   const owner = await generateKeyPairSignerWithSol(client);
 
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   // And we list the NFT with a cosigner.
   const cosigner = await generateKeyPairSigner();
@@ -302,7 +301,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
   const cosigner = await generateKeyPairSigner();
 
   // We create an NFT.
-  const { mint } = await createDefaultpNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner, standard: TokenStandard.ProgrammableNonFungible});
 
   // And we list the NFT with a cosigner.
   const listLegacyIx = await getListLegacyInstructionAsync({

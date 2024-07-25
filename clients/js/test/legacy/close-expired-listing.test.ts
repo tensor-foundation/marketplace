@@ -23,7 +23,7 @@ test('it can close an expired listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   const listLegacyIx = await getListLegacyInstructionAsync({
     owner,
@@ -81,7 +81,7 @@ test('it cannot close an active listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   const listLegacyIx = await getListLegacyInstructionAsync({
     owner,
@@ -138,7 +138,7 @@ test('it can close an expired listing with another payer', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({client, payer: owner, authority: owner, owner});
 
   const listLegacyIx = await getListLegacyInstructionAsync({
     owner,

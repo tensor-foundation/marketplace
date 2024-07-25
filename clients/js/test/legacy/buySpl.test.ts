@@ -8,10 +8,10 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  createAndMintTo,
   createAta,
   createDefaultSolanaClient,
   createDefaultTransaction,
-  createTestMint,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
   TOKEN_PROGRAM_ID,
@@ -54,7 +54,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
   const initialSupply = 1_000_000_000n;
 
   // Create a SPL token and fund the buyer with it.
-  const currency = await createTestMint({
+  const [{mint: currency }] = await createAndMintTo({
     client,
     mintAuthority,
     payer,
@@ -66,7 +66,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
   // Buyer receives the SPL token.
   const [buyerAta] = await findAssociatedTokenPda({
     owner: buyer.address,
-    mint: currency.mint,
+    mint: currency,
     tokenProgram: TOKEN_PROGRAM_ID,
   });
   const buyerAtaBalance = (
@@ -75,19 +75,19 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
   t.is(buyerAtaBalance, Number(initialSupply));
 
   // Create an NFT.
-  const { mint } = await createDefaultNft(
+  const { mint } = await createDefaultNft({
     client,
     payer,
-    updateAuthority,
+    authority: updateAuthority,
     owner
-  );
+  });
 
   // List the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
     payer,
     owner,
     mint,
-    currency: currency.mint,
+    currency: currency,
     amount: price,
   });
 
@@ -106,29 +106,29 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
 
   const [buyerCurrencyTa] = await findAssociatedTokenPda({
     owner: buyer.address,
-    mint: currency.mint,
+    mint: currency,
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const updateAuthorityCurrencyTa = await createAta(
+  const updateAuthorityCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    updateAuthority.address
-  );
+    mint: currency,
+    owner: updateAuthority.address
+  });
 
-  const feeVaultCurrencyTa = await createAta(
+  const feeVaultCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    feeVault
-  );
-  const ownerCurrencyTa = await createAta(
+    mint: currency,
+    owner: feeVault
+  });
+  const ownerCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    owner.address
-  );
+    mint: currency,
+    owner: owner.address
+  });
 
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
     owner: owner.address,
@@ -141,7 +141,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     mint,
     maxAmount: maxPrice,
     optionalRoyaltyPct: 100, // Have to specify royalties as these are not pNFTs.
-    currency: currency.mint,
+    currency: currency,
     creators: [updateAuthority.address],
     creatorsTa: [updateAuthorityCurrencyTa],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -215,7 +215,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
   const initialSupply = 1_000_000_000n;
 
   // Create a SPL token and fund the buyer with it.
-  const currency = await createTestMint({
+  const [{mint: currency }] = await createAndMintTo({
     client,
     mintAuthority,
     payer,
@@ -227,7 +227,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
   // Buyer receives the SPL token.
   const [buyerAta] = await findAssociatedTokenPda({
     owner: buyer.address,
-    mint: currency.mint,
+    mint: currency,
     tokenProgram: TOKEN_PROGRAM_ID,
   });
   const buyerAtaBalance = (
@@ -236,20 +236,20 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
   t.is(buyerAtaBalance, Number(initialSupply));
 
   // Create an NFT.
-  const { mint } = await createDefaultNft(
+  const { mint } = await createDefaultNft({
     client,
     payer,
-    updateAuthority,
+    authority: updateAuthority,
     owner,
     creators
-  );
+  });
 
   // List the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
     payer,
     owner,
     mint,
-    currency: currency.mint,
+    currency: currency,
     amount: price,
   });
 
@@ -268,29 +268,29 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
 
   const [buyerCurrencyTa] = await findAssociatedTokenPda({
     owner: buyer.address,
-    mint: currency.mint,
+    mint: currency,
     tokenProgram: TOKEN_PROGRAM_ID,
   });
 
   const creatorsAtas = [];
   for (const creator of creators) {
     creatorsAtas.push(
-      await createAta(client, payer, currency.mint, creator.address)
+      await createAta({client, payer, mint: currency, owner: creator.address})
     );
   }
 
-  const feeVaultCurrencyTa = await createAta(
+  const feeVaultCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    feeVault
-  );
-  const ownerCurrencyTa = await createAta(
+    mint: currency,
+    owner: feeVault
+  });
+  const ownerCurrencyTa = await createAta({
     client,
     payer,
-    currency.mint,
-    owner.address
-  );
+    mint: currency,
+    owner: owner.address
+  });
 
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
     owner: owner.address,
@@ -303,7 +303,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     mint,
     maxAmount: maxPrice,
     optionalRoyaltyPct: 100, // Have to specify royalties as these are not pNFTs.
-    currency: currency.mint,
+    currency: currency,
     creators: creators.map((c) => c.address),
     creatorsTa: creatorsAtas,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
