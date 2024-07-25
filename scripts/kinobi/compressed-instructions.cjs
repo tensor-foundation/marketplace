@@ -94,17 +94,6 @@ module.exports = function visitor(options) {
                 }
               ),
             },
-            cosigner: {
-              defaultValue: k.resolverValueNode(
-                "resolveRemainingSignerWithOwnerOrDelegate",
-                {
-                  dependsOn: [
-                    k.accountValueNode("owner"),
-                    k.accountValueNode("delegate"),
-                  ],
-                }
-              ),
-            },
           },
           arguments: {
             nonce: {
@@ -120,17 +109,6 @@ module.exports = function visitor(options) {
             delegate: {
               isSigner: "either",
               defaultValue: k.accountValueNode("seller"),
-            },
-            cosigner: {
-              defaultValue: k.resolverValueNode(
-                "resolveRemainingSignerWithSellerOrDelegate",
-                {
-                  dependsOn: [
-                    k.accountValueNode("seller"),
-                    k.accountValueNode("delegate"),
-                  ],
-                }
-              ),
             },
             rentDest: {
               defaultValue: k.accountValueNode("owner"),
@@ -164,17 +142,6 @@ module.exports = function visitor(options) {
             delegate: {
               isSigner: "either",
               defaultValue: k.accountValueNode("seller"),
-            },
-            cosigner: {
-              defaultValue: k.resolverValueNode(
-                "resolveRemainingSignerWithSellerOrDelegate",
-                {
-                  dependsOn: [
-                    k.accountValueNode("seller"),
-                    k.accountValueNode("delegate"),
-                  ],
-                }
-              ),
             },
             rentDest: {
               defaultValue: k.accountValueNode("owner"),

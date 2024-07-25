@@ -166,7 +166,7 @@ pub struct ListCompressedInstructionArgs {
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[writable]` list_state
 ///   10. `[writable, signer]` rent_payer
-///   11. `[signer, optional]` cosigner
+///   11. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
 pub struct ListCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,

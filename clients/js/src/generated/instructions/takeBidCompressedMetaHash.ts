@@ -51,7 +51,6 @@ import {
   resolveCreatorPath,
   resolveFeeVaultPdaFromBidState,
   resolveProofPath,
-  resolveRemainingSignerWithSellerOrDelegate,
   resolveTreeAuthorityPda,
 } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
@@ -458,12 +457,6 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
   }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner = {
-      ...accounts.cosigner,
-      ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
-    };
-  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -744,12 +737,6 @@ export function getTakeBidCompressedMetaHashInstruction<
   }
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
-  }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner = {
-      ...accounts.cosigner,
-      ...resolveRemainingSignerWithSellerOrDelegate(resolverScope),
-    };
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
