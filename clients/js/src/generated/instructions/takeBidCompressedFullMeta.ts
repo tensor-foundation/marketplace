@@ -353,7 +353,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedFullMetaInstructionDataArgs['nonce'];
   index: TakeBidCompressedFullMetaInstructionDataArgs['index'];
   root: TakeBidCompressedFullMetaInstructionDataArgs['root'];
@@ -540,6 +540,9 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -658,7 +661,7 @@ export type TakeBidCompressedFullMetaInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedFullMetaInstructionDataArgs['nonce'];
   index: TakeBidCompressedFullMetaInstructionDataArgs['index'];
   root: TakeBidCompressedFullMetaInstructionDataArgs['root'];
@@ -829,6 +832,9 @@ export function getTakeBidCompressedFullMetaInstruction<
   }
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);

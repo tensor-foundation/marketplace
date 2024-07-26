@@ -37,7 +37,7 @@ import {
   resolveTreeAuthorityPda,
 } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import { ResolvedAccount, expectSome, getAccountMetaFactory } from '../shared';
 
 export type CloseExpiredListingCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -185,8 +185,8 @@ export type CloseExpiredListingCompressedAsyncInput<
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  rentDestination: Address<TAccountRentDestination>;
-  nonce: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
+  rentDestination?: Address<TAccountRentDestination>;
+  nonce?: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
   index: CloseExpiredListingCompressedInstructionDataArgs['index'];
   root: CloseExpiredListingCompressedInstructionDataArgs['root'];
   dataHash: CloseExpiredListingCompressedInstructionDataArgs['dataHash'];
@@ -298,6 +298,12 @@ export async function getCloseExpiredListingCompressedInstructionAsync<
     accounts.compressionProgram.value =
       'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
+  }
   if (!args.creators) {
     args.creators = [];
   }
@@ -371,8 +377,8 @@ export type CloseExpiredListingCompressedInput<
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
-  rentDestination: Address<TAccountRentDestination>;
-  nonce: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
+  rentDestination?: Address<TAccountRentDestination>;
+  nonce?: CloseExpiredListingCompressedInstructionDataArgs['nonce'];
   index: CloseExpiredListingCompressedInstructionDataArgs['index'];
   root: CloseExpiredListingCompressedInstructionDataArgs['root'];
   dataHash: CloseExpiredListingCompressedInstructionDataArgs['dataHash'];
@@ -475,6 +481,12 @@ export function getCloseExpiredListingCompressedInstruction<
   if (!accounts.compressionProgram.value) {
     accounts.compressionProgram.value =
       'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK' as Address<'cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
   }
   if (!args.creators) {
     args.creators = [];

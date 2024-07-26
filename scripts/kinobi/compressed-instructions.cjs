@@ -41,7 +41,7 @@ module.exports = function visitor(options) {
             buyer: {
               defaultValue: k.accountValueNode("payer"),
             },
-            rentDest: {
+            rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
             feeVault: {
@@ -64,7 +64,7 @@ module.exports = function visitor(options) {
         },
         delistCompressed: {
           accounts: {
-            rentDest: {
+            rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
           },
@@ -110,7 +110,7 @@ module.exports = function visitor(options) {
               isSigner: "either",
               defaultValue: k.accountValueNode("seller"),
             },
-            rentDest: {
+            rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
             marginAccount: {
@@ -134,6 +134,18 @@ module.exports = function visitor(options) {
             },
           },
         },
+        closeExpiredListingCompressed: {
+          accounts: {
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            }
+          },
+          arguments: {
+            nonce: {
+              defaultValue: k.argumentValueNode("index"),
+            },
+          },
+        },
         takeBidCompressedMetaHash: {
           accounts: {
             seller: {
@@ -143,7 +155,7 @@ module.exports = function visitor(options) {
               isSigner: "either",
               defaultValue: k.accountValueNode("seller"),
             },
-            rentDest: {
+            rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
             marginAccount: {

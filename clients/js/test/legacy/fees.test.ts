@@ -49,7 +49,12 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
   const tokenAccountRent = 2_039_280n;
 
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: owner,
+    owner,
+  });
 
   // And we list the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({

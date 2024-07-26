@@ -279,7 +279,7 @@ export type TakeBidCompressedMetaHashAsyncInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
@@ -457,6 +457,9 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -575,7 +578,7 @@ export type TakeBidCompressedMetaHashInput<
   marginAccount?: Address<TAccountMarginAccount>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: TakeBidCompressedMetaHashInstructionDataArgs['nonce'];
   index: TakeBidCompressedMetaHashInstructionDataArgs['index'];
   root: TakeBidCompressedMetaHashInstructionDataArgs['root'];
@@ -737,6 +740,9 @@ export function getTakeBidCompressedMetaHashInstruction<
   }
   if (!accounts.marginAccount.value) {
     accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);

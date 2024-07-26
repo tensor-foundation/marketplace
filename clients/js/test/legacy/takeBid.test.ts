@@ -25,13 +25,18 @@ import {
 
 test('it can take a bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
-  const owner = await generateKeyPairSignerWithSol(client);
+  const buyer = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, seller, seller, seller);
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: seller,
+    owner: seller,
+  });
 
   const bidIx = await getBidInstructionAsync({
-    owner,
+    owner: buyer,
     amount: 10,
     target: Target.AssetId,
     targetId: mint,
@@ -39,14 +44,14 @@ test('it can take a bid on a legacy NFT', async (t) => {
 
   // And the owner creates a bid on the NFT.
   await pipe(
-    await createDefaultTransaction(client, owner),
+    await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   // When the seller takes the bid.
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
-    owner: owner.address,
+    owner: buyer.address,
     seller,
     mint,
     minAmount: 5,
@@ -64,7 +69,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
     (
       await fetchEncodedAccount(
         client.rpc,
-        (await findBidStatePda({ owner: owner.address, bidId: mint }))[0]
+        (await findBidStatePda({ owner: buyer.address, bidId: mint }))[0]
       )
     ).exists
   );
@@ -72,7 +77,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
   // And the owner has the NFT.
   const ownerToken = await fetchJsonParsedAccount(
     client.rpc,
-    (await findAtaPda({ mint, owner: owner.address }))[0]
+    (await findAtaPda({ mint, owner: buyer.address }))[0]
   );
   assertAccountDecoded(ownerToken);
 

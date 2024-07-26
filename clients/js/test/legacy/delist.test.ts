@@ -5,10 +5,7 @@ import {
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
-import {
-  createDefaultNft,
-  createDefaultpNft,
-} from '@tensor-foundation/mpl-token-metadata';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createDefaultSolanaClient,
@@ -27,7 +24,12 @@ test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: owner,
+    owner,
+  });
 
   // And we list the NFT.
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -66,7 +68,13 @@ test('it can delist a legacy Programmable NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an pNFT.
-  const { mint } = await createDefaultpNft(client, owner, owner, owner);
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: owner,
+    owner,
+    standard: TokenStandard.ProgrammableNonFungible,
+  });
 
   const computeIx = getSetComputeUnitLimitInstruction({
     units: 300_000,

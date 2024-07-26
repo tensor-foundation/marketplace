@@ -1,5 +1,8 @@
-import { appendTransactionMessageInstruction, pipe } from '@solana/web3.js';
-import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
+import {
+  appendTransactionMessageInstruction,
+  generateKeyPairSigner,
+  pipe,
+} from '@solana/web3.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -12,23 +15,29 @@ import {
   fetchBidStateFromSeeds,
   getBidInstructionAsync,
 } from '../../src/index.js';
+import { createWhitelistV2 } from './_common.js';
+import { Mode } from '@tensor-foundation/whitelist';
 
-test('it can bid on an NFT', async (t) => {
+test('it can bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
-  // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const creatorKeypair = await generateKeyPairSignerWithSol(client);
+
+  // Create whitelist
+  const { whitelist } = await createWhitelistV2({
     client,
-    payer: owner,
-    authority: owner,
-    owner,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
   });
+
+  const bidId = (await generateKeyPairSigner()).address;
 
   const bidIx = await getBidInstructionAsync({
     owner,
     amount: 1,
-    target: Target.AssetId,
-    targetId: mint,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId: bidId,
   });
 
   // When we create a bid on the NFT.
@@ -41,14 +50,14 @@ test('it can bid on an NFT', async (t) => {
   // Then we should be able to fetch the bid state.
   const bid = await fetchBidStateFromSeeds(client.rpc, {
     owner: owner.address,
-    bidId: mint,
+    bidId,
   });
   t.like(bid, {
     data: {
       owner: owner.address,
       amount: 1n,
-      target: Target.AssetId,
-      targetId: mint,
+      target: Target.Whitelist,
+      targetId: whitelist,
       cosigner: null,
     },
   });

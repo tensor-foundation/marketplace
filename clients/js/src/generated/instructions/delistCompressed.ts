@@ -36,7 +36,12 @@ import {
 } from '@solana/web3.js';
 import { resolveProofPath, resolveTreeAuthorityPda } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, expectSome, getAccountMetaFactory } from '../shared';
+import {
+  ResolvedAccount,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+} from '../shared';
 
 export type DelistCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -183,7 +188,7 @@ export type DelistCompressedAsyncInput<
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
   index: DelistCompressedInstructionDataArgs['index'];
   root: DelistCompressedInstructionDataArgs['root'];
@@ -295,6 +300,11 @@ export async function getDelistCompressedInstructionAsync<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
@@ -365,7 +375,7 @@ export type DelistCompressedInput<
   listState: Address<TAccountListState>;
   owner: TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
   index: DelistCompressedInstructionDataArgs['index'];
   root: DelistCompressedInstructionDataArgs['root'];
@@ -468,6 +478,11 @@ export function getDelistCompressedInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
