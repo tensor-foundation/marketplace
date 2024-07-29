@@ -37,23 +37,24 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@solana/web3.js": "2.0.0-preview.3",
     "@tensor-foundation/resolvers": "^0.1.1",
-    "@solana/web3.js": "2.0.0-preview.3"
+    "@types/node": "^22.0.0"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
-    "@solana/eslint-config-solana": "^3.0.0",
-    "@solana/web3.js": "2.0.0-preview.3",
     "@solana-program/compute-budget": "^0.3.2",
     "@solana-program/token": "0.1.4",
+    "@solana/eslint-config-solana": "^3.0.0",
+    "@solana/web3.js": "2.0.0-preview.3",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
     "@tensor-foundation/mpl-core": "^0.1.0",
     "@tensor-foundation/mpl-token-metadata": "^0.1.0",
     "@tensor-foundation/test-helpers": "^0.1.0",
     "@tensor-foundation/whitelist": "^0.1.0",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@types/uuid": "^9.0.8",
     "ava": "^6.1.2",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
@@ -63,7 +64,6 @@
     "typedoc-plugin-missing-exports": "^2.2.0",
     "typescript": "^5.4.2",
     "uuid": "^9.0.1"
-
   },
   "ava": {
     "nodeArguments": [
