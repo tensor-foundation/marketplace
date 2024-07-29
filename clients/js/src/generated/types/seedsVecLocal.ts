@@ -7,10 +7,6 @@
  */
 
 import {
-  Codec,
-  Decoder,
-  Encoder,
-  ReadonlyUint8Array,
   addDecoderSizePrefix,
   addEncoderSizePrefix,
   combineCodec,
@@ -22,6 +18,10 @@ import {
   getStructEncoder,
   getU32Decoder,
   getU32Encoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type ReadonlyUint8Array,
 } from '@solana/web3.js';
 
 export type SeedsVecLocal = {

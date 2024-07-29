@@ -147,7 +147,7 @@ export type TensorMarketplaceError =
 let tensorMarketplaceErrorMessages:
   | Record<TensorMarketplaceError, string>
   | undefined;
-if (__DEV__) {
+if (process.env.NODE_ENV !== 'production') {
   tensorMarketplaceErrorMessages = {
     [TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR]: `arithmetic error`,
     [TENSOR_MARKETPLACE_ERROR__ASSET_ID_MISMATCH]: `asset id mismatch`,
@@ -200,11 +200,11 @@ if (__DEV__) {
 export function getTensorMarketplaceErrorMessage(
   code: TensorMarketplaceError
 ): string {
-  if (__DEV__) {
+  if (process.env.NODE_ENV !== 'production') {
     return (
       tensorMarketplaceErrorMessages as Record<TensorMarketplaceError, string>
     )[code];
   }
 
-  return 'Error message not available in production bundles. Compile with `__DEV__` set to true to see more information.';
+  return 'Error message not available in production bundles.';
 }

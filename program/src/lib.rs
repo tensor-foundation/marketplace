@@ -36,8 +36,8 @@ pub use pnft_adapter::*;
 pub use shared::find_neutral_broker;
 pub(crate) use shared::*;
 pub use state::*;
-pub use tensor_whitelist::{self, Whitelist};
-pub use vipers::{prelude::*, throw_err};
+pub use tensor_vipers::{prelude::*, throw_err};
+pub use whitelist_program::{self, Whitelist};
 
 declare_id!("TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp");
 

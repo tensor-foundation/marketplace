@@ -10,8 +10,8 @@ use tensor_toolbox::{
     assert_fee_account, calc_creators_fee,
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
 };
+use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
-use vipers::Validate;
 use whitelist_program::verify_whitelist_generic;
 
 use crate::{

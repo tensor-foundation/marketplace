@@ -8,9 +8,9 @@ use tensor_toolbox::{
     assert_fee_account,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
 };
-use tensor_whitelist::verify_whitelist_generic;
+use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
-use vipers::Validate;
+use whitelist_program::verify_whitelist_generic;
 
 use crate::{
     pnft_adapter::*,

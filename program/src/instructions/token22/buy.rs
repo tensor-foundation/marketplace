@@ -10,7 +10,7 @@ use tensor_toolbox::{
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use tensor_vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,

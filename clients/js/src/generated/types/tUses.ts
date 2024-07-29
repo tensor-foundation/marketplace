@@ -7,20 +7,20 @@
  */
 
 import {
-  Codec,
-  Decoder,
-  Encoder,
   combineCodec,
   getStructDecoder,
   getStructEncoder,
   getU64Decoder,
   getU64Encoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
 } from '@solana/web3.js';
 import {
-  TUseMethod,
-  TUseMethodArgs,
   getTUseMethodDecoder,
   getTUseMethodEncoder,
+  type TUseMethod,
+  type TUseMethodArgs,
 } from '.';
 
 export type TUses = { useMethod: TUseMethod; remaining: bigint; total: bigint };

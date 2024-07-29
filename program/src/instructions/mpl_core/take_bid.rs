@@ -9,8 +9,8 @@ use tensor_toolbox::{
     assert_fee_account,
     metaplex_core::{validate_asset, MetaplexCore},
 };
+use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
-use vipers::Validate;
 use whitelist_program::{
     assert_decode_mint_proof_generic, assert_decode_whitelist_generic, FullMerkleProof,
     MintProofType, WhitelistType, ZERO_ARRAY,

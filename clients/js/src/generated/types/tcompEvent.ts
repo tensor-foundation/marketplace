@@ -7,11 +7,6 @@
  */
 
 import {
-  Codec,
-  Decoder,
-  Encoder,
-  GetDiscriminatedUnionVariant,
-  GetDiscriminatedUnionVariantContent,
   combineCodec,
   getDiscriminatedUnionDecoder,
   getDiscriminatedUnionEncoder,
@@ -19,16 +14,21 @@ import {
   getStructEncoder,
   getTupleDecoder,
   getTupleEncoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type GetDiscriminatedUnionVariant,
+  type GetDiscriminatedUnionVariantContent,
 } from '@solana/web3.js';
 import {
-  MakeEvent,
-  MakeEventArgs,
-  TakeEvent,
-  TakeEventArgs,
   getMakeEventDecoder,
   getMakeEventEncoder,
   getTakeEventDecoder,
   getTakeEventEncoder,
+  type MakeEvent,
+  type MakeEventArgs,
+  type TakeEvent,
+  type TakeEventArgs,
 } from '.';
 
 export type TcompEvent =

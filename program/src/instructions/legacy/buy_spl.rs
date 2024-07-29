@@ -13,7 +13,7 @@ use tensor_toolbox::{
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use tensor_vipers::Validate;
 
 use crate::{
     assert_decode_token_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,

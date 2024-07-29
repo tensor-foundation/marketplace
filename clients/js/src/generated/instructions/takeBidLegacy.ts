@@ -8,23 +8,6 @@
 
 import {
   AccountRole,
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  IAccountMeta,
-  IAccountSignerMeta,
-  IInstruction,
-  IInstructionWithAccounts,
-  IInstructionWithData,
-  Option,
-  OptionOrNullable,
-  ReadonlyAccount,
-  ReadonlySignerAccount,
-  ReadonlyUint8Array,
-  TransactionSigner,
-  WritableAccount,
-  WritableSignerAccount,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -42,10 +25,26 @@ import {
   getU64Encoder,
   none,
   transformEncoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type IAccountMeta,
+  type IAccountSignerMeta,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
+  type Option,
+  type OptionOrNullable,
+  type ReadonlyAccount,
+  type ReadonlySignerAccount,
+  type ReadonlyUint8Array,
+  type TransactionSigner,
+  type WritableAccount,
+  type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
   TokenStandard,
-  TokenStandardArgs,
   resolveAuthorizationRulesProgramFromTokenStandard,
   resolveBidTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
@@ -56,21 +55,22 @@ import {
   resolveSellerTokenRecordFromTokenStandard,
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
+  type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
 import { resolveBidTa, resolveFeeVaultPdaFromBidState } from '../../hooked';
 import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
-  ResolvedAccount,
   expectAddress,
   expectSome,
   getAccountMetaFactory,
+  type ResolvedAccount,
 } from '../shared';
 import {
-  AuthorizationDataLocal,
-  AuthorizationDataLocalArgs,
   getAuthorizationDataLocalDecoder,
   getAuthorizationDataLocalEncoder,
+  type AuthorizationDataLocal,
+  type AuthorizationDataLocalArgs,
 } from '../types';
 
 export type TakeBidLegacyInstruction<

@@ -11,8 +11,8 @@ use tensor_toolbox::{
     token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
     TCreator,
 };
+use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
-use vipers::Validate;
 use whitelist_program::verify_whitelist_generic;
 
 use crate::{

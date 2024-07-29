@@ -1,4 +1,4 @@
 [workspace]
-exclude = ["clients/rust"]
 resolver = "2"
 members = ["cpitest", "program"]
+exclude = ["clients/rust"]

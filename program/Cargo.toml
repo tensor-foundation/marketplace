@@ -1,6 +1,6 @@
 [package]
 name = "marketplace-program"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
@@ -26,7 +26,7 @@ external-programs-repositories = [
     [
         "tensor-foundation/whitelist",
         "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW",
-    ]
+    ],
 ]
 
 [lib]
@@ -46,26 +46,24 @@ anchor-lang = { version = "0.29.0", features = [
     "allow-missing-optionals",
 ] }
 anchor-spl = { version = "0.29.0", features = ["default"] }
-mpl-bubblegum = "1.0.0"
-metaplex-core = { package = "mpl-core", version = "0.4.3" }
+mpl-bubblegum = "1.4.0"
+metaplex-core = { package = "mpl-core", version = "0.7.2" }
 mpl-token-metadata = "4.0.0"
 spl-account-compression = { version = "0.2.0", features = ["cpi"] }
 spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 spl-token-metadata-interface = "0.2.0"
 spl-type-length-value = "0.3.0"
 static_assertions = "1.1.0"
-tensor-toolbox = { version = "0.0.5", git = "ssh://git@github.com/tensor-foundation/toolbox.git", rev = "16d98bc", features = [
+tensor-escrow = { version = "0.1.1" }
+tensor-toolbox = { version = "0.1.0", features = [
     "cnft",
     "mpl-core",
     "token-2022",
 ] }
-tensor-whitelist = { package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
-    "cpi",
-] }
+tensor-vipers = { version = "1.0.0" }
 tensorswap = { package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", rev = "be5d585", features = [
     "cpi",
 ] }
-vipers = { version = "2.0.6", git = "ssh://git@github.com/tensor-foundation/toolbox.git", rev = "a6c7423" }
 whitelist-program = { package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", rev = "0a9ef59", features = [
     "cpi",
 ] }

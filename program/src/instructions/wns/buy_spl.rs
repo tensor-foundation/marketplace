@@ -14,7 +14,7 @@ use tensor_toolbox::{
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
     CalcFeesArgs, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use tensor_vipers::Validate;
 
 use crate::{
     assert_fee_vault_seeds, assert_list_state_seeds, program::MarketplaceProgram, record_event,

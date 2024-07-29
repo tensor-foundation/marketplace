@@ -7,22 +7,6 @@
  */
 
 import {
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  IAccountMeta,
-  IAccountSignerMeta,
-  IInstruction,
-  IInstructionWithAccounts,
-  IInstructionWithData,
-  Option,
-  OptionOrNullable,
-  ReadonlyAccount,
-  ReadonlyUint8Array,
-  TransactionSigner,
-  WritableAccount,
-  WritableSignerAccount,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -34,10 +18,25 @@ import {
   getStructEncoder,
   none,
   transformEncoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type IAccountMeta,
+  type IAccountSignerMeta,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
+  type Option,
+  type OptionOrNullable,
+  type ReadonlyAccount,
+  type ReadonlyUint8Array,
+  type TransactionSigner,
+  type WritableAccount,
+  type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
   TokenStandard,
-  TokenStandardArgs,
   resolveAuthorizationRulesProgramFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveListAta,
@@ -47,21 +46,22 @@ import {
   resolveOwnerTokenRecordFromTokenStandard,
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
+  type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
-  ResolvedAccount,
   expectAddress,
   expectSome,
   expectTransactionSigner,
   getAccountMetaFactory,
+  type ResolvedAccount,
 } from '../shared';
 import {
-  AuthorizationDataLocal,
-  AuthorizationDataLocalArgs,
   getAuthorizationDataLocalDecoder,
   getAuthorizationDataLocalEncoder,
+  type AuthorizationDataLocal,
+  type AuthorizationDataLocalArgs,
 } from '../types';
 
 export type CloseExpiredListingLegacyInstruction<
