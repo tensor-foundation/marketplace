@@ -7,18 +7,6 @@
  */
 
 import {
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  IAccountMeta,
-  IAccountSignerMeta,
-  IInstruction,
-  IInstructionWithAccounts,
-  IInstructionWithData,
-  ReadonlySignerAccount,
-  ReadonlyUint8Array,
-  TransactionSigner,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -27,14 +15,26 @@ import {
   getStructDecoder,
   getStructEncoder,
   transformEncoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type IAccountMeta,
+  type IAccountSignerMeta,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
+  type ReadonlySignerAccount,
+  type ReadonlyUint8Array,
+  type TransactionSigner,
 } from '@solana/web3.js';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { ResolvedAccount, getAccountMetaFactory } from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
-  TcompEvent,
-  TcompEventArgs,
   getTcompEventDecoder,
   getTcompEventEncoder,
+  type TcompEvent,
+  type TcompEventArgs,
 } from '../types';
 
 export type TcompNoopInstruction<

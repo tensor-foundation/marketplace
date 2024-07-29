@@ -11,7 +11,7 @@ use tensor_toolbox::{
     metaplex_core::{validate_asset, MetaplexCore},
     shard_num, transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
 };
-use vipers::{throw_err, Validate};
+use tensor_vipers::{throw_err, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,

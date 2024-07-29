@@ -7,20 +7,6 @@
  */
 
 import {
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  IAccountMeta,
-  IAccountSignerMeta,
-  IInstruction,
-  IInstructionWithAccounts,
-  IInstructionWithData,
-  ReadonlyAccount,
-  ReadonlyUint8Array,
-  TransactionSigner,
-  WritableAccount,
-  WritableSignerAccount,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -29,6 +15,20 @@ import {
   getStructDecoder,
   getStructEncoder,
   transformEncoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type IAccountMeta,
+  type IAccountSignerMeta,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
+  type ReadonlyAccount,
+  type ReadonlyUint8Array,
+  type TransactionSigner,
+  type WritableAccount,
+  type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
   resolveListAta,
@@ -40,11 +40,11 @@ import {
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
-  ResolvedAccount,
   expectAddress,
   expectSome,
   expectTransactionSigner,
   getAccountMetaFactory,
+  type ResolvedAccount,
 } from '../shared';
 
 export type CloseExpiredListingWnsInstruction<

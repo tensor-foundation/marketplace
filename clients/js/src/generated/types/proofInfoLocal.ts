@@ -7,10 +7,6 @@
  */
 
 import {
-  Codec,
-  Decoder,
-  Encoder,
-  ReadonlyUint8Array,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -20,6 +16,10 @@ import {
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type ReadonlyUint8Array,
 } from '@solana/web3.js';
 
 export type ProofInfoLocal = {

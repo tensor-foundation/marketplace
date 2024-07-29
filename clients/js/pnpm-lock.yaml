@@ -14,6 +14,9 @@ importers:
       '@tensor-foundation/resolvers':
         specifier: ^0.1.1
         version: 0.1.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.18.0))
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.0.0
     devDependencies:
       '@ava/typescript':
         specifier: ^4.1.0
@@ -556,6 +559,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/node@22.0.0':
+    resolution: {integrity: sha512-VT7KSYudcPOzP5Q0wfbowyNLaVR8QWUdw+088uFWwfvpY6uCWaXpqV6ieLAu9WBcnTa7H4Z5RLK8I5t2FuOcqw==}
 
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
@@ -1885,6 +1891,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@6.11.1:
+    resolution: {integrity: sha512-mIDEX2ek50x0OlRgxryxsenE5XaQD4on5U2inY7RApK3SOJpofyw7uW2AyfMKkhAxXIceo2DeWGVGwyvng1GNQ==}
+
   undici-types@6.19.4:
     resolution: {integrity: sha512-BiKTnNSkjSEYzxd0X3KQ/ZNoA8/aFlS598kds3PuZ55csLy3fFqGap0aP84Ekb/VWYG5um4MgilNs3kAx4LHMg==}
 
@@ -2555,6 +2564,10 @@ snapshots:
   '@types/estree@1.0.5': {}
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/node@22.0.0':
+    dependencies:
+      undici-types: 6.11.1
 
   '@types/semver@7.5.8': {}
 
@@ -3897,6 +3910,8 @@ snapshots:
       typescript: 5.5.4
 
   typescript@5.5.4: {}
+
+  undici-types@6.11.1: {}
 
   undici-types@6.19.4: {}
 

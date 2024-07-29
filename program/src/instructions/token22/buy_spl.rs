@@ -13,7 +13,7 @@ use tensor_toolbox::{
     token_2022::{validate_mint, RoyaltyInfo},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, TCreator, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use tensor_vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,

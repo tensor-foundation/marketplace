@@ -7,12 +7,6 @@
  */
 
 import {
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  GetDiscriminatedUnionVariant,
-  GetDiscriminatedUnionVariantContent,
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
@@ -24,16 +18,22 @@ import {
   getTupleEncoder,
   getU64Decoder,
   getU64Encoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type GetDiscriminatedUnionVariant,
+  type GetDiscriminatedUnionVariantContent,
 } from '@solana/web3.js';
 import {
-  ProofInfoLocal,
-  ProofInfoLocalArgs,
-  SeedsVecLocal,
-  SeedsVecLocalArgs,
   getProofInfoLocalDecoder,
   getProofInfoLocalEncoder,
   getSeedsVecLocalDecoder,
   getSeedsVecLocalEncoder,
+  type ProofInfoLocal,
+  type ProofInfoLocalArgs,
+  type SeedsVecLocal,
+  type SeedsVecLocalArgs,
 } from '.';
 
 export type PayloadTypeLocal =

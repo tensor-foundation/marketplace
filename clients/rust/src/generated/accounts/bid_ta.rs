@@ -60,3 +60,28 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for BidTa {
         Self::deserialize(&mut data)
     }
 }
+
+#[cfg(feature = "anchor")]
+impl anchor_lang::AccountDeserialize for BidTa {
+    fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
+        Ok(Self::deserialize(buf)?)
+    }
+}
+
+#[cfg(feature = "anchor")]
+impl anchor_lang::AccountSerialize for BidTa {}
+
+#[cfg(feature = "anchor")]
+impl anchor_lang::Owner for BidTa {
+    fn owner() -> Pubkey {
+        crate::TENSOR_MARKETPLACE_ID
+    }
+}
+
+#[cfg(feature = "anchor-idl-build")]
+impl anchor_lang::IdlBuild for BidTa {}
+
+#[cfg(feature = "anchor-idl-build")]
+impl anchor_lang::Discriminator for BidTa {
+    const DISCRIMINATOR: [u8; 8] = [0; 8];
+}

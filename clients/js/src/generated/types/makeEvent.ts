@@ -7,12 +7,6 @@
  */
 
 import {
-  Address,
-  Codec,
-  Decoder,
-  Encoder,
-  Option,
-  OptionOrNullable,
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
@@ -27,16 +21,22 @@ import {
   getU64Decoder,
   getU64Encoder,
   transformEncoder,
+  type Address,
+  type Codec,
+  type Decoder,
+  type Encoder,
+  type Option,
+  type OptionOrNullable,
 } from '@solana/web3.js';
 import {
-  Field,
-  FieldArgs,
-  Target,
-  TargetArgs,
   getFieldDecoder,
   getFieldEncoder,
   getTargetDecoder,
   getTargetEncoder,
+  type Field,
+  type FieldArgs,
+  type Target,
+  type TargetArgs,
 } from '.';
 
 export type MakeEvent = {

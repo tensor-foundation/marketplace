@@ -7,20 +7,20 @@
  */
 
 import {
-  Codec,
-  Decoder,
-  Encoder,
   combineCodec,
   getArrayDecoder,
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
 } from '@solana/web3.js';
 import {
-  TaggedPayload,
-  TaggedPayloadArgs,
   getTaggedPayloadDecoder,
   getTaggedPayloadEncoder,
+  type TaggedPayload,
+  type TaggedPayloadArgs,
 } from '.';
 
 export type AuthorizationDataLocal = { payload: Array<TaggedPayload> };

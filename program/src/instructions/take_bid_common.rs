@@ -3,8 +3,8 @@ use tensor_toolbox::{
     calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
     CalcFeesArgs, CreatorFeeMode, FromAcc, TCreator, BROKER_FEE_PCT,
 };
-use tensor_whitelist::MintProof;
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
+use whitelist_program::MintProof;
 
 use crate::*;
 
@@ -200,7 +200,7 @@ pub fn assert_decode_mint_proof(
     mint: &Pubkey,
     mint_proof: &UncheckedAccount,
 ) -> Result<MintProof> {
-    let program_id = &tensor_whitelist::id();
+    let program_id = &whitelist_program::id();
     let (key, _) = Pubkey::find_program_address(
         &[
             b"mint_proof".as_ref(),

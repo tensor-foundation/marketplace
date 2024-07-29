@@ -10,7 +10,7 @@ use tensor_toolbox::{
     token_2022::wns::{approve, validate_mint, ApproveAccounts},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
 };
-use vipers::Validate;
+use tensor_vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
