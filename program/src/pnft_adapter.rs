@@ -6,6 +6,7 @@
 use anchor_lang::prelude::*;
 use mpl_token_metadata::types::{AuthorizationData, Payload, PayloadType, ProofInfo, SeedsVec};
 use std::collections::HashMap;
+use tensor_toolbox::mpl_token_auth_rules;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct AuthorizationDataLocal {
@@ -93,6 +94,6 @@ pub struct ProgNftShared<'info> {
     pub sysvar_instructions: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
-    #[account(address = tensorswap::instructions::MPL_TOKEN_AUTH_RULES_ID)]
+    #[account(address = mpl_token_auth_rules::ID)]
     pub authorization_rules_program: Option<UncheckedAccount<'info>>,
 }
