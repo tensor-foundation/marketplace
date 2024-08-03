@@ -57,6 +57,7 @@ pub struct BuyWns<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 

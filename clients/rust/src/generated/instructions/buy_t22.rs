@@ -194,7 +194,7 @@ pub struct BuyT22InstructionArgs {
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   15. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   15. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyT22Builder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,

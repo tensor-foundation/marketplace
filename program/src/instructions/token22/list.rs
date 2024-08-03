@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{close_account, transfer_checked, CloseAccount, Token2022, TransferChecked},
+    token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
-use tensor_toolbox::{token_2022::validate_mint, NullableOption};
+use tensor_toolbox::{
+    token_2022::{transfer::transfer_checked, validate_mint},
+    NullableOption,
+};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,

@@ -41,7 +41,7 @@ importers:
         version: 0.1.0(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.18.0)
       '@tensor-foundation/test-helpers':
         specifier: ^0.1.0
-        version: 0.1.0(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.18.0)
+        version: link:../../../toolkit/test-helpers
       '@tensor-foundation/whitelist':
         specifier: ^0.1.0
         version: 0.1.0(fastestsmallesttextencoderdecoder@1.0.22)(ws@8.18.0)

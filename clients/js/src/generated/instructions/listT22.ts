@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -206,6 +207,7 @@ export type ListT22AsyncInput<
   currency?: ListT22InstructionDataArgs['currency'];
   privateTaker?: ListT22InstructionDataArgs['privateTaker'];
   makerBroker?: ListT22InstructionDataArgs['makerBroker'];
+  transferHookAccounts: Array<Address>;
 };
 
 export async function getListT22InstructionAsync<
@@ -326,6 +328,11 @@ export async function getListT22InstructionAsync<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -340,6 +347,7 @@ export async function getListT22InstructionAsync<
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getListT22InstructionDataEncoder().encode(
@@ -392,6 +400,7 @@ export type ListT22Input<
   currency?: ListT22InstructionDataArgs['currency'];
   privateTaker?: ListT22InstructionDataArgs['privateTaker'];
   makerBroker?: ListT22InstructionDataArgs['makerBroker'];
+  transferHookAccounts: Array<Address>;
 };
 
 export function getListT22Instruction<
@@ -490,6 +499,11 @@ export function getListT22Instruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -504,6 +518,7 @@ export function getListT22Instruction<
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getListT22InstructionDataEncoder().encode(

@@ -13,6 +13,14 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyWns: {
           accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
             buyer: {
               defaultValue: k.accountValueNode("payer"),
             },
@@ -21,7 +29,7 @@ module.exports = function visitor(options) {
             },
             buyerTa: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
@@ -31,7 +39,7 @@ module.exports = function visitor(options) {
             },
             listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -42,43 +50,60 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
-            distribution: {
-              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-                importFrom:"resolvers",
-                dependsOn: [
-                  k.argumentValueNode("collection"),
-                  k.argumentValueNode("paymentMint"),
-                ],
-              }),
-            },
+            // distribution: {
+            //   defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+            //     importFrom: "resolvers",
+            //     dependsOn: [
+            //       k.argumentValueNode("collection"),
+            //       k.argumentValueNode("paymentMint"),
+            //     ],
+            //   }),
+            // },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
                   ],
-                }
+                },
               ),
             },
           },
-          arguments: {
-            collection: {
-              type: k.publicKeyTypeNode(),
-            },
-            paymentMint: {
-              type: k.publicKeyTypeNode(),
-              defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111"
-              ),
-            },
-          },
+          // arguments: {
+          //   collection: {
+          //     type: k.publicKeyTypeNode(),
+          //   },
+          //   paymentMint: {
+          //     type: k.publicKeyTypeNode(),
+          //     defaultValue: k.publicKeyValueNode(
+          //       "11111111111111111111111111111111",
+          //     ),
+          //   },
+          // },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true,
+              },
+            ),
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
         },
         closeExpiredListingWns: {
           accounts: {
@@ -90,7 +115,7 @@ module.exports = function visitor(options) {
             },
             ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -100,7 +125,7 @@ module.exports = function visitor(options) {
             },
             listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -111,13 +136,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -128,12 +153,12 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -144,7 +169,7 @@ module.exports = function visitor(options) {
             paymentMint: {
               type: k.publicKeyTypeNode(),
               defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111"
+                "11111111111111111111111111111111",
               ),
             },
           },
@@ -159,7 +184,7 @@ module.exports = function visitor(options) {
             },
             ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -169,7 +194,7 @@ module.exports = function visitor(options) {
             },
             listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -180,13 +205,13 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
             distribution: {
               defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.argumentValueNode("collection"),
                   k.argumentValueNode("paymentMint"),
@@ -197,12 +222,12 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -213,7 +238,7 @@ module.exports = function visitor(options) {
             paymentMint: {
               type: k.publicKeyTypeNode(),
               defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111"
+                "11111111111111111111111111111111",
               ),
             },
           },
@@ -225,7 +250,7 @@ module.exports = function visitor(options) {
             },
             ownerTa: {
               defaultValue: k.resolverValueNode("resolveOwnerAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
@@ -235,7 +260,7 @@ module.exports = function visitor(options) {
             },
             listTa: {
               defaultValue: k.resolverValueNode("resolveListAta", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
@@ -246,45 +271,55 @@ module.exports = function visitor(options) {
             listState: { defaultValue: k.pdaValueNode("listState") },
             approve: {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
-                importFrom:"resolvers",
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
-            distribution: {
-              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-                importFrom:"resolvers",
-                dependsOn: [
-                  k.argumentValueNode("collection"),
-                  k.argumentValueNode("paymentMint"),
-                ],
-              }),
-            },
+            // distribution: {
+            //   defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+            //     importFrom: "resolvers",
+            //     dependsOn: [
+            //       k.argumentValueNode("collection"),
+            //       k.argumentValueNode("paymentMint"),
+            //     ],
+            //   }),
+            // },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
                 {
-                  importFrom:"resolvers",
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("mint"),
                     k.accountValueNode("wnsProgram"),
                   ],
-                }
+                },
               ),
             },
           },
-          arguments: {
-            collection: {
-              type: k.publicKeyTypeNode(),
-            },
-            paymentMint: {
-              type: k.publicKeyTypeNode(),
-              defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111"
-              ),
-            },
-          },
+          // arguments: {
+          //   collection: {
+          //     type: k.publicKeyTypeNode(),
+          //   },
+          //   paymentMint: {
+          //     type: k.publicKeyTypeNode(),
+          //     defaultValue: k.publicKeyValueNode(
+          //       "11111111111111111111111111111111",
+          //     ),
+          //   },
+          // },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
         },
-      })
+      }),
     );
 
     return root;

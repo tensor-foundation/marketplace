@@ -1,14 +1,14 @@
 import {
   Address,
-  generateKeyPairSigner,
+  KeyPairSigner,
+  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
   address,
   airdropFactory,
   appendTransactionMessageInstruction,
+  generateKeyPairSigner,
+  isSolanaError,
   lamports,
   pipe,
-  KeyPairSigner,
-  isSolanaError,
-  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from '@solana/web3.js';
 import {
   Client,

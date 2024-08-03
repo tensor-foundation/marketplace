@@ -34,6 +34,7 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -219,7 +220,7 @@ export type BuyT22SplAsyncInput<
   TAccountSystemProgram extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
   buyerTa: Address<TAccountBuyerTa>;
@@ -381,16 +382,25 @@ export async function getBuyT22SplInstructionAsync<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
   if (!accounts.listState.value) {
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);

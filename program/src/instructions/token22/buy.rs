@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, Token2022, TransferChecked},
+    token_2022::{Token2022, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
-    token_2022::{validate_mint, RoyaltyInfo},
+    token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
@@ -57,6 +57,7 @@ pub struct BuyT22<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
