@@ -6,7 +6,7 @@ import {
   assertAccountExists,
   fetchEncodedAccount,
   lamports,
-  pipe
+  pipe,
 } from '@solana/web3.js';
 import {
   TokenStandard,
