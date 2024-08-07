@@ -10,7 +10,7 @@ use crate::*;
 pub struct TakeBidArgs<'a, 'info> {
     pub bid_state: &'a mut Account<'info, BidState>,
     pub seller: &'a AccountInfo<'info>,
-    pub margin_account: &'a UncheckedAccount<'info>,
+    pub margin: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
     pub rent_destination: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
@@ -32,7 +32,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let TakeBidArgs {
         bid_state,
         seller,
-        margin_account,
+        margin,
         owner,
         rent_destination,
         maker_broker,
@@ -97,19 +97,19 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     // --------------------------------------- sol transfers
 
     //if margin is used, move money into bid first
-    if let Some(margin) = bid_state.margin {
-        let decoded_margin_account = assert_decode_margin_account(margin_account, owner)?;
+    if let Some(margin_pubkey) = bid_state.margin {
+        let decoded_margin_account = assert_decode_margin_account(margin, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
         require!(
             decoded_margin_account.owner == *owner.key,
             TcompError::BadMargin
         );
-        require!(*margin_account.key == margin, TcompError::BadMargin);
+        require!(*margin.key == margin_pubkey, TcompError::BadMargin);
         tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
             CpiContext::new(
                 tswap_prog.to_account_info(),
                 tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                    margin_account: margin_account.to_account_info(),
+                    margin_account: margin.to_account_info(),
                     bid_state: bid_state.to_account_info(),
                     owner: owner.to_account_info(),
                     //transfer to bid state

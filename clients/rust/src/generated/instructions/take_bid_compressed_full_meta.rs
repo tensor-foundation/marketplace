@@ -44,7 +44,7 @@ pub struct TakeBidCompressedFullMeta {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin_account: solana_program::pubkey::Pubkey,
+    pub margin: solana_program::pubkey::Pubkey,
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
@@ -141,7 +141,7 @@ impl TakeBidCompressedFullMeta {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin_account,
+            self.margin,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -238,7 +238,7 @@ pub struct TakeBidCompressedFullMetaInstructionArgs {
 ///   12. `[writable]` owner
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable]` margin_account
+///   15. `[writable]` margin
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_destination
@@ -259,7 +259,7 @@ pub struct TakeBidCompressedFullMetaBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin_account: Option<solana_program::pubkey::Pubkey>,
+    margin: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
@@ -394,8 +394,8 @@ impl TakeBidCompressedFullMetaBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin_account = Some(margin_account);
+    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -563,7 +563,7 @@ impl TakeBidCompressedFullMetaBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin_account: self.margin_account.expect("margin_account is not set"),
+            margin: self.margin.expect("margin is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
             cosigner: self.cosigner,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
@@ -640,7 +640,7 @@ pub struct TakeBidCompressedFullMetaCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -684,7 +684,7 @@ pub struct TakeBidCompressedFullMetaCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -718,7 +718,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin_account: accounts.margin_account,
+            margin: accounts.margin,
             whitelist: accounts.whitelist,
             cosigner: accounts.cosigner,
             rent_destination: accounts.rent_destination,
@@ -834,7 +834,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin_account.key,
+            *self.margin.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -895,7 +895,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.margin.clone());
         account_infos.push(self.whitelist.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
@@ -932,7 +932,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpi<'a, 'b> {
 ///   12. `[writable]` owner
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable]` margin_account
+///   15. `[writable]` margin
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_destination
@@ -960,7 +960,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin_account: None,
+            margin: None,
             whitelist: None,
             cosigner: None,
             rent_destination: None,
@@ -1108,11 +1108,11 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin_account(
+    pub fn margin(
         &mut self,
-        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+        margin: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin_account = Some(margin_account);
+        self.instruction.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -1384,10 +1384,7 @@ impl<'a, 'b> TakeBidCompressedFullMetaCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin_account: self
-                .instruction
-                .margin_account
-                .expect("margin_account is not set"),
+            margin: self.instruction.margin.expect("margin is not set"),
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
@@ -1424,7 +1421,7 @@ struct TakeBidCompressedFullMetaCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,

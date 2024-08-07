@@ -37,7 +37,7 @@ export interface WnsTest {
   signers: TestSigners;
   nft: WnsNft;
   state: Address;
-  amount: bigint;
+  price: bigint;
   feeVault: Address;
 }
 
@@ -49,7 +49,7 @@ export interface WnsNft {
 }
 
 const DEFAULT_LISTING_PRICE = 100_000_000n;
-const DEFAULT_BID_AMOUNT = 1;
+const DEFAULT_BID_PRICE = 100_000_000n;
 const DEFAULT_SFBP = 500n;
 
 export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
@@ -57,7 +57,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
     t,
     action,
     listingPrice = DEFAULT_LISTING_PRICE,
-    bidAmount = DEFAULT_BID_AMOUNT,
+    bidPrice = DEFAULT_BID_PRICE,
     useCosigner = false,
     useMakerBroker = false,
   } = params;
@@ -121,7 +121,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
       // Bid on the NFT.
       const bidIx = await getBidInstructionAsync({
         owner: buyer,
-        amount: bidAmount,
+        amount: bidPrice,
         target: Target.AssetId,
         targetId: mint,
         cosigner: useCosigner ? cosigner : undefined,
@@ -146,12 +146,13 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
       t.like(bidState, {
         data: {
           owner: buyer.address,
-          amount: 1n,
+          amount: bidPrice,
           target: Target.AssetId,
           targetId: mint,
-          cosigner: null,
+          cosigner: useCosigner ? cosigner : null,
         },
       });
+      console.log('Created bid state:', bid);
       break;
     }
     default:
@@ -159,7 +160,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   }
 
   const state = listing ? listing! : bid!;
-  const amount = listingPrice ?? bidAmount;
+  const price = listingPrice ?? bidPrice;
 
   // Derives fee vault from state account and airdrops keep-alive rent to it.
   const feeVault = await getAndFundFeeVault(client, state!);
@@ -169,7 +170,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
     signers,
     nft: { mint, extraAccountMetas, distribution, sellerFeeBasisPoints },
     state,
-    amount,
+    price,
     feeVault,
   };
 }

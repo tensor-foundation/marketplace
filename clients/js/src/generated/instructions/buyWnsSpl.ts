@@ -74,7 +74,7 @@ export type BuyWnsSplInstruction<
   TAccountWnsProgram extends
     | string
     | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
-  TAccountWnsDistributionProgram extends
+  TAccountDistributionProgram extends
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
@@ -163,9 +163,9 @@ export type BuyWnsSplInstruction<
       TAccountWnsProgram extends string
         ? ReadonlyAccount<TAccountWnsProgram>
         : TAccountWnsProgram,
-      TAccountWnsDistributionProgram extends string
-        ? ReadonlyAccount<TAccountWnsDistributionProgram>
-        : TAccountWnsDistributionProgram,
+      TAccountDistributionProgram extends string
+        ? ReadonlyAccount<TAccountDistributionProgram>
+        : TAccountDistributionProgram,
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
@@ -241,7 +241,7 @@ export type BuyWnsSplInput<
   TAccountDistribution extends string = string,
   TAccountDistributionCurrencyTa extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
   TAccountCosigner extends string = string,
 > = {
@@ -273,7 +273,7 @@ export type BuyWnsSplInput<
   distribution: Address<TAccountDistribution>;
   distributionCurrencyTa: Address<TAccountDistributionCurrencyTa>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
@@ -306,7 +306,7 @@ export function getBuyWnsSplInstruction<
   TAccountDistribution extends string,
   TAccountDistributionCurrencyTa extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
   TAccountCosigner extends string,
 >(
@@ -337,7 +337,7 @@ export function getBuyWnsSplInstruction<
     TAccountDistribution,
     TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas,
     TAccountCosigner
   >
@@ -369,7 +369,7 @@ export function getBuyWnsSplInstruction<
   TAccountDistribution,
   TAccountDistributionCurrencyTa,
   TAccountWnsProgram,
-  TAccountWnsDistributionProgram,
+  TAccountDistributionProgram,
   TAccountExtraMetas,
   TAccountCosigner
 > {
@@ -425,8 +425,8 @@ export function getBuyWnsSplInstruction<
       isWritable: true,
     },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -461,8 +461,8 @@ export function getBuyWnsSplInstruction<
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
@@ -495,7 +495,7 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.distributionCurrencyTa),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
     ],
@@ -531,7 +531,7 @@ export function getBuyWnsSplInstruction<
     TAccountDistribution,
     TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas,
     TAccountCosigner
   >;
@@ -573,7 +573,7 @@ export type ParsedBuyWnsSplInstruction<
     distribution: TAccountMetas[23];
     distributionCurrencyTa: TAccountMetas[24];
     wnsProgram: TAccountMetas[25];
-    wnsDistributionProgram: TAccountMetas[26];
+    distributionProgram: TAccountMetas[26];
     extraMetas: TAccountMetas[27];
     cosigner?: TAccountMetas[28] | undefined;
   };
@@ -633,7 +633,7 @@ export function parseBuyWnsSplInstruction<
       distribution: getNextAccount(),
       distributionCurrencyTa: getNextAccount(),
       wnsProgram: getNextAccount(),
-      wnsDistributionProgram: getNextAccount(),
+      distributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },

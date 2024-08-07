@@ -129,11 +129,11 @@ kinobi.update(
       ),
     },
     {
-      account: "wnsDistributionProgram",
+      account: "distributionProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
-        "wnsDistributionProgram",
+        "distributionProgram",
       ),
     },
     // Compressed

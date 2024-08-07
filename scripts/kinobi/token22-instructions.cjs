@@ -251,6 +251,91 @@ module.exports = function visitor(options) {
             ),
           ],
         },
+        takeBidT22: {
+          accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")],
+                },
+              ),
+            },
+            margin: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            whitelist: {
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
+              ),
+            },
+            sellerTa: {
+              defaultValue: k.resolverValueNode("resolveSellerAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("seller"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
+            ownerTa: {
+              defaultValue: k.resolverValueNode("resolveOwnerAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("owner"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
+            bidTa: {
+              defaultValue: k.resolverValueNode("resolveBidTa", {
+                dependsOn: [k.accountValueNode("mint")],
+              }),
+            },
+            bidState: {
+              defaultValue: k.pdaValueNode("bidState", [
+                k.pdaSeedValueNode("bidId", k.accountValueNode("mint")),
+              ]),
+            },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
+          },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true,
+              },
+            ),
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
+          arguments: {
+            tokenStandard: {
+              type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
+              defaultValue: k.enumValueNode(
+                k.definedTypeLinkNode("TokenStandard", "resolvers"),
+                "ProgrammableNonFungible",
+              ),
+            },
+          },
+        },
       }),
     );
 

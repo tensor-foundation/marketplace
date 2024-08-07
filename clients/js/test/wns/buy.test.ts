@@ -214,7 +214,12 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const { client, signers, nft, amount } = await setupWnsTest({
+  const {
+    client,
+    signers,
+    nft,
+    price: listingPrice,
+  } = await setupWnsTest({
     t,
     action: TestAction.List,
   });
@@ -227,7 +232,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: amount - 1n, // <-- lower amount
+    maxAmount: listingPrice - 1n, // <-- lower amount
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -247,7 +252,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     client,
     signers,
     nft,
-    amount: listingPrice,
+    price: listingPrice,
   } = await setupWnsTest({
     t,
     action: TestAction.List,
@@ -305,7 +310,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    amount: listingPrice,
+    price: listingPrice,
   } = await setupWnsTest({
     t,
     action: TestAction.List,
@@ -340,7 +345,7 @@ test('fees are paid correctly', async (t) => {
     signers,
     nft,
     state: listing,
-    amount: listingPrice,
+    price: listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,
@@ -432,7 +437,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: listing,
-    amount: listingPrice,
+    price: listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,
@@ -560,7 +565,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: listing,
-    amount: listingPrice,
+    price: listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,

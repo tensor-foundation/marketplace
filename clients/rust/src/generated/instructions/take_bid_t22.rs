@@ -22,7 +22,7 @@ pub struct TakeBidT22 {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin_account: solana_program::pubkey::Pubkey,
+    pub margin: solana_program::pubkey::Pubkey,
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
@@ -101,7 +101,7 @@ impl TakeBidT22 {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin_account,
+            self.margin,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -205,12 +205,12 @@ pub struct TakeBidT22InstructionArgs {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin_account
-///   7. `[]` whitelist
+///   6. `[writable]` margin
+///   7. `[optional]` whitelist (default to `11111111111111111111111111111111`)
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` owner_ta
-///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   11. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
@@ -226,7 +226,7 @@ pub struct TakeBidT22Builder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin_account: Option<solana_program::pubkey::Pubkey>,
+    margin: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
@@ -286,10 +286,11 @@ impl TakeBidT22Builder {
         self
     }
     #[inline(always)]
-    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin_account = Some(margin_account);
+    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.margin = Some(margin);
         self
     }
+    /// `[optional account, default to '11111111111111111111111111111111']`
     #[inline(always)]
     pub fn whitelist(&mut self, whitelist: solana_program::pubkey::Pubkey) -> &mut Self {
         self.whitelist = Some(whitelist);
@@ -310,7 +311,7 @@ impl TakeBidT22Builder {
         self.owner_ta = Some(owner_ta);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -398,13 +399,15 @@ impl TakeBidT22Builder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin_account: self.margin_account.expect("margin_account is not set"),
-            whitelist: self.whitelist.expect("whitelist is not set"),
+            margin: self.margin.expect("margin is not set"),
+            whitelist: self
+                .whitelist
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             owner_ta: self.owner_ta.expect("owner_ta is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
@@ -444,7 +447,7 @@ pub struct TakeBidT22CpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -488,7 +491,7 @@ pub struct TakeBidT22Cpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -531,7 +534,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin_account: accounts.margin_account,
+            margin: accounts.margin,
             whitelist: accounts.whitelist,
             seller_ta: accounts.seller_ta,
             mint: accounts.mint,
@@ -620,7 +623,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin_account.key,
+            *self.margin.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -706,7 +709,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.margin.clone());
         account_infos.push(self.whitelist.clone());
         account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
@@ -743,7 +746,7 @@ impl<'a, 'b> TakeBidT22Cpi<'a, 'b> {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin_account
+///   6. `[writable]` margin
 ///   7. `[]` whitelist
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
@@ -771,7 +774,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin_account: None,
+            margin: None,
             whitelist: None,
             seller_ta: None,
             mint: None,
@@ -837,11 +840,11 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin_account(
+    pub fn margin(
         &mut self,
-        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+        margin: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin_account = Some(margin_account);
+        self.instruction.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -1007,10 +1010,7 @@ impl<'a, 'b> TakeBidT22CpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin_account: self
-                .instruction
-                .margin_account
-                .expect("margin_account is not set"),
+            margin: self.instruction.margin.expect("margin is not set"),
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
@@ -1071,7 +1071,7 @@ struct TakeBidT22CpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,

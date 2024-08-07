@@ -447,7 +447,7 @@ pub mod marketplace_program {
     }
 
     pub fn take_bid_wns<'info>(
-        ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
+        ctx: Context<'_, '_, '_, 'info, TakeBidWns<'info>>,
         min_amount: u64,
     ) -> Result<()> {
         instructions::wns::process_take_bid_wns(ctx, min_amount)

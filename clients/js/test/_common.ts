@@ -95,7 +95,8 @@ export interface SetupTestParams {
   t: ExecutionContext;
   action: TestAction;
   listingPrice?: bigint;
-  bidAmount?: number;
+  bidPrice?: bigint;
+  bidQuantity?: number;
   useSharedEscrow?: boolean;
   useCosigner?: boolean;
   useMakerBroker?: boolean;

@@ -22,7 +22,7 @@ pub struct TakeBidCore {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin_account: solana_program::pubkey::Pubkey,
+    pub margin: solana_program::pubkey::Pubkey,
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
@@ -97,7 +97,7 @@ impl TakeBidCore {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin_account,
+            self.margin,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -199,7 +199,7 @@ pub struct TakeBidCoreInstructionArgs {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin_account
+///   6. `[writable]` margin
 ///   7. `[]` whitelist
 ///   8. `[writable]` asset
 ///   9. `[optional]` collection
@@ -218,7 +218,7 @@ pub struct TakeBidCoreBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin_account: Option<solana_program::pubkey::Pubkey>,
+    margin: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     asset: Option<solana_program::pubkey::Pubkey>,
     collection: Option<solana_program::pubkey::Pubkey>,
@@ -276,8 +276,8 @@ impl TakeBidCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin_account = Some(margin_account);
+    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -378,7 +378,7 @@ impl TakeBidCoreBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin_account: self.margin_account.expect("margin_account is not set"),
+            margin: self.margin.expect("margin is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
             asset: self.asset.expect("asset is not set"),
             collection: self.collection,
@@ -420,7 +420,7 @@ pub struct TakeBidCoreCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -460,7 +460,7 @@ pub struct TakeBidCoreCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -499,7 +499,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin_account: accounts.margin_account,
+            margin: accounts.margin,
             whitelist: accounts.whitelist,
             asset: accounts.asset,
             collection: accounts.collection,
@@ -586,7 +586,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin_account.key,
+            *self.margin.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -671,7 +671,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.margin.clone());
         account_infos.push(self.whitelist.clone());
         account_infos.push(self.asset.clone());
         if let Some(collection) = self.collection {
@@ -708,7 +708,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin_account
+///   6. `[writable]` margin
 ///   7. `[]` whitelist
 ///   8. `[writable]` asset
 ///   9. `[optional]` collection
@@ -734,7 +734,7 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin_account: None,
+            margin: None,
             whitelist: None,
             asset: None,
             collection: None,
@@ -798,11 +798,11 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin_account(
+    pub fn margin(
         &mut self,
-        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+        margin: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin_account = Some(margin_account);
+        self.instruction.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -953,10 +953,7 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin_account: self
-                .instruction
-                .margin_account
-                .expect("margin_account is not set"),
+            margin: self.instruction.margin.expect("margin is not set"),
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
@@ -1010,7 +1007,7 @@ struct TakeBidCoreCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,

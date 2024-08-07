@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -33,8 +34,21 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import {
+  TokenStandard,
+  resolveOwnerAta,
+  resolveSellerAta,
+  type TokenStandardArgs,
+} from '@tensor-foundation/resolvers';
+import { resolveFeeVaultPdaFromBidState } from '../../hooked';
+import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type TakeBidT22Instruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -44,14 +58,16 @@ export type TakeBidT22Instruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
-  TAccountWhitelist extends string | IAccountMeta<string> = string,
+  TAccountMargin extends string | IAccountMeta<string> = string,
+  TAccountWhitelist extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
   TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwnerTa extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -91,9 +107,9 @@ export type TakeBidT22Instruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
+      TAccountMargin extends string
+        ? WritableAccount<TAccountMargin>
+        : TAccountMargin,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
@@ -172,6 +188,290 @@ export function getTakeBidT22InstructionDataCodec(): Codec<
   );
 }
 
+export type TakeBidT22InstructionExtraArgs = {
+  tokenStandard?: TokenStandardArgs;
+};
+
+export type TakeBidT22AsyncInput<
+  TAccountFeeVault extends string = string,
+  TAccountSeller extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMargin extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountSellerTa extends string = string,
+  TAccountMint extends string = string,
+  TAccountOwnerTa extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountEscrowProgram extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountMintProof extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  feeVault?: Address<TAccountFeeVault>;
+  seller: TransactionSigner<TAccountSeller>;
+  bidState?: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  margin?: Address<TAccountMargin>;
+  whitelist?: Address<TAccountWhitelist>;
+  sellerTa?: Address<TAccountSellerTa>;
+  mint: Address<TAccountMint>;
+  ownerTa?: Address<TAccountOwnerTa>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  escrowProgram?: Address<TAccountEscrowProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
+  mintProof: Address<TAccountMintProof>;
+  rentDestination?: Address<TAccountRentDestination>;
+  minAmount: TakeBidT22InstructionDataArgs['minAmount'];
+  tokenStandard?: TakeBidT22InstructionExtraArgs['tokenStandard'];
+  creators?: Array<Address>;
+  transferHookAccounts: Array<Address>;
+};
+
+export async function getTakeBidT22InstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountSeller extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountMargin extends string,
+  TAccountWhitelist extends string,
+  TAccountSellerTa extends string,
+  TAccountMint extends string,
+  TAccountOwnerTa extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountEscrowProgram extends string,
+  TAccountCosigner extends string,
+  TAccountMintProof extends string,
+  TAccountRentDestination extends string,
+>(
+  input: TakeBidT22AsyncInput<
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountSellerTa,
+    TAccountMint,
+    TAccountOwnerTa,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
+): Promise<
+  TakeBidT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountSellerTa,
+    TAccountMint,
+    TAccountOwnerTa,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    seller: { value: input.seller ?? null, isWritable: true },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    margin: { value: input.margin ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    sellerTa: { value: input.sellerTa ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    ownerTa: { value: input.ownerTa ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    mintProof: { value: input.mintProof ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.bidState.value) {
+    accounts.bidState.value = await findBidStatePda({
+      bidId: expectAddress(accounts.mint.value),
+      owner: expectAddress(accounts.owner.value),
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
+    };
+  }
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.sellerTa.value) {
+    accounts.sellerTa = {
+      ...accounts.sellerTa,
+      ...(await resolveSellerAta(resolverScope)),
+    };
+  }
+  if (!accounts.ownerTa.value) {
+    accounts.ownerTa = {
+      ...accounts.ownerTa,
+      ...(await resolveOwnerAta(resolverScope)),
+    };
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.escrowProgram.value) {
+    accounts.escrowProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...args.transferHookAccounts.map((address) => ({
+      address,
+      role: AccountRole.READONLY,
+    })),
+  ];
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.sellerTa),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.ownerTa),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.escrowProgram),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.mintProof),
+      getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getTakeBidT22InstructionDataEncoder().encode(
+      args as TakeBidT22InstructionDataArgs
+    ),
+  } as TakeBidT22Instruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountSellerTa,
+    TAccountMint,
+    TAccountOwnerTa,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >;
+
+  return instruction;
+}
+
 export type TakeBidT22Input<
   TAccountFeeVault extends string = string,
   TAccountSeller extends string = string,
@@ -179,7 +479,7 @@ export type TakeBidT22Input<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMarginAccount extends string = string,
+  TAccountMargin extends string = string,
   TAccountWhitelist extends string = string,
   TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
@@ -199,8 +499,8 @@ export type TakeBidT22Input<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount: Address<TAccountMarginAccount>;
-  whitelist: Address<TAccountWhitelist>;
+  margin?: Address<TAccountMargin>;
+  whitelist?: Address<TAccountWhitelist>;
   sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
   ownerTa: Address<TAccountOwnerTa>;
@@ -212,8 +512,11 @@ export type TakeBidT22Input<
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof: Address<TAccountMintProof>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidT22InstructionDataArgs['minAmount'];
+  tokenStandard?: TakeBidT22InstructionExtraArgs['tokenStandard'];
+  creators?: Array<Address>;
+  transferHookAccounts: Array<Address>;
 };
 
 export function getTakeBidT22Instruction<
@@ -223,7 +526,7 @@ export function getTakeBidT22Instruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
+  TAccountMargin extends string,
   TAccountWhitelist extends string,
   TAccountSellerTa extends string,
   TAccountMint extends string,
@@ -244,7 +547,7 @@ export function getTakeBidT22Instruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -266,7 +569,7 @@ export function getTakeBidT22Instruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountMarginAccount,
+  TAccountMargin,
   TAccountWhitelist,
   TAccountSellerTa,
   TAccountMint,
@@ -291,7 +594,7 @@ export function getTakeBidT22Instruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    margin: { value: input.margin ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
@@ -320,9 +623,16 @@ export function getTakeBidT22Instruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -340,6 +650,24 @@ export function getTakeBidT22Instruction<
     accounts.escrowProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!args.tokenStandard) {
+    args.tokenStandard = TokenStandard.ProgrammableNonFungible;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...args.transferHookAccounts.map((address) => ({
+      address,
+      role: AccountRole.READONLY,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -350,7 +678,7 @@ export function getTakeBidT22Instruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.margin),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
@@ -363,6 +691,7 @@ export function getTakeBidT22Instruction<
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
       getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidT22InstructionDataEncoder().encode(
@@ -376,7 +705,7 @@ export function getTakeBidT22Instruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -406,7 +735,7 @@ export type ParsedTakeBidT22Instruction<
     owner: TAccountMetas[3];
     takerBroker?: TAccountMetas[4] | undefined;
     makerBroker?: TAccountMetas[5] | undefined;
-    marginAccount: TAccountMetas[6];
+    margin: TAccountMetas[6];
     whitelist: TAccountMetas[7];
     sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
@@ -457,7 +786,7 @@ export function parseTakeBidT22Instruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      marginAccount: getNextAccount(),
+      margin: getNextAccount(),
       whitelist: getNextAccount(),
       sellerTa: getNextAccount(),
       mint: getNextAccount(),

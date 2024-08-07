@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
+    token_2022::spl_token_2022,
     token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
@@ -8,7 +9,10 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked,
+        wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
+    },
 };
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
@@ -20,7 +24,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct WnsTakeBid<'info> {
+pub struct TakeBidWns<'info> {
     /// CHECK: Seeds checked here, account has no state.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
@@ -52,7 +56,7 @@ pub struct WnsTakeBid<'info> {
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin_account: UncheckedAccount<'info>,
+    pub margin: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
@@ -62,7 +66,7 @@ pub struct WnsTakeBid<'info> {
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     #[account(
-        mint::token_program = anchor_spl::token_interface::spl_token_2022::id(),
+        mint::token_program = spl_token_2022::id(),
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -100,7 +104,7 @@ pub struct WnsTakeBid<'info> {
     // ---- WNS royalty enforcement
     /// CHECK: checked on approve CPI
     #[account(mut)]
-    pub approve_account: UncheckedAccount<'info>,
+    pub approve: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
     #[account(mut)]
@@ -116,7 +120,7 @@ pub struct WnsTakeBid<'info> {
     pub extra_metas: UncheckedAccount<'info>,
 }
 
-impl<'info> Validate<'info> for WnsTakeBid<'info> {
+impl<'info> Validate<'info> for TakeBidWns<'info> {
     fn validate(&self) -> Result<()> {
         assert_fee_account(
             &self.fee_vault.to_account_info(),
@@ -160,7 +164,7 @@ impl<'info> Validate<'info> for WnsTakeBid<'info> {
 
 #[access_control(ctx.accounts.validate())]
 pub fn process_take_bid_wns<'info>(
-    ctx: Context<'_, '_, '_, 'info, WnsTakeBid<'info>>,
+    ctx: Context<'_, '_, '_, 'info, TakeBidWns<'info>>,
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
@@ -227,7 +231,7 @@ pub fn process_take_bid_wns<'info>(
         payer: ctx.accounts.seller.to_account_info(),
         authority: ctx.accounts.seller.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
-        approve_account: ctx.accounts.approve_account.to_account_info(),
+        approve_account: ctx.accounts.approve.to_account_info(),
         payment_mint: None,
         authority_token_account: None,
         distribution_account: ctx.accounts.distribution.to_account_info(),
@@ -259,11 +263,11 @@ pub fn process_take_bid_wns<'info>(
         },
     );
 
-    tensor_toolbox::token_2022::transfer::transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi.with_remaining_accounts(vec![
             ctx.accounts.wns_program.to_account_info(),
             ctx.accounts.extra_metas.to_account_info(),
-            ctx.accounts.approve_account.to_account_info(),
+            ctx.accounts.approve.to_account_info(),
         ]),
         1, // supply = 1
         0, // decimals = 0
@@ -272,7 +276,7 @@ pub fn process_take_bid_wns<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin_account: &ctx.accounts.margin_account,
+        margin: &ctx.accounts.margin,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,

@@ -994,7 +994,7 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },
@@ -1149,7 +1149,7 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },
@@ -1952,7 +1952,7 @@
           "isOptional": true
         },
         {
-          "name": "sharedEscrow",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },
@@ -2593,7 +2593,7 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },
@@ -2765,7 +2765,7 @@
           "isSigner": false
         },
         {
-          "name": "wnsDistributionProgram",
+          "name": "distributionProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2932,7 +2932,7 @@
           "isSigner": false
         },
         {
-          "name": "wnsDistributionProgram",
+          "name": "distributionProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3029,7 +3029,7 @@
           "isSigner": false
         },
         {
-          "name": "wnsDistributionProgram",
+          "name": "distributionProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3115,7 +3115,7 @@
           "isSigner": false
         },
         {
-          "name": "wnsDistributionProgram",
+          "name": "distributionProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3196,7 +3196,7 @@
           "isSigner": false
         },
         {
-          "name": "wnsDistributionProgram",
+          "name": "distributionProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -3279,7 +3279,7 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },
@@ -3348,7 +3348,7 @@
           "isSigner": false
         },
         {
-          "name": "approveAccount",
+          "name": "approve",
           "isMut": true,
           "isSigner": false
         },
@@ -3807,7 +3807,7 @@
           "isOptional": true
         },
         {
-          "name": "marginAccount",
+          "name": "margin",
           "isMut": true,
           "isSigner": false
         },

@@ -73,7 +73,7 @@ export type CloseExpiredListingWnsInstruction<
   TAccountWnsProgram extends
     | string
     | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
-  TAccountWnsDistributionProgram extends
+  TAccountDistributionProgram extends
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
@@ -125,9 +125,9 @@ export type CloseExpiredListingWnsInstruction<
       TAccountWnsProgram extends string
         ? ReadonlyAccount<TAccountWnsProgram>
         : TAccountWnsProgram,
-      TAccountWnsDistributionProgram extends string
-        ? ReadonlyAccount<TAccountWnsDistributionProgram>
-        : TAccountWnsDistributionProgram,
+      TAccountDistributionProgram extends string
+        ? ReadonlyAccount<TAccountDistributionProgram>
+        : TAccountDistributionProgram,
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
@@ -187,7 +187,7 @@ export type CloseExpiredListingWnsAsyncInput<
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
   owner?: Address<TAccountOwner>;
@@ -204,7 +204,7 @@ export type CloseExpiredListingWnsAsyncInput<
   approve?: Address<TAccountApprove>;
   distribution?: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
   collection: CloseExpiredListingWnsInstructionExtraArgs['collection'];
   paymentMint?: CloseExpiredListingWnsInstructionExtraArgs['paymentMint'];
@@ -225,7 +225,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
   input: CloseExpiredListingWnsAsyncInput<
@@ -243,7 +243,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 ): Promise<
@@ -263,7 +263,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 > {
@@ -292,8 +292,8 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -371,8 +371,8 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
   if (!accounts.extraMetas.value) {
@@ -399,7 +399,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
@@ -420,7 +420,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >;
 
@@ -442,7 +442,7 @@ export type CloseExpiredListingWnsInput<
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
   owner?: Address<TAccountOwner>;
@@ -459,7 +459,7 @@ export type CloseExpiredListingWnsInput<
   approve: Address<TAccountApprove>;
   distribution: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   collection: CloseExpiredListingWnsInstructionExtraArgs['collection'];
   paymentMint?: CloseExpiredListingWnsInstructionExtraArgs['paymentMint'];
@@ -480,7 +480,7 @@ export function getCloseExpiredListingWnsInstruction<
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
   input: CloseExpiredListingWnsInput<
@@ -498,7 +498,7 @@ export function getCloseExpiredListingWnsInstruction<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 ): CloseExpiredListingWnsInstruction<
@@ -517,7 +517,7 @@ export function getCloseExpiredListingWnsInstruction<
   TAccountApprove,
   TAccountDistribution,
   TAccountWnsProgram,
-  TAccountWnsDistributionProgram,
+  TAccountDistributionProgram,
   TAccountExtraMetas
 > {
   // Program address.
@@ -545,8 +545,8 @@ export function getCloseExpiredListingWnsInstruction<
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -592,8 +592,8 @@ export function getCloseExpiredListingWnsInstruction<
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
@@ -614,7 +614,7 @@ export function getCloseExpiredListingWnsInstruction<
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
@@ -635,7 +635,7 @@ export function getCloseExpiredListingWnsInstruction<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >;
 
@@ -662,7 +662,7 @@ export type ParsedCloseExpiredListingWnsInstruction<
     approve: TAccountMetas[11];
     distribution: TAccountMetas[12];
     wnsProgram: TAccountMetas[13];
-    wnsDistributionProgram: TAccountMetas[14];
+    distributionProgram: TAccountMetas[14];
     extraMetas: TAccountMetas[15];
   };
   data: CloseExpiredListingWnsInstructionData;
@@ -703,7 +703,7 @@ export function parseCloseExpiredListingWnsInstruction<
       approve: getNextAccount(),
       distribution: getNextAccount(),
       wnsProgram: getNextAccount(),
-      wnsDistributionProgram: getNextAccount(),
+      distributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
     },
     data: getCloseExpiredListingWnsInstructionDataDecoder().decode(

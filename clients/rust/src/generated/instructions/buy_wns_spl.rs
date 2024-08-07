@@ -62,7 +62,7 @@ pub struct BuyWnsSpl {
 
     pub wns_program: solana_program::pubkey::Pubkey,
 
-    pub wns_distribution_program: solana_program::pubkey::Pubkey,
+    pub distribution_program: solana_program::pubkey::Pubkey,
 
     pub extra_metas: solana_program::pubkey::Pubkey,
 
@@ -212,7 +212,7 @@ impl BuyWnsSpl {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.wns_distribution_program,
+            self.distribution_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -297,7 +297,7 @@ pub struct BuyWnsSplInstructionArgs {
 ///   23. `[writable]` distribution
 ///   24. `[writable]` distribution_currency_ta
 ///   25. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
-///   26. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   26. `[optional]` distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   27. `[]` extra_metas
 ///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
@@ -328,7 +328,7 @@ pub struct BuyWnsSplBuilder {
     distribution: Option<solana_program::pubkey::Pubkey>,
     distribution_currency_ta: Option<solana_program::pubkey::Pubkey>,
     wns_program: Option<solana_program::pubkey::Pubkey>,
-    wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
+    distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     max_amount: Option<u64>,
@@ -518,11 +518,11 @@ impl BuyWnsSplBuilder {
     }
     /// `[optional account, default to 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay']`
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: solana_program::pubkey::Pubkey,
+        distribution_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.wns_distribution_program = Some(wns_distribution_program);
+        self.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -608,9 +608,9 @@ impl BuyWnsSplBuilder {
             wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
                 "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
             )),
-            wns_distribution_program: self.wns_distribution_program.unwrap_or(
-                solana_program::pubkey!("diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"),
-            ),
+            distribution_program: self.distribution_program.unwrap_or(solana_program::pubkey!(
+                "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"
+            )),
             extra_metas: self.extra_metas.expect("extra_metas is not set"),
             cosigner: self.cosigner,
         };
@@ -676,7 +676,7 @@ pub struct BuyWnsSplCpiAccounts<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -740,7 +740,7 @@ pub struct BuyWnsSplCpi<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -783,7 +783,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             distribution: accounts.distribution,
             distribution_currency_ta: accounts.distribution_currency_ta,
             wns_program: accounts.wns_program,
-            wns_distribution_program: accounts.wns_distribution_program,
+            distribution_program: accounts.distribution_program,
             extra_metas: accounts.extra_metas,
             cosigner: accounts.cosigner,
             __args: args,
@@ -956,7 +956,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.wns_distribution_program.key,
+            *self.distribution_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1026,7 +1026,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
         account_infos.push(self.distribution.clone());
         account_infos.push(self.distribution_currency_ta.clone());
         account_infos.push(self.wns_program.clone());
-        account_infos.push(self.wns_distribution_program.clone());
+        account_infos.push(self.distribution_program.clone());
         account_infos.push(self.extra_metas.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
@@ -1073,7 +1073,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
 ///   23. `[writable]` distribution
 ///   24. `[writable]` distribution_currency_ta
 ///   25. `[]` wns_program
-///   26. `[]` wns_distribution_program
+///   26. `[]` distribution_program
 ///   27. `[]` extra_metas
 ///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
@@ -1111,7 +1111,7 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
             distribution: None,
             distribution_currency_ta: None,
             wns_program: None,
-            wns_distribution_program: None,
+            distribution_program: None,
             extra_metas: None,
             cosigner: None,
             max_amount: None,
@@ -1322,11 +1322,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+        distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.wns_distribution_program = Some(wns_distribution_program);
+        self.instruction.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -1490,10 +1490,10 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
                 .wns_program
                 .expect("wns_program is not set"),
 
-            wns_distribution_program: self
+            distribution_program: self
                 .instruction
-                .wns_distribution_program
-                .expect("wns_distribution_program is not set"),
+                .distribution_program
+                .expect("distribution_program is not set"),
 
             extra_metas: self
                 .instruction
@@ -1539,7 +1539,7 @@ struct BuyWnsSplCpiBuilderInstruction<'a, 'b> {
     distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     distribution_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     max_amount: Option<u64>,

@@ -109,7 +109,7 @@ pub struct BuyWns<'info> {
     pub wns_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
-    pub wns_distribution_program: UncheckedAccount<'info>,
+    pub distribution_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
@@ -199,7 +199,7 @@ pub fn process_buy_wns<'info, 'b>(
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
-        distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
