@@ -4,7 +4,6 @@ use tensor_toolbox::{
     CalcFeesArgs, CreatorFeeMode, FromAcc, TCreator, BROKER_FEE_PCT,
 };
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
-use whitelist_program::MintProof;
 
 use crate::*;
 
@@ -192,32 +191,4 @@ fn transfer_lamports_from_pda_min_balance<'info>(
     }
     transfer_lamports_from_pda(from_pda, to, lamports)?;
     Ok(())
-}
-
-#[inline(never)]
-pub fn assert_decode_mint_proof(
-    whitelist_pubkey: &Pubkey,
-    mint: &Pubkey,
-    mint_proof: &UncheckedAccount,
-) -> Result<MintProof> {
-    let program_id = &whitelist_program::id();
-    let (key, _) = Pubkey::find_program_address(
-        &[
-            b"mint_proof".as_ref(),
-            mint.as_ref(),
-            whitelist_pubkey.as_ref(),
-        ],
-        program_id,
-    );
-    if key != mint_proof.key() {
-        throw_err!(TcompError::BadMintProof);
-    }
-    // Check program owner (redundant because of find_program_address above, but why not).
-    if *mint_proof.owner != *program_id {
-        throw_err!(TcompError::BadMintProof);
-    }
-
-    let mut data: &[u8] = &mint_proof.try_borrow_data()?;
-    let mint_proof: MintProof = AccountDeserialize::try_deserialize(&mut data)?;
-    Ok(mint_proof)
 }

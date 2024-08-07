@@ -6,6 +6,14 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
+import {
+  isProgramError,
+  type Address,
+  type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  type SolanaError,
+} from '@solana/web3.js';
+import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
+
 /** ArithmeticError: arithmetic error */
 export const TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR = 0x17d4; // 6100
 /** ExpiryTooLarge: expiry too large */
@@ -207,4 +215,22 @@ export function getTensorMarketplaceErrorMessage(
   }
 
   return 'Error message not available in production bundles.';
+}
+
+export function isTensorMarketplaceError<
+  TProgramErrorCode extends TensorMarketplaceError,
+>(
+  error: unknown,
+  transactionMessage: {
+    instructions: Record<number, { programAddress: Address }>;
+  },
+  code?: TProgramErrorCode
+): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
+  Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
+  return isProgramError<TProgramErrorCode>(
+    error,
+    transactionMessage,
+    TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    code
+  );
 }

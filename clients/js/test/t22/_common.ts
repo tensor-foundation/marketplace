@@ -1,81 +1,57 @@
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-  Address,
-  airdropFactory,
   appendTransactionMessageInstruction,
   assertAccountExists,
   fetchEncodedAccount,
-  lamports,
-  pipe
+  pipe,
 } from '@solana/web3.js';
-import {
-  TokenStandard,
-  createDefaultNft,
-} from '@tensor-foundation/mpl-token-metadata';
+import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 import {
   Client,
-  ONE_SOL,
-  assertTokenNftOwnedBy,
   createDefaultSolanaClient,
   createDefaultTransaction,
-  createKeyPairSigner,
+  createT22NftWithRoyalties,
   signAndSendTransaction,
+  T22NftReturn,
+  TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
+import { ExecutionContext } from 'ava';
+import { Address } from 'cluster';
 import {
-  Target,
   fetchBidStateFromSeeds,
   findBidStatePda,
   findListStatePda,
   getBidInstructionAsync,
-  getListLegacyInstructionAsync,
+  getListT22InstructionAsync,
+  Target,
 } from '../../src';
 import {
+  assertTokenNftOwnedBy,
+  COMPUTE_300K_IX,
+  getAndFundFeeVault,
+  getTestSigners,
   SetupTestParams,
   TestAction,
   TestSigners,
-  getTestSigners,
 } from '../_common';
 
-const OWNER_BYTES = [
-  75, 111, 93, 80, 59, 171, 168, 79, 238, 255, 9, 233, 236, 194, 196, 73, 76, 2,
-  51, 180, 184, 6, 77, 52, 36, 243, 28, 125, 104, 104, 114, 246, 166, 110, 5,
-  17, 12, 8, 199, 21, 64, 143, 53, 202, 39, 71, 93, 114, 119, 171, 152, 44, 155,
-  146, 43, 217, 148, 215, 83, 14, 162, 91, 65, 177,
-];
-
-export const getOwner = async () =>
-  await createKeyPairSigner(Uint8Array.from(OWNER_BYTES));
-
-export const getAndFundOwner = async (client: Client) => {
-  const owner = await createKeyPairSigner(Uint8Array.from(OWNER_BYTES));
-  await airdropFactory(client)({
-    recipientAddress: owner.address,
-    lamports: lamports(ONE_SOL),
-    commitment: 'confirmed',
-  });
-
-  return owner;
-};
-
-export interface LegacyTest {
+export interface T22Test {
   client: Client;
   signers: TestSigners;
+  nft: T22NftReturn;
   listing: Address | undefined;
   listingPrice: bigint | undefined;
   bid: Address | undefined;
   bidAmount: number | undefined;
-  mint: Address;
+  feeVault: Address;
 }
 
 const DEFAULT_LISTING_PRICE = 100_000_000n;
 const DEFAULT_BID_AMOUNT = 1;
+const DEFAULT_SFBP = 500n;
 
-export async function setupLegacyTest(
-  params: SetupTestParams & { pNft?: boolean }
-): Promise<LegacyTest> {
+export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
   const {
     t,
-    pNft,
     action,
     listingPrice = DEFAULT_LISTING_PRICE,
     bidAmount = DEFAULT_BID_AMOUNT,
@@ -87,22 +63,26 @@ export async function setupLegacyTest(
 
   const { payer, buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
 
-  const standard = pNft
-    ? TokenStandard.ProgrammableNonFungible
-    : TokenStandard.NonFungible;
-
-  // Mint an NFT.
-  const { mint } = await createDefaultNft({
+  // Mint NFT
+  const nft = await createT22NftWithRoyalties({
     client,
     payer,
-    authority: nftUpdateAuthority,
-    owner: nftOwner,
-    standard,
+    owner: nftOwner.address,
+    mintAuthority: nftUpdateAuthority,
+    freezeAuthority: null,
+    decimals: 0,
+    data: {
+      name: 'Test Token',
+      symbol: 'TT',
+      uri: 'https://example.com',
+    },
+    royalties: {
+      key: '_ro_' + nftUpdateAuthority.address,
+      value: DEFAULT_SFBP.toString(),
+    },
   });
 
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
-  });
+  const { mint, extraAccountMetas } = nft;
 
   let bid;
   let listing;
@@ -110,17 +90,17 @@ export async function setupLegacyTest(
   switch (action) {
     case TestAction.List: {
       // List the NFT.
-      const listLegacyIx = await getListLegacyInstructionAsync({
+      const listLegacyIx = await getListT22InstructionAsync({
         owner: nftOwner,
         mint,
         amount: listingPrice,
         cosigner: useCosigner ? cosigner : undefined,
-        tokenStandard: standard,
+        transferHookAccounts: extraAccountMetas.map((a) => a.address),
       });
 
       await pipe(
         await createDefaultTransaction(client, nftOwner),
-        (tx) => appendTransactionMessageInstruction(computeIx, tx),
+        (tx) => appendTransactionMessageInstruction(COMPUTE_300K_IX, tx),
         (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
         (tx) => signAndSendTransaction(client, tx)
       );
@@ -132,7 +112,13 @@ export async function setupLegacyTest(
       assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
       // NFT is now escrowed in the listing.
-      await assertTokenNftOwnedBy({ t, client, mint, owner: listing });
+      await assertTokenNftOwnedBy({
+        t,
+        client,
+        mint,
+        owner: listing,
+        tokenProgram: TOKEN22_PROGRAM_ID,
+      });
       break;
     }
     case TestAction.Bid: {
@@ -152,7 +138,7 @@ export async function setupLegacyTest(
 
       await pipe(
         await createDefaultTransaction(client, signers.buyer),
-        (tx) => appendTransactionMessageInstruction(computeIx, tx),
+        (tx) => appendTransactionMessageInstruction(COMPUTE_300K_IX, tx),
         (tx) => appendTransactionMessageInstruction(bidIx, tx),
         (tx) => signAndSendTransaction(client, tx)
       );
@@ -176,13 +162,43 @@ export async function setupLegacyTest(
       throw new Error(`Unknown action: ${action}`);
   }
 
+  const state = listing ?? bid;
+
+  // Derives fee vault from state account and airdrops keep-alive rent to it.
+  const feeVault = await getAndFundFeeVault(client, state!);
+
   return {
     client,
     signers,
-    mint,
+    nft,
     bid: bid ?? undefined,
-    listingPrice,
-    listing: listing ?? undefined,
     bidAmount,
+    listing: listing ?? undefined,
+    listingPrice,
+    feeVault,
   };
+}
+
+// Asserts that the T22 listing token acccount is closed.
+export async function assertT22ListingTokenClosed(
+  t: ExecutionContext,
+  test: T22Test
+) {
+  const { client, listing, nft } = test;
+  const { mint } = nft;
+
+  t.false(
+    (
+      await fetchEncodedAccount(
+        client.rpc,
+        (
+          await findAtaPda({
+            mint,
+            owner: listing!,
+            tokenProgramId: TOKEN22_PROGRAM_ID,
+          })
+        )[0]
+      )
+    ).exists
+  );
 }

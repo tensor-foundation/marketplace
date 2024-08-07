@@ -252,7 +252,7 @@ pub struct BuyT22SplInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
-///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   17. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   18. `[]` currency_token_program
 ///   19. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   20. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
@@ -406,7 +406,7 @@ impl BuyT22SplBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -500,7 +500,7 @@ impl BuyT22SplBuilder {
             maker_broker_currency_ta: self.maker_broker_currency_ta,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
             currency_token_program: self
                 .currency_token_program

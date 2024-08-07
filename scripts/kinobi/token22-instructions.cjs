@@ -48,6 +48,12 @@ module.exports = function visitor(options) {
                 },
               ),
             },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -104,6 +110,12 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -144,6 +156,12 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
         },
         delistT22: {
@@ -175,6 +193,12 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
         },
         listT22: {
@@ -209,6 +233,12 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(

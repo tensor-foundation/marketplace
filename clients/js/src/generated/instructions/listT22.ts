@@ -61,7 +61,7 @@ export type ListT22Instruction<
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -289,7 +289,7 @@ export async function getListT22InstructionAsync<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.ownerTa.value) {
     accounts.ownerTa = {
@@ -477,7 +477,7 @@ export function getListT22Instruction<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);

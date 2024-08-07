@@ -66,7 +66,7 @@ export type BuyT22SplInstruction<
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TAccountCurrencyTokenProgram extends string | IAccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
@@ -407,7 +407,7 @@ export async function getBuyT22SplInstructionAsync<
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -685,7 +685,7 @@ export function getBuyT22SplInstruction<
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =

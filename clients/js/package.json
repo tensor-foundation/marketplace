@@ -39,7 +39,8 @@
   "dependencies": {
     "@solana/web3.js": "2.0.0-preview.3",
     "@tensor-foundation/resolvers": "^0.1.1",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
@@ -50,7 +51,7 @@
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
     "@tensor-foundation/mpl-core": "^0.1.0",
     "@tensor-foundation/mpl-token-metadata": "^0.1.0",
-    "@tensor-foundation/test-helpers": "^0.1.0",
+    "@tensor-foundation/test-helpers": "^0.2.0",
     "@tensor-foundation/whitelist": "^0.1.0",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
