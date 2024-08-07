@@ -1226,7 +1226,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.1.0",
+ "tensor-toolbox 0.1.0 (git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=fix/wns-approve)",
  "tensor-vipers 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "whitelist-program",
 ]
@@ -2368,23 +2368,6 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bytemuck",
- "mpl-bubblegum",
- "mpl-core",
- "mpl-token-metadata",
- "solana-program",
- "spl-account-compression",
- "spl-noop",
- "spl-token-metadata-interface",
- "tensor-vipers 1.0.0",
-]
-
-[[package]]
-name = "tensor-toolbox"
-version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a50bf6f3c07d2010b30018e6ab4240bcf30b4bb2bc83cb8a5eff1c1ee9929d55"
 dependencies = [
@@ -2401,8 +2384,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tensor-toolbox"
+version = "0.1.0"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=fix/wns-approve#b2258eb2c427204c6f225515697480599fc19f53"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "mpl-bubblegum",
+ "mpl-core",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-account-compression",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "tensor-vipers 1.0.0 (git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=fix/wns-approve)",
+]
+
+[[package]]
 name = "tensor-vipers"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2412,8 +2415,7 @@ dependencies = [
 [[package]]
 name = "tensor-vipers"
 version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=fix/wns-approve#b2258eb2c427204c6f225515697480599fc19f53"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

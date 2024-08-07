@@ -11,7 +11,7 @@ use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts},
+    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     CalcFeesArgs, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
@@ -307,7 +307,11 @@ pub fn process_buy_wns_spl<'info, 'b>(
         payment_token_program: Some(ctx.accounts.currency_token_program.to_account_info()),
     };
     // royalty payment
-    approve(approve_accounts, amount, creator_fee)?;
+    let approve_params = ApproveParams {
+        price: amount,
+        royalty_fee: creator_fee,
+    };
+    approve(approve_accounts, approve_params)?;
 
     // transfer the NFT
     let transfer_cpi = CpiContext::new(

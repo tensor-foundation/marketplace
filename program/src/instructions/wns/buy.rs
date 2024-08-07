@@ -7,7 +7,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts},
+    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
@@ -204,8 +204,14 @@ pub fn process_buy_wns<'info, 'b>(
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
     };
+
+    let approve_params = ApproveParams {
+        price: amount,
+        royalty_fee: creator_fee,
+    };
+
     // royalty payment
-    approve(approve_accounts, amount, creator_fee)?;
+    approve(approve_accounts, approve_params)?;
 
     // transfer the NFT
 

@@ -7,15 +7,14 @@ use anchor_spl::{
 use tensor_toolbox::{
     token_2022::{
         transfer::transfer_checked,
-        wns::{approve, validate_mint, ApproveAccounts},
+        wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     },
     NullableOption,
 };
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
@@ -108,7 +107,7 @@ pub fn process_list_wns<'info>(
         payment_token_program: None,
     };
     // no need for royalty enforcement here
-    approve(approve_accounts, amount, 0)?;
+    approve(approve_accounts, ApproveParams::no_royalties())?;
 
     // transfer the NFT
 

@@ -8,7 +8,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts},
+    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
 };
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
@@ -239,7 +239,13 @@ pub fn process_take_bid_wns<'info>(
         payment_token_program: None,
     };
     // royalty payment
-    approve(approve_accounts, min_amount, creators_fee)?;
+    approve(
+        approve_accounts,
+        ApproveParams {
+            price: min_amount,
+            royalty_fee: creators_fee,
+        },
+    )?;
 
     // transfer the NFT
 

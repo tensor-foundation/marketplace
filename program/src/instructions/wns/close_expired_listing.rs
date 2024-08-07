@@ -4,7 +4,7 @@ use anchor_spl::{
 };
 use tensor_toolbox::token_2022::{
     transfer::transfer_checked,
-    wns::{approve, ApproveAccounts},
+    wns::{approve, ApproveAccounts, ApproveParams},
 };
 
 use self::program::MarketplaceProgram;
@@ -103,7 +103,7 @@ pub fn process_close_expired_listing_wns<'info>(
         payment_token_program: None,
     };
     // no need for royalty enforcement here
-    approve(approve_accounts, 0, 0)?;
+    approve(approve_accounts, ApproveParams::no_royalties())?;
 
     // transfer the NFT
 

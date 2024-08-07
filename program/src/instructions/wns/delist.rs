@@ -4,7 +4,7 @@ use anchor_spl::{
     token_2022::{transfer_checked, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
-use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts};
+use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts, ApproveParams};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -99,11 +99,11 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
     };
+
     // no need for royalty enforcement here
-    approve(approve_accounts, 0, 0)?;
+    approve(approve_accounts, ApproveParams::no_royalties())?;
 
     // transfer the NFT
-
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
