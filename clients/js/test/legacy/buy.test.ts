@@ -19,6 +19,7 @@ import {
 import {
   assertTokenNftOwnedBy,
   COMPUTE_300K_IX,
+  COMPUTE_500K_IX,
   TestAction,
 } from '../_common.js';
 import { setupLegacyTest } from './_common.js';
@@ -84,6 +85,7 @@ test('it can buy a Programmable NFT', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -202,7 +204,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
     payer: buyer,
     mint,
     maxAmount: listingPrice!,
-    // missing cosigner!
+    // Missing cosigner!
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [nftUpdateAuthority.address],
   });

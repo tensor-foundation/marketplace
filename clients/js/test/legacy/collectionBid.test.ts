@@ -9,14 +9,14 @@ import {
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
+import { Mode } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   Target,
   fetchBidStateFromSeeds,
   getBidInstructionAsync,
 } from '../../src/index.js';
-import { createWhitelistV2 } from './_common.js';
-import { Mode } from '@tensor-foundation/whitelist';
+import { createWhitelistV2 } from '../_common.js';
 
 test('it can bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();

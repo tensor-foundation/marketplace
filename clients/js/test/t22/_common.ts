@@ -37,7 +37,7 @@ import {
 export interface T22Test {
   client: Client;
   signers: TestSigners;
-  nft: T22NftReturn;
+  nft: T22NftReturn & { sellerFeeBasisPoints: bigint };
   listing: Address | undefined;
   listingPrice: bigint | undefined;
   bid: Address | undefined;
@@ -56,12 +56,16 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
     listingPrice = DEFAULT_LISTING_PRICE,
     bidAmount = DEFAULT_BID_AMOUNT,
     useCosigner = false,
+    useMakerBroker = false,
   } = params;
 
   const client = createDefaultSolanaClient();
   const signers = await getTestSigners(client);
 
-  const { payer, buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
+  const { payer, buyer, nftOwner, nftUpdateAuthority, cosigner, makerBroker } =
+    signers;
+
+  const sellerFeeBasisPoints = DEFAULT_SFBP;
 
   // Mint NFT
   const nft = await createT22NftWithRoyalties({
@@ -78,7 +82,7 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
     },
     royalties: {
       key: '_ro_' + nftUpdateAuthority.address,
-      value: DEFAULT_SFBP.toString(),
+      value: sellerFeeBasisPoints.toString(),
     },
   });
 
@@ -95,6 +99,7 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
         mint,
         amount: listingPrice,
         cosigner: useCosigner ? cosigner : undefined,
+        makerBroker: useMakerBroker ? makerBroker.address : undefined,
         transferHookAccounts: extraAccountMetas.map((a) => a.address),
       });
 
@@ -170,7 +175,7 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
   return {
     client,
     signers,
-    nft,
+    nft: { ...nft, sellerFeeBasisPoints },
     bid: bid ?? undefined,
     bidAmount,
     listing: listing ?? undefined,

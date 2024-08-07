@@ -61,7 +61,10 @@ export const ZERO_ACCOUNT_RENT_LAMPORTS = 890880n;
 export const POOL_SIZE = 452n;
 
 export const TAKER_FEE_BPS = 200n;
-export const BROKER_FEE_PCT = 80n;
+export const BROKER_FEE_PCT = 50n;
+export const BROKER_FEE_BPS = 5000n;
+export const HUNDRED_PCT = 100n;
+export const MAKER_BROKER_FEE_PCT = 80n;
 export const BASIS_POINTS = 10_000n;
 export const TLOCK_PREMIUM_FEE_BPS = 2500n;
 
@@ -95,6 +98,7 @@ export interface SetupTestParams {
   bidAmount?: number;
   useSharedEscrow?: boolean;
   useCosigner?: boolean;
+  useMakerBroker?: boolean;
 }
 
 export async function getTestSigners(client: Client) {

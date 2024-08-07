@@ -15,7 +15,6 @@ import {
 import {
   Client,
   ONE_SOL,
-  assertTokenNftOwnedBy,
   createDefaultSolanaClient,
   createDefaultTransaction,
   createKeyPairSigner,
@@ -33,6 +32,7 @@ import {
   SetupTestParams,
   TestAction,
   TestSigners,
+  assertTokenNftOwnedBy,
   getTestSigners,
 } from '../_common';
 

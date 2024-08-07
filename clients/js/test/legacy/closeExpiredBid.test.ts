@@ -4,13 +4,14 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
+import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
+import { Mode } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   TENSOR_MARKETPLACE_ERROR__BID_NOT_YET_EXPIRED,
@@ -19,8 +20,7 @@ import {
   getBidInstructionAsync,
   getCloseExpiredBidInstructionAsync,
 } from '../../src/index.js';
-import { createWhitelistV2 } from './_common.js';
-import { Mode } from '@tensor-foundation/whitelist';
+import { createWhitelistV2 } from '../_common.js';
 
 test('it can close an expired a bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
