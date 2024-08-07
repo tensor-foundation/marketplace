@@ -177,7 +177,7 @@ pub struct ListWnsInstructionArgs {
 ///   3. `[writable]` list_ta
 ///   4. `[]` mint
 ///   5. `[writable, signer]` payer
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   6. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   7. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   8. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -247,7 +247,7 @@ impl ListWnsBuilder {
         self.payer = Some(payer);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -370,7 +370,7 @@ impl ListWnsBuilder {
             mint: self.mint.expect("mint is not set"),
             payer: self.payer.expect("payer is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),

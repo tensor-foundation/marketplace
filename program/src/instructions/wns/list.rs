@@ -89,11 +89,6 @@ pub fn process_list_wns<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     // validates the mint
     validate_mint(&ctx.accounts.mint.to_account_info())?;
 

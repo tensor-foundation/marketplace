@@ -54,15 +54,6 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
-            // distribution: {
-            //   defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-            //     importFrom: "resolvers",
-            //     dependsOn: [
-            //       k.argumentValueNode("collection"),
-            //       k.argumentValueNode("paymentMint"),
-            //     ],
-            //   }),
-            // },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -75,18 +66,13 @@ module.exports = function visitor(options) {
                 },
               ),
             },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
-          // arguments: {
-          //   collection: {
-          //     type: k.publicKeyTypeNode(),
-          //   },
-          //   paymentMint: {
-          //     type: k.publicKeyTypeNode(),
-          //     defaultValue: k.publicKeyValueNode(
-          //       "11111111111111111111111111111111",
-          //     ),
-          //   },
-          // },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
@@ -161,6 +147,12 @@ module.exports = function visitor(options) {
                 },
               ),
             },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
           arguments: {
             collection: {
@@ -209,15 +201,6 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
-            distribution: {
-              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-                importFrom: "resolvers",
-                dependsOn: [
-                  k.argumentValueNode("collection"),
-                  k.argumentValueNode("paymentMint"),
-                ],
-              }),
-            },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -230,15 +213,10 @@ module.exports = function visitor(options) {
                 },
               ),
             },
-          },
-          arguments: {
-            collection: {
-              type: k.publicKeyTypeNode(),
-            },
-            paymentMint: {
-              type: k.publicKeyTypeNode(),
+            tokenProgram: {
               defaultValue: k.publicKeyValueNode(
-                "11111111111111111111111111111111",
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
               ),
             },
           },
@@ -275,15 +253,6 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
-            // distribution: {
-            //   defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
-            //     importFrom: "resolvers",
-            //     dependsOn: [
-            //       k.argumentValueNode("collection"),
-            //       k.argumentValueNode("paymentMint"),
-            //     ],
-            //   }),
-            // },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -296,18 +265,13 @@ module.exports = function visitor(options) {
                 },
               ),
             },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
           },
-          // arguments: {
-          //   collection: {
-          //     type: k.publicKeyTypeNode(),
-          //   },
-          //   paymentMint: {
-          //     type: k.publicKeyTypeNode(),
-          //     defaultValue: k.publicKeyValueNode(
-          //       "11111111111111111111111111111111",
-          //     ),
-          //   },
-          // },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("transferHookAccounts"),

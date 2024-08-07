@@ -220,7 +220,7 @@ pub struct BuyWnsInstructionArgs {
 ///   8. `[writable, optional]` taker_broker
 ///   9. `[writable, optional]` maker_broker
 ///   10. `[writable]` rent_destination
-///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   11. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   13. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -327,7 +327,7 @@ impl BuyWnsBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -431,7 +431,7 @@ impl BuyWnsBuilder {
             maker_broker: self.maker_broker,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),

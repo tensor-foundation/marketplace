@@ -168,6 +168,7 @@ pub fn process_buy_wns<'info, 'b>(
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
+
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
