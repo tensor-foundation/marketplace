@@ -272,7 +272,6 @@ export type TakeBidWnsAsyncInput<
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
   creators?: Array<Address>;
-  transferHookAccounts: Array<Address>;
 };
 
 export async function getTakeBidWnsInstructionAsync<
@@ -486,16 +485,9 @@ export async function getTakeBidWnsInstructionAsync<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = [
-    ...(args.creators ?? []).map((address) => ({
-      address,
-      role: AccountRole.WRITABLE,
-    })),
-    ...args.transferHookAccounts.map((address) => ({
-      address,
-      role: AccountRole.READONLY,
-    })),
-  ];
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -615,7 +607,6 @@ export type TakeBidWnsInput<
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
   creators?: Array<Address>;
-  transferHookAccounts: Array<Address>;
 };
 
 export function getTakeBidWnsInstruction<
@@ -788,16 +779,9 @@ export function getTakeBidWnsInstruction<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = [
-    ...(args.creators ?? []).map((address) => ({
-      address,
-      role: AccountRole.WRITABLE,
-    })),
-    ...args.transferHookAccounts.map((address) => ({
-      address,
-      role: AccountRole.READONLY,
-    })),
-  ];
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {

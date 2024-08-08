@@ -55,7 +55,6 @@ test('it can buy an NFT', async (t) => {
     mint,
     distribution,
     amount: 1n,
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -75,7 +74,6 @@ test('it can buy an NFT', async (t) => {
     distribution,
     maxAmount: 2n,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -143,7 +141,6 @@ test('it can buy an NFT with a cosigner', async (t) => {
     distribution,
     amount: 1,
     cosigner,
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -164,7 +161,6 @@ test('it can buy an NFT with a cosigner', async (t) => {
     maxAmount: 2,
     cosigner,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -234,7 +230,6 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     distribution,
     maxAmount: listingPrice - 1n, // <-- lower amount
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   const promise = pipe(
@@ -271,7 +266,6 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     maxAmount: listingPrice - 1n,
     // Missing cosigner!
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   let promise = pipe(
@@ -292,7 +286,6 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     maxAmount: listingPrice! - 1n,
     cosigner: fakeCosigner,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   promise = pipe(
@@ -326,7 +319,6 @@ test('buying emits a self-CPI logging event', async (t) => {
     distribution,
     maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   const sig = await pipe(
@@ -371,7 +363,6 @@ test('fees are paid correctly', async (t) => {
     distribution,
     maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -475,7 +466,6 @@ test('maker and taker brokers receive correct split', async (t) => {
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
@@ -598,7 +588,6 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(

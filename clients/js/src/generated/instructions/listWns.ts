@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -244,7 +243,6 @@ export type ListWnsAsyncInput<
   currency?: ListWnsInstructionDataArgs['currency'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
-  transferHookAccounts: Array<Address>;
 };
 
 export async function getListWnsInstructionAsync<
@@ -404,11 +402,6 @@ export async function getListWnsInstructionAsync<
     };
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
-    (address) => ({ address, role: AccountRole.READONLY })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -428,7 +421,6 @@ export async function getListWnsInstructionAsync<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getListWnsInstructionDataEncoder().encode(
@@ -496,7 +488,6 @@ export type ListWnsInput<
   currency?: ListWnsInstructionDataArgs['currency'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
-  transferHookAccounts: Array<Address>;
 };
 
 export function getListWnsInstruction<
@@ -622,11 +613,6 @@ export function getListWnsInstruction<
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
-    (address) => ({ address, role: AccountRole.READONLY })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -646,7 +632,6 @@ export function getListWnsInstruction<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getListWnsInstructionDataEncoder().encode(

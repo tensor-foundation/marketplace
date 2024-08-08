@@ -90,7 +90,6 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
         amount: listingPrice,
         cosigner: useCosigner ? cosigner : undefined,
         makerBroker: useMakerBroker ? makerBroker.address : undefined,
-        transferHookAccounts: extraAccountMetas.map((a) => a.address),
         distribution,
       });
 

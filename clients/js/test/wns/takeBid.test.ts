@@ -44,7 +44,6 @@ test('it can take a bid on a WNS NFT', async (t) => {
     minAmount: bidPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
-    transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(

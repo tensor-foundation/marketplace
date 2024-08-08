@@ -245,7 +245,6 @@ export type BuyWnsAsyncInput<
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
-  transferHookAccounts: Array<Address>;
 };
 
 export async function getBuyWnsInstructionAsync<
@@ -441,16 +440,9 @@ export async function getBuyWnsInstructionAsync<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = [
-    ...(args.creators ?? []).map((address) => ({
-      address,
-      role: AccountRole.WRITABLE,
-    })),
-    ...args.transferHookAccounts.map((address) => ({
-      address,
-      role: AccountRole.READONLY,
-    })),
-  ];
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -556,7 +548,6 @@ export type BuyWnsInput<
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
-  transferHookAccounts: Array<Address>;
 };
 
 export function getBuyWnsInstruction<
@@ -712,16 +703,9 @@ export function getBuyWnsInstruction<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = [
-    ...(args.creators ?? []).map((address) => ({
-      address,
-      role: AccountRole.WRITABLE,
-    })),
-    ...args.transferHookAccounts.map((address) => ({
-      address,
-      role: AccountRole.READONLY,
-    })),
-  ];
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {

@@ -81,14 +81,6 @@ module.exports = function visitor(options) {
                 isOptional: true,
               },
             ),
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("transferHookAccounts"),
-              {
-                isOptional: false,
-                isSigner: false,
-                isWritable: false,
-              },
-            ),
           ],
         },
         closeExpiredListingWns: {
@@ -272,16 +264,6 @@ module.exports = function visitor(options) {
               ),
             },
           },
-          remainingAccounts: [
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("transferHookAccounts"),
-              {
-                isOptional: false,
-                isSigner: false,
-                isWritable: false,
-              },
-            ),
-          ],
         },
         takeBidWns: {
           accounts: {
@@ -365,14 +347,6 @@ module.exports = function visitor(options) {
               {
                 isWritable: true,
                 isOptional: true,
-              },
-            ),
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("transferHookAccounts"),
-              {
-                isOptional: false,
-                isSigner: false,
-                isWritable: false,
               },
             ),
           ],
