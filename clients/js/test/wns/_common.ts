@@ -2,16 +2,19 @@ import {
   appendTransactionMessageInstruction,
   assertAccountExists,
   fetchEncodedAccount,
+  generateKeyPairSigner,
   IAccountMeta,
   pipe,
 } from '@solana/web3.js';
 import {
   Client,
+  createAndMintTo,
   createDefaultSolanaClient,
   createDefaultTransaction,
   createWnsNftInGroup,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
 import { Address } from 'cluster';
 import {
@@ -39,6 +42,7 @@ export interface WnsTest {
   state: Address;
   price: bigint;
   feeVault: Address;
+  splMint?: Address;
 }
 
 export interface WnsNft {
@@ -48,9 +52,9 @@ export interface WnsNft {
   sellerFeeBasisPoints: bigint;
 }
 
-const DEFAULT_LISTING_PRICE = 100_000_000n;
-const DEFAULT_BID_PRICE = 100_000_000n;
-const DEFAULT_SFBP = 500n;
+export const DEFAULT_LISTING_PRICE = 100_000_000n;
+export const DEFAULT_BID_PRICE = 100_000_000n;
+export const DEFAULT_SFBP = 500n;
 
 export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   const {
@@ -60,6 +64,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
     bidPrice = DEFAULT_BID_PRICE,
     useCosigner = false,
     useMakerBroker = false,
+    useSplToken = false,
   } = params;
 
   const client = createDefaultSolanaClient();
@@ -70,12 +75,30 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
 
   const sellerFeeBasisPoints = DEFAULT_SFBP;
 
+  let splMint;
+
+  if (useSplToken) {
+    const mintAuthority = await generateKeyPairSigner();
+
+    // Create SPL token and fund the buyer with it.
+    [{ mint: splMint }] = await createAndMintTo({
+      client,
+      payer,
+      mintAuthority,
+      recipient: payer.address,
+      decimals: 0,
+      initialSupply: 1_000_000_000n,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    });
+  }
+
   // Mint NFT
   const { mint, extraAccountMetas, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: nftOwner.address,
     authority: nftUpdateAuthority,
+    paymentMint: splMint,
   });
 
   let bid;
@@ -91,6 +114,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
         cosigner: useCosigner ? cosigner : undefined,
         makerBroker: useMakerBroker ? makerBroker.address : undefined,
         distribution,
+        currency: splMint,
       });
 
       await pipe(
@@ -124,6 +148,8 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
         target: Target.AssetId,
         targetId: mint,
         cosigner: useCosigner ? cosigner : undefined,
+        makerBroker: useMakerBroker ? makerBroker.address : undefined,
+        currency: splMint,
       });
 
       [bid] = await findBidStatePda({
@@ -151,7 +177,6 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
           cosigner: useCosigner ? cosigner : null,
         },
       });
-      console.log('Created bid state:', bid);
       break;
     }
     default:
@@ -168,6 +193,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
     client,
     signers,
     nft: { mint, extraAccountMetas, distribution, sellerFeeBasisPoints },
+    splMint,
     state,
     price,
     feeVault,

@@ -73,7 +73,7 @@ impl DelistWns {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
@@ -153,7 +153,7 @@ impl Default for DelistWnsInstructionData {
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ta
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
 ///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
@@ -496,7 +496,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
@@ -591,7 +591,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ta
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
 ///   7. `[]` token_program
 ///   8. `[]` associated_token_program

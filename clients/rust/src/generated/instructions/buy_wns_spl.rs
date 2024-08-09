@@ -288,8 +288,8 @@ pub struct BuyWnsSplInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
-///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   18. `[]` currency_token_program
+///   17. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   18. `[optional]` currency_token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   19. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   20. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   21. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -454,12 +454,13 @@ impl BuyWnsSplBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
     pub fn currency_token_program(
         &mut self,
@@ -561,59 +562,60 @@ impl BuyWnsSplBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = BuyWnsSpl {
-            fee_vault: self.fee_vault.expect("fee_vault is not set"),
-            fee_vault_currency_ta: self
-                .fee_vault_currency_ta
-                .expect("fee_vault_currency_ta is not set"),
-            buyer: self.buyer.expect("buyer is not set"),
-            buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
-            list_ta: self.list_ta.expect("list_ta is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
-            mint: self.mint.expect("mint is not set"),
-            currency: self.currency.expect("currency is not set"),
-            owner: self.owner.expect("owner is not set"),
-            owner_currency_ta: self
-                .owner_currency_ta
-                .expect("owner_currency_ta is not set"),
-            payer: self.payer.expect("payer is not set"),
-            payer_currency_ta: self
-                .payer_currency_ta
-                .expect("payer_currency_ta is not set"),
-            taker_broker: self.taker_broker,
-            taker_broker_currency_ta: self.taker_broker_currency_ta,
-            maker_broker: self.maker_broker,
-            maker_broker_currency_ta: self.maker_broker_currency_ta,
-            rent_destination: self.rent_destination.expect("rent_destination is not set"),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            )),
-            currency_token_program: self
-                .currency_token_program
-                .expect("currency_token_program is not set"),
-            associated_token_program: self.associated_token_program.unwrap_or(
-                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-            ),
-            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-            )),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            approve: self.approve.expect("approve is not set"),
-            distribution: self.distribution.expect("distribution is not set"),
-            distribution_currency_ta: self
-                .distribution_currency_ta
-                .expect("distribution_currency_ta is not set"),
-            wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
-                "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
-            )),
-            distribution_program: self.distribution_program.unwrap_or(solana_program::pubkey!(
-                "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"
-            )),
-            extra_metas: self.extra_metas.expect("extra_metas is not set"),
-            cosigner: self.cosigner,
-        };
+        let accounts =
+            BuyWnsSpl {
+                fee_vault: self.fee_vault.expect("fee_vault is not set"),
+                fee_vault_currency_ta: self
+                    .fee_vault_currency_ta
+                    .expect("fee_vault_currency_ta is not set"),
+                buyer: self.buyer.expect("buyer is not set"),
+                buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
+                list_ta: self.list_ta.expect("list_ta is not set"),
+                list_state: self.list_state.expect("list_state is not set"),
+                mint: self.mint.expect("mint is not set"),
+                currency: self.currency.expect("currency is not set"),
+                owner: self.owner.expect("owner is not set"),
+                owner_currency_ta: self
+                    .owner_currency_ta
+                    .expect("owner_currency_ta is not set"),
+                payer: self.payer.expect("payer is not set"),
+                payer_currency_ta: self
+                    .payer_currency_ta
+                    .expect("payer_currency_ta is not set"),
+                taker_broker: self.taker_broker,
+                taker_broker_currency_ta: self.taker_broker_currency_ta,
+                maker_broker: self.maker_broker,
+                maker_broker_currency_ta: self.maker_broker_currency_ta,
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
+                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                )),
+                currency_token_program: self.currency_token_program.unwrap_or(
+                    solana_program::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+                ),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
+                system_program: self
+                    .system_program
+                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+                approve: self.approve.expect("approve is not set"),
+                distribution: self.distribution.expect("distribution is not set"),
+                distribution_currency_ta: self
+                    .distribution_currency_ta
+                    .expect("distribution_currency_ta is not set"),
+                wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
+                    "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
+                )),
+                distribution_program: self.distribution_program.unwrap_or(solana_program::pubkey!(
+                    "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"
+                )),
+                extra_metas: self.extra_metas.expect("extra_metas is not set"),
+                cosigner: self.cosigner,
+            };
         let args = BuyWnsSplInstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
         };

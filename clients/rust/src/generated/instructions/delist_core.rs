@@ -71,7 +71,7 @@ impl DelistCore {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
-            true,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = DelistCoreInstructionData::new().try_to_vec().unwrap();
@@ -114,7 +114,7 @@ impl Default for DelistCoreInstructionData {
 ///   4. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   5. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[writable, signer]` rent_destination
+///   7. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct DelistCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
@@ -355,7 +355,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
-            true,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -406,7 +406,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
 ///   4. `[]` mpl_core_program
 ///   5. `[]` marketplace_program
 ///   6. `[]` system_program
-///   7. `[writable, signer]` rent_destination
+///   7. `[writable]` rent_destination
 #[derive(Clone, Debug)]
 pub struct DelistCoreCpiBuilder<'a, 'b> {
     instruction: Box<DelistCoreCpiBuilderInstruction<'a, 'b>>,

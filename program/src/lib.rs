@@ -432,7 +432,7 @@ pub mod marketplace_program {
         ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
         amount: u64,
         expire_in_sec: Option<u64>,
-        currency: Option<Pubkey>,
+        // currency: Option<Pubkey>,
         private_taker: Option<Pubkey>,
         maker_broker: Option<Pubkey>,
     ) -> Result<()> {
@@ -440,7 +440,7 @@ pub mod marketplace_program {
             ctx,
             amount,
             expire_in_sec,
-            currency,
+            // currency,
             private_taker,
             maker_broker,
         )

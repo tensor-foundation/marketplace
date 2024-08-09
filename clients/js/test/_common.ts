@@ -13,6 +13,7 @@ import {
   pipe,
   Signature,
   SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  TransactionSigner,
 } from '@solana/web3.js';
 import {
   Client,
@@ -21,7 +22,7 @@ import {
   generateKeyPairSignerWithSol,
   ONE_SOL,
   signAndSendTransaction,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from '@tensor-foundation/test-helpers';
 import {
   Condition,
@@ -100,6 +101,7 @@ export interface SetupTestParams {
   useSharedEscrow?: boolean;
   useCosigner?: boolean;
   useMakerBroker?: boolean;
+  useSplToken?: boolean;
 }
 
 export async function getTestSigners(client: Client) {
@@ -313,3 +315,13 @@ export const assertTcompNoop = async (
     tx?.meta?.logMessages?.some((msg) => msg.includes('Instruction: TcompNoop'))
   );
 };
+
+export interface SetupSplTokenTestParams {
+  t: ExecutionContext;
+  client: Client;
+  mintAuthority?: TransactionSigner;
+  payer?: TransactionSigner;
+  recipient?: Address;
+  decimals?: number;
+  initialSupply?: number;
+}

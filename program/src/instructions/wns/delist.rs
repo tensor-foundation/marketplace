@@ -47,11 +47,12 @@ pub struct DelistWns<'info> {
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
+    /// CHECK: list_state.get_rent_payer()
     #[account(
         mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_destination: Signer<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

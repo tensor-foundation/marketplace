@@ -3072,7 +3072,7 @@
         {
           "name": "rentDestination",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "payer",
@@ -3210,6 +3210,15 @@
           "isMut": false,
           "isSigner": true,
           "isOptional": true
+        },
+        {
+          "name": "currency",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "SPL token mint of the currency."
+          ]
         }
       ],
       "args": [
@@ -3221,12 +3230,6 @@
           "name": "expireInSec",
           "type": {
             "option": "u64"
-          }
-        },
-        {
-          "name": "currency",
-          "type": {
-            "option": "publicKey"
           }
         },
         {
@@ -3684,7 +3687,7 @@
         {
           "name": "rentDestination",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         }
       ],
       "args": []

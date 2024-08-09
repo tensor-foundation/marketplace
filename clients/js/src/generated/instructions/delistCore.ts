@@ -77,8 +77,7 @@ export type DelistCoreInstruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
@@ -131,7 +130,7 @@ export type DelistCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  rentDestination: TransactionSigner<TAccountRentDestination>;
+  rentDestination: Address<TAccountRentDestination>;
 };
 
 export function getDelistCoreInstruction<

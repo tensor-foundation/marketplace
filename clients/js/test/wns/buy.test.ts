@@ -639,7 +639,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   // Taker broker receives whatever is left of the broker fee.
   const takerBrokerFee = brokerFee! - makerBrokerFee;
 
-  // Fee vault receives it's split of the protocol fee and also the maker broker fee since it's not set.'
+  // Fee vault receives it's split of the protocol fee and also the maker broker fee since it's not set.
   t.assert(
     endingFeeVaultBalance ===
       startingFeeVaultBalance + protocolFee + makerBrokerFee

@@ -173,8 +173,8 @@ pub fn process_take_bid_wns<'info>(
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         min_amount,
-        Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
         None,
+        Some(100), // <- enforced royalties
     )?;
 
     let bid_state = &ctx.accounts.bid_state;

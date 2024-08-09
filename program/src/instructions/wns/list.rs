@@ -78,16 +78,21 @@ pub struct ListWns<'info> {
     pub extra_metas: UncheckedAccount<'info>,
 
     pub cosigner: Option<Signer<'info>>,
+
+    /// SPL token mint of the currency.
+    pub currency: Option<Box<InterfaceAccount<'info, Mint>>>,
 }
 
 pub fn process_list_wns<'info>(
     ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
     amount: u64,
     expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
+    // _currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
+    let currency = ctx.accounts.currency.as_ref().map(|c| c.key());
+
     // validates the mint
     validate_mint(&ctx.accounts.mint.to_account_info())?;
 
@@ -96,7 +101,7 @@ pub fn process_list_wns<'info>(
         authority: ctx.accounts.owner.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve.to_account_info(),
-        payment_mint: None,
+        payment_mint: ctx.accounts.currency.as_ref().map(|c| c.to_account_info()),
         authority_token_account: None,
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: None,

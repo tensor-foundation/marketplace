@@ -83,6 +83,149 @@ module.exports = function visitor(options) {
             ),
           ],
         },
+        buyWnsSpl: {
+          accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
+            feeVaultCurrencyTa: {
+              defaultValue: k.resolverValueNode("resolveFeeVaultCurrencyAta", {
+                dependsOn: [
+                  k.accountValueNode("feeVault"),
+                  k.accountValueNode("currencyTokenProgram"),
+                  k.accountValueNode("currency"),
+                ],
+              }),
+            },
+            payerCurrencyTa: {
+              defaultValue: k.resolverValueNode("resolvePayerCurrencyAta", {
+                dependsOn: [
+                  k.accountValueNode("payer"),
+                  k.accountValueNode("currencyTokenProgram"),
+                  k.accountValueNode("currency"),
+                ],
+              }),
+            },
+            ownerCurrencyTa: {
+              defaultValue: k.resolverValueNode("resolveOwnerCurrencyAta", {
+                dependsOn: [
+                  k.accountValueNode("owner"),
+                  k.accountValueNode("currencyTokenProgram"),
+                  k.accountValueNode("currency"),
+                ],
+              }),
+            },
+            distributionCurrencyTa: {
+              defaultValue: k.resolverValueNode(
+                "resolveDistributionCurrencyAta",
+                {
+                  dependsOn: [
+                    k.accountValueNode("distribution"),
+                    k.accountValueNode("currencyTokenProgram"),
+                    k.accountValueNode("currency"),
+                  ],
+                },
+              ),
+            },
+            makerBrokerCurrencyTa: {
+              // Only resolves if makerBroker exists
+              defaultValue: k.resolverValueNode(
+                "resolveMakerBrokerCurrencyAta",
+                {
+                  dependsOn: [
+                    k.accountValueNode("makerBroker"),
+                    k.accountValueNode("currencyTokenProgram"),
+                    k.accountValueNode("currency"),
+                  ],
+                },
+              ),
+            },
+            takerBrokerCurrencyTa: {
+              // Only resolves if takerBroker exists
+              defaultValue: k.resolverValueNode(
+                "resolveTakerBrokerCurrencyAta",
+                {
+                  dependsOn: [
+                    k.accountValueNode("takerBroker"),
+                    k.accountValueNode("currencyTokenProgram"),
+                    k.accountValueNode("currency"),
+                  ],
+                },
+              ),
+            },
+            buyer: {
+              defaultValue: k.accountValueNode("payer"),
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            buyerTa: {
+              defaultValue: k.resolverValueNode("resolveBuyerAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("buyer"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
+            listTa: {
+              defaultValue: k.resolverValueNode("resolveListAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.accountValueNode("listState"),
+                  k.accountValueNode("tokenProgram"),
+                  k.accountValueNode("mint"),
+                ],
+              }),
+            },
+            listState: { defaultValue: k.pdaValueNode("listState") },
+            approve: {
+              defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
+                importFrom: "resolvers",
+                dependsOn: [k.accountValueNode("mint")],
+              }),
+            },
+            extraMetas: {
+              defaultValue: k.resolverValueNode(
+                "resolveWnsExtraAccountMetasPda",
+                {
+                  importFrom: "resolvers",
+                  dependsOn: [
+                    k.accountValueNode("mint"),
+                    k.accountValueNode("wnsProgram"),
+                  ],
+                },
+              ),
+            },
+            tokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                "tokenProgram",
+              ),
+            },
+            currencyTokenProgram: {
+              defaultValue: k.publicKeyValueNode(
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                "tokenProgram",
+              ),
+            },
+          },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true,
+              },
+            ),
+          ],
+        },
         closeExpiredListingWns: {
           accounts: {
             owner: {

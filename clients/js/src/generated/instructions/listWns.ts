@@ -85,6 +85,7 @@ export type ListWnsInstruction<
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
+  TAccountCurrency extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -141,6 +142,9 @@ export type ListWnsInstruction<
         ? ReadonlySignerAccount<TAccountCosigner> &
             IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
+      TAccountCurrency extends string
+        ? ReadonlyAccount<TAccountCurrency>
+        : TAccountCurrency,
       ...TRemainingAccounts,
     ]
   >;
@@ -149,7 +153,6 @@ export type ListWnsInstructionData = {
   discriminator: ReadonlyUint8Array;
   amount: bigint;
   expireInSec: Option<bigint>;
-  currency: Option<Address>;
   privateTaker: Option<Address>;
   makerBroker: Option<Address>;
 };
@@ -157,7 +160,6 @@ export type ListWnsInstructionData = {
 export type ListWnsInstructionDataArgs = {
   amount: number | bigint;
   expireInSec?: OptionOrNullable<number | bigint>;
-  currency?: OptionOrNullable<Address>;
   privateTaker?: OptionOrNullable<Address>;
   makerBroker?: OptionOrNullable<Address>;
 };
@@ -168,7 +170,6 @@ export function getListWnsInstructionDataEncoder(): Encoder<ListWnsInstructionDa
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['amount', getU64Encoder()],
       ['expireInSec', getOptionEncoder(getU64Encoder())],
-      ['currency', getOptionEncoder(getAddressEncoder())],
       ['privateTaker', getOptionEncoder(getAddressEncoder())],
       ['makerBroker', getOptionEncoder(getAddressEncoder())],
     ]),
@@ -176,7 +177,6 @@ export function getListWnsInstructionDataEncoder(): Encoder<ListWnsInstructionDa
       ...value,
       discriminator: new Uint8Array([23, 202, 102, 138, 255, 190, 39, 196]),
       expireInSec: value.expireInSec ?? none(),
-      currency: value.currency ?? none(),
       privateTaker: value.privateTaker ?? none(),
       makerBroker: value.makerBroker ?? none(),
     })
@@ -188,7 +188,6 @@ export function getListWnsInstructionDataDecoder(): Decoder<ListWnsInstructionDa
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['amount', getU64Decoder()],
     ['expireInSec', getOptionDecoder(getU64Decoder())],
-    ['currency', getOptionDecoder(getAddressDecoder())],
     ['privateTaker', getOptionDecoder(getAddressDecoder())],
     ['makerBroker', getOptionDecoder(getAddressDecoder())],
   ]);
@@ -221,6 +220,7 @@ export type ListWnsAsyncInput<
   TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
   TAccountCosigner extends string = string,
+  TAccountCurrency extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
   ownerTa?: Address<TAccountOwnerTa>;
@@ -238,9 +238,10 @@ export type ListWnsAsyncInput<
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
+  /** SPL token mint of the currency. */
+  currency?: Address<TAccountCurrency>;
   amount: ListWnsInstructionDataArgs['amount'];
   expireInSec?: ListWnsInstructionDataArgs['expireInSec'];
-  currency?: ListWnsInstructionDataArgs['currency'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
 };
@@ -262,6 +263,7 @@ export async function getListWnsInstructionAsync<
   TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
   TAccountCosigner extends string,
+  TAccountCurrency extends string,
 >(
   input: ListWnsAsyncInput<
     TAccountOwner,
@@ -279,7 +281,8 @@ export async function getListWnsInstructionAsync<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    TAccountCosigner,
+    TAccountCurrency
   >
 ): Promise<
   ListWnsInstruction<
@@ -299,7 +302,8 @@ export async function getListWnsInstructionAsync<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    TAccountCosigner,
+    TAccountCurrency
   >
 > {
   // Program address.
@@ -332,6 +336,7 @@ export async function getListWnsInstructionAsync<
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
+    currency: { value: input.currency ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -421,6 +426,7 @@ export async function getListWnsInstructionAsync<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.currency),
     ],
     programAddress,
     data: getListWnsInstructionDataEncoder().encode(
@@ -443,7 +449,8 @@ export async function getListWnsInstructionAsync<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    TAccountCosigner,
+    TAccountCurrency
   >;
 
   return instruction;
@@ -466,6 +473,7 @@ export type ListWnsInput<
   TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
   TAccountCosigner extends string = string,
+  TAccountCurrency extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
   ownerTa: Address<TAccountOwnerTa>;
@@ -483,9 +491,10 @@ export type ListWnsInput<
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
+  /** SPL token mint of the currency. */
+  currency?: Address<TAccountCurrency>;
   amount: ListWnsInstructionDataArgs['amount'];
   expireInSec?: ListWnsInstructionDataArgs['expireInSec'];
-  currency?: ListWnsInstructionDataArgs['currency'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
 };
@@ -507,6 +516,7 @@ export function getListWnsInstruction<
   TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
   TAccountCosigner extends string,
+  TAccountCurrency extends string,
 >(
   input: ListWnsInput<
     TAccountOwner,
@@ -524,7 +534,8 @@ export function getListWnsInstruction<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    TAccountCosigner,
+    TAccountCurrency
   >
 ): ListWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -543,7 +554,8 @@ export function getListWnsInstruction<
   TAccountWnsProgram,
   TAccountDistributionProgram,
   TAccountExtraMetas,
-  TAccountCosigner
+  TAccountCosigner,
+  TAccountCurrency
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -575,6 +587,7 @@ export function getListWnsInstruction<
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
+    currency: { value: input.currency ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -632,6 +645,7 @@ export function getListWnsInstruction<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.currency),
     ],
     programAddress,
     data: getListWnsInstructionDataEncoder().encode(
@@ -654,7 +668,8 @@ export function getListWnsInstruction<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    TAccountCosigner,
+    TAccountCurrency
   >;
 
   return instruction;
@@ -682,6 +697,8 @@ export type ParsedListWnsInstruction<
     distributionProgram: TAccountMetas[13];
     extraMetas: TAccountMetas[14];
     cosigner?: TAccountMetas[15] | undefined;
+    /** SPL token mint of the currency. */
+    currency?: TAccountMetas[16] | undefined;
   };
   data: ListWnsInstructionData;
 };
@@ -694,7 +711,7 @@ export function parseListWnsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedListWnsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 16) {
+  if (instruction.accounts.length < 17) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -729,6 +746,7 @@ export function parseListWnsInstruction<
       distributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
       cosigner: getNextOptionalAccount(),
+      currency: getNextOptionalAccount(),
     },
     data: getListWnsInstructionDataDecoder().decode(instruction.data),
   };

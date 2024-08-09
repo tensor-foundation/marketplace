@@ -42,6 +42,8 @@ pub struct ListWns {
     pub extra_metas: solana_program::pubkey::Pubkey,
 
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
+    /// SPL token mint of the currency.
+    pub currency: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ListWns {
@@ -57,7 +59,7 @@ impl ListWns {
         args: ListWnsInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(17 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, true,
         ));
@@ -125,6 +127,16 @@ impl ListWns {
                 false,
             ));
         }
+        if let Some(currency) = self.currency {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                currency, false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ListWnsInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -162,7 +174,6 @@ impl Default for ListWnsInstructionData {
 pub struct ListWnsInstructionArgs {
     pub amount: u64,
     pub expire_in_sec: Option<u64>,
-    pub currency: Option<Pubkey>,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
 }
@@ -187,6 +198,7 @@ pub struct ListWnsInstructionArgs {
 ///   13. `[optional]` distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   14. `[]` extra_metas
 ///   15. `[signer, optional]` cosigner
+///   16. `[optional]` currency
 #[derive(Clone, Debug, Default)]
 pub struct ListWnsBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -205,9 +217,9 @@ pub struct ListWnsBuilder {
     distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
+    currency: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -313,6 +325,13 @@ impl ListWnsBuilder {
         self.cosigner = cosigner;
         self
     }
+    /// `[optional account]`
+    /// SPL token mint of the currency.
+    #[inline(always)]
+    pub fn currency(&mut self, currency: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.currency = currency;
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.amount = Some(amount);
@@ -322,12 +341,6 @@ impl ListWnsBuilder {
     #[inline(always)]
     pub fn expire_in_sec(&mut self, expire_in_sec: u64) -> &mut Self {
         self.expire_in_sec = Some(expire_in_sec);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn currency(&mut self, currency: Pubkey) -> &mut Self {
-        self.currency = Some(currency);
         self
     }
     /// `[optional argument]`
@@ -391,11 +404,11 @@ impl ListWnsBuilder {
             )),
             extra_metas: self.extra_metas.expect("extra_metas is not set"),
             cosigner: self.cosigner,
+            currency: self.currency,
         };
         let args = ListWnsInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
             expire_in_sec: self.expire_in_sec.clone(),
-            currency: self.currency.clone(),
             private_taker: self.private_taker.clone(),
             maker_broker: self.maker_broker.clone(),
         };
@@ -437,6 +450,8 @@ pub struct ListWnsCpiAccounts<'a, 'b> {
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// SPL token mint of the currency.
+    pub currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list_wns` CPI instruction.
@@ -475,6 +490,8 @@ pub struct ListWnsCpi<'a, 'b> {
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// SPL token mint of the currency.
+    pub currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListWnsInstructionArgs,
 }
@@ -503,6 +520,7 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
             distribution_program: accounts.distribution_program,
             extra_metas: accounts.extra_metas,
             cosigner: accounts.cosigner,
+            currency: accounts.currency,
             __args: args,
         }
     }
@@ -539,7 +557,7 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(16 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(17 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.owner.key,
             true,
@@ -611,6 +629,17 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
                 false,
             ));
         }
+        if let Some(currency) = self.currency {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *currency.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TENSOR_MARKETPLACE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -627,7 +656,7 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(16 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(17 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ta.clone());
@@ -646,6 +675,9 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
         account_infos.push(self.extra_metas.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
+        }
+        if let Some(currency) = self.currency {
+            account_infos.push(currency.clone());
         }
         remaining_accounts
             .iter()
@@ -679,6 +711,7 @@ impl<'a, 'b> ListWnsCpi<'a, 'b> {
 ///   13. `[]` distribution_program
 ///   14. `[]` extra_metas
 ///   15. `[signer, optional]` cosigner
+///   16. `[optional]` currency
 #[derive(Clone, Debug)]
 pub struct ListWnsCpiBuilder<'a, 'b> {
     instruction: Box<ListWnsCpiBuilderInstruction<'a, 'b>>,
@@ -704,9 +737,9 @@ impl<'a, 'b> ListWnsCpiBuilder<'a, 'b> {
             distribution_program: None,
             extra_metas: None,
             cosigner: None,
+            currency: None,
             amount: None,
             expire_in_sec: None,
-            currency: None,
             private_taker: None,
             maker_broker: None,
             __remaining_accounts: Vec::new(),
@@ -833,6 +866,16 @@ impl<'a, 'b> ListWnsCpiBuilder<'a, 'b> {
         self.instruction.cosigner = cosigner;
         self
     }
+    /// `[optional account]`
+    /// SPL token mint of the currency.
+    #[inline(always)]
+    pub fn currency(
+        &mut self,
+        currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.currency = currency;
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.instruction.amount = Some(amount);
@@ -842,12 +885,6 @@ impl<'a, 'b> ListWnsCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn expire_in_sec(&mut self, expire_in_sec: u64) -> &mut Self {
         self.instruction.expire_in_sec = Some(expire_in_sec);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn currency(&mut self, currency: Pubkey) -> &mut Self {
-        self.instruction.currency = Some(currency);
         self
     }
     /// `[optional argument]`
@@ -906,7 +943,6 @@ impl<'a, 'b> ListWnsCpiBuilder<'a, 'b> {
         let args = ListWnsInstructionArgs {
             amount: self.instruction.amount.clone().expect("amount is not set"),
             expire_in_sec: self.instruction.expire_in_sec.clone(),
-            currency: self.instruction.currency.clone(),
             private_taker: self.instruction.private_taker.clone(),
             maker_broker: self.instruction.maker_broker.clone(),
         };
@@ -968,6 +1004,8 @@ impl<'a, 'b> ListWnsCpiBuilder<'a, 'b> {
                 .expect("extra_metas is not set"),
 
             cosigner: self.instruction.cosigner,
+
+            currency: self.instruction.currency,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -996,9 +1034,9 @@ struct ListWnsCpiBuilderInstruction<'a, 'b> {
     distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

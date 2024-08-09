@@ -42,6 +42,7 @@ import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
   type ResolvedAccount,
 } from '../shared';
@@ -98,8 +99,7 @@ export type DelistWnsInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
@@ -189,7 +189,7 @@ export type DelistWnsAsyncInput<
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -321,7 +321,9 @@ export async function getDelistWnsInstructionAsync<
     };
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);
@@ -427,7 +429,7 @@ export type DelistWnsInput<
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -537,7 +539,9 @@ export function getDelistWnsInstruction<
       'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);
