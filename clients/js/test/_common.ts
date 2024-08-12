@@ -26,8 +26,10 @@ import {
 } from '@tensor-foundation/test-helpers';
 import {
   Condition,
+  findMintProofV2Pda,
   findWhitelistV2Pda,
   getCreateWhitelistV2Instruction,
+  getInitUpdateMintProofV2InstructionAsync,
   Mode,
 } from '@tensor-foundation/whitelist';
 import { ExecutionContext } from 'ava';
@@ -58,6 +60,8 @@ export const ONE_WEEK = 60 * 60 * 24 * 7;
 export const ONE_YEAR = 31557600;
 
 export const ZERO_ACCOUNT_RENT_LAMPORTS = 890880n;
+export const ATA_RENT_LAMPORTS = 2108880n;
+export const APPROVE_ACCOUNT_RENT_LAMPORTS = 1002240n;
 
 export const POOL_SIZE = 452n;
 
@@ -328,4 +332,42 @@ export interface SetupSplTokenTestParams {
   recipient?: Address;
   decimals?: number;
   initialSupply?: number;
+}
+
+export interface InitUpdateMintProofV2Params {
+  client: Client;
+  payer: KeyPairSigner;
+  mint: Address;
+  whitelist: Address;
+  proof: Uint8Array[];
+}
+
+export interface InitUpdateMintProofV2Returns {
+  mintProof: Address;
+}
+
+export async function upsertMintProof({
+  client,
+  payer,
+  mint,
+  whitelist,
+  proof,
+}: InitUpdateMintProofV2Params): Promise<InitUpdateMintProofV2Returns> {
+  const [mintProof] = await findMintProofV2Pda({ mint, whitelist });
+
+  const createMintProofIx = await getInitUpdateMintProofV2InstructionAsync({
+    payer,
+    mint,
+    mintProof,
+    whitelist,
+    proof,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, payer),
+    (tx) => appendTransactionMessageInstruction(createMintProofIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  return { mintProof };
 }

@@ -42,7 +42,7 @@ test('it can buy an NFT', async (t) => {
     await getTestSetup();
 
   // Mint NFT
-  const { mint, extraAccountMetas, distribution } = await createWnsNftInGroup({
+  const { mint, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: nftOwner.address,
@@ -127,7 +127,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     await getTestSetup();
 
   // Mint NFT
-  const { mint, extraAccountMetas, distribution } = await createWnsNftInGroup({
+  const { mint, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: nftOwner.address,
@@ -220,7 +220,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     action: TestAction.List,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, extraAccountMetas, distribution } = nft;
+  const { mint, distribution } = nft;
 
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsInstructionAsync({
@@ -254,7 +254,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     useCosigner: true,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, extraAccountMetas, distribution } = nft;
+  const { mint, distribution } = nft;
 
   const fakeCosigner = await generateKeyPairSigner();
 
@@ -309,7 +309,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     action: TestAction.List,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, extraAccountMetas, distribution } = nft;
+  const { mint, distribution } = nft;
 
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsInstructionAsync({
@@ -345,7 +345,7 @@ test('fees are paid correctly', async (t) => {
   });
 
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, extraAccountMetas, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -438,7 +438,7 @@ test('maker and taker brokers receive correct split', async (t) => {
 
   const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
     signers;
-  const { mint, extraAccountMetas, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -564,7 +564,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   });
 
   const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
-  const { mint, extraAccountMetas, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value

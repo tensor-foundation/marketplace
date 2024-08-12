@@ -37,10 +37,12 @@
   "author": "Tensor Protocol Foundation <maintainers@tensor.foundation>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@noble/hashes": "^1.4.0",
     "@solana/web3.js": "2.0.0-preview.3",
     "@tensor-foundation/resolvers": "^0.1.1",
     "@types/node": "^22.0.0",
-    "bs58": "^6.0.0"
+    "bs58": "^6.0.0",
+    "merkletreejs": "^0.4.0"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
@@ -68,9 +70,6 @@
   "ava": {
     "nodeArguments": [
       "--no-warnings"
-    ],
-    "require": [
-      "@solana/webcrypto-ed25519-polyfill"
     ],
     "typescript": {
       "compile": false,

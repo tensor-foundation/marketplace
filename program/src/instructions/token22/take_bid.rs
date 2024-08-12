@@ -163,6 +163,7 @@ pub fn process_take_bid_t22<'info>(
             );
         }
         Target::Whitelist => {
+            msg!("whitelist target");
             // Ensure the correct whitelist is passed in
             require!(
                 *ctx.accounts.whitelist.key == bid_state.target_id,

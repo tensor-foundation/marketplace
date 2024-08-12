@@ -22,7 +22,7 @@ import {
 } from '../_common.js';
 import { setupT22Test } from './_common.js';
 
-test('it can take a bid on a WNS NFT', async (t) => {
+test('it can take a bid on a T22 NFT', async (t) => {
   const {
     client,
     signers,
