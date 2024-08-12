@@ -14,8 +14,6 @@ import {
 } from '../generated/shared';
 import { findFeeVaultPda, findTreeAuthorityPda } from './pdas';
 
-//---- Fee Vault resolvers
-
 export const resolveFeeVaultPdaFromListState = async ({
   accounts,
 }: {
