@@ -2,7 +2,9 @@ use anchor_spl::{
     token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
-use tensor_toolbox::token_2022::{transfer::transfer_checked, validate_mint};
+use tensor_toolbox::token_2022::{
+    transfer::transfer_checked as tensor_transfer_checked, validate_mint,
+};
 
 use self::program::MarketplaceProgram;
 use crate::*;
@@ -90,7 +92,7 @@ pub fn process_close_expired_listing_t22<'info>(
         transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
     }
 
-    transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1, // supply = 1
         0, // decimals = 0

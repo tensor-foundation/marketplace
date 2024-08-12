@@ -33,6 +33,8 @@ import {
   BROKER_FEE_PCT,
   COMPUTE_300K_IX,
   COMPUTE_500K_IX,
+  DEFAULT_LISTING_PRICE,
+  DEFAULT_SFBP,
   expectCustomError,
   getTestSigners,
   HUNDRED_PCT,
@@ -40,11 +42,7 @@ import {
   TAKER_FEE_BPS,
   TestAction,
 } from '../_common.js';
-import {
-  DEFAULT_LISTING_PRICE,
-  DEFAULT_SFBP,
-  setupWnsTest,
-} from './_common.js';
+import { setupWnsTest } from './_common.js';
 
 test('it can buy an NFT w/ a SPL token', async (t) => {
   const {
@@ -63,12 +61,16 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
   const { mint, distribution } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     maxAmount: listingPrice,
@@ -128,12 +130,16 @@ test('it can buy with a cosigner', async (t) => {
   const { mint, distribution } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     cosigner,
@@ -192,12 +198,16 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
   const { mint, distribution } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     maxAmount: listingPrice - 1n,
@@ -230,12 +240,16 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
   const { mint, distribution } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   // When a buyer buys the NFT.
   let buyIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     // Missing cosigner!
@@ -258,7 +272,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     cosigner: fakeCosigner, // Invalid cosigner
@@ -280,7 +294,6 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    state: listing,
     price: listingPrice,
     splMint,
   } = await setupWnsTest({
@@ -292,12 +305,16 @@ test('buying emits a self-CPI logging event', async (t) => {
   const { mint, distribution } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     maxAmount: listingPrice,
@@ -331,6 +348,9 @@ test('SPL fees are paid correctly', async (t) => {
   const { mint, distribution, sellerFeeBasisPoints } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
   const [feeVaultCurrencyAta] = await findAtaPda({
     owner: feeVault,
     mint: splMint!,
@@ -345,7 +365,7 @@ test('SPL fees are paid correctly', async (t) => {
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     maxAmount: listingPrice,
@@ -424,6 +444,10 @@ test('maker and taker brokers receive correct split', async (t) => {
   const { mint, distribution, sellerFeeBasisPoints } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   const [feeVaultCurrencyAta] = await findAtaPda({
     owner: feeVault,
     mint: splMint!,
@@ -446,7 +470,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     makerBroker: makerBroker.address,
@@ -551,6 +575,10 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   const { mint, distribution, sellerFeeBasisPoints } = nft;
   const buyer = payer;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
   const [feeVaultCurrencyAta] = await findAtaPda({
     owner: feeVault,
     mint: splMint!,
@@ -569,7 +597,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     mint,
     currency: splMint,
     owner: nftOwner.address,
-    payer: buyer.address,
+    payer: buyer,
     buyer: buyer.address,
     distribution,
     takerBroker: takerBroker.address,

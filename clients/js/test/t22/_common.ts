@@ -1,21 +1,22 @@
 import {
+  Address,
   appendTransactionMessageInstruction,
   assertAccountExists,
   fetchEncodedAccount,
+  generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
-import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 import {
   Client,
+  createAndMintTo,
   createDefaultSolanaClient,
   createDefaultTransaction,
   createT22NftWithRoyalties,
   signAndSendTransaction,
   T22NftReturn,
   TOKEN22_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
-import { ExecutionContext } from 'ava';
-import { Address } from 'cluster';
 import {
   fetchBidStateFromSeeds,
   findBidStatePda,
@@ -27,6 +28,9 @@ import {
 import {
   assertTokenNftOwnedBy,
   COMPUTE_300K_IX,
+  DEFAULT_BID_PRICE,
+  DEFAULT_LISTING_PRICE,
+  DEFAULT_SFBP,
   getAndFundFeeVault,
   getTestSigners,
   SetupTestParams,
@@ -38,25 +42,21 @@ export interface T22Test {
   client: Client;
   signers: TestSigners;
   nft: T22NftReturn & { sellerFeeBasisPoints: bigint };
-  listing: Address | undefined;
-  listingPrice: bigint | undefined;
-  bid: Address | undefined;
-  bidAmount: number | undefined;
+  state: Address;
+  price: bigint;
   feeVault: Address;
+  splMint?: Address;
 }
-
-const DEFAULT_LISTING_PRICE = 100_000_000n;
-const DEFAULT_BID_AMOUNT = 1;
-const DEFAULT_SFBP = 500n;
 
 export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
   const {
     t,
     action,
     listingPrice = DEFAULT_LISTING_PRICE,
-    bidAmount = DEFAULT_BID_AMOUNT,
+    bidPrice = DEFAULT_BID_PRICE,
     useCosigner = false,
     useMakerBroker = false,
+    useSplToken = false,
   } = params;
 
   const client = createDefaultSolanaClient();
@@ -66,6 +66,23 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
     signers;
 
   const sellerFeeBasisPoints = DEFAULT_SFBP;
+
+  let splMint;
+
+  if (useSplToken) {
+    const mintAuthority = await generateKeyPairSigner();
+
+    // Create SPL token and fund the buyer with it.
+    [{ mint: splMint }] = await createAndMintTo({
+      client,
+      payer,
+      mintAuthority,
+      recipient: payer.address,
+      decimals: 0,
+      initialSupply: 1_000_000_000n,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    });
+  }
 
   // Mint NFT
   const nft = await createT22NftWithRoyalties({
@@ -100,6 +117,7 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
         amount: listingPrice,
         cosigner: useCosigner ? cosigner : undefined,
         makerBroker: useMakerBroker ? makerBroker.address : undefined,
+        currency: splMint,
         transferHookAccounts: extraAccountMetas.map((a) => a.address),
       });
 
@@ -130,9 +148,11 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
       // Bid on the NFT.
       const bidIx = await getBidInstructionAsync({
         owner: buyer,
-        amount: bidAmount,
+        amount: bidPrice,
         target: Target.AssetId,
         targetId: mint,
+        makerBroker: useMakerBroker ? makerBroker.address : undefined,
+        currency: splMint,
         cosigner: useCosigner ? cosigner : undefined,
       });
 
@@ -155,10 +175,10 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
       t.like(bidState, {
         data: {
           owner: buyer.address,
-          amount: 1n,
+          amount: bidPrice,
           target: Target.AssetId,
           targetId: mint,
-          cosigner: null,
+          cosigner: useCosigner ? cosigner : null,
         },
       });
       break;
@@ -167,7 +187,8 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
       throw new Error(`Unknown action: ${action}`);
   }
 
-  const state = listing ?? bid;
+  const state = listing ? listing! : bid!;
+  const price = listingPrice ?? bidPrice;
 
   // Derives fee vault from state account and airdrops keep-alive rent to it.
   const feeVault = await getAndFundFeeVault(client, state!);
@@ -176,34 +197,33 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
     client,
     signers,
     nft: { ...nft, sellerFeeBasisPoints },
-    bid: bid ?? undefined,
-    bidAmount,
-    listing: listing ?? undefined,
-    listingPrice,
+    state,
+    price,
     feeVault,
+    splMint,
   };
 }
 
-// Asserts that the T22 listing token acccount is closed.
-export async function assertT22ListingTokenClosed(
-  t: ExecutionContext,
-  test: T22Test
-) {
-  const { client, listing, nft } = test;
-  const { mint } = nft;
+// // Asserts that the T22 listing token acccount is closed.
+// export async function assertT22ListingTokenClosed(
+//   t: ExecutionContext,
+//   test: T22Test
+// ) {
+//   const { client, listing, nft } = test;
+//   const { mint } = nft;
 
-  t.false(
-    (
-      await fetchEncodedAccount(
-        client.rpc,
-        (
-          await findAtaPda({
-            mint,
-            owner: listing!,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
-          })
-        )[0]
-      )
-    ).exists
-  );
-}
+//   t.false(
+//     (
+//       await fetchEncodedAccount(
+//         client.rpc,
+//         (
+//           await findAtaPda({
+//             mint,
+//             owner: listing!,
+//             tokenProgramId: TOKEN22_PROGRAM_ID,
+//           })
+//         )[0]
+//       )
+//     ).exists
+//   );
+// }

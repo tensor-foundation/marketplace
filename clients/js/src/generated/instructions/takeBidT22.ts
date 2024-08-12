@@ -61,7 +61,7 @@ export type TakeBidT22Instruction<
   TAccountMargin extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends
     | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountOwnerTa extends string | IAccountMeta<string> = string,
@@ -81,7 +81,9 @@ export type TakeBidT22Instruction<
     | string
     | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountMintProof extends string | IAccountMeta<string> = string,
+  TAccountMintProof extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -231,7 +233,7 @@ export type TakeBidT22AsyncInput<
   escrowProgram?: Address<TAccountEscrowProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-  mintProof: Address<TAccountMintProof>;
+  mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidT22InstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidT22InstructionExtraArgs['tokenStandard'];
@@ -365,7 +367,7 @@ export async function getTakeBidT22InstructionAsync<
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -398,6 +400,10 @@ export async function getTakeBidT22InstructionAsync<
   if (!accounts.escrowProgram.value) {
     accounts.escrowProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.mintProof.value) {
+    accounts.mintProof.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
@@ -511,7 +517,7 @@ export type TakeBidT22Input<
   escrowProgram?: Address<TAccountEscrowProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-  mintProof: Address<TAccountMintProof>;
+  mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidT22InstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidT22InstructionExtraArgs['tokenStandard'];
@@ -628,7 +634,7 @@ export function getTakeBidT22Instruction<
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -649,6 +655,10 @@ export function getTakeBidT22Instruction<
   if (!accounts.escrowProgram.value) {
     accounts.escrowProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.mintProof.value) {
+    accounts.mintProof.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);

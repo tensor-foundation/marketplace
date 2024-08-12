@@ -11,7 +11,6 @@ import {
   fixEncoderSize,
   getBytesEncoder,
   type Address,
-  type ReadonlyUint8Array,
 } from '@solana/web3.js';
 import {
   type ParsedBidInstruction,
@@ -62,9 +61,9 @@ export enum TensorMarketplaceAccount {
 }
 
 export function identifyTensorMarketplaceAccount(
-  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+  account: { data: Uint8Array } | Uint8Array
 ): TensorMarketplaceAccount {
-  const data = 'data' in account ? account.data : account;
+  const data = account instanceof Uint8Array ? account : account.data;
   if (
     containsBytes(
       data,
@@ -143,9 +142,10 @@ export enum TensorMarketplaceInstruction {
 }
 
 export function identifyTensorMarketplaceInstruction(
-  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+  instruction: { data: Uint8Array } | Uint8Array
 ): TensorMarketplaceInstruction {
-  const data = 'data' in instruction ? instruction.data : instruction;
+  const data =
+    instruction instanceof Uint8Array ? instruction : instruction.data;
   if (
     containsBytes(
       data,

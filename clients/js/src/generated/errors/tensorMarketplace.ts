@@ -6,14 +6,6 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
-import {
-  isProgramError,
-  type Address,
-  type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
-  type SolanaError,
-} from '@solana/web3.js';
-import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-
 /** ArithmeticError: arithmetic error */
 export const TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR = 0x17d4; // 6100
 /** ExpiryTooLarge: expiry too large */
@@ -104,6 +96,8 @@ export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER = 0x17fe; // 6142
 export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT = 0x17ff; // 6143
 /** InvalidTokenAccount: invalidtoken account */
 export const TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT = 0x1800; // 6144
+/** MissingCreatorATA: missing creator ATA */
+export const TENSOR_MARKETPLACE_ERROR__MISSING_CREATOR_A_T_A = 0x1801; // 6145
 
 export type TensorMarketplaceError =
   | typeof TENSOR_MARKETPLACE_ERROR__ARITHMETIC_ERROR
@@ -141,6 +135,7 @@ export type TensorMarketplaceError =
   | typeof TENSOR_MARKETPLACE_ERROR__MISSING_BROKER
   | typeof TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT
   | typeof TENSOR_MARKETPLACE_ERROR__MISSING_COLLECTION
+  | typeof TENSOR_MARKETPLACE_ERROR__MISSING_CREATOR_A_T_A
   | typeof TENSOR_MARKETPLACE_ERROR__MISSING_FVC
   | typeof TENSOR_MARKETPLACE_ERROR__OPTIONAL_ROYALTIES_NOT_YET_ENABLED
   | typeof TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH
@@ -192,6 +187,7 @@ if (process.env.NODE_ENV !== 'production') {
     [TENSOR_MARKETPLACE_ERROR__MISSING_BROKER]: `missing broker account`,
     [TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT]: `missing broker token account`,
     [TENSOR_MARKETPLACE_ERROR__MISSING_COLLECTION]: `metadata missing collection`,
+    [TENSOR_MARKETPLACE_ERROR__MISSING_CREATOR_A_T_A]: `missing creator ATA`,
     [TENSOR_MARKETPLACE_ERROR__MISSING_FVC]: `creator array missing first verified creator`,
     [TENSOR_MARKETPLACE_ERROR__OPTIONAL_ROYALTIES_NOT_YET_ENABLED]: `optional royalties not yet enabled`,
     [TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH]: `price mismatch`,
@@ -215,22 +211,4 @@ export function getTensorMarketplaceErrorMessage(
   }
 
   return 'Error message not available in production bundles.';
-}
-
-export function isTensorMarketplaceError<
-  TProgramErrorCode extends TensorMarketplaceError,
->(
-  error: unknown,
-  transactionMessage: {
-    instructions: Record<number, { programAddress: Address }>;
-  },
-  code?: TProgramErrorCode
-): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
-  Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
-  return isProgramError<TProgramErrorCode>(
-    error,
-    transactionMessage,
-    TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    code
-  );
 }

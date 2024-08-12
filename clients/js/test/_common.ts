@@ -22,7 +22,7 @@ import {
   generateKeyPairSignerWithSol,
   ONE_SOL,
   signAndSendTransaction,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
 import {
   Condition,
@@ -60,6 +60,10 @@ export const ONE_YEAR = 31557600;
 export const ZERO_ACCOUNT_RENT_LAMPORTS = 890880n;
 
 export const POOL_SIZE = 452n;
+
+export const DEFAULT_LISTING_PRICE = 100_000_000n;
+export const DEFAULT_BID_PRICE = 100_000_000n;
+export const DEFAULT_SFBP = 500n;
 
 export const TAKER_FEE_BPS = 200n;
 export const BROKER_FEE_PCT = 50n;

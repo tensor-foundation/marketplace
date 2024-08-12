@@ -8,7 +8,9 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account,
-    token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
+    },
     TCreator,
 };
 use tensor_vipers::Validate;
@@ -248,7 +250,7 @@ pub fn process_take_bid_t22<'info>(
         (vec![], vec![], 0)
     };
 
-    transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
+    tensor_transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,

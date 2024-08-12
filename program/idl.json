@@ -2231,12 +2231,12 @@
           "isSigner": false
         },
         {
-          "name": "listTa",
+          "name": "listState",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "listState",
+          "name": "listTa",
           "isMut": true,
           "isSigner": false
         },
@@ -4837,6 +4837,11 @@
       "code": 6144,
       "name": "InvalidTokenAccount",
       "msg": "invalidtoken account"
+    },
+    {
+      "code": 6145,
+      "name": "MissingCreatorATA",
+      "msg": "missing creator ATA"
     }
   ],
   "metadata": {

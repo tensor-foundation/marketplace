@@ -1,16 +1,15 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_2022::Token2022,
-    token_interface::{
-        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
-        TransferChecked,
-    },
+    associated_token::{get_associated_token_address_with_program_id, AssociatedToken},
+    token_2022::{Token2022, TransferChecked},
+    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
-    token_2022::{validate_mint, RoyaltyInfo},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
+    },
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, TCreator, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
@@ -54,13 +53,6 @@ pub struct BuyT22Spl<'info> {
 
     #[account(
         mut,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(
-        mut,
         close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
@@ -71,6 +63,14 @@ pub struct BuyT22Spl<'info> {
         constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = list_state,
+        associated_token::token_program = token_program,
+    )]
+    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// T22 asset mint.
     pub mint: Box<InterfaceAccount<'info, Mint>>,
@@ -157,9 +157,9 @@ pub struct BuyT22Spl<'info> {
     pub cosigner: Option<Signer<'info>>,
     //
     // ----------------------------------------------------- Remaining accounts
-    //
     // 1. creators (1-5)
     // 2. creators' atas (1-5)
+    // 3. [0..n] remaining accounts for royalties transfer hook
 }
 
 impl<'info> Validate<'info> for BuyT22Spl<'info> {
@@ -201,7 +201,8 @@ impl<'info> Validate<'info> for BuyT22Spl<'info> {
 
 impl<'info> BuyT22Spl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
-        transfer_checked(
+        msg!("transferring currency ");
+        tensor_transfer_checked(
             CpiContext::new(
                 self.currency_token_program.to_account_info(),
                 TransferChecked {
@@ -268,30 +269,54 @@ pub fn process_buy_t22_spl<'info, 'b>(
     }) = &royalties
     {
         // add remaining accounts to the transfer cpi
-        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts[2..].to_vec());
 
         let mut creator_infos = Vec::with_capacity(creators.len());
+        let mut creator_ta_infos = Vec::with_capacity(creators.len());
         let mut creator_data = Vec::with_capacity(creators.len());
+
         // filter out the creators accounts; the transfer will fail if there
         // are missing creator accounts – i.e., the creator is on the `creator_data`
         // but the account is not in the `creator_infos`
-        creators.iter().for_each(|c| {
+        for c in creators.iter() {
             let creator = TCreator {
                 address: c.0,
                 share: c.1,
                 verified: true,
             };
 
+            // Derive the creator ATA address. We require it to be ATA currently to avoid having to
+            // deserialize every possible token account in the remaining accounts.
+            let creator_ata = get_associated_token_address_with_program_id(
+                &c.0,
+                &ctx.accounts.currency.key(),
+                &ctx.accounts.currency_token_program.key(),
+            );
+
+            // First check if the creator is in the remaining accounts.
             if let Some(account) = ctx
                 .remaining_accounts
                 .iter()
                 .find(|account| &creator.address == account.key)
             {
+                // Add it to the creator infos.
                 creator_infos.push(account.clone());
+
+                // Then check if the creator ATA is in the remaining accounts.
+                if let Some(account) = ctx
+                    .remaining_accounts
+                    .iter()
+                    .find(|account| &creator_ata == account.key)
+                {
+                    // Add it to the creator ATA infos.
+                    creator_ta_infos.push(account.clone());
+                } else {
+                    return Err(TcompError::MissingCreatorATA.into());
+                }
             }
 
             creator_data.push(creator);
-        });
+        }
 
         // No optional royalties.
         let creator_fee = calc_creators_fee(*seller_fee, amount, None, Some(100))?;
@@ -302,7 +327,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
     };
 
     // Invoke the transfer.
-    transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1,
         0,

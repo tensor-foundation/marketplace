@@ -6,21 +6,23 @@ import {
 } from '@solana/web3.js';
 import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 import {
+  assertTokenNftOwnedBy,
+  createAta,
   createDefaultTransaction,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
 import {
-  getBuyT22InstructionAsync,
+  getBuyT22SplInstructionAsync,
   TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
   TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH,
 } from '../../src/index.js';
 import {
   assertTcompNoop,
-  assertTokenNftOwnedBy,
   BASIS_POINTS,
   BROKER_FEE_PCT,
+  COMPUTE_500K_IX,
   expectCustomError,
   HUNDRED_PCT,
   MAKER_BROKER_FEE_PCT,
@@ -29,38 +31,55 @@ import {
 } from '../_common.js';
 import { setupT22Test } from './_common.js';
 
-test('it can buy an NFT', async (t) => {
+test('it can buy an NFT w/ a SPL token', async (t) => {
   const {
     client,
     signers,
     nft,
     state: listing,
     price: listingPrice,
+    splMint,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { payer, buyer, nftOwner, nftUpdateAuthority } = signers;
   const { mint, extraAccountMetas } = nft;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
+  const nftUpdateAuthorityCurrencyAta = await createAta({
+    client,
+    payer,
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
+
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer: payer,
+    buyer: buyer.address,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   // Then the listing account should have been closed.
-  t.false((await fetchEncodedAccount(client.rpc, listing!)).exists);
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 
   // And the listing token account should have been closed.
   t.false(
@@ -70,7 +89,7 @@ test('it can buy an NFT', async (t) => {
         (
           await findAtaPda({
             mint,
-            owner: listing!,
+            owner: listing,
             tokenProgramId: TOKEN22_PROGRAM_ID,
           })
         )[0]
@@ -84,44 +103,59 @@ test('it can buy an NFT', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgram: TOKEN22_PROGRAM_ID,
+    tokenProgramAddress: TOKEN22_PROGRAM_ID,
   });
 });
 
-test('it can buy an NFT with a cosigner', async (t) => {
+test('it can buy with a cosigner', async (t) => {
   const {
     client,
     signers,
     nft,
     state: listing,
     price: listingPrice,
+    splMint,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
     useCosigner: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
+  const { payer, buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
   const { mint, extraAccountMetas } = nft;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
+
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer: payer,
+    buyer: buyer.address,
     cosigner,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   // Then the listing account should have been closed.
-  t.false((await fetchEncodedAccount(client.rpc, listing!)).exists);
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 
   // And the listing token account should have been closed.
   t.false(
@@ -131,7 +165,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
         (
           await findAtaPda({
             mint,
-            owner: listing!,
+            owner: listing,
             tokenProgramId: TOKEN22_PROGRAM_ID,
           })
         )[0]
@@ -145,7 +179,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgram: TOKEN22_PROGRAM_ID,
+    tokenProgramAddress: TOKEN22_PROGRAM_ID,
   });
 });
 
@@ -155,27 +189,40 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     signers,
     nft,
     price: listingPrice,
+    splMint,
   } = await setupT22Test({
     t,
     action: TestAction.List,
-    useCosigner: true,
+    useSplToken: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
+  const { payer, buyer, nftOwner, nftUpdateAuthority } = signers;
   const { mint, extraAccountMetas } = nft;
 
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
+
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice! - 1n,
-    cosigner,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer: payer,
+    buyer: buyer.address,
+    maxAmount: listingPrice - 1n,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   const promise = pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -189,47 +236,68 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     signers,
     nft,
     price: listingPrice,
+    splMint,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
     useCosigner: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { payer, nftOwner, nftUpdateAuthority } = signers;
   const { mint, extraAccountMetas } = nft;
+  const buyer = payer;
 
-  const fakeCosigner = await generateKeyPairSigner();
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
 
-  let buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
+
+  // When a buyer buys the NFT.
+  let buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice! - 1n,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
     // Missing cosigner!
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   let promise = pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   await expectCustomError(t, promise, TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER);
 
+  const fakeCosigner = await generateKeyPairSigner();
+
   // When a buyer buys the NFT.
-  buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice! - 1n,
-    cosigner: fakeCosigner,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
+    cosigner: fakeCosigner, // Invalid cosigner
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   promise = pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -243,25 +311,41 @@ test('buying emits a self-CPI logging event', async (t) => {
     signers,
     nft,
     price: listingPrice,
+    splMint,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { payer, nftOwner, nftUpdateAuthority } = signers;
   const { mint, extraAccountMetas } = nft;
+  const buyer = payer;
+
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
+
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
 
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   const sig = await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -269,43 +353,54 @@ test('buying emits a self-CPI logging event', async (t) => {
   assertTcompNoop(t, client, sig);
 });
 
-test('fees are paid correctly', async (t) => {
+test('SPL fees are paid correctly', async (t) => {
   const {
     client,
     signers,
     nft,
-    state: maybeListing,
+    state: listing,
     price: listingPrice,
+    splMint,
     feeVault,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
   });
-  const listing = maybeListing!;
-
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { payer, nftOwner, nftUpdateAuthority } = signers;
   const { mint, extraAccountMetas, sellerFeeBasisPoints } = nft;
+  const buyer = payer;
 
-  const startingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
-  );
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
 
-  const startingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
+  const [feeVaultCurrencyAta] = await findAtaPda({
+    owner: feeVault,
+    mint: splMint!,
+  });
+
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
 
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -329,33 +424,35 @@ test('fees are paid correctly', async (t) => {
     ).exists
   );
 
-  // And the buyer has the NFT.
+  // The buyer has the NFT.
   await assertTokenNftOwnedBy({
     t,
     client,
     mint,
     owner: buyer.address,
-    tokenProgram: TOKEN22_PROGRAM_ID,
+    tokenProgramAddress: TOKEN22_PROGRAM_ID,
   });
 
-  const endingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
+  const feeVaultBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(feeVaultCurrencyAta).send()).value
+      .uiAmount!
+  );
+
+  const creatorBalance = BigInt(
+    (
+      await client.rpc
+        .getTokenAccountBalance(nftUpdateAuthorityCurrencyAta)
+        .send()
+    ).value.uiAmount!
   );
 
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
-  t.assert(
-    endingFeeVaultBalance ===
-      startingFeeVaultBalance + (listingPrice! * TAKER_FEE_BPS) / BASIS_POINTS
-  );
+  t.assert(feeVaultBalance === (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS);
 
-  // Check that the royalties were paid correctly
-  const endingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
+  // Royalties are paid to the creator ATA.
   t.assert(
-    endingUpdateAuthorityBalance ===
-      startingUpdateAuthorityBalance +
-        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
+    creatorBalance ===
+      BigInt(listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -364,50 +461,61 @@ test('maker and taker brokers receive correct split', async (t) => {
     client,
     signers,
     nft,
-    state: maybeListing,
+    state: listing,
     price: listingPrice,
+    splMint,
     feeVault,
   } = await setupT22Test({
     t,
     action: TestAction.List,
+    useSplToken: true,
     useMakerBroker: true,
   });
-  const listing = maybeListing!;
-
-  const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
+  const { payer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
     signers;
-  const { mint, extraAccountMetas, sellerFeeBasisPoints } = nft;
+  const { mint, extraAccountMetas } = nft;
+  const buyer = payer;
 
-  const startingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
-  );
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
 
-  const startingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
 
-  const startingMakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(makerBroker.address).send()).value
-  );
-
-  const startingTakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(takerBroker.address).send()).value
-  );
+  const [feeVaultCurrencyAta] = await findAtaPda({
+    owner: feeVault,
+    mint: splMint!,
+  });
+  const [makerBrokerCurrencyAta] = await findAtaPda({
+    owner: makerBroker.address,
+    mint: splMint,
+  });
+  const [takerBrokerCurrencyAta] = await findAtaPda({
+    owner: takerBroker.address,
+    mint: splMint,
+  });
 
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -431,17 +539,28 @@ test('maker and taker brokers receive correct split', async (t) => {
     ).exists
   );
 
-  // And the buyer has the NFT.
+  // The buyer has the NFT.
   await assertTokenNftOwnedBy({
     t,
     client,
     mint,
     owner: buyer.address,
-    tokenProgram: TOKEN22_PROGRAM_ID,
+    tokenProgramAddress: TOKEN22_PROGRAM_ID,
   });
 
-  const endingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
+  const feeVaultBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(feeVaultCurrencyAta).send()).value
+      .uiAmount!
+  );
+
+  const makerBrokerBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(makerBrokerCurrencyAta).send())
+      .value.uiAmount!
+  );
+
+  const takerBrokerBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(takerBrokerCurrencyAta).send())
+      .value.uiAmount!
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
@@ -455,34 +574,12 @@ test('maker and taker brokers receive correct split', async (t) => {
   const takerBrokerFee = brokerFee! - makerBrokerFee;
 
   // Fee vault receives whatever brokers don't receive, currently half of the taker fee.
-  t.assert(endingFeeVaultBalance === startingFeeVaultBalance + protocolFee);
+  t.assert(feeVaultBalance === protocolFee);
 
-  // Royalties were paid correctly.
-  const endingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
-  t.assert(
-    endingUpdateAuthorityBalance ===
-      startingUpdateAuthorityBalance +
-        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
-  );
-
-  const endingMakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(makerBroker.address).send()).value
-  );
-
-  const endingTakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(takerBroker.address).send()).value
-  );
-
-  t.assert(
-    endingMakerBrokerBalance === startingMakerBrokerBalance + makerBrokerFee
-  );
+  t.assert(makerBrokerBalance === makerBrokerFee);
 
   // Taker broker receives whatever is left of the protocol fee.
-  t.assert(
-    endingTakerBrokerBalance === startingTakerBrokerBalance + takerBrokerFee
-  );
+  t.assert(takerBrokerBalance === takerBrokerFee);
 });
 
 test('taker broker receives correct split even if maker broker is not set', async (t) => {
@@ -490,45 +587,54 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     client,
     signers,
     nft,
-    state: maybeListing,
+    state: listing,
     price: listingPrice,
+    splMint,
     feeVault,
   } = await setupT22Test({
     t,
     action: TestAction.List,
-    // not setting maker broker
+    useSplToken: true,
   });
-  const listing = maybeListing!;
+  const { payer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
+  const { mint, extraAccountMetas } = nft;
+  const buyer = payer;
 
-  const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
-  const { mint, extraAccountMetas, sellerFeeBasisPoints } = nft;
+  if (!splMint) {
+    throw new Error('splMint is undefined');
+  }
 
-  const startingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
-  );
+  const [nftUpdateAuthorityCurrencyAta] = await findAtaPda({
+    mint: splMint,
+    owner: nftUpdateAuthority.address,
+  });
 
-  const startingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
-
-  const startingTakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(takerBroker.address).send()).value
-  );
+  const [feeVaultCurrencyAta] = await findAtaPda({
+    owner: feeVault,
+    mint: splMint!,
+  });
+  const [takerBrokerCurrencyAta] = await findAtaPda({
+    owner: takerBroker.address,
+    mint: splMint,
+  });
 
   // When a buyer buys the NFT.
-  const buyIx = await getBuyT22InstructionAsync({
-    owner: nftOwner.address,
-    payer: buyer,
+  const buyIx = await getBuyT22SplInstructionAsync({
     mint,
-    maxAmount: listingPrice!,
-    // not passing in maker broker
-    takerBroker: takerBroker.address, // still passing in taker broker
+    currency: splMint,
+    owner: nftOwner.address,
+    payer,
+    buyer: buyer.address,
+    takerBroker: takerBroker.address,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
+    creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
   await pipe(
     await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
     (tx) => appendTransactionMessageInstruction(buyIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -552,17 +658,23 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     ).exists
   );
 
-  // And the buyer has the NFT.
+  // The buyer has the NFT.
   await assertTokenNftOwnedBy({
     t,
     client,
     mint,
     owner: buyer.address,
-    tokenProgram: TOKEN22_PROGRAM_ID,
+    tokenProgramAddress: TOKEN22_PROGRAM_ID,
   });
 
-  const endingFeeVaultBalance = BigInt(
-    (await client.rpc.getBalance(feeVault).send()).value
+  const feeVaultBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(feeVaultCurrencyAta).send()).value
+      .uiAmount!
+  );
+
+  const takerBrokerBalance = BigInt(
+    (await client.rpc.getTokenAccountBalance(takerBrokerCurrencyAta).send())
+      .value.uiAmount!
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
@@ -575,28 +687,9 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   // Taker broker receives whatever is left of the broker fee.
   const takerBrokerFee = brokerFee! - makerBrokerFee;
 
-  // Fee vault receives it's split of the protocol fee and also the maker broker fee since it's not set.'
-  t.assert(
-    endingFeeVaultBalance ===
-      startingFeeVaultBalance + protocolFee + makerBrokerFee
-  );
+  // Fee vault receives it's split of the protocol fee and also the maker broker fee since it's not set.
+  t.assert(feeVaultBalance === protocolFee + makerBrokerFee);
 
-  // Royalties were paid correctly.
-  const endingUpdateAuthorityBalance = (
-    await client.rpc.getBalance(nftUpdateAuthority.address).send()
-  ).value;
-  t.assert(
-    endingUpdateAuthorityBalance ===
-      startingUpdateAuthorityBalance +
-        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
-  );
-
-  const endingTakerBrokerBalance = BigInt(
-    (await client.rpc.getBalance(takerBroker.address).send()).value
-  );
-
-  // Taker broker should still receive its share.
-  t.assert(
-    endingTakerBrokerBalance === startingTakerBrokerBalance + takerBrokerFee
-  );
+  // Taker broker still receives its share.
+  t.assert(takerBrokerBalance === takerBrokerFee);
 });

@@ -1,4 +1,5 @@
 import {
+  Address,
   appendTransactionMessageInstruction,
   assertAccountExists,
   fetchEncodedAccount,
@@ -16,7 +17,6 @@ import {
   TOKEN22_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
-import { Address } from 'cluster';
 import {
   fetchBidStateFromSeeds,
   findBidStatePda,
@@ -28,6 +28,9 @@ import {
 import {
   assertTokenNftOwnedBy,
   COMPUTE_300K_IX,
+  DEFAULT_BID_PRICE,
+  DEFAULT_LISTING_PRICE,
+  DEFAULT_SFBP,
   getAndFundFeeVault,
   getTestSigners,
   SetupTestParams,
@@ -51,10 +54,6 @@ export interface WnsNft {
   distribution: Address;
   sellerFeeBasisPoints: bigint;
 }
-
-export const DEFAULT_LISTING_PRICE = 100_000_000n;
-export const DEFAULT_BID_PRICE = 100_000_000n;
-export const DEFAULT_SFBP = 500n;
 
 export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   const {

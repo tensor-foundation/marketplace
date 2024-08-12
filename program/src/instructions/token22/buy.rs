@@ -6,7 +6,9 @@ use anchor_spl::{
 };
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
-    token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
+    },
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
@@ -97,7 +99,9 @@ pub struct BuyT22<'info> {
 
     pub cosigner: Option<Signer<'info>>,
     //
-    // ---- [0..n] remaining accounts for royalties transfer hook
+    // ----------------------------------------------------- Remaining accounts
+    // 1. creators (1-5)
+    // 2. [0..n] remaining accounts for royalties transfer hook
 }
 
 impl<'info> Validate<'info> for BuyT22<'info> {
@@ -213,7 +217,7 @@ pub fn process_buy_t22<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-    transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1,
         0,

@@ -20,10 +20,6 @@ pub fn find_neutral_broker() -> (Pubkey, u8) {
     Pubkey::find_program_address(&[], &crate::ID)
 }
 
-pub fn maker_broker_is_whitelisted(maker_broker: Option<Pubkey>) -> bool {
-    maker_broker.is_none() || maker_broker == Some(tensor_toolbox::gameshift::ID)
-}
-
 /// Checks if cosigner is deliberately passed in or if it should be a remaining account instead.
 /// Used whenever an optional cosigner account was added to an instruction with remaining accounts
 /// to avoid breaking changes. Validates the cosigner account against if one is expected and returns an Option storing

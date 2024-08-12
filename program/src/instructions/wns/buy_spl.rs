@@ -3,15 +3,17 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_2022::Token2022,
     token_interface::{
-        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
-        TransferChecked,
+        close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked,
     },
 };
 use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked,
+        wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
+    },
     CalcFeesArgs, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
@@ -182,12 +184,12 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
         )?;
 
         // Check that the payer currency token account is valid.
-        // assert_token_account(
-        //     &self.payer_currency_ta.to_account_info(),
-        //     &self.currency.key(),
-        //     &self.payer.key(),
-        //     &self.currency_token_program.key(),
-        // )?;
+        assert_token_account(
+            &self.payer_currency_ta.to_account_info(),
+            &self.currency.key(),
+            &self.payer.key(),
+            &self.currency_token_program.key(),
+        )?;
 
         assert_token_account(
             &self.list_ta.to_account_info(),
@@ -259,7 +261,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
 
 impl<'info> BuyWnsSpl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
-        transfer_checked(
+        tensor_transfer_checked(
             CpiContext::new(
                 self.currency_token_program.to_account_info(),
                 TransferChecked {
@@ -355,7 +357,6 @@ pub fn process_buy_wns_spl<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyWnsSpl<'info>>,
     max_amount: u64,
 ) -> Result<()> {
-    msg!("buy_ta: {:?}", ctx.accounts.buyer_ta.key());
     // validate the mint
     let list_state = &ctx.accounts.list_state;
 
@@ -419,7 +420,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
         },
     );
 
-    tensor_toolbox::token_2022::transfer::transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi
             .with_remaining_accounts(vec![
                 ctx.accounts.wns_program.to_account_info(),

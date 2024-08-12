@@ -4,7 +4,9 @@ use anchor_spl::{
     token_2022::{Token2022, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
-use tensor_toolbox::token_2022::{transfer::transfer_checked, validate_mint};
+use tensor_toolbox::token_2022::{
+    transfer::transfer_checked as tensor_transfer_checked, validate_mint,
+};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -91,7 +93,7 @@ pub fn process_delist_t22<'info>(ctx: Context<'_, '_, '_, 'info, DelistT22<'info
         transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
     }
 
-    transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1, // supply = 1
         0, // decimals = 0

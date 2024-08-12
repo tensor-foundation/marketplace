@@ -48,7 +48,6 @@
     "@solana-program/token": "0.1.4",
     "@solana/eslint-config-solana": "^3.0.0",
     "@solana/web3.js": "2.0.0-preview.3",
-    "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
     "@tensor-foundation/mpl-core": "^0.1.0",
     "@tensor-foundation/mpl-token-metadata": "^0.1.0",
     "@tensor-foundation/test-helpers": "^0.2.0",

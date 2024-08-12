@@ -138,4 +138,7 @@ pub enum TcompError {
 
     #[msg("invalidtoken account")]
     InvalidTokenAccount = 144,
+
+    #[msg("missing creator ATA")]
+    MissingCreatorATA = 145,
 }

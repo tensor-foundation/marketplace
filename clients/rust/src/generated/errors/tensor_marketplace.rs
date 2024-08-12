@@ -145,6 +145,9 @@ pub enum TensorMarketplaceError {
     /// 6144 - invalidtoken account
     #[error("invalidtoken account")]
     InvalidTokenAccount = 0x1800,
+    /// 6145 - missing creator ATA
+    #[error("missing creator ATA")]
+    MissingCreatorATA = 0x1801,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

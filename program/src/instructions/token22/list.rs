@@ -5,7 +5,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount},
 };
 use tensor_toolbox::{
-    token_2022::{transfer::transfer_checked, validate_mint},
+    token_2022::{transfer::transfer_checked as tensor_transfer_checked, validate_mint},
     NullableOption,
 };
 
@@ -91,7 +91,7 @@ pub fn process_list_t22<'info>(
         transfer_cpi = transfer_cpi.with_remaining_accounts(remaining_accounts);
     }
 
-    transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
+    tensor_transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
 
     // creates the listing state
 

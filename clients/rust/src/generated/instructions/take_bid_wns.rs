@@ -236,7 +236,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` margin
-///   7. `[optional]` whitelist (default to `11111111111111111111111111111111`)
+///   7. `[optional]` whitelist (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` owner_ta
@@ -246,7 +246,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   14. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   15. `[optional]` escrow_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   16. `[signer, optional]` cosigner
-///   17. `[]` mint_proof
+///   17. `[optional]` mint_proof (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   18. `[writable]` rent_destination
 ///   19. `[writable]` approve
 ///   20. `[writable]` distribution
@@ -330,7 +330,7 @@ impl TakeBidWnsBuilder {
         self.margin = Some(margin);
         self
     }
-    /// `[optional account, default to '11111111111111111111111111111111']`
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn whitelist(&mut self, whitelist: solana_program::pubkey::Pubkey) -> &mut Self {
         self.whitelist = Some(whitelist);
@@ -393,6 +393,7 @@ impl TakeBidWnsBuilder {
         self.cosigner = cosigner;
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     #[inline(always)]
     pub fn mint_proof(&mut self, mint_proof: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -470,9 +471,9 @@ impl TakeBidWnsBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             margin: self.margin.expect("margin is not set"),
-            whitelist: self
-                .whitelist
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            whitelist: self.whitelist.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
             owner_ta: self.owner_ta.expect("owner_ta is not set"),
@@ -492,7 +493,9 @@ impl TakeBidWnsBuilder {
                 "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
             )),
             cosigner: self.cosigner,
-            mint_proof: self.mint_proof.expect("mint_proof is not set"),
+            mint_proof: self.mint_proof.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             approve: self.approve.expect("approve is not set"),
             distribution: self.distribution.expect("distribution is not set"),
