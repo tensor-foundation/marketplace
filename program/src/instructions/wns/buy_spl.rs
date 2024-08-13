@@ -30,12 +30,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
-    // #[account(init_if_needed,
-    //     payer = payer,
-    //     associated_token::mint = currency,
-    //     associated_token::authority = fee_vault,
-    //     associated_token::token_program = currency_token_program,
-    // )]
     /// CHECK: Validated and initialized if needed in init_atas().
     #[account(mut)]
     pub fee_vault_currency_ta: UncheckedAccount<'info>,
@@ -77,13 +71,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
 
-    // #[account(
-    //     init_if_needed,
-    //     payer = payer,
-    //     associated_token::mint = currency,
-    //     associated_token::authority = owner,
-    //     associated_token::token_program = currency_token_program,
-    // )]
     /// CHECK: Validated and initialized if needed in init_atas().
     #[account(mut)]
     pub owner_currency_ta: UncheckedAccount<'info>,
@@ -99,12 +86,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    // #[account(init_if_needed,
-    //     payer = payer,
-    //     associated_token::mint = currency,
-    //     associated_token::authority = taker_broker,
-    //     associated_token::token_program = currency_token_program,
-    // )]
     /// CHECK: Validated and initialized if needed in init_atas().
     #[account(mut)]
     pub taker_broker_currency_ta: Option<UncheckedAccount<'info>>,
@@ -113,12 +94,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
-    // #[account(init_if_needed,
-    //     payer = payer,
-    //     associated_token::mint = currency,
-    //     associated_token::authority = maker_broker,
-    //     associated_token::token_program = currency_token_program,
-    // )]
     /// CHECK: Validated and initialized if needed in init_atas().
     #[account(mut)]
     pub maker_broker_currency_ta: Option<UncheckedAccount<'info>>,
@@ -149,12 +124,6 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub distribution: UncheckedAccount<'info>,
 
-    // #[account(init_if_needed,
-    //     payer = payer,
-    //     associated_token::mint = currency,
-    //     associated_token::authority = distribution,
-    //     associated_token::token_program = currency_token_program,
-    // )]
     /// CHECK: Validated and initialized if needed in init_atas().
     #[account(mut)]
     pub distribution_currency_ta: UncheckedAccount<'info>,

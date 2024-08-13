@@ -201,7 +201,6 @@ impl<'info> Validate<'info> for BuyT22Spl<'info> {
 
 impl<'info> BuyT22Spl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
-        msg!("transferring currency ");
         tensor_transfer_checked(
             CpiContext::new(
                 self.currency_token_program.to_account_info(),
@@ -269,7 +268,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
     }) = &royalties
     {
         // add remaining accounts to the transfer cpi
-        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts[2..].to_vec());
+        transfer_cpi = transfer_cpi.with_remaining_accounts(ctx.remaining_accounts.to_vec());
 
         let mut creator_infos = Vec::with_capacity(creators.len());
         let mut creator_ta_infos = Vec::with_capacity(creators.len());
