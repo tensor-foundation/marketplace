@@ -87,7 +87,6 @@ pub fn process_list_wns<'info>(
     ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
     amount: u64,
     expire_in_sec: Option<u64>,
-    // _currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
