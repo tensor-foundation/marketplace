@@ -307,7 +307,11 @@ module.exports = function visitor(options) {
         delistLegacy: {
           accounts: {
             payer: {
+              isSigner: "either",
               defaultValue: k.accountValueNode("owner"),
+            },
+            owner: {
+              isSigner: "either",
             },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
