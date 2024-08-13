@@ -78,9 +78,12 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: Validated and initialized if needed in init_atas().
-    #[account(mut)]
-    pub payer_currency_ta: UncheckedAccount<'info>,
+    #[account(mut,
+      token::mint = currency,
+      token::authority = payer,
+      token::token_program = currency_token_program,
+    )]
+    pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: none, can be anything
     #[account(mut)]
@@ -252,17 +255,6 @@ impl<'info> BuyWnsSpl<'info> {
             ata: self.distribution_currency_ta.to_account_info(),
             payer: self.payer.to_account_info(),
             owner: self.distribution.to_account_info(),
-            mint: self.currency.to_account_info(),
-            associated_token_program: self.associated_token_program.to_account_info(),
-            token_program: self.currency_token_program.to_account_info(),
-            system_program: self.system_program.to_account_info(),
-        })?;
-
-        // Payer currency ata.
-        init_if_needed_ata(InitIfNeededAtaParams {
-            ata: self.payer_currency_ta.to_account_info(),
-            payer: self.payer.to_account_info(),
-            owner: self.payer.to_account_info(),
             mint: self.currency.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.currency_token_program.to_account_info(),
