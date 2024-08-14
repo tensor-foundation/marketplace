@@ -169,7 +169,7 @@ pub fn process_buy_spl<'info>(
     root: [u8; 32],
     meta_hash: [u8; 32],
     // Below 3 used for creator verification
-    // Creators themseleves taken from extra accounts
+    // Creators themselves taken from extra accounts
     creator_shares: Vec<u8>,
     creator_verified: Vec<bool>,
     seller_fee_basis_points: u16,
