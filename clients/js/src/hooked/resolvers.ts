@@ -4,14 +4,29 @@ import {
   ProgramDerivedAddress,
   ProgramDerivedAddressBump,
   TransactionSigner,
+  generateKeyPair,
+  getAddressFromPublicKey,
 } from '@solana/web3.js';
-import { findBidTaPda } from '../generated';
+import { Target, findBidTaPda } from '../generated';
 import {
   ResolvedAccount,
   expectAddress,
+  expectSome,
   isTransactionSigner,
 } from '../generated/shared';
 import { findFeeVaultPda, findTreeAuthorityPda } from './pdas';
+
+export const resolveBidIdOnCreate = async ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: { target?: Target; targetId?: Address };
+}): Promise<Address> => {
+  if (expectSome(args.target) === Target.AssetId)
+    return await Promise.resolve(expectAddress(args.targetId));
+  return await getAddressFromPublicKey((await generateKeyPair()).publicKey);
+};
 
 //---- Fee Vault resolvers
 

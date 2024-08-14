@@ -302,7 +302,11 @@ kinobi.update(
       },
       arguments: {
         bidId: {
-          defaultValue: k.argumentValueNode("targetId")
+          defaultValue: k.resolverValueNode("resolveBidIdOnCreate"),
+          dependsOn: [
+            k.argumentValueNode("target"),
+            k.argumentValueNode("targetId"),
+          ],
         }
       }
     },
@@ -463,7 +467,8 @@ kinobi.accept(
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
-      "resolveTreeAuthorityPda"
+      "resolveTreeAuthorityPda",
+      "resolveBidIdOnCreate",
     ],
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers"
