@@ -36,6 +36,13 @@ jobs:
         with:
           filters: .github/file-filters.yml
 
+      - name: Debug changes output
+        run: |
+          echo "changes.any=${{ steps.changes.outputs.any }}"
+          echo "changes.programs=${{ steps.changes.outputs.programs }}"
+          echo "changes.js_client=${{ steps.changes.outputs.js_client }}"
+          echo "changes.rust_client=${{ steps.changes.outputs.rust_client }}"
+
       - name: Filter program matrix
         id: program_matrix
         uses: tensor-foundation/actions/filter-matrix@v2
