@@ -38,6 +38,7 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
     amount: price,
     target: Target.AssetId,
     targetId: mint,
+    bidId: mint,
     expireInSec: 1,
   });
 
@@ -100,6 +101,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
     amount: 1,
     target: Target.AssetId,
     targetId: mint,
+    bidId: mint,
     expireInSec: 10,
   });
 

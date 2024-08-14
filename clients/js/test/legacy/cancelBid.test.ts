@@ -34,6 +34,7 @@ test('it can cancel a bid on a legacy NFT', async (t) => {
     amount: 1,
     target: Target.AssetId,
     targetId: mint,
+    bidId: mint,
   });
 
   // And we create a bid on the NFT.

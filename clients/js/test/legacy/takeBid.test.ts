@@ -40,6 +40,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
     amount: 10,
     target: Target.AssetId,
     targetId: mint,
+    bidId: mint,
   });
 
   // And the owner creates a bid on the NFT.
