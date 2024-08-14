@@ -303,8 +303,9 @@ kinobi.update(
       arguments: {
         bidId: {
           defaultValue: k.resolverValueNode("resolveBidIdOnCreate"),
-          docs: [
-            "Defaults bidId to random address if not specified otherwise",
+          dependsOn: [
+            k.argumentValueNode("target"),
+            k.argumentValueNode("targetId"),
           ],
         }
       }
