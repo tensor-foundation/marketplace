@@ -101,7 +101,8 @@ export type CloseExpiredListingWnsInstruction<
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountPayer extends string
-        ? WritableAccount<TAccountPayer>
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -195,7 +196,7 @@ export type CloseExpiredListingWnsAsyncInput<
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -254,9 +255,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -413,9 +412,7 @@ export async function getCloseExpiredListingWnsInstructionAsync<
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,
@@ -454,7 +451,7 @@ export type CloseExpiredListingWnsInput<
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -512,9 +509,7 @@ export function getCloseExpiredListingWnsInstruction<
   TAccountListTa,
   TAccountMint,
   TAccountRentDestination,
-  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-    : TAccountPayer,
+  TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountSystemProgram,
@@ -632,9 +627,7 @@ export function getCloseExpiredListingWnsInstruction<
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram,

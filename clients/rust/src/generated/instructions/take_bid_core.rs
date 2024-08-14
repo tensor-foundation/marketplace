@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct TakeBidCore {
     pub fee_vault: solana_program::pubkey::Pubkey,
 
-    pub seller: (solana_program::pubkey::Pubkey, bool),
+    pub seller: solana_program::pubkey::Pubkey,
 
     pub bid_state: solana_program::pubkey::Pubkey,
 
@@ -38,7 +38,7 @@ pub struct TakeBidCore {
 
     pub escrow_program: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: solana_program::pubkey::Pubkey,
 
@@ -64,8 +64,8 @@ impl TakeBidCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller.0,
-            self.seller.1,
+            self.seller,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.bid_state,
@@ -133,9 +133,9 @@ impl TakeBidCore {
             self.escrow_program,
             false,
         ));
-        if let Some((cosigner, signer)) = self.cosigner {
+        if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, signer,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -213,7 +213,7 @@ pub struct TakeBidCoreInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct TakeBidCoreBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
-    seller: Option<(solana_program::pubkey::Pubkey, bool)>,
+    seller: Option<solana_program::pubkey::Pubkey>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
@@ -226,7 +226,7 @@ pub struct TakeBidCoreBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     escrow_program: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     mint_proof: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     min_amount: Option<u64>,
@@ -243,8 +243,8 @@ impl TakeBidCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.seller = Some((seller, as_signer));
+    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller = Some(seller);
         self
     }
     #[inline(always)]
@@ -328,16 +328,8 @@ impl TakeBidCoreBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(
-        &mut self,
-        cosigner: Option<solana_program::pubkey::Pubkey>,
-        as_signer: bool,
-    ) -> &mut Self {
-        if let Some(cosigner) = cosigner {
-            self.cosigner = Some((cosigner, as_signer));
-        } else {
-            self.cosigner = None;
-        }
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -418,7 +410,7 @@ impl TakeBidCoreBuilder {
 pub struct TakeBidCoreCpiAccounts<'a, 'b> {
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -444,7 +436,7 @@ pub struct TakeBidCoreCpiAccounts<'a, 'b> {
 
     pub escrow_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -458,7 +450,7 @@ pub struct TakeBidCoreCpi<'a, 'b> {
 
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -484,7 +476,7 @@ pub struct TakeBidCoreCpi<'a, 'b> {
 
     pub escrow_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     pub mint_proof: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -560,8 +552,8 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller.0.key,
-            self.seller.1,
+            *self.seller.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.bid_state.key,
@@ -632,10 +624,10 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
             *self.escrow_program.key,
             false,
         ));
-        if let Some((cosigner, signer)) = self.cosigner {
+        if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                signer,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -670,7 +662,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(17 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
-        account_infos.push(self.seller.0.clone());
+        account_infos.push(self.seller.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
         if let Some(taker_broker) = self.taker_broker {
@@ -690,7 +682,7 @@ impl<'a, 'b> TakeBidCoreCpi<'a, 'b> {
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.escrow_program.clone());
         if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.0.clone());
+            account_infos.push(cosigner.clone());
         }
         account_infos.push(self.mint_proof.clone());
         account_infos.push(self.rent_destination.clone());
@@ -770,9 +762,8 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
     pub fn seller(
         &mut self,
         seller: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.seller = Some((seller, as_signer));
+        self.instruction.seller = Some(seller);
         self
     }
     #[inline(always)]
@@ -873,13 +864,8 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
     pub fn cosigner(
         &mut self,
         cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-        as_signer: bool,
     ) -> &mut Self {
-        if let Some(cosigner) = cosigner {
-            self.instruction.cosigner = Some((cosigner, as_signer));
-        } else {
-            self.instruction.cosigner = None;
-        }
+        self.instruction.cosigner = cosigner;
         self
     }
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
@@ -1016,7 +1002,7 @@ impl<'a, 'b> TakeBidCoreCpiBuilder<'a, 'b> {
 struct TakeBidCoreCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1029,7 +1015,7 @@ struct TakeBidCoreCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     escrow_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint_proof: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     min_amount: Option<u64>,

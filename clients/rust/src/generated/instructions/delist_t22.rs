@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct DelistT22 {
-    pub owner: (solana_program::pubkey::Pubkey, bool),
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub owner_ta: solana_program::pubkey::Pubkey,
 
@@ -22,7 +22,7 @@ pub struct DelistT22 {
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
-    pub payer: (solana_program::pubkey::Pubkey, bool),
+    pub payer: solana_program::pubkey::Pubkey,
 
     pub token_program: solana_program::pubkey::Pubkey,
 
@@ -44,8 +44,7 @@ impl DelistT22 {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner.0,
-            self.owner.1,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner_ta,
@@ -67,8 +66,7 @@ impl DelistT22 {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer.0,
-            self.payer.1,
+            self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
@@ -133,13 +131,13 @@ impl Default for DelistT22InstructionData {
 ///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct DelistT22Builder {
-    owner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     owner_ta: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     list_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<(solana_program::pubkey::Pubkey, bool)>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -152,8 +150,8 @@ impl DelistT22Builder {
         Self::default()
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -185,8 +183,8 @@ impl DelistT22Builder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.payer = Some((payer, as_signer));
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
         self
     }
     /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
@@ -267,7 +265,7 @@ impl DelistT22Builder {
 
 /// `delist_t22` CPI accounts.
 pub struct DelistT22CpiAccounts<'a, 'b> {
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -279,7 +277,7 @@ pub struct DelistT22CpiAccounts<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -295,7 +293,7 @@ pub struct DelistT22Cpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -307,7 +305,7 @@ pub struct DelistT22Cpi<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -373,8 +371,8 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner.0.key,
-            self.owner.1,
+            *self.owner.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner_ta.key,
@@ -397,8 +395,8 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.0.key,
-            self.payer.1,
+            *self.payer.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
@@ -432,13 +430,13 @@ impl<'a, 'b> DelistT22Cpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.owner.0.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.owner_ta.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.list_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.rent_destination.clone());
-        account_infos.push(self.payer.0.clone());
+        account_infos.push(self.payer.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -495,12 +493,8 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn owner(
-        &mut self,
-        owner: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -541,12 +535,8 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(
-        &mut self,
-        payer: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.payer = Some((payer, as_signer));
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
         self
     }
     #[inline(always)]
@@ -672,13 +662,13 @@ impl<'a, 'b> DelistT22CpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct DelistT22CpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    owner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

@@ -83,7 +83,8 @@ export type DelistWnsInstruction<
   IInstructionWithAccounts<
     [
       TAccountOwner extends string
-        ? ReadonlyAccount<TAccountOwner>
+        ? ReadonlySignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       TAccountOwnerTa extends string
         ? WritableAccount<TAccountOwnerTa>
@@ -101,7 +102,8 @@ export type DelistWnsInstruction<
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountPayer extends string
-        ? WritableAccount<TAccountPayer>
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -182,13 +184,13 @@ export type DelistWnsAsyncInput<
   TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
-  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -239,17 +241,13 @@ export async function getDelistWnsInstructionAsync<
 ): Promise<
   DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -387,17 +385,13 @@ export async function getDelistWnsInstructionAsync<
     data: getDelistWnsInstructionDataEncoder().encode({}),
   } as DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -430,13 +424,13 @@ export type DelistWnsInput<
   TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
   rentDestination?: Address<TAccountRentDestination>;
-  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -486,17 +480,13 @@ export function getDelistWnsInstruction<
   >
 ): DelistWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-    : TAccountOwner,
+  TAccountOwner,
   TAccountOwnerTa,
   TAccountListState,
   TAccountListTa,
   TAccountMint,
   TAccountRentDestination,
-  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-    : TAccountPayer,
+  TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -601,17 +591,13 @@ export function getDelistWnsInstruction<
     data: getDelistWnsInstructionDataEncoder().encode({}),
   } as DelistWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
     TAccountRentDestination,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,

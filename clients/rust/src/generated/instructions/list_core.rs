@@ -17,7 +17,7 @@ pub struct ListCore {
 
     pub list_state: solana_program::pubkey::Pubkey,
 
-    pub owner: (solana_program::pubkey::Pubkey, bool),
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub mpl_core_program: solana_program::pubkey::Pubkey,
 
@@ -25,9 +25,9 @@ pub struct ListCore {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub payer: (solana_program::pubkey::Pubkey, bool),
+    pub payer: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ListCore {
@@ -62,8 +62,7 @@ impl ListCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner.0,
-            self.owner.1,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mpl_core_program,
@@ -78,12 +77,11 @@ impl ListCore {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer.0,
-            self.payer.1,
+            self.payer, true,
         ));
-        if let Some((cosigner, signer)) = self.cosigner {
+        if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, signer,
+                cosigner, true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -151,12 +149,12 @@ pub struct ListCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
     collection: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<(solana_program::pubkey::Pubkey, bool)>,
-    cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    payer: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,
@@ -186,8 +184,8 @@ impl ListCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d']`
@@ -215,22 +213,14 @@ impl ListCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.payer = Some((payer, as_signer));
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
         self
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(
-        &mut self,
-        cosigner: Option<solana_program::pubkey::Pubkey>,
-        as_signer: bool,
-    ) -> &mut Self {
-        if let Some(cosigner) = cosigner {
-            self.cosigner = Some((cosigner, as_signer));
-        } else {
-            self.cosigner = None;
-        }
+    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -319,7 +309,7 @@ pub struct ListCoreCpiAccounts<'a, 'b> {
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -327,9 +317,9 @@ pub struct ListCoreCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `list_core` CPI instruction.
@@ -343,7 +333,7 @@ pub struct ListCoreCpi<'a, 'b> {
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub mpl_core_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -351,9 +341,9 @@ pub struct ListCoreCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ListCoreInstructionArgs,
 }
@@ -432,8 +422,8 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.owner.0.key,
-            self.owner.1,
+            *self.owner.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mpl_core_program.key,
@@ -448,13 +438,13 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.0.key,
-            self.payer.1,
+            *self.payer.key,
+            true,
         ));
-        if let Some((cosigner, signer)) = self.cosigner {
+        if let Some(cosigner) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                signer,
+                true,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -485,13 +475,13 @@ impl<'a, 'b> ListCoreCpi<'a, 'b> {
             account_infos.push(collection.clone());
         }
         account_infos.push(self.list_state.clone());
-        account_infos.push(self.owner.0.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.payer.0.clone());
+        account_infos.push(self.payer.clone());
         if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.0.clone());
+            account_infos.push(cosigner.clone());
         }
         remaining_accounts
             .iter()
@@ -568,12 +558,8 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(
-        &mut self,
-        owner: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -601,12 +587,8 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(
-        &mut self,
-        payer: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.payer = Some((payer, as_signer));
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
         self
     }
     /// `[optional account]`
@@ -614,13 +596,8 @@ impl<'a, 'b> ListCoreCpiBuilder<'a, 'b> {
     pub fn cosigner(
         &mut self,
         cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-        as_signer: bool,
     ) -> &mut Self {
-        if let Some(cosigner) = cosigner {
-            self.instruction.cosigner = Some((cosigner, as_signer));
-        } else {
-            self.instruction.cosigner = None;
-        }
+        self.instruction.cosigner = cosigner;
         self
     }
     #[inline(always)]
@@ -744,12 +721,12 @@ struct ListCoreCpiBuilderInstruction<'a, 'b> {
     asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
-    cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     expire_in_sec: Option<u64>,
     currency: Option<Pubkey>,

@@ -116,7 +116,8 @@ export type CloseExpiredListingLegacyInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountPayer extends string
-        ? WritableAccount<TAccountPayer>
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
@@ -234,7 +235,7 @@ export type CloseExpiredListingLegacyAsyncInput<
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -302,9 +303,7 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -499,9 +498,7 @@ export async function getCloseExpiredListingLegacyInstructionAsync<
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
@@ -546,7 +543,7 @@ export type CloseExpiredListingLegacyInput<
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -613,9 +610,7 @@ export function getCloseExpiredListingLegacyInstruction<
   TAccountListState,
   TAccountListTa,
   TAccountMint,
-  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-    : TAccountPayer,
+  TAccountPayer,
   TAccountRentDestination,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
@@ -768,9 +763,7 @@ export function getCloseExpiredListingLegacyInstruction<
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountRentDestination,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,

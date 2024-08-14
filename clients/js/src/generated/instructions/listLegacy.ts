@@ -105,7 +105,8 @@ export type ListLegacyInstruction<
   IInstructionWithAccounts<
     [
       TAccountOwner extends string
-        ? ReadonlyAccount<TAccountOwner>
+        ? ReadonlySignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       TAccountOwnerTa extends string
         ? WritableAccount<TAccountOwnerTa>
@@ -120,7 +121,8 @@ export type ListLegacyInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountPayer extends string
-        ? WritableAccount<TAccountPayer>
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -159,7 +161,8 @@ export type ListLegacyInstruction<
         ? ReadonlyAccount<TAccountSysvarInstructions>
         : TAccountSysvarInstructions,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -257,12 +260,12 @@ export type ListLegacyAsyncInput<
   TAccountSysvarInstructions extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -275,7 +278,7 @@ export type ListLegacyAsyncInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListLegacyInstructionDataArgs['amount'];
   expireInSec?: ListLegacyInstructionDataArgs['expireInSec'];
   currency?: ListLegacyInstructionDataArgs['currency'];
@@ -330,16 +333,12 @@ export async function getListLegacyInstructionAsync<
 ): Promise<
   ListLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -352,10 +351,7 @@ export async function getListLegacyInstructionAsync<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -527,16 +523,12 @@ export async function getListLegacyInstructionAsync<
     ),
   } as ListLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -549,10 +541,7 @@ export async function getListLegacyInstructionAsync<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >;
 
   return instruction;
@@ -579,12 +568,12 @@ export type ListLegacyInput<
   TAccountSysvarInstructions extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -597,7 +586,7 @@ export type ListLegacyInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   amount: ListLegacyInstructionDataArgs['amount'];
   expireInSec?: ListLegacyInstructionDataArgs['expireInSec'];
   currency?: ListLegacyInstructionDataArgs['currency'];
@@ -651,16 +640,12 @@ export function getListLegacyInstruction<
   >
 ): ListLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-    : TAccountOwner,
+  TAccountOwner,
   TAccountOwnerTa,
   TAccountListState,
   TAccountListTa,
   TAccountMint,
-  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-    : TAccountPayer,
+  TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -673,10 +658,7 @@ export function getListLegacyInstruction<
   TAccountAuthorizationRulesProgram,
   TAccountTokenMetadataProgram,
   TAccountSysvarInstructions,
-  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-    ? ReadonlySignerAccount<TAccountCosigner> &
-        IAccountSignerMeta<TAccountCosigner>
-    : TAccountCosigner
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -806,16 +788,12 @@ export function getListLegacyInstruction<
     ),
   } as ListLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -828,10 +806,7 @@ export function getListLegacyInstruction<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >;
 
   return instruction;

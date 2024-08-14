@@ -67,7 +67,8 @@ export type DelistCoreInstruction<
         ? ReadonlyAccount<TAccountCollection>
         : TAccountCollection,
       TAccountOwner extends string
-        ? WritableAccount<TAccountOwner>
+        ? WritableSignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
@@ -130,7 +131,7 @@ export type DelistCoreAsyncInput<
 > = {
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   listState?: Address<TAccountListState>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -163,9 +164,7 @@ export async function getDelistCoreInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountAsset,
     TAccountCollection,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? WritableSignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountListState,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -237,9 +236,7 @@ export async function getDelistCoreInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountAsset,
     TAccountCollection,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? WritableSignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountListState,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -262,7 +259,7 @@ export type DelistCoreInput<
 > = {
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   listState: Address<TAccountListState>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -294,9 +291,7 @@ export function getDelistCoreInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountAsset,
   TAccountCollection,
-  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-    ? WritableSignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-    : TAccountOwner,
+  TAccountOwner,
   TAccountListState,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
@@ -362,9 +357,7 @@ export function getDelistCoreInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountAsset,
     TAccountCollection,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? WritableSignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     TAccountListState,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,

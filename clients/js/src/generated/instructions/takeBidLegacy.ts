@@ -127,7 +127,8 @@ export type TakeBidLegacyInstruction<
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
       TAccountSeller extends string
-        ? WritableAccount<TAccountSeller>
+        ? WritableSignerAccount<TAccountSeller> &
+            IAccountSignerMeta<TAccountSeller>
         : TAccountSeller,
       TAccountBidState extends string
         ? WritableAccount<TAccountBidState>
@@ -202,7 +203,8 @@ export type TakeBidLegacyInstruction<
         ? ReadonlyAccount<TAccountEscrowProgram>
         : TAccountEscrowProgram,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       TAccountMintProof extends string
         ? ReadonlyAccount<TAccountMintProof>
@@ -307,7 +309,7 @@ export type TakeBidLegacyAsyncInput<
   TAccountRentDestination extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  seller: TransactionSigner<TAccountSeller>;
   bidState?: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -333,7 +335,7 @@ export type TakeBidLegacyAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   escrowProgram?: Address<TAccountEscrowProgram>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -411,10 +413,7 @@ export async function getTakeBidLegacyInstructionAsync<
   TakeBidLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
@@ -439,10 +438,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
     TAccountEscrowProgram,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner,
+    TAccountCosigner,
     TAccountMintProof,
     TAccountRentDestination
   >
@@ -676,10 +672,7 @@ export async function getTakeBidLegacyInstructionAsync<
   } as TakeBidLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
@@ -704,10 +697,7 @@ export async function getTakeBidLegacyInstructionAsync<
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
     TAccountEscrowProgram,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner,
+    TAccountCosigner,
     TAccountMintProof,
     TAccountRentDestination
   >;
@@ -747,7 +737,7 @@ export type TakeBidLegacyInput<
   TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  seller: TransactionSigner<TAccountSeller>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -773,7 +763,7 @@ export type TakeBidLegacyInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   escrowProgram?: Address<TAccountEscrowProgram>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
   mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -850,9 +840,7 @@ export function getTakeBidLegacyInstruction<
 ): TakeBidLegacyInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
-  (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-    ? WritableSignerAccount<TAccountSeller> & IAccountSignerMeta<TAccountSeller>
-    : TAccountSeller,
+  TAccountSeller,
   TAccountBidState,
   TAccountOwner,
   TAccountTakerBroker,
@@ -877,10 +865,7 @@ export function getTakeBidLegacyInstruction<
   TAccountSystemProgram,
   TAccountMarketplaceProgram,
   TAccountEscrowProgram,
-  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-    ? ReadonlySignerAccount<TAccountCosigner> &
-        IAccountSignerMeta<TAccountCosigner>
-    : TAccountCosigner,
+  TAccountCosigner,
   TAccountMintProof,
   TAccountRentDestination
 > {
@@ -1053,10 +1038,7 @@ export function getTakeBidLegacyInstruction<
   } as TakeBidLegacyInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
@@ -1081,10 +1063,7 @@ export function getTakeBidLegacyInstruction<
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
     TAccountEscrowProgram,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner,
+    TAccountCosigner,
     TAccountMintProof,
     TAccountRentDestination
   >;

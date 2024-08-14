@@ -105,7 +105,8 @@ export type TakeBidWnsInstruction<
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
       TAccountSeller extends string
-        ? WritableAccount<TAccountSeller>
+        ? WritableSignerAccount<TAccountSeller> &
+            IAccountSignerMeta<TAccountSeller>
         : TAccountSeller,
       TAccountBidState extends string
         ? WritableAccount<TAccountBidState>
@@ -246,7 +247,7 @@ export type TakeBidWnsAsyncInput<
   TAccountExtraMetas extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  seller: TransactionSigner<TAccountSeller>;
   bidState?: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -331,10 +332,7 @@ export async function getTakeBidWnsInstructionAsync<
   TakeBidWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
@@ -533,10 +531,7 @@ export async function getTakeBidWnsInstructionAsync<
   } as TakeBidWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,
@@ -591,7 +586,7 @@ export type TakeBidWnsInput<
   TAccountExtraMetas extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
+  seller: TransactionSigner<TAccountSeller>;
   bidState: Address<TAccountBidState>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -675,9 +670,7 @@ export function getTakeBidWnsInstruction<
 ): TakeBidWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
-  (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-    ? WritableSignerAccount<TAccountSeller> & IAccountSignerMeta<TAccountSeller>
-    : TAccountSeller,
+  TAccountSeller,
   TAccountBidState,
   TAccountOwner,
   TAccountTakerBroker,
@@ -836,10 +829,7 @@ export function getTakeBidWnsInstruction<
   } as TakeBidWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
+    TAccountSeller,
     TAccountBidState,
     TAccountOwner,
     TAccountTakerBroker,

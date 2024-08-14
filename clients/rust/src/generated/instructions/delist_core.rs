@@ -14,7 +14,7 @@ pub struct DelistCore {
 
     pub collection: Option<solana_program::pubkey::Pubkey>,
 
-    pub owner: (solana_program::pubkey::Pubkey, bool),
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub list_state: solana_program::pubkey::Pubkey,
 
@@ -51,8 +51,7 @@ impl DelistCore {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner.0,
-            self.owner.1,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_state,
@@ -120,7 +119,7 @@ impl Default for DelistCoreInstructionData {
 pub struct DelistCoreBuilder {
     asset: Option<solana_program::pubkey::Pubkey>,
     collection: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<(solana_program::pubkey::Pubkey, bool)>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     mpl_core_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
@@ -145,8 +144,8 @@ impl DelistCoreBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -233,7 +232,7 @@ pub struct DelistCoreCpiAccounts<'a, 'b> {
 
     pub collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -255,7 +254,7 @@ pub struct DelistCoreCpi<'a, 'b> {
 
     pub collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -335,8 +334,8 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner.0.key,
-            self.owner.1,
+            *self.owner.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.list_state.key,
@@ -378,7 +377,7 @@ impl<'a, 'b> DelistCoreCpi<'a, 'b> {
         if let Some(collection) = self.collection {
             account_infos.push(collection.clone());
         }
-        account_infos.push(self.owner.0.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.mpl_core_program.clone());
         account_infos.push(self.marketplace_program.clone());
@@ -444,12 +443,8 @@ impl<'a, 'b> DelistCoreCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(
-        &mut self,
-        owner: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -576,7 +571,7 @@ struct DelistCoreCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     collection: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mpl_core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

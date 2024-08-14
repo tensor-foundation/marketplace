@@ -127,7 +127,8 @@ export type BuyCompressedInstruction<
         ? ReadonlyAccount<TAccountBuyer>
         : TAccountBuyer,
       TAccountPayer extends string
-        ? WritableAccount<TAccountPayer>
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountOwner extends string
         ? WritableAccount<TAccountOwner>
@@ -142,7 +143,8 @@ export type BuyCompressedInstruction<
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountCosigner extends string
-        ? ReadonlyAccount<TAccountCosigner>
+        ? ReadonlySignerAccount<TAccountCosigner> &
+            IAccountSignerMeta<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -260,12 +262,12 @@ export type BuyCompressedAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   buyer?: Address<TAccountBuyer>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];
@@ -329,17 +331,12 @@ export async function getBuyCompressedInstructionAsync<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >
 > {
   // Program address.
@@ -485,17 +482,12 @@ export async function getBuyCompressedInstructionAsync<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >;
 
   return instruction;
@@ -529,12 +521,12 @@ export type BuyCompressedInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   buyer?: Address<TAccountBuyer>;
-  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  payer: TransactionSigner<TAccountPayer>;
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
-  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuyCompressedInstructionDataArgs['nonce'];
   index: BuyCompressedInstructionDataArgs['index'];
   root: BuyCompressedInstructionDataArgs['root'];
@@ -597,17 +589,12 @@ export function getBuyCompressedInstruction<
   TAccountMarketplaceProgram,
   TAccountListState,
   TAccountBuyer,
-  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-    : TAccountPayer,
+  TAccountPayer,
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
   TAccountRentDestination,
-  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-    ? ReadonlySignerAccount<TAccountCosigner> &
-        IAccountSignerMeta<TAccountCosigner>
-    : TAccountCosigner
+  TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -740,17 +727,12 @@ export function getBuyCompressedInstruction<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountBuyer,
-    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
-      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
-      : TAccountPayer,
+    TAccountPayer,
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
     TAccountRentDestination,
-    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
-      ? ReadonlySignerAccount<TAccountCosigner> &
-          IAccountSignerMeta<TAccountCosigner>
-      : TAccountCosigner
+    TAccountCosigner
   >;
 
   return instruction;

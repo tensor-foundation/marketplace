@@ -49,7 +49,6 @@ import {
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
-  type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
   resolveCreatorPath,
@@ -341,8 +340,8 @@ export type TakeBidCompressedFullMetaAsyncInput<
 > = {
   feeVault?: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
-  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
+  seller: Address<TAccountSeller>;
+  delegate?: Address<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -428,14 +427,8 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -595,14 +588,8 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -646,8 +633,8 @@ export type TakeBidCompressedFullMetaInput<
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
-  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
+  seller: Address<TAccountSeller>;
+  delegate?: Address<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -732,13 +719,8 @@ export function getTakeBidCompressedFullMetaInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountTreeAuthority,
-  (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-    ? WritableSignerAccount<TAccountSeller> & IAccountSignerMeta<TAccountSeller>
-    : TAccountSeller,
-  (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-    ? ReadonlySignerAccount<TAccountDelegate> &
-        IAccountSignerMeta<TAccountDelegate>
-    : TAccountDelegate,
+  TAccountSeller,
+  TAccountDelegate,
   TAccountMerkleTree,
   TAccountLogWrapper,
   TAccountCompressionProgram,
@@ -885,14 +867,8 @@ export function getTakeBidCompressedFullMetaInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
