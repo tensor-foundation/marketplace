@@ -186,6 +186,12 @@ kinobi.update(
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
       ],
     },
+    assetListState: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("utf8", "asset_list_state"),
+        k.variablePdaSeedNode("asset", k.publicKeyTypeNode()),
+      ],
+    },
     bidState: {
       seeds: [
         k.constantPdaSeedNodeFromString("utf8", "bid_state"),

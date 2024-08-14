@@ -15,6 +15,9 @@ module.exports = function visitor(options) {
         buy: {
           name: "buyCompressed",
         },
+        buySpl: {
+          name: "buySplCompressed",
+        },
         closeExpiredListing: {
           name: "closeExpiredListingCompressed",
         },
@@ -30,7 +33,7 @@ module.exports = function visitor(options) {
         takeBidMetaHash: {
           name: "takeBidCompressedMetaHash",
         },
-      })
+      }),
     );
 
     // Update instructions.
@@ -38,6 +41,13 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyCompressed: {
           accounts: {
+            payer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
             buyer: {
               defaultValue: k.accountValueNode("payer"),
             },
@@ -48,10 +58,10 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
-                  dependsOn: [k.accountValueNode("listState")]
-                }
-              )
-            }
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
@@ -62,8 +72,59 @@ module.exports = function visitor(options) {
             },
           },
         },
+        buySplCompressed: {
+          accounts: {
+            payer: {
+              isSigner: "either",
+            },
+            rentPayer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
+            buyer: {
+              defaultValue: k.accountValueNode("payer"),
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
+          },
+          arguments: {
+            optionalRoyaltyPct: {
+              defaultValue: k.numberValueNode(100),
+            },
+            nonce: {
+              defaultValue: k.argumentValueNode("index"),
+            },
+          },
+        },
+        closeExpiredListingCompressed: {
+          accounts: {
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+          },
+          arguments: {
+            nonce: {
+              defaultValue: k.argumentValueNode("index"),
+            },
+          },
+        },
         delistCompressed: {
           accounts: {
+            owner: {
+              isSigner: "either",
+            },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
@@ -76,7 +137,11 @@ module.exports = function visitor(options) {
         },
         listCompressed: {
           accounts: {
-            owner: {
+            rentPayer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
               isSigner: "either",
             },
             delegate: {
@@ -91,7 +156,7 @@ module.exports = function visitor(options) {
                     k.accountValueNode("owner"),
                     k.accountValueNode("delegate"),
                   ],
-                }
+                },
               ),
             },
           },
@@ -120,27 +185,15 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
-                  dependsOn: [k.accountValueNode("bidState")]
-                }
-              )
-            }
+                  dependsOn: [k.accountValueNode("bidState")],
+                },
+              ),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
               defaultValue: k.numberValueNode(100),
             },
-            nonce: {
-              defaultValue: k.argumentValueNode("index"),
-            },
-          },
-        },
-        closeExpiredListingCompressed: {
-          accounts: {
-            rentDestination: {
-              defaultValue: k.accountValueNode("owner"),
-            }
-          },
-          arguments: {
             nonce: {
               defaultValue: k.argumentValueNode("index"),
             },
@@ -165,10 +218,10 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
-                  dependsOn: [k.accountValueNode("bidState")]
-                }
-              )
-            }
+                  dependsOn: [k.accountValueNode("bidState")],
+                },
+              ),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
@@ -179,7 +232,7 @@ module.exports = function visitor(options) {
             },
           },
         },
-      })
+      }),
     );
 
     // Add creators, proof, canopyDepth for remaining accounts
@@ -210,7 +263,7 @@ module.exports = function visitor(options) {
                       k.publicKeyTypeNode(),
                       k.numberTypeNode("u16"),
                     ]),
-                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                    k.prefixedCountNode(k.numberTypeNode("u32")),
                   ),
                   docs: [
                     "creators, structured like [ [creator_pubkey_1,creator_shares_1], ..., [creator_pubkey_n, creator_shares_n] ]",
@@ -222,7 +275,7 @@ module.exports = function visitor(options) {
                   name: "proof",
                   type: k.arrayTypeNode(
                     k.publicKeyTypeNode(),
-                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                    k.prefixedCountNode(k.numberTypeNode("u32")),
                   ),
                   docs: [
                     "proof path, can be shortened if canopyDepth of merkle tree is also specified",
@@ -247,7 +300,7 @@ module.exports = function visitor(options) {
                   }),
                   {
                     isOptional: true,
-                  }
+                  },
                 ),
                 k.instructionRemainingAccountsNode(
                   k.resolverValueNode("resolveProofPath", {
@@ -258,7 +311,7 @@ module.exports = function visitor(options) {
                   }),
                   {
                     isOptional: true,
-                  }
+                  },
                 ),
               ],
             };
@@ -281,7 +334,7 @@ module.exports = function visitor(options) {
                   name: "proof",
                   type: k.arrayTypeNode(
                     k.publicKeyTypeNode(),
-                    k.prefixedCountNode(k.numberTypeNode("u32"))
+                    k.prefixedCountNode(k.numberTypeNode("u32")),
                   ),
                   docs: [
                     "proof path, can be shortened if canopyDepth of merkle tree is also specified",
@@ -309,13 +362,13 @@ module.exports = function visitor(options) {
                   }),
                   {
                     isOptional: true,
-                  }
+                  },
                 ),
               ],
             };
           },
         },
-      ])
+      ]),
     );
     return root;
   });

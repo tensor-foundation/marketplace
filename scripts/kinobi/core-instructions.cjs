@@ -13,19 +13,26 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyCore: {
           accounts: {
-            // feeVault: {
-            //   defaultValue: k.resolverValueNode(
-            //     "resolveFeeVaultPdaFromListState",
-            //     {
-            //       dependsOn: [k.accountValueNode("listState")]
-            //     }
-            //   )
-            // },
+            payer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
             buyer: {
-              defaultValue: k.accountValueNode("payer")
+              defaultValue: k.accountValueNode("payer"),
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
@@ -33,9 +40,9 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
+                  k.accountValueNode("asset"),
+                ],
+              }),
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
@@ -43,36 +50,43 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
-            }
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true
-              }
-            )
-          ]
+                isOptional: true,
+              },
+            ),
+          ],
         },
         buyCoreSpl: {
           accounts: {
-            // feeVault: {
-            //   defaultValue: k.resolverValueNode(
-            //     "resolveFeeVaultPdaFromListState",
-            //     {
-            //       dependsOn: [k.accountValueNode("listState")]
-            //     }
-            //   )
-            // },
+            payer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
+            },
             buyer: {
-              defaultValue: k.accountValueNode("payer")
+              defaultValue: k.accountValueNode("payer"),
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
@@ -80,9 +94,9 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
+                  k.accountValueNode("asset"),
+                ],
+              }),
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
@@ -90,29 +104,72 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
-            }
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true
-              }
+                isOptional: true,
+              },
             ),
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creatorsAtas"),
               {
                 isWritable: true,
-                isOptional: true
-              }
-            )
-          ]
-        }
-      })
+                isOptional: true,
+              },
+            ),
+          ],
+        },
+        closeExpiredListingCore: {
+          accounts: {
+            listState: { defaultValue: k.pdaValueNode("assetListState") },
+          },
+        },
+        delistCore: {
+          accounts: {
+            owner: {
+              isSigner: "either",
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            listState: { defaultValue: k.pdaValueNode("assetListState") },
+          },
+        },
+        listCore: {
+          accounts: {
+            payer: {
+              isSigner: "either",
+              defaultValue: k.accountValueNode("owner"),
+            },
+            owner: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
+            listState: { defaultValue: k.pdaValueNode("assetListState") },
+          },
+        },
+        takeBidCore: {
+          accounts: {
+            seller: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
+          },
+        },
+      }),
     );
 
     return root;

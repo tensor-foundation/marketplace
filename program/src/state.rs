@@ -62,6 +62,10 @@ impl ListState {
     }
 }
 
+// Dummy account
+#[account]
+pub struct AssetListState {}
+
 // --------------------------------------- bidding
 
 #[repr(u8)]

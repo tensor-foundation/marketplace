@@ -3962,6 +3962,13 @@
       }
     },
     {
+      "name": "AssetListState",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
       "name": "BidState",
       "type": {
         "kind": "struct",

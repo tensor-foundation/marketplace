@@ -92,8 +92,7 @@ export type DelistCompressedInstruction<
         ? WritableAccount<TAccountListState>
         : TAccountListState,
       TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
+        ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
@@ -186,7 +185,7 @@ export type DelistCompressedAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDestination?: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
@@ -232,7 +231,9 @@ export async function getDelistCompressedInstructionAsync<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountListState,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountMarketplaceProgram,
     TAccountRentDestination
   >
@@ -346,7 +347,9 @@ export async function getDelistCompressedInstructionAsync<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountListState,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountMarketplaceProgram,
     TAccountRentDestination
   >;
@@ -373,7 +376,7 @@ export type DelistCompressedInput<
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDestination?: Address<TAccountRentDestination>;
   nonce?: DelistCompressedInstructionDataArgs['nonce'];
@@ -418,7 +421,9 @@ export function getDelistCompressedInstruction<
   TAccountSystemProgram,
   TAccountBubblegumProgram,
   TAccountListState,
-  TAccountOwner,
+  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+    : TAccountOwner,
   TAccountMarketplaceProgram,
   TAccountRentDestination
 > {
@@ -525,7 +530,9 @@ export function getDelistCompressedInstruction<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountListState,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountMarketplaceProgram,
     TAccountRentDestination
   >;

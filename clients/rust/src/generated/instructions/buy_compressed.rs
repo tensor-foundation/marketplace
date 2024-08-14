@@ -30,7 +30,7 @@ pub struct BuyCompressed {
 
     pub buyer: solana_program::pubkey::Pubkey,
 
-    pub payer: solana_program::pubkey::Pubkey,
+    pub payer: (solana_program::pubkey::Pubkey, bool),
 
     pub owner: solana_program::pubkey::Pubkey,
 
@@ -40,7 +40,7 @@ pub struct BuyCompressed {
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
-    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+    pub cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
 }
 
 impl BuyCompressed {
@@ -97,7 +97,8 @@ impl BuyCompressed {
             self.buyer, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.payer.0,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, false,
@@ -128,9 +129,9 @@ impl BuyCompressed {
             self.rent_destination,
             false,
         ));
-        if let Some(cosigner) = self.cosigner {
+        if let Some((cosigner, signer)) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
+                cosigner, signer,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -216,12 +217,12 @@ pub struct BuyCompressedBuilder {
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
     buyer: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<(solana_program::pubkey::Pubkey, bool)>,
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,
@@ -303,8 +304,8 @@ impl BuyCompressedBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
+        self.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -340,8 +341,16 @@ impl BuyCompressedBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.cosigner = cosigner;
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<solana_program::pubkey::Pubkey>,
+        as_signer: bool,
+    ) -> &mut Self {
+        if let Some(cosigner) = cosigner {
+            self.cosigner = Some((cosigner, as_signer));
+        } else {
+            self.cosigner = None;
+        }
         self
     }
     #[inline(always)]
@@ -485,7 +494,7 @@ pub struct BuyCompressedCpiAccounts<'a, 'b> {
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -495,7 +504,7 @@ pub struct BuyCompressedCpiAccounts<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
 }
 
 /// `buy_compressed` CPI instruction.
@@ -523,7 +532,7 @@ pub struct BuyCompressedCpi<'a, 'b> {
 
     pub buyer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -533,7 +542,7 @@ pub struct BuyCompressedCpi<'a, 'b> {
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     /// The arguments for the instruction.
     pub __args: BuyCompressedInstructionArgs,
 }
@@ -640,8 +649,8 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
+            *self.payer.0.key,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner.key,
@@ -673,10 +682,10 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
             *self.rent_destination.key,
             false,
         ));
-        if let Some(cosigner) = self.cosigner {
+        if let Some((cosigner, signer)) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                true,
+                signer,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -712,7 +721,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.buyer.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.payer.0.clone());
         account_infos.push(self.owner.clone());
         if let Some(taker_broker) = self.taker_broker {
             account_infos.push(taker_broker.clone());
@@ -722,7 +731,7 @@ impl<'a, 'b> BuyCompressedCpi<'a, 'b> {
         }
         account_infos.push(self.rent_destination.clone());
         if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.clone());
+            account_infos.push(cosigner.0.clone());
         }
         remaining_accounts
             .iter()
@@ -872,8 +881,12 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn payer(
+        &mut self,
+        payer: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
+    ) -> &mut Self {
+        self.instruction.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -912,8 +925,13 @@ impl<'a, 'b> BuyCompressedCpiBuilder<'a, 'b> {
     pub fn cosigner(
         &mut self,
         cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.cosigner = cosigner;
+        if let Some(cosigner) = cosigner {
+            self.instruction.cosigner = Some((cosigner, as_signer));
+        } else {
+            self.instruction.cosigner = None;
+        }
         self
     }
     #[inline(always)]
@@ -1114,12 +1132,12 @@ struct BuyCompressedCpiBuilderInstruction<'a, 'b> {
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     nonce: Option<u64>,
     index: Option<u32>,
     root: Option<[u8; 32]>,

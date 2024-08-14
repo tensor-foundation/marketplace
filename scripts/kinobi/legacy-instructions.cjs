@@ -13,6 +13,13 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyLegacy: {
           accounts: {
+            payer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
             feeVault: {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
@@ -114,6 +121,13 @@ module.exports = function visitor(options) {
         },
         buyLegacySpl: {
           accounts: {
+            payer: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
             feeVault: {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
@@ -222,6 +236,9 @@ module.exports = function visitor(options) {
         },
         closeExpiredListingLegacy: {
           accounts: {
+            payer: {
+              isSigner: "either",
+            },
             owner: {
               defaultValue: k.accountValueNode("payer"),
             },
@@ -402,6 +419,7 @@ module.exports = function visitor(options) {
               isSigner: "either",
             },
             cosigner: {
+              isOptional: true,
               isSigner: "either",
             },
             ownerTa: {
@@ -482,6 +500,13 @@ module.exports = function visitor(options) {
         },
         takeBidLegacy: {
           accounts: {
+            seller: {
+              isSigner: "either",
+            },
+            cosigner: {
+              isOptional: true,
+              isSigner: "either",
+            },
             feeVault: {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",

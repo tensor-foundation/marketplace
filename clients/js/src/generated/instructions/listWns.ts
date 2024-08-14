@@ -92,8 +92,7 @@ export type ListWnsInstruction<
   IInstructionWithAccounts<
     [
       TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
+        ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
       TAccountOwnerTa extends string
         ? WritableAccount<TAccountOwnerTa>
@@ -108,8 +107,7 @@ export type ListWnsInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
+        ? WritableAccount<TAccountPayer>
         : TAccountPayer,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -222,12 +220,12 @@ export type ListWnsAsyncInput<
   TAccountCosigner extends string = string,
   TAccountCurrency extends string = string,
 > = {
-  owner: TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
   ownerTa?: Address<TAccountOwnerTa>;
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer?: TransactionSigner<TAccountPayer>;
+  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -287,12 +285,16 @@ export async function getListWnsInstructionAsync<
 ): Promise<
   ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -434,12 +436,16 @@ export async function getListWnsInstructionAsync<
     ),
   } as ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,
@@ -475,12 +481,12 @@ export type ListWnsInput<
   TAccountCosigner extends string = string,
   TAccountCurrency extends string = string,
 > = {
-  owner: TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
   ownerTa: Address<TAccountOwnerTa>;
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  payer?: TransactionSigner<TAccountPayer>;
+  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
@@ -539,12 +545,16 @@ export function getListWnsInstruction<
   >
 ): ListWnsInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-  TAccountOwner,
+  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+    : TAccountOwner,
   TAccountOwnerTa,
   TAccountListState,
   TAccountListTa,
   TAccountMint,
-  TAccountPayer,
+  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+    : TAccountPayer,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMarketplaceProgram,
@@ -653,12 +663,16 @@ export function getListWnsInstruction<
     ),
   } as ListWnsInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountOwnerTa,
     TAccountListState,
     TAccountListTa,
     TAccountMint,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMarketplaceProgram,

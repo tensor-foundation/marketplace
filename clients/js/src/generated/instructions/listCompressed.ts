@@ -120,8 +120,7 @@ export type ListCompressedInstruction<
             IAccountSignerMeta<TAccountRentPayer>
         : TAccountRentPayer,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -228,7 +227,7 @@ export type ListCompressedAsyncInput<
   TAccountCosigner extends string = string,
 > = {
   treeAuthority?: Address<TAccountTreeAuthority>;
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner>;
   delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -238,7 +237,7 @@ export type ListCompressedAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   rentPayer?: TransactionSigner<TAccountRentPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];
@@ -285,9 +284,7 @@ export async function getListCompressedInstructionAsync<
   ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
       ? ReadonlySignerAccount<TAccountDelegate> &
           IAccountSignerMeta<TAccountDelegate>
@@ -300,7 +297,10 @@ export async function getListCompressedInstructionAsync<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountRentPayer,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >
 > {
   // Program address.
@@ -418,9 +418,7 @@ export async function getListCompressedInstructionAsync<
   } as ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
       ? ReadonlySignerAccount<TAccountDelegate> &
           IAccountSignerMeta<TAccountDelegate>
@@ -433,7 +431,10 @@ export async function getListCompressedInstructionAsync<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountRentPayer,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;
@@ -454,7 +455,7 @@ export type ListCompressedInput<
   TAccountCosigner extends string = string,
 > = {
   treeAuthority: Address<TAccountTreeAuthority>;
-  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner>;
   delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -464,7 +465,7 @@ export type ListCompressedInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   listState: Address<TAccountListState>;
   rentPayer?: TransactionSigner<TAccountRentPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   nonce?: ListCompressedInstructionDataArgs['nonce'];
   index: ListCompressedInstructionDataArgs['index'];
   root: ListCompressedInstructionDataArgs['root'];
@@ -510,9 +511,7 @@ export function getListCompressedInstruction<
 ): ListCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountTreeAuthority,
-  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-    : TAccountOwner,
+  TAccountOwner,
   (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
     ? ReadonlySignerAccount<TAccountDelegate> &
         IAccountSignerMeta<TAccountDelegate>
@@ -525,7 +524,10 @@ export function getListCompressedInstruction<
   TAccountMarketplaceProgram,
   TAccountListState,
   TAccountRentPayer,
-  TAccountCosigner
+  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+    ? ReadonlySignerAccount<TAccountCosigner> &
+        IAccountSignerMeta<TAccountCosigner>
+    : TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -636,9 +638,7 @@ export function getListCompressedInstruction<
   } as ListCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountTreeAuthority,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
-      : TAccountOwner,
+    TAccountOwner,
     (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
       ? ReadonlySignerAccount<TAccountDelegate> &
           IAccountSignerMeta<TAccountDelegate>
@@ -651,7 +651,10 @@ export function getListCompressedInstruction<
     TAccountMarketplaceProgram,
     TAccountListState,
     TAccountRentPayer,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;

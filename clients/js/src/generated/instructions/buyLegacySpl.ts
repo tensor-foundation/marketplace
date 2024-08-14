@@ -148,8 +148,7 @@ export type BuyLegacySplInstruction<
         ? WritableAccount<TAccountOwnerCurrencyTa>
         : TAccountOwnerCurrencyTa,
       TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
+        ? WritableAccount<TAccountPayer>
         : TAccountPayer,
       TAccountPayerCurrencyTa extends string
         ? WritableAccount<TAccountPayerCurrencyTa>
@@ -203,8 +202,7 @@ export type BuyLegacySplInstruction<
         ? ReadonlyAccount<TAccountSysvarInstructions>
         : TAccountSysvarInstructions,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -307,7 +305,7 @@ export type BuyLegacySplAsyncInput<
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
   ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
-  payer: TransactionSigner<TAccountPayer>;
+  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -325,7 +323,7 @@ export type BuyLegacySplAsyncInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   maxAmount: BuyLegacySplInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacySplInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacySplInstructionDataArgs['authorizationData'];
@@ -409,7 +407,9 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountMakerBroker,
     TAccountTakerBroker,
@@ -427,7 +427,10 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >
 > {
   // Program address.
@@ -659,7 +662,9 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountMakerBroker,
     TAccountTakerBroker,
@@ -677,7 +682,10 @@ export async function getBuyLegacySplInstructionAsync<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;
@@ -724,7 +732,7 @@ export type BuyLegacySplInput<
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
   ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
-  payer: TransactionSigner<TAccountPayer>;
+  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   takerBroker?: Address<TAccountTakerBroker>;
@@ -742,7 +750,7 @@ export type BuyLegacySplInput<
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   tokenMetadataProgram?: Address<TAccountTokenMetadataProgram>;
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   maxAmount: BuyLegacySplInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacySplInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacySplInstructionDataArgs['authorizationData'];
@@ -825,7 +833,9 @@ export function getBuyLegacySplInstruction<
   TAccountCurrency,
   TAccountOwner,
   TAccountOwnerCurrencyTa,
-  TAccountPayer,
+  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+    : TAccountPayer,
   TAccountPayerCurrencyTa,
   TAccountMakerBroker,
   TAccountTakerBroker,
@@ -843,7 +853,10 @@ export function getBuyLegacySplInstruction<
   TAccountAuthorizationRulesProgram,
   TAccountTokenMetadataProgram,
   TAccountSysvarInstructions,
-  TAccountCosigner
+  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+    ? ReadonlySignerAccount<TAccountCosigner> &
+        IAccountSignerMeta<TAccountCosigner>
+    : TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -1027,7 +1040,9 @@ export function getBuyLegacySplInstruction<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountMakerBroker,
     TAccountTakerBroker,
@@ -1045,7 +1060,10 @@ export function getBuyLegacySplInstruction<
     TAccountAuthorizationRulesProgram,
     TAccountTokenMetadataProgram,
     TAccountSysvarInstructions,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;

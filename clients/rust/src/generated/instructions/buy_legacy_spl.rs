@@ -31,7 +31,7 @@ pub struct BuyLegacySpl {
 
     pub owner_currency_ta: solana_program::pubkey::Pubkey,
 
-    pub payer: solana_program::pubkey::Pubkey,
+    pub payer: (solana_program::pubkey::Pubkey, bool),
 
     pub payer_currency_ta: solana_program::pubkey::Pubkey,
 
@@ -67,7 +67,7 @@ pub struct BuyLegacySpl {
 
     pub sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
 
-    pub cosigner: Option<solana_program::pubkey::Pubkey>,
+    pub cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
 }
 
 impl BuyLegacySpl {
@@ -122,7 +122,8 @@ impl BuyLegacySpl {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.payer.0,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer_currency_ta,
@@ -248,9 +249,9 @@ impl BuyLegacySpl {
                 false,
             ));
         }
-        if let Some(cosigner) = self.cosigner {
+        if let Some((cosigner, signer)) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                cosigner, true,
+                cosigner, signer,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -343,7 +344,7 @@ pub struct BuyLegacySplBuilder {
     currency: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     owner_currency_ta: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<(solana_program::pubkey::Pubkey, bool)>,
     payer_currency_ta: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
@@ -361,7 +362,7 @@ pub struct BuyLegacySplBuilder {
     authorization_rules_program: Option<solana_program::pubkey::Pubkey>,
     token_metadata_program: Option<solana_program::pubkey::Pubkey>,
     sysvar_instructions: Option<solana_program::pubkey::Pubkey>,
-    cosigner: Option<solana_program::pubkey::Pubkey>,
+    cosigner: Option<(solana_program::pubkey::Pubkey, bool)>,
     max_amount: Option<u64>,
     optional_royalty_pct: Option<u16>,
     authorization_data: Option<AuthorizationDataLocal>,
@@ -429,8 +430,8 @@ impl BuyLegacySplBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
+        self.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -571,8 +572,16 @@ impl BuyLegacySplBuilder {
     }
     /// `[optional account]`
     #[inline(always)]
-    pub fn cosigner(&mut self, cosigner: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.cosigner = cosigner;
+    pub fn cosigner(
+        &mut self,
+        cosigner: Option<solana_program::pubkey::Pubkey>,
+        as_signer: bool,
+    ) -> &mut Self {
+        if let Some(cosigner) = cosigner {
+            self.cosigner = Some((cosigner, as_signer));
+        } else {
+            self.cosigner = None;
+        }
         self
     }
     #[inline(always)]
@@ -691,7 +700,7 @@ pub struct BuyLegacySplCpiAccounts<'a, 'b> {
 
     pub owner_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub payer_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -727,7 +736,7 @@ pub struct BuyLegacySplCpiAccounts<'a, 'b> {
 
     pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
 }
 
 /// `buy_legacy_spl` CPI instruction.
@@ -755,7 +764,7 @@ pub struct BuyLegacySplCpi<'a, 'b> {
 
     pub owner_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub payer_currency_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -791,7 +800,7 @@ pub struct BuyLegacySplCpi<'a, 'b> {
 
     pub sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pub cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     /// The arguments for the instruction.
     pub __args: BuyLegacySplInstructionArgs,
 }
@@ -911,8 +920,8 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
+            *self.payer.0.key,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer_currency_ta.key,
@@ -1038,10 +1047,10 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
                 false,
             ));
         }
-        if let Some(cosigner) = self.cosigner {
+        if let Some((cosigner, signer)) = self.cosigner {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *cosigner.key,
-                true,
+                signer,
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1077,7 +1086,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
         account_infos.push(self.currency.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.owner_currency_ta.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.payer.0.clone());
         account_infos.push(self.payer_currency_ta.clone());
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
@@ -1112,7 +1121,7 @@ impl<'a, 'b> BuyLegacySplCpi<'a, 'b> {
             account_infos.push(sysvar_instructions.clone());
         }
         if let Some(cosigner) = self.cosigner {
-            account_infos.push(cosigner.clone());
+            account_infos.push(cosigner.0.clone());
         }
         remaining_accounts
             .iter()
@@ -1276,8 +1285,12 @@ impl<'a, 'b> BuyLegacySplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn payer(
+        &mut self,
+        payer: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
+    ) -> &mut Self {
+        self.instruction.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -1429,8 +1442,13 @@ impl<'a, 'b> BuyLegacySplCpiBuilder<'a, 'b> {
     pub fn cosigner(
         &mut self,
         cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.cosigner = cosigner;
+        if let Some(cosigner) = cosigner {
+            self.instruction.cosigner = Some((cosigner, as_signer));
+        } else {
+            self.instruction.cosigner = None;
+        }
         self
     }
     #[inline(always)]
@@ -1609,7 +1627,7 @@ struct BuyLegacySplCpiBuilderInstruction<'a, 'b> {
     currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     payer_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1627,7 +1645,7 @@ struct BuyLegacySplCpiBuilderInstruction<'a, 'b> {
     authorization_rules_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sysvar_instructions: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    cosigner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     max_amount: Option<u64>,
     optional_royalty_pct: Option<u16>,
     authorization_data: Option<AuthorizationDataLocal>,

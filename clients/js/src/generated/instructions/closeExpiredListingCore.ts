@@ -27,8 +27,13 @@ import {
   type ReadonlyUint8Array,
   type WritableAccount,
 } from '@solana/web3.js';
+import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type CloseExpiredListingCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -109,6 +114,129 @@ export function getCloseExpiredListingCoreInstructionDataCodec(): Codec<
     getCloseExpiredListingCoreInstructionDataEncoder(),
     getCloseExpiredListingCoreInstructionDataDecoder()
   );
+}
+
+export type CloseExpiredListingCoreAsyncInput<
+  TAccountListState extends string = string,
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountOwner extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  listState?: Address<TAccountListState>;
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  owner: Address<TAccountOwner>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  rentDestination: Address<TAccountRentDestination>;
+};
+
+export async function getCloseExpiredListingCoreInstructionAsync<
+  TAccountListState extends string,
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountOwner extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountRentDestination extends string,
+>(
+  input: CloseExpiredListingCoreAsyncInput<
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
+  >
+): Promise<
+  CloseExpiredListingCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    listState: { value: input.listState ?? null, isWritable: true },
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: false },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findAssetListStatePda({
+      asset: expectAddress(accounts.asset.value),
+    });
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.rentDestination),
+    ],
+    programAddress,
+    data: getCloseExpiredListingCoreInstructionDataEncoder().encode({}),
+  } as CloseExpiredListingCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountRentDestination
+  >;
+
+  return instruction;
 }
 
 export type CloseExpiredListingCoreInput<

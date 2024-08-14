@@ -140,8 +140,7 @@ export type BuyWnsSplInstruction<
         ? WritableAccount<TAccountOwnerCurrencyTa>
         : TAccountOwnerCurrencyTa,
       TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
+        ? WritableAccount<TAccountPayer>
         : TAccountPayer,
       TAccountPayerCurrencyTa extends string
         ? WritableAccount<TAccountPayerCurrencyTa>
@@ -195,8 +194,7 @@ export type BuyWnsSplInstruction<
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -282,7 +280,7 @@ export type BuyWnsSplAsyncInput<
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
   ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
-  payer: TransactionSigner<TAccountPayer>;
+  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
@@ -300,7 +298,7 @@ export type BuyWnsSplAsyncInput<
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
 };
@@ -380,7 +378,9 @@ export async function getBuyWnsSplInstructionAsync<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountTakerBroker,
     TAccountTakerBrokerCurrencyTa,
@@ -398,7 +398,10 @@ export async function getBuyWnsSplInstructionAsync<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >
 > {
   // Program address.
@@ -635,7 +638,9 @@ export async function getBuyWnsSplInstructionAsync<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountTakerBroker,
     TAccountTakerBrokerCurrencyTa,
@@ -653,7 +658,10 @@ export async function getBuyWnsSplInstructionAsync<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;
@@ -702,7 +710,7 @@ export type BuyWnsSplInput<
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
   ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
-  payer: TransactionSigner<TAccountPayer>;
+  payer: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
   payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
@@ -720,7 +728,7 @@ export type BuyWnsSplInput<
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
 };
@@ -799,7 +807,9 @@ export function getBuyWnsSplInstruction<
   TAccountCurrency,
   TAccountOwner,
   TAccountOwnerCurrencyTa,
-  TAccountPayer,
+  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+    : TAccountPayer,
   TAccountPayerCurrencyTa,
   TAccountTakerBroker,
   TAccountTakerBrokerCurrencyTa,
@@ -817,7 +827,10 @@ export function getBuyWnsSplInstruction<
   TAccountWnsProgram,
   TAccountDistributionProgram,
   TAccountExtraMetas,
-  TAccountCosigner
+  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+    ? ReadonlySignerAccount<TAccountCosigner> &
+        IAccountSignerMeta<TAccountCosigner>
+    : TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -979,7 +992,9 @@ export function getBuyWnsSplInstruction<
     TAccountCurrency,
     TAccountOwner,
     TAccountOwnerCurrencyTa,
-    TAccountPayer,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
     TAccountPayerCurrencyTa,
     TAccountTakerBroker,
     TAccountTakerBrokerCurrencyTa,
@@ -997,7 +1012,10 @@ export function getBuyWnsSplInstruction<
     TAccountWnsProgram,
     TAccountDistributionProgram,
     TAccountExtraMetas,
-    TAccountCosigner
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;

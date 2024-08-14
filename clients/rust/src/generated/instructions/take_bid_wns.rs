@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct TakeBidWns {
     pub fee_vault: solana_program::pubkey::Pubkey,
 
-    pub seller: solana_program::pubkey::Pubkey,
+    pub seller: (solana_program::pubkey::Pubkey, bool),
 
     pub bid_state: solana_program::pubkey::Pubkey,
 
@@ -78,8 +78,8 @@ impl TakeBidWns {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller,
-            true,
+            self.seller.0,
+            self.seller.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.bid_state,
@@ -256,7 +256,7 @@ pub struct TakeBidWnsInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct TakeBidWnsBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
-    seller: Option<solana_program::pubkey::Pubkey>,
+    seller: Option<(solana_program::pubkey::Pubkey, bool)>,
     bid_state: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
@@ -293,8 +293,8 @@ impl TakeBidWnsBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.seller = Some(seller);
+    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
+        self.seller = Some((seller, as_signer));
         self
     }
     #[inline(always)]
@@ -519,7 +519,7 @@ impl TakeBidWnsBuilder {
 pub struct TakeBidWnsCpiAccounts<'a, 'b> {
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -573,7 +573,7 @@ pub struct TakeBidWnsCpi<'a, 'b> {
 
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
+    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub bid_state: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -696,8 +696,8 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller.key,
-            true,
+            *self.seller.0.key,
+            self.seller.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.bid_state.key,
@@ -827,7 +827,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(24 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
-        account_infos.push(self.seller.clone());
+        account_infos.push(self.seller.0.clone());
         account_infos.push(self.bid_state.clone());
         account_infos.push(self.owner.clone());
         if let Some(taker_broker) = self.taker_broker {
@@ -946,8 +946,9 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
     pub fn seller(
         &mut self,
         seller: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.seller = Some(seller);
+        self.instruction.seller = Some((seller, as_signer));
         self
     }
     #[inline(always)]
@@ -1270,7 +1271,7 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
 struct TakeBidWnsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    seller: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     bid_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,

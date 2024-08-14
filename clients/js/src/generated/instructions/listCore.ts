@@ -40,8 +40,14 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type ListCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -75,8 +81,7 @@ export type ListCoreInstruction<
         ? WritableAccount<TAccountListState>
         : TAccountListState,
       TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
+        ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
       TAccountMplCoreProgram extends string
         ? ReadonlyAccount<TAccountMplCoreProgram>
@@ -88,12 +93,10 @@ export type ListCoreInstruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
+        ? WritableAccount<TAccountPayer>
         : TAccountPayer,
       TAccountCosigner extends string
-        ? ReadonlySignerAccount<TAccountCosigner> &
-            IAccountSignerMeta<TAccountCosigner>
+        ? ReadonlyAccount<TAccountCosigner>
         : TAccountCosigner,
       ...TRemainingAccounts,
     ]
@@ -158,6 +161,164 @@ export function getListCoreInstructionDataCodec(): Codec<
   );
 }
 
+export type ListCoreAsyncInput<
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountListState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountPayer extends string = string,
+  TAccountCosigner extends string = string,
+> = {
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  listState?: Address<TAccountListState>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
+  amount: ListCoreInstructionDataArgs['amount'];
+  expireInSec?: ListCoreInstructionDataArgs['expireInSec'];
+  currency?: ListCoreInstructionDataArgs['currency'];
+  privateTaker?: ListCoreInstructionDataArgs['privateTaker'];
+  makerBroker?: ListCoreInstructionDataArgs['makerBroker'];
+};
+
+export async function getListCoreInstructionAsync<
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountListState extends string,
+  TAccountOwner extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountPayer extends string,
+  TAccountCosigner extends string,
+>(
+  input: ListCoreAsyncInput<
+    TAccountAsset,
+    TAccountCollection,
+    TAccountListState,
+    TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountPayer,
+    TAccountCosigner
+  >
+): Promise<
+  ListCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountListState,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    listState: { value: input.listState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findAssetListStatePda({
+      asset: expectAddress(accounts.asset.value),
+    });
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.cosigner),
+    ],
+    programAddress,
+    data: getListCoreInstructionDataEncoder().encode(
+      args as ListCoreInstructionDataArgs
+    ),
+  } as ListCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountListState,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
+  >;
+
+  return instruction;
+}
+
 export type ListCoreInput<
   TAccountAsset extends string = string,
   TAccountCollection extends string = string,
@@ -172,12 +333,12 @@ export type ListCoreInput<
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
   listState: Address<TAccountListState>;
-  owner: TransactionSigner<TAccountOwner>;
+  owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  payer: TransactionSigner<TAccountPayer>;
-  cosigner?: TransactionSigner<TAccountCosigner>;
+  payer?: Address<TAccountPayer> | TransactionSigner<TAccountPayer>;
+  cosigner?: Address<TAccountCosigner> | TransactionSigner<TAccountCosigner>;
   amount: ListCoreInstructionDataArgs['amount'];
   expireInSec?: ListCoreInstructionDataArgs['expireInSec'];
   currency?: ListCoreInstructionDataArgs['currency'];
@@ -212,12 +373,19 @@ export function getListCoreInstruction<
   TAccountAsset,
   TAccountCollection,
   TAccountListState,
-  TAccountOwner,
+  (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+    ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+    : TAccountOwner,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
   TAccountSystemProgram,
-  TAccountPayer,
-  TAccountCosigner
+  (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+    ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+    : TAccountPayer,
+  (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+    ? ReadonlySignerAccount<TAccountCosigner> &
+        IAccountSignerMeta<TAccountCosigner>
+    : TAccountCosigner
 > {
   // Program address.
   const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
@@ -258,6 +426,9 @@ export function getListCoreInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.payer.value) {
+    accounts.payer.value = expectSome(accounts.owner.value);
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -281,12 +452,19 @@ export function getListCoreInstruction<
     TAccountAsset,
     TAccountCollection,
     TAccountListState,
-    TAccountOwner,
+    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
+      ? ReadonlySignerAccount<TAccountOwner> & IAccountSignerMeta<TAccountOwner>
+      : TAccountOwner,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
     TAccountSystemProgram,
-    TAccountPayer,
-    TAccountCosigner
+    (typeof input)['payer'] extends TransactionSigner<TAccountPayer>
+      ? WritableSignerAccount<TAccountPayer> & IAccountSignerMeta<TAccountPayer>
+      : TAccountPayer,
+    (typeof input)['cosigner'] extends TransactionSigner<TAccountCosigner>
+      ? ReadonlySignerAccount<TAccountCosigner> &
+          IAccountSignerMeta<TAccountCosigner>
+      : TAccountCosigner
   >;
 
   return instruction;

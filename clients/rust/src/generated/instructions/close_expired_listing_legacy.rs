@@ -21,7 +21,7 @@ pub struct CloseExpiredListingLegacy {
 
     pub mint: solana_program::pubkey::Pubkey,
 
-    pub payer: solana_program::pubkey::Pubkey,
+    pub payer: (solana_program::pubkey::Pubkey, bool),
 
     pub rent_destination: solana_program::pubkey::Pubkey,
 
@@ -83,7 +83,8 @@ impl CloseExpiredListingLegacy {
             self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.payer.0,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
@@ -249,7 +250,7 @@ pub struct CloseExpiredListingLegacyBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
     list_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<(solana_program::pubkey::Pubkey, bool)>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
@@ -297,8 +298,8 @@ impl CloseExpiredListingLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
+        self.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -478,7 +479,7 @@ pub struct CloseExpiredListingLegacyCpiAccounts<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -522,7 +523,7 @@ pub struct CloseExpiredListingLegacyCpi<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: (&'b solana_program::account_info::AccountInfo<'a>, bool),
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -638,8 +639,8 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
+            *self.payer.0.key,
+            self.payer.1,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
@@ -760,7 +761,7 @@ impl<'a, 'b> CloseExpiredListingLegacyCpi<'a, 'b> {
         account_infos.push(self.list_state.clone());
         account_infos.push(self.list_ta.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.payer.0.clone());
         account_infos.push(self.rent_destination.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
@@ -889,8 +890,12 @@ impl<'a, 'b> CloseExpiredListingLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn payer(
+        &mut self,
+        payer: &'b solana_program::account_info::AccountInfo<'a>,
+        as_signer: bool,
+    ) -> &mut Self {
+        self.instruction.payer = Some((payer, as_signer));
         self
     }
     #[inline(always)]
@@ -1125,7 +1130,7 @@ struct CloseExpiredListingLegacyCpiBuilderInstruction<'a, 'b> {
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

@@ -19,7 +19,7 @@ import {
   type ParsedBuyCoreSplInstruction,
   type ParsedBuyLegacyInstruction,
   type ParsedBuyLegacySplInstruction,
-  type ParsedBuySplInstruction,
+  type ParsedBuySplCompressedInstruction,
   type ParsedBuyT22Instruction,
   type ParsedBuyT22SplInstruction,
   type ParsedBuyWnsInstruction,
@@ -56,6 +56,7 @@ export const TENSOR_MARKETPLACE_PROGRAM_ADDRESS =
 
 export enum TensorMarketplaceAccount {
   ListState,
+  AssetListState,
   BidState,
   BidTa,
 }
@@ -74,6 +75,17 @@ export function identifyTensorMarketplaceAccount(
     )
   ) {
     return TensorMarketplaceAccount.ListState;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([65, 195, 176, 188, 72, 18, 65, 77])
+      ),
+      0
+    )
+  ) {
+    return TensorMarketplaceAccount.AssetListState;
   }
   if (
     containsBytes(
@@ -109,7 +121,7 @@ export enum TensorMarketplaceInstruction {
   CancelBid,
   CloseExpiredBid,
   BuyCompressed,
-  BuySpl,
+  BuySplCompressed,
   CloseExpiredListingCompressed,
   ListCompressed,
   DelistCompressed,
@@ -221,7 +233,7 @@ export function identifyTensorMarketplaceInstruction(
       0
     )
   ) {
-    return TensorMarketplaceInstruction.BuySpl;
+    return TensorMarketplaceInstruction.BuySplCompressed;
   }
   if (
     containsBytes(
@@ -569,8 +581,8 @@ export type ParsedTensorMarketplaceInstruction<
       instructionType: TensorMarketplaceInstruction.BuyCompressed;
     } & ParsedBuyCompressedInstruction<TProgram>)
   | ({
-      instructionType: TensorMarketplaceInstruction.BuySpl;
-    } & ParsedBuySplInstruction<TProgram>)
+      instructionType: TensorMarketplaceInstruction.BuySplCompressed;
+    } & ParsedBuySplCompressedInstruction<TProgram>)
   | ({
       instructionType: TensorMarketplaceInstruction.CloseExpiredListingCompressed;
     } & ParsedCloseExpiredListingCompressedInstruction<TProgram>)
