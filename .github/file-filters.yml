@@ -33,8 +33,7 @@ client_common: &client_common
   - ".github/workflows/main.yml"
   - ".github/file-filters.yml"
   - ".github/.env"
-  - "scripts/generate-idls.cjs"
-  - "scripts/generate-clients.cjs"
+  - "scripts/**"
 
 js_client: &js_client
   - *client_common
