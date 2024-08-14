@@ -4,6 +4,8 @@ import {
   ProgramDerivedAddress,
   ProgramDerivedAddressBump,
   TransactionSigner,
+  generateKeyPair,
+  getAddressFromPublicKey,
 } from '@solana/web3.js';
 import { findBidTaPda } from '../generated';
 import {
@@ -12,6 +14,15 @@ import {
   isTransactionSigner,
 } from '../generated/shared';
 import { findFeeVaultPda, findTreeAuthorityPda } from './pdas';
+
+// Satisfy linter
+type ArgsAny = {
+  [key: string]: unknown;
+};
+
+export const resolveBidIdOnCreate = async (_: ArgsAny) => {
+  return await getAddressFromPublicKey((await generateKeyPair()).publicKey);
+};
 
 //---- Fee Vault resolvers
 

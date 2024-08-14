@@ -42,6 +42,7 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveBidIdOnCreate } from '../../hooked';
 import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -110,6 +111,7 @@ export type BidInstruction<
 
 export type BidInstructionData = {
   discriminator: ReadonlyUint8Array;
+  /** Defaults bidId to random address if not specified otherwise */
   bidId: Address;
   target: Target;
   targetId: Address;
@@ -124,6 +126,7 @@ export type BidInstructionData = {
 };
 
 export type BidInstructionDataArgs = {
+  /** Defaults bidId to random address if not specified otherwise */
   bidId: Address;
   target: TargetArgs;
   targetId: Address;
@@ -277,6 +280,9 @@ export async function getBidInstructionAsync<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -287,7 +293,7 @@ export async function getBidInstructionAsync<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!args.bidId) {
-    args.bidId = expectSome(args.targetId);
+    args.bidId = await resolveBidIdOnCreate(resolverScope);
   }
   if (!accounts.bidState.value) {
     accounts.bidState.value = await findBidStatePda({
@@ -420,9 +426,6 @@ export function getBidInstruction<
   if (!accounts.marketplaceProgram.value) {
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
-  if (!args.bidId) {
-    args.bidId = expectSome(args.targetId);
   }
   if (!accounts.sharedEscrow.value) {
     accounts.sharedEscrow.value = expectTransactionSigner(
