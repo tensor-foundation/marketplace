@@ -111,7 +111,6 @@ export type BidInstruction<
 
 export type BidInstructionData = {
   discriminator: ReadonlyUint8Array;
-  /** Defaults bidId to random address if not specified otherwise */
   bidId: Address;
   target: Target;
   targetId: Address;
@@ -126,7 +125,6 @@ export type BidInstructionData = {
 };
 
 export type BidInstructionDataArgs = {
-  /** Defaults bidId to random address if not specified otherwise */
   bidId: Address;
   target: TargetArgs;
   targetId: Address;

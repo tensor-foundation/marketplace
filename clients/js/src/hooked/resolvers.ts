@@ -7,20 +7,24 @@ import {
   generateKeyPair,
   getAddressFromPublicKey,
 } from '@solana/web3.js';
-import { findBidTaPda } from '../generated';
+import { Target, findBidTaPda } from '../generated';
 import {
   ResolvedAccount,
   expectAddress,
+  expectSome,
   isTransactionSigner,
 } from '../generated/shared';
 import { findFeeVaultPda, findTreeAuthorityPda } from './pdas';
 
-// Satisfy linter
-type ArgsAny = {
-  [key: string]: unknown;
-};
-
-export const resolveBidIdOnCreate = async (_: ArgsAny) => {
+export const resolveBidIdOnCreate = async ({
+  args,
+}: {
+  programAddress: Address;
+  accounts: Record<string, ResolvedAccount>;
+  args: { target?: Target; targetId?: Address };
+}): Promise<Address> => {
+  if (expectSome(args.target) === Target.AssetId)
+    return await Promise.resolve(expectAddress(args.targetId));
   return await getAddressFromPublicKey((await generateKeyPair()).publicKey);
 };
 

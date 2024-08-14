@@ -29,7 +29,6 @@ test('it can bid on an NFT', async (t) => {
     amount: 1,
     target: Target.AssetId,
     targetId: mint,
-    bidId: mint,
   });
 
   // When we create a bid on the NFT.
