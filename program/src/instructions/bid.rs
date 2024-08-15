@@ -59,8 +59,6 @@ pub fn process_bid<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(maker_broker.is_none(), TcompError::MakerBrokerNotYetEnabled);
-
     let bid_state = &mut ctx.accounts.bid_state;
 
     // Passed in quantity can't be smaller than what's already been filled

@@ -4,14 +4,13 @@ use tensor_toolbox::{
     CalcFeesArgs, CreatorFeeMode, FromAcc, TCreator, BROKER_FEE_PCT,
 };
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
-use whitelist_program::MintProof;
 
 use crate::*;
 
 pub struct TakeBidArgs<'a, 'info> {
     pub bid_state: &'a mut Account<'info, BidState>,
     pub seller: &'a AccountInfo<'info>,
-    pub margin_account: &'a UncheckedAccount<'info>,
+    pub margin: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
     pub rent_destination: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
@@ -33,7 +32,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let TakeBidArgs {
         bid_state,
         seller,
-        margin_account,
+        margin,
         owner,
         rent_destination,
         maker_broker,
@@ -98,19 +97,19 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     // --------------------------------------- sol transfers
 
     //if margin is used, move money into bid first
-    if let Some(margin) = bid_state.margin {
-        let decoded_margin_account = assert_decode_margin_account(margin_account, owner)?;
+    if let Some(margin_pubkey) = bid_state.margin {
+        let decoded_margin_account = assert_decode_margin_account(margin, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
         require!(
             decoded_margin_account.owner == *owner.key,
             TcompError::BadMargin
         );
-        require!(*margin_account.key == margin, TcompError::BadMargin);
+        require!(*margin.key == margin_pubkey, TcompError::BadMargin);
         tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
             CpiContext::new(
                 tswap_prog.to_account_info(),
                 tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                    margin_account: margin_account.to_account_info(),
+                    margin_account: margin.to_account_info(),
                     bid_state: bid_state.to_account_info(),
                     owner: owner.to_account_info(),
                     //transfer to bid state
@@ -192,32 +191,4 @@ fn transfer_lamports_from_pda_min_balance<'info>(
     }
     transfer_lamports_from_pda(from_pda, to, lamports)?;
     Ok(())
-}
-
-#[inline(never)]
-pub fn assert_decode_mint_proof(
-    whitelist_pubkey: &Pubkey,
-    mint: &Pubkey,
-    mint_proof: &UncheckedAccount,
-) -> Result<MintProof> {
-    let program_id = &whitelist_program::id();
-    let (key, _) = Pubkey::find_program_address(
-        &[
-            b"mint_proof".as_ref(),
-            mint.as_ref(),
-            whitelist_pubkey.as_ref(),
-        ],
-        program_id,
-    );
-    if key != mint_proof.key() {
-        throw_err!(TcompError::BadMintProof);
-    }
-    // Check program owner (redundant because of find_program_address above, but why not).
-    if *mint_proof.owner != *program_id {
-        throw_err!(TcompError::BadMintProof);
-    }
-
-    let mut data: &[u8] = &mint_proof.try_borrow_data()?;
-    let mint_proof: MintProof = AccountDeserialize::try_deserialize(&mut data)?;
-    Ok(mint_proof)
 }

@@ -18,9 +18,9 @@ pub struct BuyT22Spl {
 
     pub buyer_ta: solana_program::pubkey::Pubkey,
 
-    pub list_ta: solana_program::pubkey::Pubkey,
-
     pub list_state: solana_program::pubkey::Pubkey,
+
+    pub list_ta: solana_program::pubkey::Pubkey,
     /// T22 asset mint.
     pub mint: solana_program::pubkey::Pubkey,
     /// SPL token mint of the currency.
@@ -87,11 +87,11 @@ impl BuyT22Spl {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_ta,
+            self.list_state,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.list_state,
+            self.list_ta,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -239,8 +239,8 @@ pub struct BuyT22SplInstructionArgs {
 ///   1. `[writable]` fee_vault_currency_ta
 ///   2. `[]` buyer
 ///   3. `[writable]` buyer_ta
-///   4. `[writable]` list_ta
-///   5. `[writable]` list_state
+///   4. `[writable]` list_state
+///   5. `[writable]` list_ta
 ///   6. `[]` mint
 ///   7. `[]` currency
 ///   8. `[writable]` owner
@@ -252,8 +252,8 @@ pub struct BuyT22SplInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
-///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   18. `[]` currency_token_program
+///   17. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   18. `[optional]` currency_token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   19. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   20. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   21. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -264,8 +264,8 @@ pub struct BuyT22SplBuilder {
     fee_vault_currency_ta: Option<solana_program::pubkey::Pubkey>,
     buyer: Option<solana_program::pubkey::Pubkey>,
     buyer_ta: Option<solana_program::pubkey::Pubkey>,
-    list_ta: Option<solana_program::pubkey::Pubkey>,
     list_state: Option<solana_program::pubkey::Pubkey>,
+    list_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     currency: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
@@ -315,13 +315,13 @@ impl BuyT22SplBuilder {
         self
     }
     #[inline(always)]
-    pub fn list_ta(&mut self, list_ta: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_ta = Some(list_ta);
+    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_state = Some(list_state);
         self
     }
     #[inline(always)]
-    pub fn list_state(&mut self, list_state: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.list_state = Some(list_state);
+    pub fn list_ta(&mut self, list_ta: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.list_ta = Some(list_ta);
         self
     }
     /// T22 asset mint.
@@ -406,12 +406,13 @@ impl BuyT22SplBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
     pub fn currency_token_program(
         &mut self,
@@ -475,47 +476,48 @@ impl BuyT22SplBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = BuyT22Spl {
-            fee_vault: self.fee_vault.expect("fee_vault is not set"),
-            fee_vault_currency_ta: self
-                .fee_vault_currency_ta
-                .expect("fee_vault_currency_ta is not set"),
-            buyer: self.buyer.expect("buyer is not set"),
-            buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
-            list_ta: self.list_ta.expect("list_ta is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
-            mint: self.mint.expect("mint is not set"),
-            currency: self.currency.expect("currency is not set"),
-            owner: self.owner.expect("owner is not set"),
-            owner_currency_ta: self
-                .owner_currency_ta
-                .expect("owner_currency_ta is not set"),
-            payer: self.payer.expect("payer is not set"),
-            payer_currency_ta: self
-                .payer_currency_ta
-                .expect("payer_currency_ta is not set"),
-            taker_broker: self.taker_broker,
-            taker_broker_currency_ta: self.taker_broker_currency_ta,
-            maker_broker: self.maker_broker,
-            maker_broker_currency_ta: self.maker_broker_currency_ta,
-            rent_destination: self.rent_destination.expect("rent_destination is not set"),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            )),
-            currency_token_program: self
-                .currency_token_program
-                .expect("currency_token_program is not set"),
-            associated_token_program: self.associated_token_program.unwrap_or(
-                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-            ),
-            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-            )),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            cosigner: self.cosigner,
-        };
+        let accounts =
+            BuyT22Spl {
+                fee_vault: self.fee_vault.expect("fee_vault is not set"),
+                fee_vault_currency_ta: self
+                    .fee_vault_currency_ta
+                    .expect("fee_vault_currency_ta is not set"),
+                buyer: self.buyer.expect("buyer is not set"),
+                buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
+                list_state: self.list_state.expect("list_state is not set"),
+                list_ta: self.list_ta.expect("list_ta is not set"),
+                mint: self.mint.expect("mint is not set"),
+                currency: self.currency.expect("currency is not set"),
+                owner: self.owner.expect("owner is not set"),
+                owner_currency_ta: self
+                    .owner_currency_ta
+                    .expect("owner_currency_ta is not set"),
+                payer: self.payer.expect("payer is not set"),
+                payer_currency_ta: self
+                    .payer_currency_ta
+                    .expect("payer_currency_ta is not set"),
+                taker_broker: self.taker_broker,
+                taker_broker_currency_ta: self.taker_broker_currency_ta,
+                maker_broker: self.maker_broker,
+                maker_broker_currency_ta: self.maker_broker_currency_ta,
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
+                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                )),
+                currency_token_program: self.currency_token_program.unwrap_or(
+                    solana_program::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+                ),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
+                system_program: self
+                    .system_program
+                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+                cosigner: self.cosigner,
+            };
         let args = BuyT22SplInstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
         };
@@ -534,9 +536,9 @@ pub struct BuyT22SplCpiAccounts<'a, 'b> {
 
     pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
     /// T22 asset mint.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// SPL token mint of the currency.
@@ -586,9 +588,9 @@ pub struct BuyT22SplCpi<'a, 'b> {
 
     pub buyer_ta: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub list_state: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub list_ta: &'b solana_program::account_info::AccountInfo<'a>,
     /// T22 asset mint.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// SPL token mint of the currency.
@@ -639,8 +641,8 @@ impl<'a, 'b> BuyT22SplCpi<'a, 'b> {
             fee_vault_currency_ta: accounts.fee_vault_currency_ta,
             buyer: accounts.buyer,
             buyer_ta: accounts.buyer_ta,
-            list_ta: accounts.list_ta,
             list_state: accounts.list_state,
+            list_ta: accounts.list_ta,
             mint: accounts.mint,
             currency: accounts.currency,
             owner: accounts.owner,
@@ -712,11 +714,11 @@ impl<'a, 'b> BuyT22SplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_ta.key,
+            *self.list_state.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.list_state.key,
+            *self.list_ta.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -844,8 +846,8 @@ impl<'a, 'b> BuyT22SplCpi<'a, 'b> {
         account_infos.push(self.fee_vault_currency_ta.clone());
         account_infos.push(self.buyer.clone());
         account_infos.push(self.buyer_ta.clone());
-        account_infos.push(self.list_ta.clone());
         account_infos.push(self.list_state.clone());
+        account_infos.push(self.list_ta.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.currency.clone());
         account_infos.push(self.owner.clone());
@@ -893,8 +895,8 @@ impl<'a, 'b> BuyT22SplCpi<'a, 'b> {
 ///   1. `[writable]` fee_vault_currency_ta
 ///   2. `[]` buyer
 ///   3. `[writable]` buyer_ta
-///   4. `[writable]` list_ta
-///   5. `[writable]` list_state
+///   4. `[writable]` list_state
+///   5. `[writable]` list_ta
 ///   6. `[]` mint
 ///   7. `[]` currency
 ///   8. `[writable]` owner
@@ -925,8 +927,8 @@ impl<'a, 'b> BuyT22SplCpiBuilder<'a, 'b> {
             fee_vault_currency_ta: None,
             buyer: None,
             buyer_ta: None,
-            list_ta: None,
             list_state: None,
+            list_ta: None,
             mint: None,
             currency: None,
             owner: None,
@@ -979,19 +981,19 @@ impl<'a, 'b> BuyT22SplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn list_ta(
-        &mut self,
-        list_ta: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.list_ta = Some(list_ta);
-        self
-    }
-    #[inline(always)]
     pub fn list_state(
         &mut self,
         list_state: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.list_state = Some(list_state);
+        self
+    }
+    #[inline(always)]
+    pub fn list_ta(
+        &mut self,
+        list_ta: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.list_ta = Some(list_ta);
         self
     }
     /// T22 asset mint.
@@ -1195,9 +1197,9 @@ impl<'a, 'b> BuyT22SplCpiBuilder<'a, 'b> {
 
             buyer_ta: self.instruction.buyer_ta.expect("buyer_ta is not set"),
 
-            list_ta: self.instruction.list_ta.expect("list_ta is not set"),
-
             list_state: self.instruction.list_state.expect("list_state is not set"),
+
+            list_ta: self.instruction.list_ta.expect("list_ta is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -1272,8 +1274,8 @@ struct BuyT22SplCpiBuilderInstruction<'a, 'b> {
     fee_vault_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     buyer_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     list_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    list_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     currency: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,

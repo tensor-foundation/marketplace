@@ -51,11 +51,6 @@ pub fn process_list_core<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     validate_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),

@@ -920,7 +920,7 @@ source = "git+ssh://git@github.com/tensor-foundation/escrow.git#7b880e3ae0529a6d
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "tensor-toolbox",
+ "tensor-toolbox 0.1.0",
  "tensor-vipers",
 ]
 
@@ -1226,7 +1226,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox",
+ "tensor-toolbox 0.2.0",
  "tensor-vipers",
  "whitelist-program",
 ]
@@ -2375,6 +2375,24 @@ dependencies = [
  "anchor-spl",
  "bytemuck",
  "mpl-bubblegum",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-account-compression",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "tensor-vipers",
+]
+
+[[package]]
+name = "tensor-toolbox"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d196245d5c203b4051b94475e56808c0e03c83f2fe4aa6e167f488ea385fe18"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "mpl-bubblegum",
  "mpl-core",
  "mpl-token-metadata",
  "solana-program",
@@ -2621,7 +2639,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "mpl-token-metadata",
- "tensor-toolbox",
+ "tensor-toolbox 0.1.0",
  "tensor-vipers",
 ]
 

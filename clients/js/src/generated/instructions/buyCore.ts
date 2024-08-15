@@ -34,6 +34,7 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,
@@ -154,6 +155,206 @@ export function getBuyCoreInstructionDataCodec(): Codec<
     getBuyCoreInstructionDataEncoder(),
     getBuyCoreInstructionDataDecoder()
   );
+}
+
+export type BuyCoreAsyncInput<
+  TAccountFeeVault extends string = string,
+  TAccountListState extends string = string,
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountBuyer extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountRentDestination extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountCosigner extends string = string,
+> = {
+  feeVault?: Address<TAccountFeeVault>;
+  listState: Address<TAccountListState>;
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  buyer?: Address<TAccountBuyer>;
+  payer: TransactionSigner<TAccountPayer>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  rentDestination?: Address<TAccountRentDestination>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  maxAmount: BuyCoreInstructionDataArgs['maxAmount'];
+  creators?: Array<Address>;
+};
+
+export async function getBuyCoreInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountListState extends string,
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountBuyer extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountRentDestination extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountCosigner extends string,
+>(
+  input: BuyCoreAsyncInput<
+    TAccountFeeVault,
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDestination,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountCosigner
+  >
+): Promise<
+  BuyCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDestination,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountCosigner
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    buyer: { value: input.buyer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.cosigner.value) {
+    accounts.cosigner.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.buyer),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getBuyCoreInstructionDataEncoder().encode(
+      args as BuyCoreInstructionDataArgs
+    ),
+  } as BuyCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountListState,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountBuyer,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountRentDestination,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountCosigner
+  >;
+
+  return instruction;
 }
 
 export type BuyCoreInput<

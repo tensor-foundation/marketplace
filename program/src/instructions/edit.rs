@@ -24,11 +24,6 @@ pub fn process_edit<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     let list_state = &mut ctx.accounts.list_state;
     list_state.amount = amount;
     list_state.currency = currency;

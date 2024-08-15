@@ -12,7 +12,7 @@ export * from './buyCore';
 export * from './buyCoreSpl';
 export * from './buyLegacy';
 export * from './buyLegacySpl';
-export * from './buySpl';
+export * from './buySplCompressed';
 export * from './buyT22';
 export * from './buyT22Spl';
 export * from './buyWns';

@@ -35,7 +35,6 @@ import {
   resolveListAta,
   resolveOwnerAta,
   resolveWnsApprovePda,
-  resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
@@ -43,6 +42,7 @@ import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
   expectSome,
+  expectTransactionSigner,
   getAccountMetaFactory,
   type ResolvedAccount,
 } from '../shared';
@@ -58,7 +58,7 @@ export type DelistWnsInstruction<
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -73,7 +73,7 @@ export type DelistWnsInstruction<
   TAccountWnsProgram extends
     | string
     | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
-  TAccountWnsDistributionProgram extends
+  TAccountDistributionProgram extends
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
@@ -99,8 +99,7 @@ export type DelistWnsInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
@@ -127,9 +126,9 @@ export type DelistWnsInstruction<
       TAccountWnsProgram extends string
         ? ReadonlyAccount<TAccountWnsProgram>
         : TAccountWnsProgram,
-      TAccountWnsDistributionProgram extends string
-        ? ReadonlyAccount<TAccountWnsDistributionProgram>
-        : TAccountWnsDistributionProgram,
+      TAccountDistributionProgram extends string
+        ? ReadonlyAccount<TAccountDistributionProgram>
+        : TAccountDistributionProgram,
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
@@ -167,11 +166,6 @@ export function getDelistWnsInstructionDataCodec(): Codec<
   );
 }
 
-export type DelistWnsInstructionExtraArgs = {
-  collection: Address;
-  paymentMint?: Address;
-};
-
 export type DelistWnsAsyncInput<
   TAccountOwner extends string = string,
   TAccountOwnerTa extends string = string,
@@ -187,7 +181,7 @@ export type DelistWnsAsyncInput<
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
@@ -195,19 +189,17 @@ export type DelistWnsAsyncInput<
   listState?: Address<TAccountListState>;
   listTa?: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   approve?: Address<TAccountApprove>;
-  distribution?: Address<TAccountDistribution>;
+  distribution: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
-  collection: DelistWnsInstructionExtraArgs['collection'];
-  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
 };
 
 export async function getDelistWnsInstructionAsync<
@@ -225,7 +217,7 @@ export async function getDelistWnsInstructionAsync<
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
   input: DelistWnsAsyncInput<
@@ -243,7 +235,7 @@ export async function getDelistWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 ): Promise<
@@ -263,7 +255,7 @@ export async function getDelistWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 > {
@@ -292,8 +284,8 @@ export async function getDelistWnsInstructionAsync<
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -303,16 +295,13 @@ export async function getDelistWnsInstructionAsync<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolver scope.
-  const resolverScope = { programAddress, accounts, args };
+  const resolverScope = { programAddress, accounts };
 
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.ownerTa.value) {
     accounts.ownerTa = {
@@ -332,7 +321,9 @@ export async function getDelistWnsInstructionAsync<
     };
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);
@@ -355,22 +346,12 @@ export async function getDelistWnsInstructionAsync<
       ...(await resolveWnsApprovePda(resolverScope)),
     };
   }
-  if (!args.paymentMint) {
-    args.paymentMint =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-  if (!accounts.distribution.value) {
-    accounts.distribution = {
-      ...accounts.distribution,
-      ...(await resolveWnsDistributionPda(resolverScope)),
-    };
-  }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
   if (!accounts.extraMetas.value) {
@@ -397,7 +378,7 @@ export async function getDelistWnsInstructionAsync<
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
@@ -418,7 +399,7 @@ export async function getDelistWnsInstructionAsync<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >;
 
@@ -440,7 +421,7 @@ export type DelistWnsInput<
   TAccountApprove extends string = string,
   TAccountDistribution extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
 > = {
   owner: TransactionSigner<TAccountOwner>;
@@ -448,7 +429,7 @@ export type DelistWnsInput<
   listState: Address<TAccountListState>;
   listTa: Address<TAccountListTa>;
   mint: Address<TAccountMint>;
-  rentDestination?: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   payer?: TransactionSigner<TAccountPayer>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -457,10 +438,8 @@ export type DelistWnsInput<
   approve: Address<TAccountApprove>;
   distribution: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
-  collection: DelistWnsInstructionExtraArgs['collection'];
-  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
 };
 
 export function getDelistWnsInstruction<
@@ -478,7 +457,7 @@ export function getDelistWnsInstruction<
   TAccountApprove extends string,
   TAccountDistribution extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
 >(
   input: DelistWnsInput<
@@ -496,7 +475,7 @@ export function getDelistWnsInstruction<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >
 ): DelistWnsInstruction<
@@ -515,7 +494,7 @@ export function getDelistWnsInstruction<
   TAccountApprove,
   TAccountDistribution,
   TAccountWnsProgram,
-  TAccountWnsDistributionProgram,
+  TAccountDistributionProgram,
   TAccountExtraMetas
 > {
   // Program address.
@@ -543,8 +522,8 @@ export function getDelistWnsInstruction<
     approve: { value: input.approve ?? null, isWritable: true },
     distribution: { value: input.distribution ?? null, isWritable: true },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -554,16 +533,15 @@ export function getDelistWnsInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
   if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
   if (!accounts.payer.value) {
     accounts.payer.value = expectSome(accounts.owner.value);
@@ -580,16 +558,12 @@ export function getDelistWnsInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!args.paymentMint) {
-    args.paymentMint =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
@@ -610,7 +584,7 @@ export function getDelistWnsInstruction<
       getAccountMeta(accounts.approve),
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
     ],
     programAddress,
@@ -631,7 +605,7 @@ export function getDelistWnsInstruction<
     TAccountApprove,
     TAccountDistribution,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas
   >;
 
@@ -658,7 +632,7 @@ export type ParsedDelistWnsInstruction<
     approve: TAccountMetas[11];
     distribution: TAccountMetas[12];
     wnsProgram: TAccountMetas[13];
-    wnsDistributionProgram: TAccountMetas[14];
+    distributionProgram: TAccountMetas[14];
     extraMetas: TAccountMetas[15];
   };
   data: DelistWnsInstructionData;
@@ -699,7 +673,7 @@ export function parseDelistWnsInstruction<
       approve: getNextAccount(),
       distribution: getNextAccount(),
       wnsProgram: getNextAccount(),
-      wnsDistributionProgram: getNextAccount(),
+      distributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
     },
     data: getDelistWnsInstructionDataDecoder().decode(instruction.data),

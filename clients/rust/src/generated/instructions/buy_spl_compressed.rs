@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct BuySpl {
+pub struct BuySplCompressed {
     pub fee_vault: solana_program::pubkey::Pubkey,
 
     pub fee_vault_ta: solana_program::pubkey::Pubkey,
@@ -61,17 +61,17 @@ pub struct BuySpl {
     pub cosigner: Option<solana_program::pubkey::Pubkey>,
 }
 
-impl BuySpl {
+impl BuySplCompressed {
     pub fn instruction(
         &self,
-        args: BuySplInstructionArgs,
+        args: BuySplCompressedInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: BuySplInstructionArgs,
+        args: BuySplCompressedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(25 + remaining_accounts.len());
@@ -207,7 +207,7 @@ impl BuySpl {
             ));
         }
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = BuySplInstructionData::new().try_to_vec().unwrap();
+        let mut data = BuySplCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -220,11 +220,11 @@ impl BuySpl {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct BuySplInstructionData {
+pub struct BuySplCompressedInstructionData {
     discriminator: [u8; 8],
 }
 
-impl BuySplInstructionData {
+impl BuySplCompressedInstructionData {
     pub fn new() -> Self {
         Self {
             discriminator: [65, 136, 254, 255, 59, 130, 234, 174],
@@ -232,7 +232,7 @@ impl BuySplInstructionData {
     }
 }
 
-impl Default for BuySplInstructionData {
+impl Default for BuySplCompressedInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -240,7 +240,7 @@ impl Default for BuySplInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BuySplInstructionArgs {
+pub struct BuySplCompressedInstructionArgs {
     pub nonce: u64,
     pub index: u32,
     pub root: [u8; 32],
@@ -252,7 +252,7 @@ pub struct BuySplInstructionArgs {
     pub optional_royalty_pct: Option<u16>,
 }
 
-/// Instruction builder for `BuySpl`.
+/// Instruction builder for `BuySplCompressed`.
 ///
 /// ### Accounts:
 ///
@@ -282,7 +282,7 @@ pub struct BuySplInstructionArgs {
 ///   23. `[writable, signer]` rent_payer
 ///   24. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 #[derive(Clone, Debug, Default)]
-pub struct BuySplBuilder {
+pub struct BuySplCompressedBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
     fee_vault_ta: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
@@ -320,7 +320,7 @@ pub struct BuySplBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl BuySplBuilder {
+impl BuySplCompressedBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -557,7 +557,7 @@ impl BuySplBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = BuySpl {
+        let accounts = BuySplCompressed {
             fee_vault: self.fee_vault.expect("fee_vault is not set"),
             fee_vault_ta: self.fee_vault_ta.expect("fee_vault_ta is not set"),
             tree_authority: self.tree_authority.expect("tree_authority is not set"),
@@ -600,7 +600,7 @@ impl BuySplBuilder {
             rent_payer: self.rent_payer.expect("rent_payer is not set"),
             cosigner: self.cosigner,
         };
-        let args = BuySplInstructionArgs {
+        let args = BuySplCompressedInstructionArgs {
             nonce: self.nonce.clone().expect("nonce is not set"),
             index: self.index.clone().expect("index is not set"),
             root: self.root.clone().expect("root is not set"),
@@ -625,8 +625,8 @@ impl BuySplBuilder {
     }
 }
 
-/// `buy_spl` CPI accounts.
-pub struct BuySplCpiAccounts<'a, 'b> {
+/// `buy_spl_compressed` CPI accounts.
+pub struct BuySplCompressedCpiAccounts<'a, 'b> {
     pub fee_vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub fee_vault_ta: &'b solana_program::account_info::AccountInfo<'a>,
@@ -678,8 +678,8 @@ pub struct BuySplCpiAccounts<'a, 'b> {
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
-/// `buy_spl` CPI instruction.
-pub struct BuySplCpi<'a, 'b> {
+/// `buy_spl_compressed` CPI instruction.
+pub struct BuySplCompressedCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -733,14 +733,14 @@ pub struct BuySplCpi<'a, 'b> {
 
     pub cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
-    pub __args: BuySplInstructionArgs,
+    pub __args: BuySplCompressedInstructionArgs,
 }
 
-impl<'a, 'b> BuySplCpi<'a, 'b> {
+impl<'a, 'b> BuySplCompressedCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: BuySplCpiAccounts<'a, 'b>,
-        args: BuySplInstructionArgs,
+        accounts: BuySplCompressedCpiAccounts<'a, 'b>,
+        args: BuySplCompressedInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -948,7 +948,7 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = BuySplInstructionData::new().try_to_vec().unwrap();
+        let mut data = BuySplCompressedInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -1006,7 +1006,7 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `BuySpl` via CPI.
+/// Instruction builder for `BuySplCompressed` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -1036,13 +1036,13 @@ impl<'a, 'b> BuySplCpi<'a, 'b> {
 ///   23. `[writable, signer]` rent_payer
 ///   24. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
-pub struct BuySplCpiBuilder<'a, 'b> {
-    instruction: Box<BuySplCpiBuilderInstruction<'a, 'b>>,
+pub struct BuySplCompressedCpiBuilder<'a, 'b> {
+    instruction: Box<BuySplCompressedCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
+impl<'a, 'b> BuySplCompressedCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(BuySplCpiBuilderInstruction {
+        let instruction = Box::new(BuySplCompressedCpiBuilderInstruction {
             __program: program,
             fee_vault: None,
             fee_vault_ta: None,
@@ -1365,7 +1365,7 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = BuySplInstructionArgs {
+        let args = BuySplCompressedInstructionArgs {
             nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             index: self.instruction.index.clone().expect("index is not set"),
             root: self.instruction.root.clone().expect("root is not set"),
@@ -1396,7 +1396,7 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
                 .expect("max_amount is not set"),
             optional_royalty_pct: self.instruction.optional_royalty_pct.clone(),
         };
-        let instruction = BuySplCpi {
+        let instruction = BuySplCompressedCpi {
             __program: self.instruction.__program,
 
             fee_vault: self.instruction.fee_vault.expect("fee_vault is not set"),
@@ -1497,7 +1497,7 @@ impl<'a, 'b> BuySplCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct BuySplCpiBuilderInstruction<'a, 'b> {
+struct BuySplCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     fee_vault_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,

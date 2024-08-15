@@ -7,15 +7,14 @@ use anchor_spl::{
 use tensor_toolbox::{
     token_2022::{
         transfer::transfer_checked,
-        wns::{approve, validate_mint, ApproveAccounts},
+        wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     },
     NullableOption,
 };
 
 use crate::{
-    maker_broker_is_whitelisted, program::MarketplaceProgram, record_event, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
 #[derive(Accounts)]
@@ -73,26 +72,25 @@ pub struct ListWns<'info> {
     pub wns_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
-    pub wns_distribution_program: UncheckedAccount<'info>,
+    pub distribution_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
 
     pub cosigner: Option<Signer<'info>>,
+
+    /// SPL token mint of the currency.
+    pub currency: Option<Box<InterfaceAccount<'info, Mint>>>,
 }
 
 pub fn process_list_wns<'info>(
     ctx: Context<'_, '_, '_, 'info, ListWns<'info>>,
     amount: u64,
     expire_in_sec: Option<u64>,
-    currency: Option<Pubkey>,
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
+    let currency = ctx.accounts.currency.as_ref().map(|c| c.key());
 
     // validates the mint
     validate_mint(&ctx.accounts.mint.to_account_info())?;
@@ -102,18 +100,18 @@ pub fn process_list_wns<'info>(
         authority: ctx.accounts.owner.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         approve_account: ctx.accounts.approve.to_account_info(),
-        payment_mint: None,
+        payment_mint: ctx.accounts.currency.as_ref().map(|c| c.to_account_info()),
         authority_token_account: None,
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
-        distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
     };
     // no need for royalty enforcement here
-    approve(approve_accounts, amount, 0)?;
+    approve(approve_accounts, ApproveParams::no_royalties())?;
 
     // transfer the NFT
 

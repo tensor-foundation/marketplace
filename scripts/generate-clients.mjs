@@ -129,11 +129,11 @@ kinobi.update(
       )
     },
     {
-      account: "wnsDistributionProgram",
+      account: "distributionProgram",
       ignoreIfOptional: true,
       defaultValue: k.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
-        "wnsDistributionProgram"
+        "distributionProgram"
       )
     },
     // Compressed
@@ -184,6 +184,12 @@ kinobi.update(
       seeds: [
         k.constantPdaSeedNodeFromString("utf8", "list_state"),
         k.variablePdaSeedNode("mint", k.publicKeyTypeNode())
+      ]
+    },
+    assetListState: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("utf8", "asset_list_state"),
+        k.variablePdaSeedNode("asset", k.publicKeyTypeNode())
       ]
     },
     bidState: {
@@ -266,26 +272,6 @@ kinobi.update(
         }
       }
     },
-    buyT22: {
-      accounts: {
-        cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-          ),
-          isSigner: true
-        }
-      }
-    },
-    listT22: {
-      accounts: {
-        cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-          ),
-          isSigner: true
-        }
-      }
-    },
     bid: {
       accounts: {
         rentPayer: {
@@ -305,8 +291,8 @@ kinobi.update(
           defaultValue: k.resolverValueNode("resolveBidIdOnCreate"),
           dependsOn: [
             k.argumentValueNode("target"),
-            k.argumentValueNode("targetId"),
-          ],
+            k.argumentValueNode("targetId")
+          ]
         }
       }
     },
@@ -452,6 +438,12 @@ kinobi.accept(
       "resolveBidStateFromBidId",
       "resolveFeeVaultPdaFromListState",
       "resolveFeeVaultPdaFromBidState",
+      "resolveFeeVaultCurrencyAta",
+      "resolveOwnerCurrencyAta",
+      "resolvePayerCurrencyAta",
+      "resolveDistributionCurrencyAta",
+      "resolveMakerBrokerCurrencyAta",
+      "resolveTakerBrokerCurrencyAta",
       "resolveBuyerAta",
       "resolveListAta",
       "resolveOwnerAta",
@@ -468,7 +460,7 @@ kinobi.accept(
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
       "resolveTreeAuthorityPda",
-      "resolveBidIdOnCreate",
+      "resolveBidIdOnCreate"
     ],
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers"

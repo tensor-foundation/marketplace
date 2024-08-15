@@ -30,8 +30,14 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type DelistCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -77,8 +83,7 @@ export type DelistCoreInstruction<
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
       TAccountRentDestination extends string
-        ? WritableSignerAccount<TAccountRentDestination> &
-            IAccountSignerMeta<TAccountRentDestination>
+        ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
       ...TRemainingAccounts,
     ]
@@ -114,6 +119,134 @@ export function getDelistCoreInstructionDataCodec(): Codec<
   );
 }
 
+export type DelistCoreAsyncInput<
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountOwner extends string = string,
+  TAccountListState extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  owner: TransactionSigner<TAccountOwner>;
+  listState?: Address<TAccountListState>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  rentDestination?: Address<TAccountRentDestination>;
+};
+
+export async function getDelistCoreInstructionAsync<
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountOwner extends string,
+  TAccountListState extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountRentDestination extends string,
+>(
+  input: DelistCoreAsyncInput<
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountListState,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountRentDestination
+  >
+): Promise<
+  DelistCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountListState,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountRentDestination
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findAssetListStatePda({
+      asset: expectAddress(accounts.asset.value),
+    });
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.rentDestination),
+    ],
+    programAddress,
+    data: getDelistCoreInstructionDataEncoder().encode({}),
+  } as DelistCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountOwner,
+    TAccountListState,
+    TAccountMplCoreProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountRentDestination
+  >;
+
+  return instruction;
+}
+
 export type DelistCoreInput<
   TAccountAsset extends string = string,
   TAccountCollection extends string = string,
@@ -131,7 +264,7 @@ export type DelistCoreInput<
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  rentDestination: TransactionSigner<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
 };
 
 export function getDelistCoreInstruction<
@@ -199,6 +332,11 @@ export function getDelistCoreInstruction<
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectTransactionSigner(
+      accounts.owner.value
+    ).address;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

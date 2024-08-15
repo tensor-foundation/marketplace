@@ -34,6 +34,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveBuyerAta, resolveListAta } from '@tensor-foundation/resolvers';
+import {
+  resolveFeeVaultCurrencyAta,
+  resolveFeeVaultPdaFromListState,
+  resolveMakerBrokerCurrencyAta,
+  resolveOwnerCurrencyAta,
+  resolvePayerCurrencyAta,
+  resolveTakerBrokerCurrencyAta,
+} from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -50,8 +59,8 @@ export type BuyT22SplInstruction<
   TAccountFeeVaultCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
   TAccountBuyerTa extends string | IAccountMeta<string> = string,
-  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountListState extends string | IAccountMeta<string> = string,
+  TAccountListTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountCurrency extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
@@ -65,8 +74,10 @@ export type BuyT22SplInstruction<
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountCurrencyTokenProgram extends
+    | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountCurrencyTokenProgram extends string | IAccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -94,12 +105,12 @@ export type BuyT22SplInstruction<
       TAccountBuyerTa extends string
         ? WritableAccount<TAccountBuyerTa>
         : TAccountBuyerTa,
-      TAccountListTa extends string
-        ? WritableAccount<TAccountListTa>
-        : TAccountListTa,
       TAccountListState extends string
         ? WritableAccount<TAccountListState>
         : TAccountListState,
+      TAccountListTa extends string
+        ? WritableAccount<TAccountListTa>
+        : TAccountListTa,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -199,8 +210,8 @@ export type BuyT22SplAsyncInput<
   TAccountFeeVaultCurrencyTa extends string = string,
   TAccountBuyer extends string = string,
   TAccountBuyerTa extends string = string,
-  TAccountListTa extends string = string,
   TAccountListState extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountCurrency extends string = string,
   TAccountOwner extends string = string,
@@ -219,33 +230,35 @@ export type BuyT22SplAsyncInput<
   TAccountSystemProgram extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
-  feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
+  feeVault?: Address<TAccountFeeVault>;
+  feeVaultCurrencyTa?: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
-  buyerTa: Address<TAccountBuyerTa>;
-  listTa: Address<TAccountListTa>;
+  buyerTa?: Address<TAccountBuyerTa>;
   listState?: Address<TAccountListState>;
+  listTa?: Address<TAccountListTa>;
   /** T22 asset mint. */
   mint: Address<TAccountMint>;
   /** SPL token mint of the currency. */
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
-  ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
+  ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
   payer: TransactionSigner<TAccountPayer>;
-  payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
+  payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyT22SplInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
+  creatorAtas?: Array<Address>;
+  transferHookAccounts: Array<Address>;
 };
 
 export async function getBuyT22SplInstructionAsync<
@@ -253,8 +266,8 @@ export async function getBuyT22SplInstructionAsync<
   TAccountFeeVaultCurrencyTa extends string,
   TAccountBuyer extends string,
   TAccountBuyerTa extends string,
-  TAccountListTa extends string,
   TAccountListState extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountCurrency extends string,
   TAccountOwner extends string,
@@ -278,8 +291,8 @@ export async function getBuyT22SplInstructionAsync<
     TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListTa,
     TAccountListState,
+    TAccountListTa,
     TAccountMint,
     TAccountCurrency,
     TAccountOwner,
@@ -305,8 +318,8 @@ export async function getBuyT22SplInstructionAsync<
     TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListTa,
     TAccountListState,
+    TAccountListTa,
     TAccountMint,
     TAccountCurrency,
     TAccountOwner,
@@ -338,8 +351,8 @@ export async function getBuyT22SplInstructionAsync<
     },
     buyer: { value: input.buyer ?? null, isWritable: false },
     buyerTa: { value: input.buyerTa ?? null, isWritable: true },
-    listTa: { value: input.listTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     currency: { value: input.currency ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -381,23 +394,78 @@ export async function getBuyT22SplInstructionAsync<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
-  if (!accounts.buyer.value) {
-    accounts.buyer.value = expectTransactionSigner(
-      accounts.payer.value
-    ).address;
-  }
   if (!accounts.listState.value) {
     accounts.listState.value = await findListStatePda({
       mint: expectAddress(accounts.mint.value),
     });
   }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.feeVaultCurrencyTa.value) {
+    accounts.feeVaultCurrencyTa = {
+      ...accounts.feeVaultCurrencyTa,
+      ...(await resolveFeeVaultCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.buyerTa.value) {
+    accounts.buyerTa = {
+      ...accounts.buyerTa,
+      ...(await resolveBuyerAta(resolverScope)),
+    };
+  }
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
+      ...(await resolveListAta(resolverScope)),
+    };
+  }
+  if (!accounts.ownerCurrencyTa.value) {
+    accounts.ownerCurrencyTa = {
+      ...accounts.ownerCurrencyTa,
+      ...(await resolveOwnerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.payerCurrencyTa.value) {
+    accounts.payerCurrencyTa = {
+      ...accounts.payerCurrencyTa,
+      ...(await resolvePayerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.takerBrokerCurrencyTa.value) {
+    accounts.takerBrokerCurrencyTa = {
+      ...accounts.takerBrokerCurrencyTa,
+      ...(await resolveTakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.makerBrokerCurrencyTa.value) {
+    accounts.makerBrokerCurrencyTa = {
+      ...accounts.makerBrokerCurrencyTa,
+      ...(await resolveMakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -413,9 +481,20 @@ export async function getBuyT22SplInstructionAsync<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.creatorAtas ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...args.transferHookAccounts.map((address) => ({
+      address,
+      role: AccountRole.READONLY,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -424,8 +503,8 @@ export async function getBuyT22SplInstructionAsync<
       getAccountMeta(accounts.feeVaultCurrencyTa),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.buyerTa),
-      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.owner),
@@ -455,8 +534,8 @@ export async function getBuyT22SplInstructionAsync<
     TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListTa,
     TAccountListState,
+    TAccountListTa,
     TAccountMint,
     TAccountCurrency,
     TAccountOwner,
@@ -484,8 +563,8 @@ export type BuyT22SplInput<
   TAccountFeeVaultCurrencyTa extends string = string,
   TAccountBuyer extends string = string,
   TAccountBuyerTa extends string = string,
-  TAccountListTa extends string = string,
   TAccountListState extends string = string,
+  TAccountListTa extends string = string,
   TAccountMint extends string = string,
   TAccountCurrency extends string = string,
   TAccountOwner extends string = string,
@@ -508,8 +587,8 @@ export type BuyT22SplInput<
   feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
   buyerTa: Address<TAccountBuyerTa>;
-  listTa: Address<TAccountListTa>;
   listState: Address<TAccountListState>;
+  listTa: Address<TAccountListTa>;
   /** T22 asset mint. */
   mint: Address<TAccountMint>;
   /** SPL token mint of the currency. */
@@ -524,13 +603,15 @@ export type BuyT22SplInput<
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
   rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyT22SplInstructionDataArgs['maxAmount'];
   creators?: Array<Address>;
+  creatorAtas?: Array<Address>;
+  transferHookAccounts: Array<Address>;
 };
 
 export function getBuyT22SplInstruction<
@@ -538,8 +619,8 @@ export function getBuyT22SplInstruction<
   TAccountFeeVaultCurrencyTa extends string,
   TAccountBuyer extends string,
   TAccountBuyerTa extends string,
-  TAccountListTa extends string,
   TAccountListState extends string,
+  TAccountListTa extends string,
   TAccountMint extends string,
   TAccountCurrency extends string,
   TAccountOwner extends string,
@@ -563,8 +644,8 @@ export function getBuyT22SplInstruction<
     TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListTa,
     TAccountListState,
+    TAccountListTa,
     TAccountMint,
     TAccountCurrency,
     TAccountOwner,
@@ -589,8 +670,8 @@ export function getBuyT22SplInstruction<
   TAccountFeeVaultCurrencyTa,
   TAccountBuyer,
   TAccountBuyerTa,
-  TAccountListTa,
   TAccountListState,
+  TAccountListTa,
   TAccountMint,
   TAccountCurrency,
   TAccountOwner,
@@ -621,8 +702,8 @@ export function getBuyT22SplInstruction<
     },
     buyer: { value: input.buyer ?? null, isWritable: false },
     buyerTa: { value: input.buyerTa ?? null, isWritable: true },
-    listTa: { value: input.listTa ?? null, isWritable: true },
     listState: { value: input.listState ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     currency: { value: input.currency ?? null, isWritable: false },
     owner: { value: input.owner ?? null, isWritable: true },
@@ -665,17 +746,21 @@ export function getBuyT22SplInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
     ).address;
   }
-  if (!accounts.rentDestination.value) {
-    accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -691,9 +776,20 @@ export function getBuyT22SplInstruction<
   }
 
   // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.creatorAtas ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...args.transferHookAccounts.map((address) => ({
+      address,
+      role: AccountRole.READONLY,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -702,8 +798,8 @@ export function getBuyT22SplInstruction<
       getAccountMeta(accounts.feeVaultCurrencyTa),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.buyerTa),
-      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.listTa),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.owner),
@@ -733,8 +829,8 @@ export function getBuyT22SplInstruction<
     TAccountFeeVaultCurrencyTa,
     TAccountBuyer,
     TAccountBuyerTa,
-    TAccountListTa,
     TAccountListState,
+    TAccountListTa,
     TAccountMint,
     TAccountCurrency,
     TAccountOwner,
@@ -767,8 +863,8 @@ export type ParsedBuyT22SplInstruction<
     feeVaultCurrencyTa: TAccountMetas[1];
     buyer: TAccountMetas[2];
     buyerTa: TAccountMetas[3];
-    listTa: TAccountMetas[4];
-    listState: TAccountMetas[5];
+    listState: TAccountMetas[4];
+    listTa: TAccountMetas[5];
     /** T22 asset mint. */
     mint: TAccountMetas[6];
     /** SPL token mint of the currency. */
@@ -823,8 +919,8 @@ export function parseBuyT22SplInstruction<
       feeVaultCurrencyTa: getNextAccount(),
       buyer: getNextAccount(),
       buyerTa: getNextAccount(),
-      listTa: getNextAccount(),
       listState: getNextAccount(),
+      listTa: getNextAccount(),
       mint: getNextAccount(),
       currency: getNextAccount(),
       owner: getNextAccount(),

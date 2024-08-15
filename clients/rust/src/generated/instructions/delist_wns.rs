@@ -38,7 +38,7 @@ pub struct DelistWns {
 
     pub wns_program: solana_program::pubkey::Pubkey,
 
-    pub wns_distribution_program: solana_program::pubkey::Pubkey,
+    pub distribution_program: solana_program::pubkey::Pubkey,
 
     pub extra_metas: solana_program::pubkey::Pubkey,
 }
@@ -73,7 +73,7 @@ impl DelistWns {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
@@ -107,7 +107,7 @@ impl DelistWns {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.wns_distribution_program,
+            self.distribution_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -153,16 +153,16 @@ impl Default for DelistWnsInstructionData {
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ta
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
-///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 ///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   9. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   11. `[writable]` approve
 ///   12. `[writable]` distribution
 ///   13. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
-///   14. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   14. `[optional]` distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   15. `[]` extra_metas
 #[derive(Clone, Debug, Default)]
 pub struct DelistWnsBuilder {
@@ -180,7 +180,7 @@ pub struct DelistWnsBuilder {
     approve: Option<solana_program::pubkey::Pubkey>,
     distribution: Option<solana_program::pubkey::Pubkey>,
     wns_program: Option<solana_program::pubkey::Pubkey>,
-    wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
+    distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -227,7 +227,7 @@ impl DelistWnsBuilder {
         self.payer = Some(payer);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -275,11 +275,11 @@ impl DelistWnsBuilder {
     }
     /// `[optional account, default to 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay']`
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: solana_program::pubkey::Pubkey,
+        distribution_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.wns_distribution_program = Some(wns_distribution_program);
+        self.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -316,7 +316,7 @@ impl DelistWnsBuilder {
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
             payer: self.payer.expect("payer is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
             associated_token_program: self.associated_token_program.unwrap_or(
                 solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
@@ -332,9 +332,9 @@ impl DelistWnsBuilder {
             wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
                 "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
             )),
-            wns_distribution_program: self.wns_distribution_program.unwrap_or(
-                solana_program::pubkey!("diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"),
-            ),
+            distribution_program: self.distribution_program.unwrap_or(solana_program::pubkey!(
+                "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"
+            )),
             extra_metas: self.extra_metas.expect("extra_metas is not set"),
         };
 
@@ -372,7 +372,7 @@ pub struct DelistWnsCpiAccounts<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -410,7 +410,7 @@ pub struct DelistWnsCpi<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -436,7 +436,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
             approve: accounts.approve,
             distribution: accounts.distribution,
             wns_program: accounts.wns_program,
-            wns_distribution_program: accounts.wns_distribution_program,
+            distribution_program: accounts.distribution_program,
             extra_metas: accounts.extra_metas,
         }
     }
@@ -496,7 +496,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.rent_destination.key,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
@@ -531,7 +531,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.wns_distribution_program.key,
+            *self.distribution_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -568,7 +568,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
         account_infos.push(self.approve.clone());
         account_infos.push(self.distribution.clone());
         account_infos.push(self.wns_program.clone());
-        account_infos.push(self.wns_distribution_program.clone());
+        account_infos.push(self.distribution_program.clone());
         account_infos.push(self.extra_metas.clone());
         remaining_accounts
             .iter()
@@ -591,7 +591,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
 ///   2. `[writable]` list_state
 ///   3. `[writable]` list_ta
 ///   4. `[]` mint
-///   5. `[writable, signer]` rent_destination
+///   5. `[writable]` rent_destination
 ///   6. `[writable, signer]` payer
 ///   7. `[]` token_program
 ///   8. `[]` associated_token_program
@@ -600,7 +600,7 @@ impl<'a, 'b> DelistWnsCpi<'a, 'b> {
 ///   11. `[writable]` approve
 ///   12. `[writable]` distribution
 ///   13. `[]` wns_program
-///   14. `[]` wns_distribution_program
+///   14. `[]` distribution_program
 ///   15. `[]` extra_metas
 #[derive(Clone, Debug)]
 pub struct DelistWnsCpiBuilder<'a, 'b> {
@@ -625,7 +625,7 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
             approve: None,
             distribution: None,
             wns_program: None,
-            wns_distribution_program: None,
+            distribution_program: None,
             extra_metas: None,
             __remaining_accounts: Vec::new(),
         });
@@ -735,11 +735,11 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+        distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.wns_distribution_program = Some(wns_distribution_program);
+        self.instruction.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -843,10 +843,10 @@ impl<'a, 'b> DelistWnsCpiBuilder<'a, 'b> {
                 .wns_program
                 .expect("wns_program is not set"),
 
-            wns_distribution_program: self
+            distribution_program: self
                 .instruction
-                .wns_distribution_program
-                .expect("wns_distribution_program is not set"),
+                .distribution_program
+                .expect("distribution_program is not set"),
 
             extra_metas: self
                 .instruction
@@ -877,7 +877,7 @@ struct DelistWnsCpiBuilderInstruction<'a, 'b> {
     approve: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

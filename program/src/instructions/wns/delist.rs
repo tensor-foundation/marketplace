@@ -4,7 +4,7 @@ use anchor_spl::{
     token_2022::{transfer_checked, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
-use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts};
+use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts, ApproveParams};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -47,11 +47,12 @@ pub struct DelistWns<'info> {
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
+    /// CHECK: list_state.get_rent_payer()
     #[account(
         mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
-    pub rent_destination: Signer<'info>,
+    pub rent_destination: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -77,7 +78,7 @@ pub struct DelistWns<'info> {
     pub wns_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
-    pub wns_distribution_program: UncheckedAccount<'info>,
+    pub distribution_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
@@ -94,16 +95,16 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
-        distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
     };
+
     // no need for royalty enforcement here
-    approve(approve_accounts, 0, 0)?;
+    approve(approve_accounts, ApproveParams::no_royalties())?;
 
     // transfer the NFT
-
     let transfer_cpi = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {

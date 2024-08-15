@@ -7,11 +7,16 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  createDefaultNft,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
+import { Mode } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   Target,
@@ -19,12 +24,7 @@ import {
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
-import { createWhitelistV2, expectCustomError } from './_common.js';
-import { Mode } from '@tensor-foundation/whitelist';
-import {
-  createDefaultNft,
-  findAtaPda,
-} from '@tensor-foundation/mpl-token-metadata';
+import { createWhitelistV2, expectCustomError } from '../_common.js';
 
 test('it can take a bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();

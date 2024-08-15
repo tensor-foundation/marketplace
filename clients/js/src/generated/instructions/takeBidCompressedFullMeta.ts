@@ -49,7 +49,6 @@ import {
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
-  type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
   resolveCreatorPath,
@@ -111,7 +110,7 @@ export type TakeBidCompressedFullMetaInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMarginAccount extends string | IAccountMeta<string> = string,
+  TAccountMargin extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
@@ -165,9 +164,9 @@ export type TakeBidCompressedFullMetaInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMarginAccount extends string
-        ? WritableAccount<TAccountMarginAccount>
-        : TAccountMarginAccount,
+      TAccountMargin extends string
+        ? WritableAccount<TAccountMargin>
+        : TAccountMargin,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
@@ -334,15 +333,15 @@ export type TakeBidCompressedFullMetaAsyncInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMarginAccount extends string = string,
+  TAccountMargin extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
   TAccountRentDestination extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
   treeAuthority?: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
-  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
+  seller: Address<TAccountSeller>;
+  delegate?: Address<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -354,7 +353,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount?: Address<TAccountMarginAccount>;
+  margin: Address<TAccountMargin>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -397,7 +396,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
+  TAccountMargin extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
   TAccountRentDestination extends string,
@@ -418,7 +417,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -428,14 +427,8 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -447,7 +440,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -485,7 +478,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    margin: { value: input.margin ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -541,9 +534,6 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
-  if (!accounts.marginAccount.value) {
-    accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
-  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
@@ -584,7 +574,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.margin),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentDestination),
@@ -598,14 +588,8 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -617,7 +601,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -642,15 +626,15 @@ export type TakeBidCompressedFullMetaInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMarginAccount extends string = string,
+  TAccountMargin extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
   TAccountRentDestination extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   treeAuthority: Address<TAccountTreeAuthority>;
-  seller: Address<TAccountSeller> | TransactionSigner<TAccountSeller>;
-  delegate?: Address<TAccountDelegate> | TransactionSigner<TAccountDelegate>;
+  seller: Address<TAccountSeller>;
+  delegate?: Address<TAccountDelegate>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
   compressionProgram?: Address<TAccountCompressionProgram>;
@@ -662,7 +646,7 @@ export type TakeBidCompressedFullMetaInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  marginAccount?: Address<TAccountMarginAccount>;
+  margin: Address<TAccountMargin>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -705,7 +689,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMarginAccount extends string,
+  TAccountMargin extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
   TAccountRentDestination extends string,
@@ -726,7 +710,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -735,13 +719,8 @@ export function getTakeBidCompressedFullMetaInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountTreeAuthority,
-  (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-    ? WritableSignerAccount<TAccountSeller> & IAccountSignerMeta<TAccountSeller>
-    : TAccountSeller,
-  (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-    ? ReadonlySignerAccount<TAccountDelegate> &
-        IAccountSignerMeta<TAccountDelegate>
-    : TAccountDelegate,
+  TAccountSeller,
+  TAccountDelegate,
   TAccountMerkleTree,
   TAccountLogWrapper,
   TAccountCompressionProgram,
@@ -753,7 +732,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountMarginAccount,
+  TAccountMargin,
   TAccountWhitelist,
   TAccountCosigner,
   TAccountRentDestination
@@ -790,7 +769,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    marginAccount: { value: input.marginAccount ?? null, isWritable: true },
+    margin: { value: input.margin ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -834,9 +813,6 @@ export function getTakeBidCompressedFullMetaInstruction<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
-  if (!accounts.marginAccount.value) {
-    accounts.marginAccount.value = expectSome(accounts.tensorswapProgram.value);
-  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
@@ -877,7 +853,7 @@ export function getTakeBidCompressedFullMetaInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.marginAccount),
+      getAccountMeta(accounts.margin),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentDestination),
@@ -891,14 +867,8 @@ export function getTakeBidCompressedFullMetaInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountTreeAuthority,
-    (typeof input)['seller'] extends TransactionSigner<TAccountSeller>
-      ? WritableSignerAccount<TAccountSeller> &
-          IAccountSignerMeta<TAccountSeller>
-      : TAccountSeller,
-    (typeof input)['delegate'] extends TransactionSigner<TAccountDelegate>
-      ? ReadonlySignerAccount<TAccountDelegate> &
-          IAccountSignerMeta<TAccountDelegate>
-      : TAccountDelegate,
+    TAccountSeller,
+    TAccountDelegate,
     TAccountMerkleTree,
     TAccountLogWrapper,
     TAccountCompressionProgram,
@@ -910,7 +880,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMarginAccount,
+    TAccountMargin,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -940,7 +910,7 @@ export type ParsedTakeBidCompressedFullMetaInstruction<
     owner: TAccountMetas[12];
     takerBroker?: TAccountMetas[13] | undefined;
     makerBroker?: TAccountMetas[14] | undefined;
-    marginAccount: TAccountMetas[15];
+    margin: TAccountMetas[15];
     whitelist: TAccountMetas[16];
     cosigner?: TAccountMetas[17] | undefined;
     rentDestination: TAccountMetas[18];
@@ -990,7 +960,7 @@ export function parseTakeBidCompressedFullMetaInstruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      marginAccount: getNextAccount(),
+      margin: getNextAccount(),
       whitelist: getNextAccount(),
       cosigner: getNextOptionalAccount(),
       rentDestination: getNextAccount(),

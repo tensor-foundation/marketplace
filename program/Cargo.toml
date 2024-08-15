@@ -9,6 +9,7 @@ publish = false
 [package.metadata.solana]
 program-id = "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
 program-dependencies = [
+    "CZ1rQoAHSqWBoAEfqGsiLhgbM59dDrCWk3rnG5FXaoRV",
     "auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg",
     "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
@@ -21,7 +22,10 @@ program-dependencies = [
     "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
     "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
 ]
-account-dependencies = ["9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"]
+account-dependencies = [
+    "9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX",
+    "99jtJwGDfaBKXtc7kxQneAGbERGK8F5XyJWHv7qTbj9G",
+]
 external-programs-repositories = [
     [
         "tensor-foundation/whitelist",
@@ -55,7 +59,7 @@ spl-token-metadata-interface = "0.2.0"
 spl-type-length-value = "0.3.0"
 static_assertions = "1.1.0"
 tensor-escrow = { version = "0.1.1" }
-tensor-toolbox = { version = "0.1.0", features = [
+tensor-toolbox = { version = "0.2.0", features = [
     "cnft",
     "mpl-core",
     "token-2022",

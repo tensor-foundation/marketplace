@@ -7,7 +7,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts},
+    token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
@@ -57,6 +57,7 @@ pub struct BuyWns<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -108,7 +109,7 @@ pub struct BuyWns<'info> {
     pub wns_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
-    pub wns_distribution_program: UncheckedAccount<'info>,
+    pub distribution_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
@@ -167,6 +168,7 @@ pub fn process_buy_wns<'info, 'b>(
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
+
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
@@ -197,13 +199,19 @@ pub fn process_buy_wns<'info, 'b>(
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: None,
         system_program: ctx.accounts.system_program.to_account_info(),
-        distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: None,
     };
+
+    let approve_params = ApproveParams {
+        price: amount,
+        royalty_fee: creator_fee,
+    };
+
     // royalty payment
-    approve(approve_accounts, amount, creator_fee)?;
+    approve(approve_accounts, approve_params)?;
 
     // transfer the NFT
 

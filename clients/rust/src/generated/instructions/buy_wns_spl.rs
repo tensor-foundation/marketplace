@@ -62,7 +62,7 @@ pub struct BuyWnsSpl {
 
     pub wns_program: solana_program::pubkey::Pubkey,
 
-    pub wns_distribution_program: solana_program::pubkey::Pubkey,
+    pub distribution_program: solana_program::pubkey::Pubkey,
 
     pub extra_metas: solana_program::pubkey::Pubkey,
 
@@ -212,7 +212,7 @@ impl BuyWnsSpl {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.wns_distribution_program,
+            self.distribution_program,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -288,8 +288,8 @@ pub struct BuyWnsSplInstructionArgs {
 ///   14. `[writable, optional]` maker_broker
 ///   15. `[writable, optional]` maker_broker_currency_ta
 ///   16. `[writable]` rent_destination
-///   17. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   18. `[]` currency_token_program
+///   17. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   18. `[optional]` currency_token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   19. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
 ///   20. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   21. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -297,7 +297,7 @@ pub struct BuyWnsSplInstructionArgs {
 ///   23. `[writable]` distribution
 ///   24. `[writable]` distribution_currency_ta
 ///   25. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
-///   26. `[optional]` wns_distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
+///   26. `[optional]` distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   27. `[]` extra_metas
 ///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
@@ -328,7 +328,7 @@ pub struct BuyWnsSplBuilder {
     distribution: Option<solana_program::pubkey::Pubkey>,
     distribution_currency_ta: Option<solana_program::pubkey::Pubkey>,
     wns_program: Option<solana_program::pubkey::Pubkey>,
-    wns_distribution_program: Option<solana_program::pubkey::Pubkey>,
+    distribution_program: Option<solana_program::pubkey::Pubkey>,
     extra_metas: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     max_amount: Option<u64>,
@@ -454,12 +454,13 @@ impl BuyWnsSplBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
         self
     }
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
     pub fn currency_token_program(
         &mut self,
@@ -518,11 +519,11 @@ impl BuyWnsSplBuilder {
     }
     /// `[optional account, default to 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay']`
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: solana_program::pubkey::Pubkey,
+        distribution_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.wns_distribution_program = Some(wns_distribution_program);
+        self.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -561,59 +562,60 @@ impl BuyWnsSplBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = BuyWnsSpl {
-            fee_vault: self.fee_vault.expect("fee_vault is not set"),
-            fee_vault_currency_ta: self
-                .fee_vault_currency_ta
-                .expect("fee_vault_currency_ta is not set"),
-            buyer: self.buyer.expect("buyer is not set"),
-            buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
-            list_ta: self.list_ta.expect("list_ta is not set"),
-            list_state: self.list_state.expect("list_state is not set"),
-            mint: self.mint.expect("mint is not set"),
-            currency: self.currency.expect("currency is not set"),
-            owner: self.owner.expect("owner is not set"),
-            owner_currency_ta: self
-                .owner_currency_ta
-                .expect("owner_currency_ta is not set"),
-            payer: self.payer.expect("payer is not set"),
-            payer_currency_ta: self
-                .payer_currency_ta
-                .expect("payer_currency_ta is not set"),
-            taker_broker: self.taker_broker,
-            taker_broker_currency_ta: self.taker_broker_currency_ta,
-            maker_broker: self.maker_broker,
-            maker_broker_currency_ta: self.maker_broker_currency_ta,
-            rent_destination: self.rent_destination.expect("rent_destination is not set"),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            )),
-            currency_token_program: self
-                .currency_token_program
-                .expect("currency_token_program is not set"),
-            associated_token_program: self.associated_token_program.unwrap_or(
-                solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
-            ),
-            marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
-                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
-            )),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            approve: self.approve.expect("approve is not set"),
-            distribution: self.distribution.expect("distribution is not set"),
-            distribution_currency_ta: self
-                .distribution_currency_ta
-                .expect("distribution_currency_ta is not set"),
-            wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
-                "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
-            )),
-            wns_distribution_program: self.wns_distribution_program.unwrap_or(
-                solana_program::pubkey!("diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"),
-            ),
-            extra_metas: self.extra_metas.expect("extra_metas is not set"),
-            cosigner: self.cosigner,
-        };
+        let accounts =
+            BuyWnsSpl {
+                fee_vault: self.fee_vault.expect("fee_vault is not set"),
+                fee_vault_currency_ta: self
+                    .fee_vault_currency_ta
+                    .expect("fee_vault_currency_ta is not set"),
+                buyer: self.buyer.expect("buyer is not set"),
+                buyer_ta: self.buyer_ta.expect("buyer_ta is not set"),
+                list_ta: self.list_ta.expect("list_ta is not set"),
+                list_state: self.list_state.expect("list_state is not set"),
+                mint: self.mint.expect("mint is not set"),
+                currency: self.currency.expect("currency is not set"),
+                owner: self.owner.expect("owner is not set"),
+                owner_currency_ta: self
+                    .owner_currency_ta
+                    .expect("owner_currency_ta is not set"),
+                payer: self.payer.expect("payer is not set"),
+                payer_currency_ta: self
+                    .payer_currency_ta
+                    .expect("payer_currency_ta is not set"),
+                taker_broker: self.taker_broker,
+                taker_broker_currency_ta: self.taker_broker_currency_ta,
+                maker_broker: self.maker_broker,
+                maker_broker_currency_ta: self.maker_broker_currency_ta,
+                rent_destination: self.rent_destination.expect("rent_destination is not set"),
+                token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                )),
+                currency_token_program: self.currency_token_program.unwrap_or(
+                    solana_program::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+                ),
+                associated_token_program: self.associated_token_program.unwrap_or(
+                    solana_program::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+                ),
+                marketplace_program: self.marketplace_program.unwrap_or(solana_program::pubkey!(
+                    "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+                )),
+                system_program: self
+                    .system_program
+                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+                approve: self.approve.expect("approve is not set"),
+                distribution: self.distribution.expect("distribution is not set"),
+                distribution_currency_ta: self
+                    .distribution_currency_ta
+                    .expect("distribution_currency_ta is not set"),
+                wns_program: self.wns_program.unwrap_or(solana_program::pubkey!(
+                    "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
+                )),
+                distribution_program: self.distribution_program.unwrap_or(solana_program::pubkey!(
+                    "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay"
+                )),
+                extra_metas: self.extra_metas.expect("extra_metas is not set"),
+                cosigner: self.cosigner,
+            };
         let args = BuyWnsSplInstructionArgs {
             max_amount: self.max_amount.clone().expect("max_amount is not set"),
         };
@@ -676,7 +678,7 @@ pub struct BuyWnsSplCpiAccounts<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -740,7 +742,7 @@ pub struct BuyWnsSplCpi<'a, 'b> {
 
     pub wns_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub extra_metas: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -783,7 +785,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             distribution: accounts.distribution,
             distribution_currency_ta: accounts.distribution_currency_ta,
             wns_program: accounts.wns_program,
-            wns_distribution_program: accounts.wns_distribution_program,
+            distribution_program: accounts.distribution_program,
             extra_metas: accounts.extra_metas,
             cosigner: accounts.cosigner,
             __args: args,
@@ -956,7 +958,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.wns_distribution_program.key,
+            *self.distribution_program.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -1026,7 +1028,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
         account_infos.push(self.distribution.clone());
         account_infos.push(self.distribution_currency_ta.clone());
         account_infos.push(self.wns_program.clone());
-        account_infos.push(self.wns_distribution_program.clone());
+        account_infos.push(self.distribution_program.clone());
         account_infos.push(self.extra_metas.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
@@ -1073,7 +1075,7 @@ impl<'a, 'b> BuyWnsSplCpi<'a, 'b> {
 ///   23. `[writable]` distribution
 ///   24. `[writable]` distribution_currency_ta
 ///   25. `[]` wns_program
-///   26. `[]` wns_distribution_program
+///   26. `[]` distribution_program
 ///   27. `[]` extra_metas
 ///   28. `[signer, optional]` cosigner
 #[derive(Clone, Debug)]
@@ -1111,7 +1113,7 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
             distribution: None,
             distribution_currency_ta: None,
             wns_program: None,
-            wns_distribution_program: None,
+            distribution_program: None,
             extra_metas: None,
             cosigner: None,
             max_amount: None,
@@ -1322,11 +1324,11 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn wns_distribution_program(
+    pub fn distribution_program(
         &mut self,
-        wns_distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
+        distribution_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.wns_distribution_program = Some(wns_distribution_program);
+        self.instruction.distribution_program = Some(distribution_program);
         self
     }
     #[inline(always)]
@@ -1490,10 +1492,10 @@ impl<'a, 'b> BuyWnsSplCpiBuilder<'a, 'b> {
                 .wns_program
                 .expect("wns_program is not set"),
 
-            wns_distribution_program: self
+            distribution_program: self
                 .instruction
-                .wns_distribution_program
-                .expect("wns_distribution_program is not set"),
+                .distribution_program
+                .expect("distribution_program is not set"),
 
             extra_metas: self
                 .instruction
@@ -1539,7 +1541,7 @@ struct BuyWnsSplCpiBuilderInstruction<'a, 'b> {
     distribution: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     distribution_currency_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     wns_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    wns_distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    distribution_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     extra_metas: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     max_amount: Option<u64>,

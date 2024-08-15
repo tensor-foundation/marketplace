@@ -3,38 +3,36 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_2022::Token2022,
     token_interface::{
-        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
-        TransferChecked,
+        close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked,
     },
 };
 use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
-    token_2022::wns::{approve, validate_mint, ApproveAccounts},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked,
+        wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
+    },
     CalcFeesArgs, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
 
 use crate::{
-    assert_fee_vault_seeds, assert_list_state_seeds, program::MarketplaceProgram, record_event,
-    ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_fee_vault_seeds, assert_list_state_seeds, assert_token_account, init_if_needed_ata,
+    program::MarketplaceProgram, record_event, InitIfNeededAtaParams, ListState, TakeEvent, Target,
+    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
 pub struct BuyWnsSpl<'info> {
-    /// CHECK: seeds and program checked here
+    /// CHECK: seeds checked in validate() due to stack size issues.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = fee_vault,
-        associated_token::token_program = currency_token_program,
-    )]
-    pub fee_vault_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Validated and initialized if needed in init_atas().
+    #[account(mut)]
+    pub fee_vault_currency_ta: UncheckedAccount<'info>,
 
     /// CHECK: it can be a 3rd party receiver address
     pub buyer: UncheckedAccount<'info>,
@@ -44,15 +42,13 @@ pub struct BuyWnsSpl<'info> {
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = buyer,
+        associated_token::token_program = token_program,
     )]
     pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = list_state,
-    )]
-    pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: checked in validate().
+    #[account(mut)]
+    pub list_ta: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -75,14 +71,9 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
 
-    #[account(
-        init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = owner,
-        associated_token::token_program = currency_token_program,
-    )]
-    pub owner_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Validated and initialized if needed in init_atas().
+    #[account(mut)]
+    pub owner_currency_ta: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -98,25 +89,17 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = taker_broker,
-        associated_token::token_program = currency_token_program,
-    )]
-    pub taker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    /// CHECK: Validated and initialized if needed in init_atas().
+    #[account(mut)]
+    pub taker_broker_currency_ta: Option<UncheckedAccount<'info>>,
 
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = maker_broker,
-        associated_token::token_program = currency_token_program,
-    )]
-    pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    /// CHECK: Validated and initialized if needed in init_atas().
+    #[account(mut)]
+    pub maker_broker_currency_ta: Option<UncheckedAccount<'info>>,
 
     /// CHECK: list_state.get_rent_payer()
     #[account(mut)]
@@ -144,19 +127,15 @@ pub struct BuyWnsSpl<'info> {
     #[account(mut)]
     pub distribution: UncheckedAccount<'info>,
 
-    #[account(init_if_needed,
-        payer = payer,
-        associated_token::mint = currency,
-        associated_token::authority = distribution,
-        associated_token::token_program = currency_token_program,
-    )]
-    pub distribution_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Validated and initialized if needed in init_atas().
+    #[account(mut)]
+    pub distribution_currency_ta: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
     pub wns_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on approve CPI
-    pub wns_distribution_program: UncheckedAccount<'info>,
+    pub distribution_program: UncheckedAccount<'info>,
 
     /// CHECK: checked on transfer CPI
     pub extra_metas: UncheckedAccount<'info>,
@@ -174,6 +153,21 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
         assert_list_state_seeds(
             &self.list_state.to_account_info(),
             &self.mint.to_account_info(),
+        )?;
+
+        // Check that the payer currency token account is valid.
+        assert_token_account(
+            &self.payer_currency_ta.to_account_info(),
+            &self.currency.key(),
+            &self.payer.key(),
+            &self.currency_token_program.key(),
+        )?;
+
+        assert_token_account(
+            &self.list_ta.to_account_info(),
+            &self.mint.key(),
+            &self.list_state.key(),
+            &self.token_program.key(),
         )?;
 
         let list_state = &self.list_state;
@@ -239,7 +233,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
 
 impl<'info> BuyWnsSpl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
-        transfer_checked(
+        tensor_transfer_checked(
             CpiContext::new(
                 self.currency_token_program.to_account_info(),
                 TransferChecked {
@@ -254,9 +248,72 @@ impl<'info> BuyWnsSpl<'info> {
         )?;
         Ok(())
     }
+
+    fn init_atas(&self) -> Result<()> {
+        // Distribution currency ata.
+        init_if_needed_ata(InitIfNeededAtaParams {
+            ata: self.distribution_currency_ta.to_account_info(),
+            payer: self.payer.to_account_info(),
+            owner: self.distribution.to_account_info(),
+            mint: self.currency.to_account_info(),
+            associated_token_program: self.associated_token_program.to_account_info(),
+            token_program: self.currency_token_program.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+        })?;
+
+        // Owner currency ata.
+        init_if_needed_ata(InitIfNeededAtaParams {
+            ata: self.owner_currency_ta.to_account_info(),
+            payer: self.payer.to_account_info(),
+            owner: self.owner.to_account_info(),
+            mint: self.currency.to_account_info(),
+            associated_token_program: self.associated_token_program.to_account_info(),
+            token_program: self.currency_token_program.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+        })?;
+
+        // Fee Vault currency ata.
+        init_if_needed_ata(InitIfNeededAtaParams {
+            ata: self.fee_vault_currency_ta.to_account_info(),
+            payer: self.payer.to_account_info(),
+            owner: self.fee_vault.to_account_info(),
+            mint: self.currency.to_account_info(),
+            associated_token_program: self.associated_token_program.to_account_info(),
+            token_program: self.currency_token_program.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+        })?;
+
+        // Maker broker currency ata.
+        if let Some(ref maker_broker_currency_ta) = self.maker_broker_currency_ta {
+            init_if_needed_ata(InitIfNeededAtaParams {
+                ata: maker_broker_currency_ta.to_account_info(),
+                payer: self.payer.to_account_info(),
+                owner: self.maker_broker.as_ref().unwrap().to_account_info(),
+                mint: self.currency.to_account_info(),
+                associated_token_program: self.associated_token_program.to_account_info(),
+                token_program: self.currency_token_program.to_account_info(),
+                system_program: self.system_program.to_account_info(),
+            })?;
+        }
+
+        // Taker broker currency ata.
+        if let Some(ref taker_broker_currency_ta) = self.taker_broker_currency_ta {
+            init_if_needed_ata(InitIfNeededAtaParams {
+                ata: taker_broker_currency_ta.to_account_info(),
+                payer: self.payer.to_account_info(),
+                owner: self.taker_broker.as_ref().unwrap().to_account_info(),
+                mint: self.currency.to_account_info(),
+                associated_token_program: self.associated_token_program.to_account_info(),
+                token_program: self.currency_token_program.to_account_info(),
+                system_program: self.system_program.to_account_info(),
+            })?;
+        }
+
+        Ok(())
+    }
 }
 
-#[access_control(ctx.accounts.validate())]
+#[access_control(ctx.accounts.validate(); ctx.accounts.init_atas())]
 pub fn process_buy_wns_spl<'info, 'b>(
     ctx: Context<'_, 'b, '_, 'info, BuyWnsSpl<'info>>,
     max_amount: u64,
@@ -301,13 +358,17 @@ pub fn process_buy_wns_spl<'info, 'b>(
         distribution_account: ctx.accounts.distribution.to_account_info(),
         distribution_token_account: Some(ctx.accounts.distribution_currency_ta.to_account_info()),
         system_program: ctx.accounts.system_program.to_account_info(),
-        distribution_program: ctx.accounts.wns_distribution_program.to_account_info(),
+        distribution_program: ctx.accounts.distribution_program.to_account_info(),
         wns_program: ctx.accounts.wns_program.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         payment_token_program: Some(ctx.accounts.currency_token_program.to_account_info()),
     };
     // royalty payment
-    approve(approve_accounts, amount, creator_fee)?;
+    let approve_params = ApproveParams {
+        price: amount,
+        royalty_fee: creator_fee,
+    };
+    approve(approve_accounts, approve_params)?;
 
     // transfer the NFT
     let transfer_cpi = CpiContext::new(
@@ -320,7 +381,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
         },
     );
 
-    tensor_toolbox::token_2022::transfer::transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi
             .with_remaining_accounts(vec![
                 ctx.accounts.wns_program.to_account_info(),

@@ -1,29 +1,40 @@
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   Address,
-  generateKeyPairSigner,
-  address,
   airdropFactory,
   appendTransactionMessageInstruction,
+  assertAccountExists,
+  fetchEncodedAccount,
   lamports,
   pipe,
-  KeyPairSigner,
-  isSolanaError,
-  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from '@solana/web3.js';
 import {
+  TokenStandard,
+  createDefaultNft,
+} from '@tensor-foundation/mpl-token-metadata';
+import {
   Client,
+  ONE_SOL,
+  createDefaultSolanaClient,
   createDefaultTransaction,
   createKeyPairSigner,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
 import {
-  Condition,
-  Mode,
-  findWhitelistV2Pda,
-  getCreateWhitelistV2Instruction,
-} from '@tensor-foundation/whitelist';
-import { ExecutionContext } from 'ava';
-import { v4 } from 'uuid';
+  Target,
+  fetchBidStateFromSeeds,
+  findBidStatePda,
+  findListStatePda,
+  getBidInstructionAsync,
+  getListLegacyInstructionAsync,
+} from '../../src';
+import {
+  SetupTestParams,
+  TestAction,
+  TestSigners,
+  assertTokenNftOwnedBy,
+  getTestSigners,
+} from '../_common';
 
 const OWNER_BYTES = [
   75, 111, 93, 80, 59, 171, 168, 79, 238, 255, 9, 233, 236, 194, 196, 73, 76, 2,
@@ -46,96 +57,132 @@ export const getAndFundOwner = async (client: Client) => {
   return owner;
 };
 
-export const DEFAULT_PUBKEY: Address = address(
-  '11111111111111111111111111111111'
-);
-export const LAMPORTS_PER_SOL = 1_000_000_000n;
-export const DEFAULT_DELTA = 100_000n;
-export const ONE_WEEK = 60 * 60 * 24 * 7;
-export const ONE_YEAR = 31557600;
-
-export const ZERO_ACCOUNT_RENT_LAMPORTS = 890880n;
-export const ONE_SOL = 1_000_000_000n;
-
-export const POOL_SIZE = 452n;
-
-export const TAKER_FEE_BPS = 150n;
-export const BROKER_FEE_PCT = 50n;
-export const BASIS_POINTS = 10_000n;
-export const TLOCK_PREMIUM_FEE_BPS = 2500n;
-
-export interface CreateWhitelistParams {
+export interface LegacyTest {
   client: Client;
-  payer?: KeyPairSigner;
-  updateAuthority: KeyPairSigner;
-  namespace?: KeyPairSigner;
-  freezeAuthority?: Address;
-  conditions?: Condition[];
+  signers: TestSigners;
+  listing: Address | undefined;
+  listingPrice: bigint | undefined;
+  bid: Address | undefined;
+  bidAmount: number | undefined;
+  mint: Address;
 }
 
-export interface CreateWhitelistReturns {
-  whitelist: Address;
-  uuid: Uint8Array;
-  conditions: Condition[];
-}
-export const generateUuid = () => uuidToUint8Array(v4());
+const DEFAULT_LISTING_PRICE = 100_000_000n;
+const DEFAULT_BID_AMOUNT = 1;
 
-export const uuidToUint8Array = (uuid: string) => {
-  const encoder = new TextEncoder();
-  // replace any '-' to handle uuids
-  return encoder.encode(uuid.replaceAll('-', ''));
-};
+export async function setupLegacyTest(
+  params: SetupTestParams & { pNft?: boolean }
+): Promise<LegacyTest> {
+  const {
+    t,
+    pNft,
+    action,
+    listingPrice = DEFAULT_LISTING_PRICE,
+    bidAmount = DEFAULT_BID_AMOUNT,
+    useCosigner = false,
+  } = params;
 
-export async function createWhitelistV2({
-  client,
-  updateAuthority,
-  payer = updateAuthority,
-  namespace,
-  freezeAuthority = DEFAULT_PUBKEY,
-  conditions = [{ mode: Mode.FVC, value: updateAuthority.address }],
-}: CreateWhitelistParams): Promise<CreateWhitelistReturns> {
-  const uuid = generateUuid();
-  namespace = namespace || (await generateKeyPairSigner());
+  const client = createDefaultSolanaClient();
+  const signers = await getTestSigners(client);
 
-  const [whitelist] = await findWhitelistV2Pda({
-    namespace: namespace.address,
-    uuid,
-  });
+  const { payer, buyer, nftOwner, nftUpdateAuthority, cosigner } = signers;
 
-  const createWhitelistIx = getCreateWhitelistV2Instruction({
+  const standard = pNft
+    ? TokenStandard.ProgrammableNonFungible
+    : TokenStandard.NonFungible;
+
+  // Mint an NFT.
+  const { mint } = await createDefaultNft({
+    client,
     payer,
-    updateAuthority,
-    namespace,
-    whitelist,
-    freezeAuthority,
-    conditions,
-    uuid,
+    authority: nftUpdateAuthority,
+    owner: nftOwner,
+    standard,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(createWhitelistIx, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 300_000,
+  });
 
-  return { whitelist, uuid, conditions };
-}
+  let bid;
+  let listing;
 
-export const expectCustomError = async (
-  t: ExecutionContext,
-  promise: Promise<unknown>,
-  code: number
-) => {
-  const error = await t.throwsAsync<Error & { data: { logs: string[] } }>(
-    promise
-  );
+  switch (action) {
+    case TestAction.List: {
+      // List the NFT.
+      const listLegacyIx = await getListLegacyInstructionAsync({
+        owner: nftOwner,
+        mint,
+        amount: listingPrice,
+        cosigner: useCosigner ? cosigner : undefined,
+        tokenStandard: standard,
+      });
 
-  if (isSolanaError(error.cause, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM)) {
-    t.assert(
-      error.cause.context.code === code,
-      `expected error code ${code}, received ${error.cause.context.code}`
-    );
-  } else {
-    t.fail("expected a custom error, but didn't get one");
+      await pipe(
+        await createDefaultTransaction(client, nftOwner),
+        (tx) => appendTransactionMessageInstruction(computeIx, tx),
+        (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+        (tx) => signAndSendTransaction(client, tx)
+      );
+
+      // Listing was created.
+      [listing] = await findListStatePda({
+        mint,
+      });
+      assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
+
+      // NFT is now escrowed in the listing.
+      await assertTokenNftOwnedBy({ t, client, mint, owner: listing });
+      break;
+    }
+    case TestAction.Bid: {
+      // Bid on the NFT.
+      const bidIx = await getBidInstructionAsync({
+        owner: buyer,
+        amount: bidAmount,
+        target: Target.AssetId,
+        targetId: mint,
+        cosigner: useCosigner ? cosigner : undefined,
+      });
+
+      [bid] = await findBidStatePda({
+        owner: buyer.address,
+        bidId: mint,
+      });
+
+      await pipe(
+        await createDefaultTransaction(client, signers.buyer),
+        (tx) => appendTransactionMessageInstruction(computeIx, tx),
+        (tx) => appendTransactionMessageInstruction(bidIx, tx),
+        (tx) => signAndSendTransaction(client, tx)
+      );
+
+      const bidState = await fetchBidStateFromSeeds(client.rpc, {
+        owner: buyer.address,
+        bidId: mint,
+      });
+      t.like(bidState, {
+        data: {
+          owner: buyer.address,
+          amount: 1n,
+          target: Target.AssetId,
+          targetId: mint,
+          cosigner: null,
+        },
+      });
+      break;
+    }
+    default:
+      throw new Error(`Unknown action: ${action}`);
   }
-};
+
+  return {
+    client,
+    signers,
+    mint,
+    bid: bid ?? undefined,
+    listingPrice,
+    listing: listing ?? undefined,
+    bidAmount,
+  };
+}

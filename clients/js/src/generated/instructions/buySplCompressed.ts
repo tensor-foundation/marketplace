@@ -28,7 +28,6 @@ import {
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
-  none,
   transformEncoder,
   type Address,
   type Codec,
@@ -48,11 +47,19 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { resolveTreeAuthorityPda } from '../../hooked';
+import {
+  resolveFeeVaultPdaFromListState,
+  resolveTreeAuthorityPda,
+} from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
-export type BuySplInstruction<
+export type BuySplCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountFeeVaultTa extends string | IAccountMeta<string> = string,
@@ -182,7 +189,7 @@ export type BuySplInstruction<
     ]
   >;
 
-export type BuySplInstructionData = {
+export type BuySplCompressedInstructionData = {
   discriminator: ReadonlyUint8Array;
   nonce: bigint;
   index: number;
@@ -195,7 +202,7 @@ export type BuySplInstructionData = {
   optionalRoyaltyPct: Option<number>;
 };
 
-export type BuySplInstructionDataArgs = {
+export type BuySplCompressedInstructionDataArgs = {
   nonce: number | bigint;
   index: number;
   root: ReadonlyUint8Array;
@@ -207,7 +214,7 @@ export type BuySplInstructionDataArgs = {
   optionalRoyaltyPct?: OptionOrNullable<number>;
 };
 
-export function getBuySplInstructionDataEncoder(): Encoder<BuySplInstructionDataArgs> {
+export function getBuySplCompressedInstructionDataEncoder(): Encoder<BuySplCompressedInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -227,12 +234,12 @@ export function getBuySplInstructionDataEncoder(): Encoder<BuySplInstructionData
     (value) => ({
       ...value,
       discriminator: new Uint8Array([65, 136, 254, 255, 59, 130, 234, 174]),
-      optionalRoyaltyPct: value.optionalRoyaltyPct ?? none(),
+      optionalRoyaltyPct: value.optionalRoyaltyPct ?? 100,
     })
   );
 }
 
-export function getBuySplInstructionDataDecoder(): Decoder<BuySplInstructionData> {
+export function getBuySplCompressedInstructionDataDecoder(): Decoder<BuySplCompressedInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['nonce', getU64Decoder()],
@@ -247,17 +254,17 @@ export function getBuySplInstructionDataDecoder(): Decoder<BuySplInstructionData
   ]);
 }
 
-export function getBuySplInstructionDataCodec(): Codec<
-  BuySplInstructionDataArgs,
-  BuySplInstructionData
+export function getBuySplCompressedInstructionDataCodec(): Codec<
+  BuySplCompressedInstructionDataArgs,
+  BuySplCompressedInstructionData
 > {
   return combineCodec(
-    getBuySplInstructionDataEncoder(),
-    getBuySplInstructionDataDecoder()
+    getBuySplCompressedInstructionDataEncoder(),
+    getBuySplCompressedInstructionDataDecoder()
   );
 }
 
-export type BuySplAsyncInput<
+export type BuySplCompressedAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultTa extends string = string,
   TAccountTreeAuthority extends string = string,
@@ -284,7 +291,7 @@ export type BuySplAsyncInput<
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   feeVaultTa: Address<TAccountFeeVaultTa>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
@@ -296,7 +303,7 @@ export type BuySplAsyncInput<
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
   payerSource: Address<TAccountPayerSource>;
   owner: Address<TAccountOwner>;
@@ -306,21 +313,21 @@ export type BuySplAsyncInput<
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  nonce: BuySplInstructionDataArgs['nonce'];
-  index: BuySplInstructionDataArgs['index'];
-  root: BuySplInstructionDataArgs['root'];
-  metaHash: BuySplInstructionDataArgs['metaHash'];
-  creatorShares: BuySplInstructionDataArgs['creatorShares'];
-  creatorVerified: BuySplInstructionDataArgs['creatorVerified'];
-  sellerFeeBasisPoints: BuySplInstructionDataArgs['sellerFeeBasisPoints'];
-  maxAmount: BuySplInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct?: BuySplInstructionDataArgs['optionalRoyaltyPct'];
+  nonce?: BuySplCompressedInstructionDataArgs['nonce'];
+  index: BuySplCompressedInstructionDataArgs['index'];
+  root: BuySplCompressedInstructionDataArgs['root'];
+  metaHash: BuySplCompressedInstructionDataArgs['metaHash'];
+  creatorShares: BuySplCompressedInstructionDataArgs['creatorShares'];
+  creatorVerified: BuySplCompressedInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: BuySplCompressedInstructionDataArgs['sellerFeeBasisPoints'];
+  maxAmount: BuySplCompressedInstructionDataArgs['maxAmount'];
+  optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
 };
 
-export async function getBuySplInstructionAsync<
+export async function getBuySplCompressedInstructionAsync<
   TAccountFeeVault extends string,
   TAccountFeeVaultTa extends string,
   TAccountTreeAuthority extends string,
@@ -347,7 +354,7 @@ export async function getBuySplInstructionAsync<
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
-  input: BuySplAsyncInput<
+  input: BuySplCompressedAsyncInput<
     TAccountFeeVault,
     TAccountFeeVaultTa,
     TAccountTreeAuthority,
@@ -375,7 +382,7 @@ export async function getBuySplInstructionAsync<
     TAccountCosigner
   >
 ): Promise<
-  BuySplInstruction<
+  BuySplCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountFeeVaultTa,
@@ -468,6 +475,12 @@ export async function getBuySplInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
@@ -502,9 +515,20 @@ export async function getBuySplInstructionAsync<
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.cosigner.value) {
     accounts.cosigner.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -537,10 +561,10 @@ export async function getBuySplInstructionAsync<
       getAccountMeta(accounts.cosigner),
     ],
     programAddress,
-    data: getBuySplInstructionDataEncoder().encode(
-      args as BuySplInstructionDataArgs
+    data: getBuySplCompressedInstructionDataEncoder().encode(
+      args as BuySplCompressedInstructionDataArgs
     ),
-  } as BuySplInstruction<
+  } as BuySplCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountFeeVaultTa,
@@ -572,7 +596,7 @@ export async function getBuySplInstructionAsync<
   return instruction;
 }
 
-export type BuySplInput<
+export type BuySplCompressedInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultTa extends string = string,
   TAccountTreeAuthority extends string = string,
@@ -611,7 +635,7 @@ export type BuySplInput<
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
   payerSource: Address<TAccountPayerSource>;
   owner: Address<TAccountOwner>;
@@ -621,21 +645,21 @@ export type BuySplInput<
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   rentPayer: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
-  nonce: BuySplInstructionDataArgs['nonce'];
-  index: BuySplInstructionDataArgs['index'];
-  root: BuySplInstructionDataArgs['root'];
-  metaHash: BuySplInstructionDataArgs['metaHash'];
-  creatorShares: BuySplInstructionDataArgs['creatorShares'];
-  creatorVerified: BuySplInstructionDataArgs['creatorVerified'];
-  sellerFeeBasisPoints: BuySplInstructionDataArgs['sellerFeeBasisPoints'];
-  maxAmount: BuySplInstructionDataArgs['maxAmount'];
-  optionalRoyaltyPct?: BuySplInstructionDataArgs['optionalRoyaltyPct'];
+  nonce?: BuySplCompressedInstructionDataArgs['nonce'];
+  index: BuySplCompressedInstructionDataArgs['index'];
+  root: BuySplCompressedInstructionDataArgs['root'];
+  metaHash: BuySplCompressedInstructionDataArgs['metaHash'];
+  creatorShares: BuySplCompressedInstructionDataArgs['creatorShares'];
+  creatorVerified: BuySplCompressedInstructionDataArgs['creatorVerified'];
+  sellerFeeBasisPoints: BuySplCompressedInstructionDataArgs['sellerFeeBasisPoints'];
+  maxAmount: BuySplCompressedInstructionDataArgs['maxAmount'];
+  optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
 };
 
-export function getBuySplInstruction<
+export function getBuySplCompressedInstruction<
   TAccountFeeVault extends string,
   TAccountFeeVaultTa extends string,
   TAccountTreeAuthority extends string,
@@ -662,7 +686,7 @@ export function getBuySplInstruction<
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
 >(
-  input: BuySplInput<
+  input: BuySplCompressedInput<
     TAccountFeeVault,
     TAccountFeeVaultTa,
     TAccountTreeAuthority,
@@ -689,7 +713,7 @@ export function getBuySplInstruction<
     TAccountRentPayer,
     TAccountCosigner
   >
-): BuySplInstruction<
+): BuySplCompressedInstruction<
   typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault,
   TAccountFeeVaultTa,
@@ -806,9 +830,20 @@ export function getBuySplInstruction<
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.cosigner.value) {
     accounts.cosigner.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!args.nonce) {
+    args.nonce = expectSome(args.index);
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -841,10 +876,10 @@ export function getBuySplInstruction<
       getAccountMeta(accounts.cosigner),
     ],
     programAddress,
-    data: getBuySplInstructionDataEncoder().encode(
-      args as BuySplInstructionDataArgs
+    data: getBuySplCompressedInstructionDataEncoder().encode(
+      args as BuySplCompressedInstructionDataArgs
     ),
-  } as BuySplInstruction<
+  } as BuySplCompressedInstruction<
     typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
     TAccountFeeVault,
     TAccountFeeVaultTa,
@@ -876,7 +911,7 @@ export function getBuySplInstruction<
   return instruction;
 }
 
-export type ParsedBuySplInstruction<
+export type ParsedBuySplCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -908,17 +943,17 @@ export type ParsedBuySplInstruction<
     rentPayer: TAccountMetas[23];
     cosigner?: TAccountMetas[24] | undefined;
   };
-  data: BuySplInstructionData;
+  data: BuySplCompressedInstructionData;
 };
 
-export function parseBuySplInstruction<
+export function parseBuySplCompressedInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedBuySplInstruction<TProgram, TAccountMetas> {
+): ParsedBuySplCompressedInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 25) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -964,6 +999,6 @@ export function parseBuySplInstruction<
       rentPayer: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },
-    data: getBuySplInstructionDataDecoder().decode(instruction.data),
+    data: getBuySplCompressedInstructionDataDecoder().decode(instruction.data),
   };
 }

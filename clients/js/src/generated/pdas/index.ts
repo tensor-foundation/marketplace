@@ -6,6 +6,7 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
+export * from './assetListState';
 export * from './bidState';
 export * from './bidTa';
 export * from './listState';

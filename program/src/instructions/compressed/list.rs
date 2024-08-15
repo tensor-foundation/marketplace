@@ -81,11 +81,6 @@ pub fn process_list<'info>(
             ctx.remaining_accounts
         };
 
-    require!(
-        maker_broker_is_whitelisted(maker_broker),
-        TcompError::MakerBrokerNotYetWhitelisted
-    );
-
     transfer_cnft(TransferArgs {
         root,
         nonce,

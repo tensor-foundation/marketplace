@@ -8,7 +8,9 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account,
-    token_2022::{transfer::transfer_checked, validate_mint, RoyaltyInfo},
+    token_2022::{
+        transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
+    },
     TCreator,
 };
 use tensor_vipers::Validate;
@@ -53,7 +55,7 @@ pub struct TakeBidT22<'info> {
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin_account: UncheckedAccount<'info>,
+    pub margin: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
@@ -248,12 +250,12 @@ pub fn process_take_bid_t22<'info>(
         (vec![], vec![], 0)
     };
 
-    transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
+    tensor_transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin_account: &ctx.accounts.margin_account,
+        margin: &ctx.accounts.margin,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,

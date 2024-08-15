@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -33,8 +34,30 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import {
+  resolveBuyerAta,
+  resolveListAta,
+  resolveWnsApprovePda,
+  resolveWnsExtraAccountMetasPda,
+} from '@tensor-foundation/resolvers';
+import {
+  resolveDistributionCurrencyAta,
+  resolveFeeVaultCurrencyAta,
+  resolveFeeVaultPdaFromListState,
+  resolveMakerBrokerCurrencyAta,
+  resolveOwnerCurrencyAta,
+  resolvePayerCurrencyAta,
+  resolveTakerBrokerCurrencyAta,
+} from '../../hooked';
+import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectSome,
+  expectTransactionSigner,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type BuyWnsSplInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -57,8 +80,10 @@ export type BuyWnsSplInstruction<
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountCurrencyTokenProgram extends
+    | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  TAccountCurrencyTokenProgram extends string | IAccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | IAccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -74,7 +99,7 @@ export type BuyWnsSplInstruction<
   TAccountWnsProgram extends
     | string
     | IAccountMeta<string> = 'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
-  TAccountWnsDistributionProgram extends
+  TAccountDistributionProgram extends
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
@@ -163,9 +188,9 @@ export type BuyWnsSplInstruction<
       TAccountWnsProgram extends string
         ? ReadonlyAccount<TAccountWnsProgram>
         : TAccountWnsProgram,
-      TAccountWnsDistributionProgram extends string
-        ? ReadonlyAccount<TAccountWnsDistributionProgram>
-        : TAccountWnsDistributionProgram,
+      TAccountDistributionProgram extends string
+        ? ReadonlyAccount<TAccountDistributionProgram>
+        : TAccountDistributionProgram,
       TAccountExtraMetas extends string
         ? ReadonlyAccount<TAccountExtraMetas>
         : TAccountExtraMetas,
@@ -214,6 +239,426 @@ export function getBuyWnsSplInstructionDataCodec(): Codec<
   );
 }
 
+export type BuyWnsSplAsyncInput<
+  TAccountFeeVault extends string = string,
+  TAccountFeeVaultCurrencyTa extends string = string,
+  TAccountBuyer extends string = string,
+  TAccountBuyerTa extends string = string,
+  TAccountListTa extends string = string,
+  TAccountListState extends string = string,
+  TAccountMint extends string = string,
+  TAccountCurrency extends string = string,
+  TAccountOwner extends string = string,
+  TAccountOwnerCurrencyTa extends string = string,
+  TAccountPayer extends string = string,
+  TAccountPayerCurrencyTa extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountTakerBrokerCurrencyTa extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMakerBrokerCurrencyTa extends string = string,
+  TAccountRentDestination extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountApprove extends string = string,
+  TAccountDistribution extends string = string,
+  TAccountDistributionCurrencyTa extends string = string,
+  TAccountWnsProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
+  TAccountExtraMetas extends string = string,
+  TAccountCosigner extends string = string,
+> = {
+  feeVault?: Address<TAccountFeeVault>;
+  feeVaultCurrencyTa?: Address<TAccountFeeVaultCurrencyTa>;
+  buyer?: Address<TAccountBuyer>;
+  buyerTa?: Address<TAccountBuyerTa>;
+  listTa?: Address<TAccountListTa>;
+  listState?: Address<TAccountListState>;
+  /** WNS asset mint. */
+  mint: Address<TAccountMint>;
+  /** SPL token mint of the currency. */
+  currency: Address<TAccountCurrency>;
+  owner: Address<TAccountOwner>;
+  ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
+  payer: TransactionSigner<TAccountPayer>;
+  payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
+  rentDestination?: Address<TAccountRentDestination>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  approve?: Address<TAccountApprove>;
+  distribution: Address<TAccountDistribution>;
+  distributionCurrencyTa?: Address<TAccountDistributionCurrencyTa>;
+  wnsProgram?: Address<TAccountWnsProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
+  extraMetas?: Address<TAccountExtraMetas>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
+  creators?: Array<Address>;
+};
+
+export async function getBuyWnsSplInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountFeeVaultCurrencyTa extends string,
+  TAccountBuyer extends string,
+  TAccountBuyerTa extends string,
+  TAccountListTa extends string,
+  TAccountListState extends string,
+  TAccountMint extends string,
+  TAccountCurrency extends string,
+  TAccountOwner extends string,
+  TAccountOwnerCurrencyTa extends string,
+  TAccountPayer extends string,
+  TAccountPayerCurrencyTa extends string,
+  TAccountTakerBroker extends string,
+  TAccountTakerBrokerCurrencyTa extends string,
+  TAccountMakerBroker extends string,
+  TAccountMakerBrokerCurrencyTa extends string,
+  TAccountRentDestination extends string,
+  TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountApprove extends string,
+  TAccountDistribution extends string,
+  TAccountDistributionCurrencyTa extends string,
+  TAccountWnsProgram extends string,
+  TAccountDistributionProgram extends string,
+  TAccountExtraMetas extends string,
+  TAccountCosigner extends string,
+>(
+  input: BuyWnsSplAsyncInput<
+    TAccountFeeVault,
+    TAccountFeeVaultCurrencyTa,
+    TAccountBuyer,
+    TAccountBuyerTa,
+    TAccountListTa,
+    TAccountListState,
+    TAccountMint,
+    TAccountCurrency,
+    TAccountOwner,
+    TAccountOwnerCurrencyTa,
+    TAccountPayer,
+    TAccountPayerCurrencyTa,
+    TAccountTakerBroker,
+    TAccountTakerBrokerCurrencyTa,
+    TAccountMakerBroker,
+    TAccountMakerBrokerCurrencyTa,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountApprove,
+    TAccountDistribution,
+    TAccountDistributionCurrencyTa,
+    TAccountWnsProgram,
+    TAccountDistributionProgram,
+    TAccountExtraMetas,
+    TAccountCosigner
+  >
+): Promise<
+  BuyWnsSplInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountFeeVaultCurrencyTa,
+    TAccountBuyer,
+    TAccountBuyerTa,
+    TAccountListTa,
+    TAccountListState,
+    TAccountMint,
+    TAccountCurrency,
+    TAccountOwner,
+    TAccountOwnerCurrencyTa,
+    TAccountPayer,
+    TAccountPayerCurrencyTa,
+    TAccountTakerBroker,
+    TAccountTakerBrokerCurrencyTa,
+    TAccountMakerBroker,
+    TAccountMakerBrokerCurrencyTa,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountApprove,
+    TAccountDistribution,
+    TAccountDistributionCurrencyTa,
+    TAccountWnsProgram,
+    TAccountDistributionProgram,
+    TAccountExtraMetas,
+    TAccountCosigner
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    feeVaultCurrencyTa: {
+      value: input.feeVaultCurrencyTa ?? null,
+      isWritable: true,
+    },
+    buyer: { value: input.buyer ?? null, isWritable: false },
+    buyerTa: { value: input.buyerTa ?? null, isWritable: true },
+    listTa: { value: input.listTa ?? null, isWritable: true },
+    listState: { value: input.listState ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    currency: { value: input.currency ?? null, isWritable: false },
+    owner: { value: input.owner ?? null, isWritable: true },
+    ownerCurrencyTa: { value: input.ownerCurrencyTa ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
+    payerCurrencyTa: { value: input.payerCurrencyTa ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    takerBrokerCurrencyTa: {
+      value: input.takerBrokerCurrencyTa ?? null,
+      isWritable: true,
+    },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    makerBrokerCurrencyTa: {
+      value: input.makerBrokerCurrencyTa ?? null,
+      isWritable: true,
+    },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    approve: { value: input.approve ?? null, isWritable: true },
+    distribution: { value: input.distribution ?? null, isWritable: true },
+    distributionCurrencyTa: {
+      value: input.distributionCurrencyTa ?? null,
+      isWritable: true,
+    },
+    wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
+      isWritable: false,
+    },
+    extraMetas: { value: input.extraMetas ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findListStatePda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.feeVaultCurrencyTa.value) {
+    accounts.feeVaultCurrencyTa = {
+      ...accounts.feeVaultCurrencyTa,
+      ...(await resolveFeeVaultCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.buyerTa.value) {
+    accounts.buyerTa = {
+      ...accounts.buyerTa,
+      ...(await resolveBuyerAta(resolverScope)),
+    };
+  }
+  if (!accounts.listTa.value) {
+    accounts.listTa = {
+      ...accounts.listTa,
+      ...(await resolveListAta(resolverScope)),
+    };
+  }
+  if (!accounts.ownerCurrencyTa.value) {
+    accounts.ownerCurrencyTa = {
+      ...accounts.ownerCurrencyTa,
+      ...(await resolveOwnerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.payerCurrencyTa.value) {
+    accounts.payerCurrencyTa = {
+      ...accounts.payerCurrencyTa,
+      ...(await resolvePayerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.takerBrokerCurrencyTa.value) {
+    accounts.takerBrokerCurrencyTa = {
+      ...accounts.takerBrokerCurrencyTa,
+      ...(await resolveTakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.makerBrokerCurrencyTa.value) {
+    accounts.makerBrokerCurrencyTa = {
+      ...accounts.makerBrokerCurrencyTa,
+      ...(await resolveMakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.approve.value) {
+    accounts.approve = {
+      ...accounts.approve,
+      ...(await resolveWnsApprovePda(resolverScope)),
+    };
+  }
+  if (!accounts.distributionCurrencyTa.value) {
+    accounts.distributionCurrencyTa = {
+      ...accounts.distributionCurrencyTa,
+      ...(await resolveDistributionCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.wnsProgram.value) {
+    accounts.wnsProgram.value =
+      'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
+  }
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
+      'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
+  }
+  if (!accounts.extraMetas.value) {
+    accounts.extraMetas = {
+      ...accounts.extraMetas,
+      ...(await resolveWnsExtraAccountMetasPda(resolverScope)),
+    };
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.feeVaultCurrencyTa),
+      getAccountMeta(accounts.buyer),
+      getAccountMeta(accounts.buyerTa),
+      getAccountMeta(accounts.listTa),
+      getAccountMeta(accounts.listState),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.currency),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.ownerCurrencyTa),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.payerCurrencyTa),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.takerBrokerCurrencyTa),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.makerBrokerCurrencyTa),
+      getAccountMeta(accounts.rentDestination),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.approve),
+      getAccountMeta(accounts.distribution),
+      getAccountMeta(accounts.distributionCurrencyTa),
+      getAccountMeta(accounts.wnsProgram),
+      getAccountMeta(accounts.distributionProgram),
+      getAccountMeta(accounts.extraMetas),
+      getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getBuyWnsSplInstructionDataEncoder().encode(
+      args as BuyWnsSplInstructionDataArgs
+    ),
+  } as BuyWnsSplInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountFeeVaultCurrencyTa,
+    TAccountBuyer,
+    TAccountBuyerTa,
+    TAccountListTa,
+    TAccountListState,
+    TAccountMint,
+    TAccountCurrency,
+    TAccountOwner,
+    TAccountOwnerCurrencyTa,
+    TAccountPayer,
+    TAccountPayerCurrencyTa,
+    TAccountTakerBroker,
+    TAccountTakerBrokerCurrencyTa,
+    TAccountMakerBroker,
+    TAccountMakerBrokerCurrencyTa,
+    TAccountRentDestination,
+    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountMarketplaceProgram,
+    TAccountSystemProgram,
+    TAccountApprove,
+    TAccountDistribution,
+    TAccountDistributionCurrencyTa,
+    TAccountWnsProgram,
+    TAccountDistributionProgram,
+    TAccountExtraMetas,
+    TAccountCosigner
+  >;
+
+  return instruction;
+}
+
 export type BuyWnsSplInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultCurrencyTa extends string = string,
@@ -241,13 +686,13 @@ export type BuyWnsSplInput<
   TAccountDistribution extends string = string,
   TAccountDistributionCurrencyTa extends string = string,
   TAccountWnsProgram extends string = string,
-  TAccountWnsDistributionProgram extends string = string,
+  TAccountDistributionProgram extends string = string,
   TAccountExtraMetas extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
   feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
-  buyer: Address<TAccountBuyer>;
+  buyer?: Address<TAccountBuyer>;
   buyerTa: Address<TAccountBuyerTa>;
   listTa: Address<TAccountListTa>;
   listState: Address<TAccountListState>;
@@ -263,9 +708,9 @@ export type BuyWnsSplInput<
   takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
-  rentDestination: Address<TAccountRentDestination>;
+  rentDestination?: Address<TAccountRentDestination>;
   tokenProgram?: Address<TAccountTokenProgram>;
-  currencyTokenProgram: Address<TAccountCurrencyTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -273,10 +718,11 @@ export type BuyWnsSplInput<
   distribution: Address<TAccountDistribution>;
   distributionCurrencyTa: Address<TAccountDistributionCurrencyTa>;
   wnsProgram?: Address<TAccountWnsProgram>;
-  wnsDistributionProgram?: Address<TAccountWnsDistributionProgram>;
+  distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
+  creators?: Array<Address>;
 };
 
 export function getBuyWnsSplInstruction<
@@ -306,7 +752,7 @@ export function getBuyWnsSplInstruction<
   TAccountDistribution extends string,
   TAccountDistributionCurrencyTa extends string,
   TAccountWnsProgram extends string,
-  TAccountWnsDistributionProgram extends string,
+  TAccountDistributionProgram extends string,
   TAccountExtraMetas extends string,
   TAccountCosigner extends string,
 >(
@@ -337,7 +783,7 @@ export function getBuyWnsSplInstruction<
     TAccountDistribution,
     TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas,
     TAccountCosigner
   >
@@ -369,7 +815,7 @@ export function getBuyWnsSplInstruction<
   TAccountDistribution,
   TAccountDistributionCurrencyTa,
   TAccountWnsProgram,
-  TAccountWnsDistributionProgram,
+  TAccountDistributionProgram,
   TAccountExtraMetas,
   TAccountCosigner
 > {
@@ -425,8 +871,8 @@ export function getBuyWnsSplInstruction<
       isWritable: true,
     },
     wnsProgram: { value: input.wnsProgram ?? null, isWritable: false },
-    wnsDistributionProgram: {
-      value: input.wnsDistributionProgram ?? null,
+    distributionProgram: {
+      value: input.distributionProgram ?? null,
       isWritable: false,
     },
     extraMetas: { value: input.extraMetas ?? null, isWritable: false },
@@ -441,9 +887,21 @@ export function getBuyWnsSplInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.buyer.value) {
+    accounts.buyer.value = expectTransactionSigner(
+      accounts.payer.value
+    ).address;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -461,10 +919,15 @@ export function getBuyWnsSplInstruction<
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
   }
-  if (!accounts.wnsDistributionProgram.value) {
-    accounts.wnsDistributionProgram.value =
+  if (!accounts.distributionProgram.value) {
+    accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
+    (address) => ({ address, role: AccountRole.WRITABLE })
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -495,9 +958,10 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.distribution),
       getAccountMeta(accounts.distributionCurrencyTa),
       getAccountMeta(accounts.wnsProgram),
-      getAccountMeta(accounts.wnsDistributionProgram),
+      getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsSplInstructionDataEncoder().encode(
@@ -531,7 +995,7 @@ export function getBuyWnsSplInstruction<
     TAccountDistribution,
     TAccountDistributionCurrencyTa,
     TAccountWnsProgram,
-    TAccountWnsDistributionProgram,
+    TAccountDistributionProgram,
     TAccountExtraMetas,
     TAccountCosigner
   >;
@@ -573,7 +1037,7 @@ export type ParsedBuyWnsSplInstruction<
     distribution: TAccountMetas[23];
     distributionCurrencyTa: TAccountMetas[24];
     wnsProgram: TAccountMetas[25];
-    wnsDistributionProgram: TAccountMetas[26];
+    distributionProgram: TAccountMetas[26];
     extraMetas: TAccountMetas[27];
     cosigner?: TAccountMetas[28] | undefined;
   };
@@ -633,7 +1097,7 @@ export function parseBuyWnsSplInstruction<
       distribution: getNextAccount(),
       distributionCurrencyTa: getNextAccount(),
       wnsProgram: getNextAccount(),
-      wnsDistributionProgram: getNextAccount(),
+      distributionProgram: getNextAccount(),
       extraMetas: getNextAccount(),
       cosigner: getNextOptionalAccount(),
     },

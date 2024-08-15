@@ -1,4 +1,7 @@
-use anchor_spl::token_interface::TokenAccount;
+use anchor_spl::{
+    associated_token::{create_idempotent, get_associated_token_address_with_program_id},
+    token_interface::TokenAccount,
+};
 use tensor_toolbox::{fees, shard_num, TensorError};
 
 use crate::*;
@@ -15,10 +18,6 @@ pub(crate) enum TcompSigner<'a, 'info> {
 
 pub fn find_neutral_broker() -> (Pubkey, u8) {
     Pubkey::find_program_address(&[], &crate::ID)
-}
-
-pub fn maker_broker_is_whitelisted(maker_broker: Option<Pubkey>) -> bool {
-    maker_broker.is_none() || maker_broker == Some(tensor_toolbox::gameshift::ID)
 }
 
 /// Checks if cosigner is deliberately passed in or if it should be a remaining account instead.
@@ -114,4 +113,65 @@ pub fn assert_list_state_seeds(
     );
 
     Ok(())
+}
+
+/// Asserts that the given token account belongs to the provided mint, owner and token_program..
+pub fn assert_token_account(
+    token_account_info: &AccountInfo,
+    mint: &Pubkey,
+    owner: &Pubkey,
+    token_program: &Pubkey,
+) -> Result<()> {
+    require!(
+        token_account_info.owner == token_program,
+        TcompError::InvalidTokenAccount
+    );
+
+    let mut data: &[u8] = &token_account_info.try_borrow_data()?;
+    let token_account = TokenAccount::try_deserialize(&mut data)?;
+
+    require!(
+        token_account.mint == *mint && token_account.owner == *owner,
+        TcompError::InvalidTokenAccount
+    );
+    Ok(())
+}
+
+pub struct InitIfNeededAtaParams<'info> {
+    pub ata: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub owner: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub associated_token_program: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
+}
+
+pub fn init_if_needed_ata(params: InitIfNeededAtaParams) -> Result<()> {
+    let InitIfNeededAtaParams {
+        ata,
+        payer,
+        owner,
+        mint,
+        associated_token_program,
+        token_program,
+        system_program,
+    } = params;
+    let expected_ata =
+        get_associated_token_address_with_program_id(owner.key, mint.key, token_program.key);
+    require!(expected_ata == *ata.key, TcompError::InvalidTokenAccount);
+
+    let ctx = CpiContext::new(
+        associated_token_program,
+        Create {
+            payer,
+            associated_token: ata,
+            authority: owner,
+            mint,
+            system_program,
+            token_program,
+        },
+    );
+
+    create_idempotent(ctx)
 }

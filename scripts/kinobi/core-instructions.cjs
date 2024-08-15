@@ -13,14 +13,14 @@ module.exports = function visitor(options) {
       k.updateInstructionsVisitor({
         buyCore: {
           accounts: {
-            // feeVault: {
-            //   defaultValue: k.resolverValueNode(
-            //     "resolveFeeVaultPdaFromListState",
-            //     {
-            //       dependsOn: [k.accountValueNode("listState")]
-            //     }
-            //   )
-            // },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")]
+                }
+              )
+            },
             buyer: {
               defaultValue: k.accountValueNode("payer")
             },
@@ -60,14 +60,14 @@ module.exports = function visitor(options) {
         },
         buyCoreSpl: {
           accounts: {
-            // feeVault: {
-            //   defaultValue: k.resolverValueNode(
-            //     "resolveFeeVaultPdaFromListState",
-            //     {
-            //       dependsOn: [k.accountValueNode("listState")]
-            //     }
-            //   )
-            // },
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromListState",
+                {
+                  dependsOn: [k.accountValueNode("listState")]
+                }
+              )
+            },
             buyer: {
               defaultValue: k.accountValueNode("payer")
             },
@@ -111,6 +111,27 @@ module.exports = function visitor(options) {
               }
             )
           ]
+        },
+        closeExpiredListingCore: {
+          accounts: {
+            listState: { defaultValue: k.pdaValueNode("assetListState") }
+          }
+        },
+        delistCore: {
+          accounts: {
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner")
+            },
+            listState: { defaultValue: k.pdaValueNode("assetListState") }
+          }
+        },
+        listCore: {
+          accounts: {
+            payer: {
+              defaultValue: k.accountValueNode("owner")
+            },
+            listState: { defaultValue: k.pdaValueNode("assetListState") }
+          }
         }
       })
     );

@@ -30,6 +30,7 @@ import {
   getBuyLegacySplInstructionAsync,
   getListLegacyInstructionAsync,
 } from '../../src';
+
 test('it can buy an NFT paying using a SPL token', async (t) => {
   const client = createDefaultSolanaClient();
 

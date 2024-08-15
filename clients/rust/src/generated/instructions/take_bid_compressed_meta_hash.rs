@@ -14,9 +14,9 @@ pub struct TakeBidCompressedMetaHash {
 
     pub tree_authority: solana_program::pubkey::Pubkey,
 
-    pub seller: (solana_program::pubkey::Pubkey, bool),
+    pub seller: solana_program::pubkey::Pubkey,
 
-    pub delegate: (solana_program::pubkey::Pubkey, bool),
+    pub delegate: solana_program::pubkey::Pubkey,
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
 
@@ -40,7 +40,7 @@ pub struct TakeBidCompressedMetaHash {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin_account: solana_program::pubkey::Pubkey,
+    pub margin: solana_program::pubkey::Pubkey,
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
@@ -72,12 +72,12 @@ impl TakeBidCompressedMetaHash {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.seller.0,
-            self.seller.1,
+            self.seller,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.delegate.0,
-            self.delegate.1,
+            self.delegate,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.merkle_tree,
@@ -137,7 +137,7 @@ impl TakeBidCompressedMetaHash {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin_account,
+            self.margin,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -212,8 +212,8 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
-///   2. `[writable, signer]` seller
-///   3. `[signer]` delegate
+///   2. `[writable]` seller
+///   3. `[]` delegate
 ///   4. `[writable]` merkle_tree
 ///   5. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
 ///   6. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
@@ -225,7 +225,7 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 ///   12. `[writable]` owner
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable]` margin_account
+///   15. `[writable]` margin
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_destination
@@ -233,8 +233,8 @@ pub struct TakeBidCompressedMetaHashInstructionArgs {
 pub struct TakeBidCompressedMetaHashBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
     tree_authority: Option<solana_program::pubkey::Pubkey>,
-    seller: Option<(solana_program::pubkey::Pubkey, bool)>,
-    delegate: Option<(solana_program::pubkey::Pubkey, bool)>,
+    seller: Option<solana_program::pubkey::Pubkey>,
+    delegate: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
@@ -246,7 +246,7 @@ pub struct TakeBidCompressedMetaHashBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin_account: Option<solana_program::pubkey::Pubkey>,
+    margin: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     cosigner: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
@@ -277,17 +277,13 @@ impl TakeBidCompressedMetaHashBuilder {
         self
     }
     #[inline(always)]
-    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.seller = Some((seller, as_signer));
+    pub fn seller(&mut self, seller: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.seller = Some(seller);
         self
     }
     #[inline(always)]
-    pub fn delegate(
-        &mut self,
-        delegate: solana_program::pubkey::Pubkey,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.delegate = Some((delegate, as_signer));
+    pub fn delegate(&mut self, delegate: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -372,8 +368,8 @@ impl TakeBidCompressedMetaHashBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin_account(&mut self, margin_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin_account = Some(margin_account);
+    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -489,7 +485,7 @@ impl TakeBidCompressedMetaHashBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin_account: self.margin_account.expect("margin_account is not set"),
+            margin: self.margin.expect("margin is not set"),
             whitelist: self.whitelist.expect("whitelist is not set"),
             cosigner: self.cosigner,
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
@@ -525,9 +521,9 @@ pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -551,7 +547,7 @@ pub struct TakeBidCompressedMetaHashCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -569,9 +565,9 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub seller: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub seller: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -595,7 +591,7 @@ pub struct TakeBidCompressedMetaHashCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -629,7 +625,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin_account: accounts.margin_account,
+            margin: accounts.margin,
             whitelist: accounts.whitelist,
             cosigner: accounts.cosigner,
             rent_destination: accounts.rent_destination,
@@ -679,12 +675,12 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.seller.0.key,
-            self.seller.1,
+            *self.seller.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.delegate.0.key,
-            self.delegate.1,
+            *self.delegate.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.merkle_tree.key,
@@ -745,7 +741,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin_account.key,
+            *self.margin.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -789,8 +785,8 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.fee_vault.clone());
         account_infos.push(self.tree_authority.clone());
-        account_infos.push(self.seller.0.clone());
-        account_infos.push(self.delegate.0.clone());
+        account_infos.push(self.seller.clone());
+        account_infos.push(self.delegate.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
@@ -806,7 +802,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin_account.clone());
+        account_infos.push(self.margin.clone());
         account_infos.push(self.whitelist.clone());
         if let Some(cosigner) = self.cosigner {
             account_infos.push(cosigner.clone());
@@ -830,8 +826,8 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///
 ///   0. `[writable]` fee_vault
 ///   1. `[]` tree_authority
-///   2. `[writable, signer]` seller
-///   3. `[signer]` delegate
+///   2. `[writable]` seller
+///   3. `[]` delegate
 ///   4. `[writable]` merkle_tree
 ///   5. `[]` log_wrapper
 ///   6. `[]` compression_program
@@ -843,7 +839,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpi<'a, 'b> {
 ///   12. `[writable]` owner
 ///   13. `[writable, optional]` taker_broker
 ///   14. `[writable, optional]` maker_broker
-///   15. `[writable]` margin_account
+///   15. `[writable]` margin
 ///   16. `[]` whitelist
 ///   17. `[signer, optional]` cosigner
 ///   18. `[writable]` rent_destination
@@ -871,7 +867,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin_account: None,
+            margin: None,
             whitelist: None,
             cosigner: None,
             rent_destination: None,
@@ -908,18 +904,16 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
     pub fn seller(
         &mut self,
         seller: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.seller = Some((seller, as_signer));
+        self.instruction.seller = Some(seller);
         self
     }
     #[inline(always)]
     pub fn delegate(
         &mut self,
         delegate: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.delegate = Some((delegate, as_signer));
+        self.instruction.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -1010,11 +1004,11 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin_account(
+    pub fn margin(
         &mut self,
-        margin_account: &'b solana_program::account_info::AccountInfo<'a>,
+        margin: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin_account = Some(margin_account);
+        self.instruction.margin = Some(margin);
         self
     }
     #[inline(always)]
@@ -1217,10 +1211,7 @@ impl<'a, 'b> TakeBidCompressedMetaHashCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin_account: self
-                .instruction
-                .margin_account
-                .expect("margin_account is not set"),
+            margin: self.instruction.margin.expect("margin is not set"),
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
@@ -1244,8 +1235,8 @@ struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     fee_vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    seller: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
-    delegate: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    seller: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -1257,7 +1248,7 @@ struct TakeBidCompressedMetaHashCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cosigner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,

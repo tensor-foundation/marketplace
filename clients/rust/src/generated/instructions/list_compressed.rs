@@ -13,9 +13,9 @@ use solana_program::pubkey::Pubkey;
 pub struct ListCompressed {
     pub tree_authority: solana_program::pubkey::Pubkey,
 
-    pub owner: (solana_program::pubkey::Pubkey, bool),
+    pub owner: solana_program::pubkey::Pubkey,
 
-    pub delegate: (solana_program::pubkey::Pubkey, bool),
+    pub delegate: solana_program::pubkey::Pubkey,
 
     pub merkle_tree: solana_program::pubkey::Pubkey,
 
@@ -55,12 +55,11 @@ impl ListCompressed {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.owner.0,
-            self.owner.1,
+            self.owner, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.delegate.0,
-            self.delegate.1,
+            self.delegate,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.merkle_tree,
@@ -156,8 +155,8 @@ pub struct ListCompressedInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[]` tree_authority
-///   1. `[signer]` owner
-///   2. `[signer]` delegate
+///   1. `[]` owner
+///   2. `[]` delegate
 ///   3. `[writable]` merkle_tree
 ///   4. `[optional]` log_wrapper (default to `noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV`)
 ///   5. `[optional]` compression_program (default to `cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK`)
@@ -170,8 +169,8 @@ pub struct ListCompressedInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct ListCompressedBuilder {
     tree_authority: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<(solana_program::pubkey::Pubkey, bool)>,
-    delegate: Option<(solana_program::pubkey::Pubkey, bool)>,
+    owner: Option<solana_program::pubkey::Pubkey>,
+    delegate: Option<solana_program::pubkey::Pubkey>,
     merkle_tree: Option<solana_program::pubkey::Pubkey>,
     log_wrapper: Option<solana_program::pubkey::Pubkey>,
     compression_program: Option<solana_program::pubkey::Pubkey>,
@@ -204,17 +203,13 @@ impl ListCompressedBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey, as_signer: bool) -> &mut Self {
-        self.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     #[inline(always)]
-    pub fn delegate(
-        &mut self,
-        delegate: solana_program::pubkey::Pubkey,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.delegate = Some((delegate, as_signer));
+    pub fn delegate(&mut self, delegate: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -396,9 +391,9 @@ impl ListCompressedBuilder {
 pub struct ListCompressedCpiAccounts<'a, 'b> {
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -426,9 +421,9 @@ pub struct ListCompressedCpi<'a, 'b> {
 
     pub tree_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub delegate: (&'b solana_program::account_info::AccountInfo<'a>, bool),
+    pub delegate: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub merkle_tree: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -513,12 +508,12 @@ impl<'a, 'b> ListCompressedCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.owner.0.key,
-            self.owner.1,
+            *self.owner.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.delegate.0.key,
-            self.delegate.1,
+            *self.delegate.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.merkle_tree.key,
@@ -582,8 +577,8 @@ impl<'a, 'b> ListCompressedCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(12 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.tree_authority.clone());
-        account_infos.push(self.owner.0.clone());
-        account_infos.push(self.delegate.0.clone());
+        account_infos.push(self.owner.clone());
+        account_infos.push(self.delegate.clone());
         account_infos.push(self.merkle_tree.clone());
         account_infos.push(self.log_wrapper.clone());
         account_infos.push(self.compression_program.clone());
@@ -612,8 +607,8 @@ impl<'a, 'b> ListCompressedCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` tree_authority
-///   1. `[signer]` owner
-///   2. `[signer]` delegate
+///   1. `[]` owner
+///   2. `[]` delegate
 ///   3. `[writable]` merkle_tree
 ///   4. `[]` log_wrapper
 ///   5. `[]` compression_program
@@ -667,21 +662,16 @@ impl<'a, 'b> ListCompressedCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(
-        &mut self,
-        owner: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
-    ) -> &mut Self {
-        self.instruction.owner = Some((owner, as_signer));
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
     pub fn delegate(
         &mut self,
         delegate: &'b solana_program::account_info::AccountInfo<'a>,
-        as_signer: bool,
     ) -> &mut Self {
-        self.instruction.delegate = Some((delegate, as_signer));
+        self.instruction.delegate = Some(delegate);
         self
     }
     #[inline(always)]
@@ -932,8 +922,8 @@ impl<'a, 'b> ListCompressedCpiBuilder<'a, 'b> {
 struct ListCompressedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     tree_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
-    delegate: Option<(&'b solana_program::account_info::AccountInfo<'a>, bool)>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    delegate: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     merkle_tree: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     log_wrapper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     compression_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
