@@ -353,7 +353,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin: Address<TAccountMargin>;
+  margin?: Address<TAccountMargin>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -534,6 +534,9 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.tensorswapProgram.value);
+  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
@@ -646,7 +649,7 @@ export type TakeBidCompressedFullMetaInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin: Address<TAccountMargin>;
+  margin?: Address<TAccountMargin>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -812,6 +815,9 @@ export function getTakeBidCompressedFullMetaInstruction<
   if (!accounts.tensorswapProgram.value) {
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.tensorswapProgram.value);
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);

@@ -84,7 +84,7 @@ export type TakeBidLegacyInstruction<
   TAccountMargin extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends
     | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountSellerTa extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountMetadata extends string | IAccountMeta<string> = string,
@@ -531,7 +531,7 @@ export async function getTakeBidLegacyInstructionAsync<
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -945,7 +945,7 @@ export function getTakeBidLegacyInstruction<
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =

@@ -6,15 +6,15 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  createDefaultNft,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  findAtaPda,
-} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
   Target,

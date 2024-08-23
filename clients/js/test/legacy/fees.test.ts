@@ -9,16 +9,17 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  createDefaultNft,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   getBalance,
+  ONE_SOL,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  findAtaPda,
-} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
 import {
   findFeeVaultPda,
@@ -37,7 +38,7 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
   const owner = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);
   const makerBroker = await generateKeyPairSignerWithSol(client);
-  const takerBroker = await generateKeyPairSignerWithSol(client);
+  const takerBroker = await generateKeyPairSignerWithSol(client, 5n * ONE_SOL);
 
   const price = 100_000_000n;
   const totalFee = (price * TOTAL_FEE_BP) / HUNDRED_BP;

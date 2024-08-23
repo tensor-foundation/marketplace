@@ -331,7 +331,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` margin
-///   7. `[optional]` whitelist (default to `11111111111111111111111111111111`)
+///   7. `[optional]` whitelist (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
 ///   10. `[writable]` metadata
