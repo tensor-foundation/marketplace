@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -209,6 +210,7 @@ export type TakeBidCoreAsyncInput<
   mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
+  creators: Array<Address>;
 };
 
 export async function getTakeBidCoreInstructionAsync<
@@ -346,6 +348,12 @@ export async function getTakeBidCoreInstructionAsync<
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.creators.map((address) => ({
+    address,
+    role: AccountRole.WRITABLE,
+  }));
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -366,6 +374,7 @@ export async function getTakeBidCoreInstructionAsync<
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
       getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidCoreInstructionDataEncoder().encode(
@@ -433,6 +442,7 @@ export type TakeBidCoreInput<
   mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
+  creators: Array<Address>;
 };
 
 export function getTakeBidCoreInstruction<
@@ -559,6 +569,12 @@ export function getTakeBidCoreInstruction<
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.creators.map((address) => ({
+    address,
+    role: AccountRole.WRITABLE,
+  }));
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -579,6 +595,7 @@ export function getTakeBidCoreInstruction<
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
       getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidCoreInstructionDataEncoder().encode(

@@ -921,7 +921,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "tensor-toolbox 0.1.0",
- "tensor-vipers",
+ "tensor-vipers 1.0.0",
 ]
 
 [[package]]
@@ -1226,8 +1226,8 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.2.0",
- "tensor-vipers",
+ "tensor-toolbox 0.3.0",
+ "tensor-vipers 1.0.0",
  "whitelist-program",
 ]
 
@@ -2380,14 +2380,13 @@ dependencies = [
  "spl-account-compression",
  "spl-noop",
  "spl-token-metadata-interface",
- "tensor-vipers",
+ "tensor-vipers 1.0.0",
 ]
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d196245d5c203b4051b94475e56808c0e03c83f2fe4aa6e167f488ea385fe18"
+version = "0.3.0"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox?branch=feat/fee-args#c506f815f0af6332bdba59d313efcdf1266f95d7"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2399,7 +2398,7 @@ dependencies = [
  "spl-account-compression",
  "spl-noop",
  "spl-token-metadata-interface",
- "tensor-vipers",
+ "tensor-vipers 1.0.1",
 ]
 
 [[package]]
@@ -2407,6 +2406,16 @@ name = "tensor-vipers"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "num-traits",
+]
+
+[[package]]
+name = "tensor-vipers"
+version = "1.0.1"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox?branch=feat/fee-args#c506f815f0af6332bdba59d313efcdf1266f95d7"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2634,13 +2643,13 @@ dependencies = [
 [[package]]
 name = "whitelist-program"
 version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git#090cfed5213d4de23b5c78f2a8df573f3d422f1a"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=71e0013#71e0013f26ff18b39c3aeeb5bfc2533af7ef32cf"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "mpl-token-metadata",
  "tensor-toolbox 0.1.0",
- "tensor-vipers",
+ "tensor-vipers 1.0.0",
 ]
 
 [[package]]

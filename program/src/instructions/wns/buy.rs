@@ -8,7 +8,7 @@ use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
-    transfer_lamports, transfer_lamports_checked, CalcFeesArgs, BROKER_FEE_PCT,
+    transfer_lamports, transfer_lamports_checked, CalcFeesArgs, Fees, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
 
@@ -38,6 +38,7 @@ pub struct BuyWns<'info> {
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = buyer,
+        associated_token::token_program = token_program,
     )]
     pub buyer_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -172,7 +173,12 @@ pub fn process_buy_wns<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
         total_fee_bps: TCOMP_FEE_BPS,
@@ -208,6 +214,7 @@ pub fn process_buy_wns<'info, 'b>(
     let approve_params = ApproveParams {
         price: amount,
         royalty_fee: creator_fee,
+        signer_seeds: &[],
     };
 
     // royalty payment

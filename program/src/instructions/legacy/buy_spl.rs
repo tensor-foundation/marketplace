@@ -11,7 +11,7 @@ use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
-    transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, BROKER_FEE_PCT,
+    transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
 
@@ -292,7 +292,12 @@ pub fn process_buy_legacy_spl<'info, 'b>(
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
         total_fee_bps: TCOMP_FEE_BPS,

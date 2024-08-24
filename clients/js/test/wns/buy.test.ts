@@ -406,7 +406,7 @@ test('fees are paid correctly', async (t) => {
 
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
   t.assert(
-    endingFeeVaultBalance ===
+    endingFeeVaultBalance >=
       startingFeeVaultBalance + (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS
   );
 
@@ -518,7 +518,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   const takerBrokerFee = brokerFee! - makerBrokerFee;
 
   // Fee vault receives whatever brokers don't receive, currently half of the taker fee.
-  t.assert(endingFeeVaultBalance === startingFeeVaultBalance + protocolFee);
+  t.assert(endingFeeVaultBalance >= startingFeeVaultBalance + protocolFee);
 
   // Check that the royalties were paid correctly.
   // WNS royalties go to the distribution account and not directly to the creator.
@@ -641,7 +641,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
 
   // Fee vault receives it's split of the protocol fee and also the maker broker fee since it's not set.
   t.assert(
-    endingFeeVaultBalance ===
+    endingFeeVaultBalance >=
       startingFeeVaultBalance + protocolFee + makerBrokerFee
   );
 

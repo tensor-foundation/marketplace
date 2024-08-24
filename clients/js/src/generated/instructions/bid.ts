@@ -295,8 +295,8 @@ export async function getBidInstructionAsync<
   }
   if (!accounts.bidState.value) {
     accounts.bidState.value = await findBidStatePda({
-      bidId: expectSome(args.bidId),
       owner: expectAddress(accounts.owner.value),
+      bidId: expectSome(args.bidId),
     });
   }
   if (!accounts.sharedEscrow.value) {

@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -160,6 +161,7 @@ export type DelistT22AsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  transferHookAccounts: Array<Address>;
 };
 
 export async function getDelistT22InstructionAsync<
@@ -232,8 +234,11 @@ export async function getDelistT22InstructionAsync<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolver scope.
-  const resolverScope = { programAddress, accounts };
+  const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
@@ -278,6 +283,11 @@ export async function getDelistT22InstructionAsync<
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -292,6 +302,7 @@ export async function getDelistT22InstructionAsync<
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getDelistT22InstructionDataEncoder().encode({}),
@@ -337,6 +348,7 @@ export type DelistT22Input<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
+  transferHookAccounts: Array<Address>;
 };
 
 export function getDelistT22Instruction<
@@ -407,6 +419,9 @@ export function getDelistT22Instruction<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -433,6 +448,11 @@ export function getDelistT22Instruction<
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -447,6 +467,7 @@ export function getDelistT22Instruction<
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.systemProgram),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getDelistT22InstructionDataEncoder().encode({}),

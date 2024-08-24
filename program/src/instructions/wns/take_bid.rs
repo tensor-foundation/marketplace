@@ -75,6 +75,7 @@ pub struct TakeBidWns<'info> {
         payer = seller,
         associated_token::mint = mint,
         associated_token::authority = owner,
+        associated_token::token_program = token_program,
     )]
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -248,6 +249,7 @@ pub fn process_take_bid_wns<'info>(
         ApproveParams {
             price: min_amount,
             royalty_fee: creators_fee,
+            signer_seeds: &[],
         },
     )?;
 

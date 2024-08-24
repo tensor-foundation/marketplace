@@ -120,7 +120,9 @@ module.exports = function visitor(options) {
         },
         closeExpiredListingCore: {
           accounts: {
-            listState: { defaultValue: k.pdaValueNode("assetListState") },
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
           },
         },
         delistCore: {
@@ -128,7 +130,9 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            listState: { defaultValue: k.pdaValueNode("assetListState") },
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
           },
         },
         listCore: {
@@ -136,7 +140,9 @@ module.exports = function visitor(options) {
             payer: {
               defaultValue: k.accountValueNode("owner"),
             },
-            listState: { defaultValue: k.pdaValueNode("assetListState") },
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
           },
         },
         takeBidCore: {
@@ -166,6 +172,15 @@ module.exports = function visitor(options) {
               ),
             },
           },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: false,
+              },
+            ),
+          ],
         },
       }),
     );

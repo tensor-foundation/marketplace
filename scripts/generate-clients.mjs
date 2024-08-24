@@ -188,7 +188,7 @@ kinobi.update(
     },
     assetListState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "asset_list_state"),
+        k.constantPdaSeedNodeFromString("utf8", "list_state"),
         k.variablePdaSeedNode("asset", k.publicKeyTypeNode()),
       ],
     },
@@ -282,9 +282,7 @@ kinobi.update(
           defaultValue: k.accountValueNode("owner"),
         },
         bidState: {
-          defaultValue: k.pdaValueNode("bidState", [
-            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
-          ]),
+          defaultValue: k.pdaValueNode("bidState"),
         },
       },
       arguments: {
@@ -314,6 +312,7 @@ kinobi.update(
           defaultValue: k.publicKeyValueNode(
             "11111111111111111111111111111111",
           ),
+          isRequired: true,
         },
       },
     },

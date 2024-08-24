@@ -59,7 +59,7 @@ spl-token-metadata-interface = "0.2.0"
 spl-type-length-value = "0.3.0"
 static_assertions = "1.1.0"
 tensor-escrow = { version = "0.1.1" }
-tensor-toolbox = { version = "0.2.0", features = [
+tensor-toolbox = { git = "ssh://git@github.com/tensor-foundation/toolbox", branch = "feat/fee-args", default-features = false, features = [
     "cnft",
     "mpl-core",
     "token-2022",
@@ -68,6 +68,6 @@ tensor-vipers = { version = "1.0.0" }
 tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", features = [
     "cpi",
 ] }
-whitelist-program = { version = "0.1.0", package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
+whitelist-program = { rev = "71e0013", package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
     "cpi",
 ] }

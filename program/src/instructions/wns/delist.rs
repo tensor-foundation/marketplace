@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, TransferChecked},
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_2022::{Token2022, TransferChecked},
+    token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
-use tensor_toolbox::token_2022::wns::{approve, ApproveAccounts, ApproveParams};
+use tensor_toolbox::token_2022::{
+    transfer::transfer_checked as tensor_transfer_checked,
+    wns::{approve, ApproveAccounts, ApproveParams},
+};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, MakeEvent, Target, TcompError,
@@ -40,6 +43,7 @@ pub struct DelistWns<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -57,7 +61,7 @@ pub struct DelistWns<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
@@ -102,7 +106,10 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
     };
 
     // no need for royalty enforcement here
-    approve(approve_accounts, ApproveParams::no_royalties())?;
+    approve(
+        approve_accounts,
+        ApproveParams::no_royalties_with_signer_seeds(&[&ctx.accounts.list_state.seeds()]),
+    )?;
 
     // transfer the NFT
     let transfer_cpi = CpiContext::new(
@@ -115,7 +122,7 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
         },
     );
 
-    transfer_checked(
+    tensor_transfer_checked(
         transfer_cpi
             .with_remaining_accounts(vec![
                 ctx.accounts.wns_program.to_account_info(),
@@ -130,6 +137,7 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
     // records the delisting
 
     let list_state = &ctx.accounts.list_state;
+    msg!("list_state: {:?}", ctx.accounts.list_state.key());
 
     record_event(
         &TcompEvent::Maker(MakeEvent {

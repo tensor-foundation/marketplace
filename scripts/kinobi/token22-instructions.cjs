@@ -274,6 +274,16 @@ module.exports = function visitor(options) {
               ),
             },
           },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
         },
         listT22: {
           accounts: {
