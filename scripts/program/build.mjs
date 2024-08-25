@@ -2,11 +2,13 @@
 import "zx/globals";
 import { workingDirectory, getProgramFolders } from "../utils.mjs";
 
-// Save external programs binaries to the output directory.
-import "./dump.mjs";
+const fetchFromArtifacts = argv._.filter(a => a !== path.basename(__filename))[0] === "artifacts";
 
-// Fetch, save and potentially override external binaries.
-await import("../fetch-external-binaries.mjs"); 
+// Save external programs binaries to the output directory.
+import "./dump_mainnet.mjs";
+
+if(fetchFromArtifacts) await import("../fetch-external-binaries.mjs"); 
+else await import("./dump_devnet.mjs");
 
 // Build the programs.
 for (const folder of getProgramFolders()) {
