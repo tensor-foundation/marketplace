@@ -117,8 +117,12 @@ module.exports = function visitor(options) {
         },
         listCompressed: {
           accounts: {
+            owner: {
+              isSigner: "either",
+            },
             delegate: {
               defaultValue: k.accountValueNode("owner"),
+              isSigner: "either",
             },
             rentPayer: {
               defaultValue: k.resolverValueNode(
@@ -140,8 +144,12 @@ module.exports = function visitor(options) {
         },
         takeBidCompressedFullMeta: {
           accounts: {
+            seller: {
+              isSigner: "either",
+            },
             delegate: {
               defaultValue: k.accountValueNode("seller"),
+              isSigner: "either",
             },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
@@ -169,8 +177,12 @@ module.exports = function visitor(options) {
         },
         takeBidCompressedMetaHash: {
           accounts: {
+            seller: {
+              isSigner: "either",
+            },
             delegate: {
               defaultValue: k.accountValueNode("seller"),
+              isSigner: "either",
             },
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
