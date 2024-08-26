@@ -59,7 +59,7 @@ spl-token-metadata-interface = "0.2.0"
 spl-type-length-value = "0.3.0"
 static_assertions = "1.1.0"
 tensor-escrow = { version = "0.1.1" }
-tensor-toolbox = { git = "ssh://git@github.com/tensor-foundation/toolbox", branch = "feat/fee-args", default-features = false, features = [
+tensor-toolbox = { version = "0.3.0", default-features = false, features = [
     "cnft",
     "mpl-core",
     "token-2022",
