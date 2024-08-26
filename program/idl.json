@@ -370,19 +370,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -557,19 +551,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -664,28 +652,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
@@ -767,28 +746,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -887,28 +857,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
@@ -1027,19 +988,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -1182,10 +1137,7 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -2244,17 +2196,13 @@
           "name": "mint",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "T22 asset mint."
-          ]
+          "docs": ["T22 asset mint."]
         },
         {
           "name": "currency",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         },
         {
           "name": "owner",
@@ -2825,17 +2773,13 @@
           "name": "mint",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "WNS asset mint."
-          ]
+          "docs": ["WNS asset mint."]
         },
         {
           "name": "currency",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         },
         {
           "name": "owner",
@@ -3216,9 +3160,7 @@
           "isMut": false,
           "isSigner": false,
           "isOptional": true,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         }
       ],
       "args": [
@@ -3560,9 +3502,7 @@
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Token Program used for the currency."
-          ]
+          "docs": ["Token Program used for the currency."]
         },
         {
           "name": "associatedTokenProgram",
@@ -3891,10 +3831,7 @@
           {
             "name": "bump",
             "type": {
-              "array": [
-                "u8",
-                1
-              ]
+              "array": ["u8", 1]
             }
           },
           {
@@ -3933,18 +3870,14 @@
           },
           {
             "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is `None`"
-            ],
+            "docs": ["owner is the rent payer when this is `None`"],
             "type": {
               "defined": "NullableOption<Pubkey>"
             }
           },
           {
             "name": "cosigner",
-            "docs": [
-              "cosigner"
-            ],
+            "docs": ["cosigner"],
             "type": {
               "defined": "NullableOption<Pubkey>"
             }
@@ -3952,10 +3885,7 @@
           {
             "name": "reserved1",
             "type": {
-              "array": [
-                "u8",
-                64
-              ]
+              "array": ["u8", 64]
             }
           }
         ]
@@ -3980,10 +3910,7 @@
           {
             "name": "bump",
             "type": {
-              "array": [
-                "u8",
-                1
-              ]
+              "array": ["u8", 1]
             }
           },
           {
@@ -4073,9 +4000,7 @@
           },
           {
             "name": "rentPayer",
-            "docs": [
-              "owner is the rent payer when this is `None`"
-            ],
+            "docs": ["owner is the rent payer when this is `None`"],
             "type": {
               "defined": "NullableOption<Pubkey>"
             }
@@ -4083,28 +4008,19 @@
           {
             "name": "reserved",
             "type": {
-              "array": [
-                "u8",
-                8
-              ]
+              "array": ["u8", 8]
             }
           },
           {
             "name": "reserved1",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "array": ["u8", 16]
             }
           },
           {
             "name": "reserved2",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         ]
@@ -4164,23 +4080,17 @@
         "fields": [
           {
             "name": "name",
-            "docs": [
-              "The name of the asset"
-            ],
+            "docs": ["The name of the asset"],
             "type": "string"
           },
           {
             "name": "symbol",
-            "docs": [
-              "The symbol for the asset"
-            ],
+            "docs": ["The symbol for the asset"],
             "type": "string"
           },
           {
             "name": "uri",
-            "docs": [
-              "URI pointing to JSON representing the asset"
-            ],
+            "docs": ["URI pointing to JSON representing the asset"],
             "type": "string"
           },
           {
@@ -4200,9 +4110,7 @@
           },
           {
             "name": "editionNonce",
-            "docs": [
-              "nonce for easy calculation of editions, if present"
-            ],
+            "docs": ["nonce for easy calculation of editions, if present"],
             "type": {
               "option": "u8"
             }
@@ -4220,9 +4128,7 @@
           },
           {
             "name": "collection",
-            "docs": [
-              "Collection"
-            ],
+            "docs": ["Collection"],
             "type": {
               "option": {
                 "defined": "TCollection"
@@ -4231,9 +4137,7 @@
           },
           {
             "name": "uses",
-            "docs": [
-              "Uses"
-            ],
+            "docs": ["Uses"],
             "type": {
               "option": {
                 "defined": "TUses"
@@ -4450,9 +4354,7 @@
         "fields": [
           {
             "name": "seeds",
-            "docs": [
-              "The vector of derivation seeds."
-            ],
+            "docs": ["The vector of derivation seeds."],
             "type": {
               "vec": "bytes"
             }
@@ -4467,15 +4369,10 @@
         "fields": [
           {
             "name": "proof",
-            "docs": [
-              "The merkle proof."
-            ],
+            "docs": ["The merkle proof."],
             "type": {
               "vec": {
-                "array": [
-                  "u8",
-                  32
-                ]
+                "array": ["u8", 32]
               }
             }
           }
@@ -4564,9 +4461,7 @@
         "variants": [
           {
             "name": "Pubkey",
-            "fields": [
-              "publicKey"
-            ]
+            "fields": ["publicKey"]
           },
           {
             "name": "Seeds",
@@ -4586,9 +4481,7 @@
           },
           {
             "name": "Number",
-            "fields": [
-              "u64"
-            ]
+            "fields": ["u64"]
           }
         ]
       }
