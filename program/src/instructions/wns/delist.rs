@@ -137,7 +137,6 @@ pub fn process_delist_wns<'info>(ctx: Context<'_, '_, '_, 'info, DelistWns<'info
     // records the delisting
 
     let list_state = &ctx.accounts.list_state;
-    msg!("list_state: {:?}", ctx.accounts.list_state.key());
 
     record_event(
         &TcompEvent::Maker(MakeEvent {
