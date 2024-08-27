@@ -1,3 +1,5 @@
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { findAssociatedTokenPda } from '@solana-program/token';
 import {
   appendTransactionMessageInstruction,
   assertAccountDecoded,
@@ -8,6 +10,11 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  createDefaultNft,
+  Creator,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
+import {
   createAndMintTo,
   createAta,
   createDefaultSolanaClient,
@@ -16,14 +23,7 @@ import {
   signAndSendTransaction,
   TOKEN_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
-import {
-  createDefaultNft,
-  Creator,
-  findAtaPda,
-} from '@tensor-foundation/mpl-token-metadata';
 import test from 'ava';
-import { findAssociatedTokenPda } from '@solana-program/token';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   findFeeVaultPda,
   findListStatePda,
@@ -32,6 +32,7 @@ import {
 } from '../../src';
 
 test('it can buy an NFT paying using a SPL token', async (t) => {
+  t.timeout(10_000);
   const client = createDefaultSolanaClient();
 
   // General test payer.

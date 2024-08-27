@@ -35,8 +35,10 @@ import {
   type WritableSignerAccount,
 } from '@solana/web3.js';
 import { resolveFeeVaultPdaFromListState } from '../../hooked';
+import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
+  expectAddress,
   expectSome,
   expectTransactionSigner,
   getAccountMetaFactory,
@@ -218,7 +220,7 @@ export type BuyCoreSplAsyncInput<
   feeVault?: Address<TAccountFeeVault>;
   feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
-  listState: Address<TAccountListState>;
+  listState?: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
   currency: Address<TAccountCurrency>;
@@ -367,6 +369,11 @@ export async function getBuyCoreSplInstructionAsync<
   const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
+  if (!accounts.listState.value) {
+    accounts.listState.value = await findAssetListStatePda({
+      asset: expectAddress(accounts.asset.value),
+    });
+  }
   if (!accounts.feeVault.value) {
     accounts.feeVault = {
       ...accounts.feeVault,

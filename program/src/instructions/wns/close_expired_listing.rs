@@ -20,6 +20,7 @@ pub struct CloseExpiredListingWns<'info> {
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = owner,
+        associated_token::token_program = token_program,
     )]
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 

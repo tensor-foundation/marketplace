@@ -24,21 +24,21 @@ impl AssetListState {
     ///
     ///   0. `AssetListState::PREFIX`
     ///   1. asset (`Pubkey`)
-    pub const PREFIX: &'static [u8] = "asset_list_state".as_bytes();
+    pub const PREFIX: &'static [u8] = "list_state".as_bytes();
 
     pub fn create_pda(
         asset: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
-            &["asset_list_state".as_bytes(), asset.as_ref(), &[bump]],
+            &["list_state".as_bytes(), asset.as_ref(), &[bump]],
             &crate::TENSOR_MARKETPLACE_ID,
         )
     }
 
     pub fn find_pda(asset: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["asset_list_state".as_bytes(), asset.as_ref()],
+            &["list_state".as_bytes(), asset.as_ref()],
             &crate::TENSOR_MARKETPLACE_ID,
         )
     }

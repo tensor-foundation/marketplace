@@ -4,7 +4,7 @@ use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_asset, MetaplexCore},
-    transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, FromAcc,
+    transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc,
     FromExternal, BROKER_FEE_PCT,
 };
 
@@ -176,7 +176,12 @@ pub fn process_buy_core<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
         total_fee_bps: TCOMP_FEE_BPS,

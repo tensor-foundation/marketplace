@@ -1,6 +1,6 @@
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
-    transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, FromAcc,
+    transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, Fees, FromAcc,
     FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
 };
 
@@ -197,7 +197,12 @@ pub fn process_buy<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
         total_fee_bps: TCOMP_FEE_BPS,

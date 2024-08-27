@@ -10,7 +10,7 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
     },
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
-    CreatorFeeMode, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
+    CreatorFeeMode, Fees, FromAcc, FromExternal, TCreator, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
 
@@ -157,7 +157,12 @@ pub fn process_buy_t22<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
         total_fee_bps: TCOMP_FEE_BPS,

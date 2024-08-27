@@ -14,7 +14,7 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked,
         wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     },
-    CalcFeesArgs, BROKER_FEE_PCT,
+    CalcFeesArgs, Fees, BROKER_FEE_PCT,
 };
 use tensor_vipers::Validate;
 
@@ -329,7 +329,12 @@ pub fn process_buy_wns_spl<'info, 'b>(
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
-    let (tcomp_fee, maker_broker_fee, taker_broker_fee) = calc_fees(CalcFeesArgs {
+    let Fees {
+        protocol_fee: tcomp_fee,
+        maker_broker_fee,
+        taker_broker_fee,
+        ..
+    } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
         total_fee_bps: TCOMP_FEE_BPS,
@@ -367,6 +372,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
     let approve_params = ApproveParams {
         price: amount,
         royalty_fee: creator_fee,
+        signer_seeds: &[],
     };
     approve(approve_accounts, approve_params)?;
 

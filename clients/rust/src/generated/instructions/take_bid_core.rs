@@ -200,7 +200,7 @@ pub struct TakeBidCoreInstructionArgs {
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
 ///   6. `[writable]` margin
-///   7. `[]` whitelist
+///   7. `[optional]` whitelist (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` asset
 ///   9. `[optional]` collection
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
@@ -208,7 +208,7 @@ pub struct TakeBidCoreInstructionArgs {
 ///   12. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   13. `[optional]` escrow_program (default to `TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN`)
 ///   14. `[signer, optional]` cosigner
-///   15. `[]` mint_proof
+///   15. `[optional]` mint_proof (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   16. `[writable]` rent_destination
 #[derive(Clone, Debug, Default)]
 pub struct TakeBidCoreBuilder {
@@ -280,6 +280,7 @@ impl TakeBidCoreBuilder {
         self.margin = Some(margin);
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     #[inline(always)]
     pub fn whitelist(&mut self, whitelist: solana_program::pubkey::Pubkey) -> &mut Self {
         self.whitelist = Some(whitelist);
@@ -332,6 +333,7 @@ impl TakeBidCoreBuilder {
         self.cosigner = cosigner;
         self
     }
+    /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
     /// intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification
     #[inline(always)]
     pub fn mint_proof(&mut self, mint_proof: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -379,7 +381,9 @@ impl TakeBidCoreBuilder {
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
             margin: self.margin.expect("margin is not set"),
-            whitelist: self.whitelist.expect("whitelist is not set"),
+            whitelist: self.whitelist.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             asset: self.asset.expect("asset is not set"),
             collection: self.collection,
             mpl_core_program: self.mpl_core_program.unwrap_or(solana_program::pubkey!(
@@ -395,7 +399,9 @@ impl TakeBidCoreBuilder {
                 "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN"
             )),
             cosigner: self.cosigner,
-            mint_proof: self.mint_proof.expect("mint_proof is not set"),
+            mint_proof: self.mint_proof.unwrap_or(solana_program::pubkey!(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
+            )),
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
         };
         let args = TakeBidCoreInstructionArgs {

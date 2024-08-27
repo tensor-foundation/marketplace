@@ -28,7 +28,7 @@ export async function findAssetListStatePda(
   return await getProgramDerivedAddress({
     programAddress,
     seeds: [
-      getUtf8Encoder().encode('asset_list_state'),
+      getUtf8Encoder().encode('list_state'),
       getAddressEncoder().encode(seeds.asset),
     ],
   });

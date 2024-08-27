@@ -165,7 +165,7 @@ pub fn process_list_legacy<'info>(
     list_state.expiry = expiry;
     list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
     list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
-    // seriallizes the account data
+    // Manually serialize the account data so that we can use it in the event noop CPI.
     list_state.exit(ctx.program_id)?;
 
     record_event(

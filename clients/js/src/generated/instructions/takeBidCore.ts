@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -33,8 +34,13 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveFeeVaultPdaFromBidState } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectSome,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export type TakeBidCoreInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
@@ -45,7 +51,9 @@ export type TakeBidCoreInstruction<
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountMargin extends string | IAccountMeta<string> = string,
-  TAccountWhitelist extends string | IAccountMeta<string> = string,
+  TAccountWhitelist extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountAsset extends string | IAccountMeta<string> = string,
   TAccountCollection extends string | IAccountMeta<string> = string,
   TAccountMplCoreProgram extends
@@ -61,7 +69,9 @@ export type TakeBidCoreInstruction<
     | string
     | IAccountMeta<string> = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
   TAccountCosigner extends string | IAccountMeta<string> = string,
-  TAccountMintProof extends string | IAccountMeta<string> = string,
+  TAccountMintProof extends
+    | string
+    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -162,6 +172,238 @@ export function getTakeBidCoreInstructionDataCodec(): Codec<
   );
 }
 
+export type TakeBidCoreAsyncInput<
+  TAccountFeeVault extends string = string,
+  TAccountSeller extends string = string,
+  TAccountBidState extends string = string,
+  TAccountOwner extends string = string,
+  TAccountTakerBroker extends string = string,
+  TAccountMakerBroker extends string = string,
+  TAccountMargin extends string = string,
+  TAccountWhitelist extends string = string,
+  TAccountAsset extends string = string,
+  TAccountCollection extends string = string,
+  TAccountMplCoreProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountMarketplaceProgram extends string = string,
+  TAccountEscrowProgram extends string = string,
+  TAccountCosigner extends string = string,
+  TAccountMintProof extends string = string,
+  TAccountRentDestination extends string = string,
+> = {
+  feeVault?: Address<TAccountFeeVault>;
+  seller: TransactionSigner<TAccountSeller>;
+  bidState: Address<TAccountBidState>;
+  owner: Address<TAccountOwner>;
+  takerBroker?: Address<TAccountTakerBroker>;
+  makerBroker?: Address<TAccountMakerBroker>;
+  margin?: Address<TAccountMargin>;
+  whitelist?: Address<TAccountWhitelist>;
+  asset: Address<TAccountAsset>;
+  collection?: Address<TAccountCollection>;
+  mplCoreProgram?: Address<TAccountMplCoreProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  escrowProgram?: Address<TAccountEscrowProgram>;
+  cosigner?: TransactionSigner<TAccountCosigner>;
+  /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
+  mintProof?: Address<TAccountMintProof>;
+  rentDestination?: Address<TAccountRentDestination>;
+  minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
+  creators: Array<Address>;
+};
+
+export async function getTakeBidCoreInstructionAsync<
+  TAccountFeeVault extends string,
+  TAccountSeller extends string,
+  TAccountBidState extends string,
+  TAccountOwner extends string,
+  TAccountTakerBroker extends string,
+  TAccountMakerBroker extends string,
+  TAccountMargin extends string,
+  TAccountWhitelist extends string,
+  TAccountAsset extends string,
+  TAccountCollection extends string,
+  TAccountMplCoreProgram extends string,
+  TAccountSystemProgram extends string,
+  TAccountMarketplaceProgram extends string,
+  TAccountEscrowProgram extends string,
+  TAccountCosigner extends string,
+  TAccountMintProof extends string,
+  TAccountRentDestination extends string,
+>(
+  input: TakeBidCoreAsyncInput<
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
+): Promise<
+  TakeBidCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >
+> {
+  // Program address.
+  const programAddress = TENSOR_MARKETPLACE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    seller: { value: input.seller ?? null, isWritable: true },
+    bidState: { value: input.bidState ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    takerBroker: { value: input.takerBroker ?? null, isWritable: true },
+    makerBroker: { value: input.makerBroker ?? null, isWritable: true },
+    margin: { value: input.margin ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: false },
+    asset: { value: input.asset ?? null, isWritable: true },
+    collection: { value: input.collection ?? null, isWritable: false },
+    mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    marketplaceProgram: {
+      value: input.marketplaceProgram ?? null,
+      isWritable: false,
+    },
+    escrowProgram: { value: input.escrowProgram ?? null, isWritable: false },
+    cosigner: { value: input.cosigner ?? null, isWritable: false },
+    mintProof: { value: input.mintProof ?? null, isWritable: false },
+    rentDestination: { value: input.rentDestination ?? null, isWritable: true },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
+  // Resolve default values.
+  if (!accounts.feeVault.value) {
+    accounts.feeVault = {
+      ...accounts.feeVault,
+      ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
+    };
+  }
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.mplCoreProgram.value) {
+    accounts.mplCoreProgram.value =
+      'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.marketplaceProgram.value) {
+    accounts.marketplaceProgram.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.escrowProgram.value) {
+    accounts.escrowProgram.value =
+      'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.mintProof.value) {
+    accounts.mintProof.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.creators.map((address) => ({
+    address,
+    role: AccountRole.WRITABLE,
+  }));
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.seller),
+      getAccountMeta(accounts.bidState),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.takerBroker),
+      getAccountMeta(accounts.makerBroker),
+      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.whitelist),
+      getAccountMeta(accounts.asset),
+      getAccountMeta(accounts.collection),
+      getAccountMeta(accounts.mplCoreProgram),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.marketplaceProgram),
+      getAccountMeta(accounts.escrowProgram),
+      getAccountMeta(accounts.cosigner),
+      getAccountMeta(accounts.mintProof),
+      getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
+    ],
+    programAddress,
+    data: getTakeBidCoreInstructionDataEncoder().encode(
+      args as TakeBidCoreInstructionDataArgs
+    ),
+  } as TakeBidCoreInstruction<
+    typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
+    TAccountFeeVault,
+    TAccountSeller,
+    TAccountBidState,
+    TAccountOwner,
+    TAccountTakerBroker,
+    TAccountMakerBroker,
+    TAccountMargin,
+    TAccountWhitelist,
+    TAccountAsset,
+    TAccountCollection,
+    TAccountMplCoreProgram,
+    TAccountSystemProgram,
+    TAccountMarketplaceProgram,
+    TAccountEscrowProgram,
+    TAccountCosigner,
+    TAccountMintProof,
+    TAccountRentDestination
+  >;
+
+  return instruction;
+}
+
 export type TakeBidCoreInput<
   TAccountFeeVault extends string = string,
   TAccountSeller extends string = string,
@@ -187,8 +429,8 @@ export type TakeBidCoreInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin: Address<TAccountMargin>;
-  whitelist: Address<TAccountWhitelist>;
+  margin?: Address<TAccountMargin>;
+  whitelist?: Address<TAccountWhitelist>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
@@ -197,9 +439,10 @@ export type TakeBidCoreInput<
   escrowProgram?: Address<TAccountEscrowProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   /** intentionally not deserializing, it would be dummy in the case of VOC/FVC based verification */
-  mintProof: Address<TAccountMintProof>;
-  rentDestination: Address<TAccountRentDestination>;
+  mintProof?: Address<TAccountMintProof>;
+  rentDestination?: Address<TAccountRentDestination>;
   minAmount: TakeBidCoreInstructionDataArgs['minAmount'];
+  creators: Array<Address>;
 };
 
 export function getTakeBidCoreInstruction<
@@ -295,6 +538,13 @@ export function getTakeBidCoreInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.margin.value) {
+    accounts.margin.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.whitelist.value) {
+    accounts.whitelist.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
   if (!accounts.mplCoreProgram.value) {
     accounts.mplCoreProgram.value =
       'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d' as Address<'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d'>;
@@ -311,6 +561,19 @@ export function getTakeBidCoreInstruction<
     accounts.escrowProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
+  if (!accounts.mintProof.value) {
+    accounts.mintProof.value =
+      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
+  }
+  if (!accounts.rentDestination.value) {
+    accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.creators.map((address) => ({
+    address,
+    role: AccountRole.WRITABLE,
+  }));
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -332,6 +595,7 @@ export function getTakeBidCoreInstruction<
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.mintProof),
       getAccountMeta(accounts.rentDestination),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidCoreInstructionDataEncoder().encode(

@@ -17,15 +17,15 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
-                  dependsOn: [k.accountValueNode("listState")]
-                }
-              )
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
             },
             buyer: {
-              defaultValue: k.accountValueNode("payer")
+              defaultValue: k.accountValueNode("payer"),
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
@@ -33,9 +33,12 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
@@ -43,20 +46,20 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
-            }
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true
-              }
-            )
-          ]
+                isOptional: true,
+              },
+            ),
+          ],
         },
         buyCoreSpl: {
           accounts: {
@@ -64,15 +67,15 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
-                  dependsOn: [k.accountValueNode("listState")]
-                }
-              )
+                  dependsOn: [k.accountValueNode("listState")],
+                },
+              ),
             },
             buyer: {
-              defaultValue: k.accountValueNode("payer")
+              defaultValue: k.accountValueNode("payer"),
             },
             rentDestination: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
             buyerAta: {
               defaultValue: k.resolverValueNode("resolveBuyerAta", {
@@ -80,9 +83,12 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("buyer"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
             },
             listAta: {
               defaultValue: k.resolverValueNode("resolveListAta", {
@@ -90,50 +96,93 @@ module.exports = function visitor(options) {
                 dependsOn: [
                   k.accountValueNode("listState"),
                   k.accountValueNode("tokenProgram"),
-                  k.accountValueNode("asset")
-                ]
-              })
-            }
+                  k.accountValueNode("asset"),
+                ],
+              }),
+            },
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creators"),
               {
                 isWritable: true,
-                isOptional: true
-              }
+                isOptional: true,
+              },
             ),
             k.instructionRemainingAccountsNode(
               k.argumentValueNode("creatorsAtas"),
               {
                 isWritable: true,
-                isOptional: true
-              }
-            )
-          ]
+                isOptional: true,
+              },
+            ),
+          ],
         },
         closeExpiredListingCore: {
           accounts: {
-            listState: { defaultValue: k.pdaValueNode("assetListState") }
-          }
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
+          },
         },
         delistCore: {
           accounts: {
             rentDestination: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
-            listState: { defaultValue: k.pdaValueNode("assetListState") }
-          }
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
+          },
         },
         listCore: {
           accounts: {
             payer: {
-              defaultValue: k.accountValueNode("owner")
+              defaultValue: k.accountValueNode("owner"),
             },
-            listState: { defaultValue: k.pdaValueNode("assetListState") }
-          }
-        }
-      })
+            listState: {
+              defaultValue: k.pdaValueNode("assetListState"),
+            },
+          },
+        },
+        takeBidCore: {
+          accounts: {
+            feeVault: {
+              defaultValue: k.resolverValueNode(
+                "resolveFeeVaultPdaFromBidState",
+                {
+                  dependsOn: [k.accountValueNode("bidState")],
+                },
+              ),
+            },
+            margin: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
+            whitelist: {
+              defaultValue: k.publicKeyValueNode(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+              ),
+            },
+            mintProof: {
+              defaultValue: k.publicKeyValueNode(
+                "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
+              ),
+            },
+          },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: false,
+              },
+            ),
+          ],
+        },
+      }),
     );
 
     return root;

@@ -1212,7 +1212,7 @@ checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "marketplace-program"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1226,7 +1226,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.2.0",
+ "tensor-toolbox 0.3.0",
  "tensor-vipers",
  "whitelist-program",
 ]
@@ -2385,9 +2385,9 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d196245d5c203b4051b94475e56808c0e03c83f2fe4aa6e167f488ea385fe18"
+checksum = "afac38c888eca208989efb9a77048101e117ab5023940ef7d359350acfb11d16"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

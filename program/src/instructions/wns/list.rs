@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{close_account, CloseAccount, TransferChecked},
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
+    token_interface::{Mint, TokenAccount},
 };
 use tensor_toolbox::{
     token_2022::{
@@ -42,6 +42,7 @@ pub struct ListWns<'info> {
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -51,7 +52,7 @@ pub struct ListWns<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token2022>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
