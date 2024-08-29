@@ -1,29 +1,6 @@
-#!/usr/bin/env zx
-import "zx/globals";
-import {
-  getExternalAccountAddresses,
-  getExternalProgramAddresses,
-  getExternalProgramOutputDir,
-} from "../utils.mjs";
-
-// Get input from environment variables.
-const rpc = process.env.RPC ?? "https://api.mainnet-beta.solana.com";
-const outputDir = getExternalProgramOutputDir();
-await dump();
-
 /** Dump external programs binaries if needed. */
-async function dump() {
-  // Ensure we have some external programs/accounts to dump.
-  const programs = getExternalProgramAddresses();
-  const accounts = getExternalAccountAddresses();
-  const addresses = [
-    ...programs.map((program) => `${program}.so`),
-    ...accounts.map((account) => `${account}.json`),
-  ].flat();
-
+export async function dump(rpc, outputDir, addresses) {
   if (addresses.length === 0) return;
-  echo(`Dumping external accounts to '${outputDir}':`);
-
   // Create the output directory if needed.
   $`mkdir -p ${outputDir}`.quiet();
 
@@ -34,7 +11,7 @@ async function dump() {
       const hasBinary = await fs.exists(`${outputDir}/${binary}`);
 
       if (!hasBinary) {
-        await copyFromChain(address, binary);
+        await copyFromChain(address, binary, rpc, outputDir);
         echo(`Wrote account data to ${outputDir}/${binary}`);
         return;
       }
@@ -54,7 +31,7 @@ async function dump() {
       }
 
       if (hasShaChecksum) {
-        await copyFromChain(address, `onchain-${binary}`);
+        await copyFromChain(address, `onchain-${binary}`, rpc, outputDir);
         const [onChainHash, localHash] = await Promise.all([
           $`${sha} ${options} -b ${outputDir}/onchain-${binary} | cut -d ' ' -f 1`.quiet(),
           $`${sha} ${options} -b ${outputDir}/${binary} | cut -d ' ' -f 1`.quiet(),
@@ -84,7 +61,7 @@ async function dump() {
 }
 
 /** Helper function to copy external programs or accounts binaries from the chain. */
-async function copyFromChain(address, binary) {
+async function copyFromChain(address, binary, rpc, outputDir) {
   switch (binary.split(".").pop()) {
     case "json":
       return $`solana account -u ${rpc} ${address} -o ${outputDir}/${binary} --output json >/dev/null`.quiet();
