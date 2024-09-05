@@ -11,12 +11,15 @@ importers:
       '@noble/hashes':
         specifier: ^1.4.0
         version: 1.4.0
+      '@solana-program/system':
+        specifier: ^0.5.0
+        version: 0.5.0(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))
       '@solana/web3.js':
         specifier: 2.0.0-preview.3
         version: 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       '@tensor-foundation/resolvers':
-        specifier: ^0.1.1
-        version: 0.1.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))
+        specifier: ^0.2.1
+        version: 0.2.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))
       '@types/node':
         specifier: ^22.0.0
         version: 22.2.0
@@ -445,6 +448,11 @@ packages:
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
 
+  '@solana-program/system@0.5.0':
+    resolution: {integrity: sha512-vZ5WfkZTSR3ZvikvG4dIN1B1Hjje+a2oy5E4i6T4z4C7WwPEwBti0bRz0hno4pmlqqG+VxAydhvFsXpRX7N0dQ==}
+    peerDependencies:
+      '@solana/web3.js': 2.0.0-rc.0
+
   '@solana-program/token@0.1.4':
     resolution: {integrity: sha512-3+9oVY+jie5cXZQM7s6jLui9vtwXO1F7EOdT7sHg/Xh9NT5J+9xWZUdPbOC5sNU+4V3W6RpVm20gqjX7WKbkLg==}
     peerDependencies:
@@ -680,8 +688,8 @@ packages:
   '@tensor-foundation/mpl-token-metadata@0.1.2':
     resolution: {integrity: sha512-vA82svhj2e/Fm8qJ0+VUqg4hOnUxcCryW5G8ADpmKVdTMNug+HVS9Y2Tc63oogxHxXCDH1QXSqdguas9gwOvHA==}
 
-  '@tensor-foundation/resolvers@0.1.1':
-    resolution: {integrity: sha512-gU2f3KZmIgOkKPvuA5uHy+AiHvhVg3asiZZkiAJwyItM8037OGOVDG3VFMgHcrFudnFHDFQVB36z7Oby44geqA==}
+  '@tensor-foundation/resolvers@0.2.1':
+    resolution: {integrity: sha512-ThxP87Y3fH1hHdCkXctJHBBnq4C8FRVKcbh94jqogwEOWhj9NuzSu1QMnszO0yQ4ZRowPxpsU6ADoRf3HAZOtw==}
     peerDependencies:
       '@solana/web3.js': 2.0.0-preview.3
 
@@ -2592,6 +2600,10 @@ snapshots:
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10))
 
+  '@solana-program/system@0.5.0(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))':
+    dependencies:
+      '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+
   '@solana-program/token@0.1.4(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))':
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -3094,7 +3106,7 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@tensor-foundation/resolvers@0.1.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))':
+  '@tensor-foundation/resolvers@0.2.1(@solana/web3.js@2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)))':
     dependencies:
       '@solana/web3.js': 2.0.0-preview.3(fastestsmallesttextencoderdecoder@1.0.22)(ws@7.5.10(bufferutil@4.0.8)(utf-8-validate@5.0.10))
 

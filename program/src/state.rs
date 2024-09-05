@@ -15,6 +15,9 @@ pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/
 #[constant]
 pub const MAKER_BROKER_PCT: u64 = 80; // Out of 100
 
+pub const BID_STATE_DISCRIMINATOR: [u8; 8] = [155, 197, 5, 97, 189, 60, 8, 183];
+pub const LIST_STATE_DISCRIMINATOR: [u8; 8] = [78, 242, 89, 138, 161, 221, 176, 75];
+
 //(!!) sync with sdk.ts:getRentPayer()
 #[inline(always)]
 fn get_rent_payer(rent_payer: NullableOption<Pubkey>, owner: Pubkey) -> Pubkey {

@@ -28,6 +28,13 @@ pub fn process_noop(ctx: Context<TcompNoop>) -> Result<()> {
         return Err(ErrorCode::AccountDiscriminatorNotFound.into());
     }
 
+    // the discriminator must match a Bid or List account
+    if data[0..DISCRIMINATOR_LEN] != BID_STATE_DISCRIMINATOR
+        && data[0..DISCRIMINATOR_LEN] != LIST_STATE_DISCRIMINATOR
+    {
+        return Err(ErrorCode::AccountDiscriminatorMismatch.into());
+    }
+
     Ok(())
 }
 

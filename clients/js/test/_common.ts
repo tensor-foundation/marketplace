@@ -51,6 +51,11 @@ export const COMPUTE_500K_IX = (() => {
 
 export const TCOMP_FEE = address('q4s8z5dRAt2fKC2tLthBPatakZRXPMx1LfacckSXd4f');
 
+export const ANCHOR_ERROR__CONSTRAINT_OWNER = 2004;
+export const ANCHOR_ERROR__CONSTRAINT_SEEDS = 2006;
+export const ANCHOR_ERROR__ACCOUNT_DISCRIMINATOR_NOT_FOUND = 3001;
+export const ANCHOR_ERROR__ACCOUNT_DISCRIMINATOR_MISMATCH = 3002;
+
 export const DEFAULT_PUBKEY: Address = address(
   '11111111111111111111111111111111'
 );
@@ -104,7 +109,7 @@ export interface SetupTestParams {
   t: ExecutionContext;
   action: TestAction;
   listingPrice?: bigint;
-  bidPrice?: bigint;
+  bidPrice?: number;
   bidQuantity?: number;
   useSharedEscrow?: boolean;
   useCosigner?: boolean;
