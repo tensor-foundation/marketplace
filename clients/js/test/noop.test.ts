@@ -45,7 +45,7 @@ test('only Bid and List state accounts can call noop', async (t) => {
     assetId: (await generateKeyPairSigner()).address,
   };
 
-  // Random keypair should fail--not a program account.
+  // Random keypair should fail--not a program-owned account.
   const randomKeypair = await generateKeyPairSignerWithSol(client);
 
   let tcompNoopIx = getTcompNoopInstruction({
@@ -59,16 +59,18 @@ test('only Bid and List state accounts can call noop', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  // Account owner constraint should fail.
   await expectCustomError(t, promise, ANCHOR_ERROR__CONSTRAINT_OWNER);
 
   // A program account that is not a Bid or List state account should fail.
-  // We create an IDL buffer account which is a non-PDA account which we can sign for.
+  // We create an IDL buffer account which is a non-PDA program-owned account which we can sign for.
   const buffer = await generateKeyPairSigner();
   const bufferAuthority = await generateKeyPairSignerWithSol(client);
 
-  // min needed for buffer account w/ no idl
+  // min size needed for buffer account w/ no idl
   const space = 44n;
 
+  // Create the account.
   const createAccountIx = getCreateAccountInstruction({
     payer: bufferAuthority,
     newAccount: buffer,
@@ -77,6 +79,7 @@ test('only Bid and List state accounts can call noop', async (t) => {
     programAddress,
   });
 
+  // Create the buffer program-owned account.
   const createBufferIx: IInstruction = {
     accounts: [
       {
@@ -107,6 +110,7 @@ test('only Bid and List state accounts can call noop', async (t) => {
     .value;
   t.assert(bufferAccount?.owner === programAddress);
 
+  // Create the noop instruction, using the buffer account as the signer.
   tcompNoopIx = getTcompNoopInstruction({
     tcompSigner: buffer,
     event: { __kind: 'Maker', fields: [eventArgs] },
@@ -124,6 +128,4 @@ test('only Bid and List state accounts can call noop', async (t) => {
     promise,
     ANCHOR_ERROR__ACCOUNT_DISCRIMINATOR_MISMATCH
   );
-
-  t.pass();
 });
