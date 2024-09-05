@@ -63,7 +63,7 @@ export interface LegacyTest {
   listing: Address | undefined;
   listingPrice: bigint | undefined;
   bid: Address | undefined;
-  bidAmount: number | undefined;
+  bidPrice: number | undefined;
   mint: Address;
 }
 
@@ -78,7 +78,7 @@ export async function setupLegacyTest(
     pNft,
     action,
     listingPrice = DEFAULT_LISTING_PRICE,
-    bidAmount = DEFAULT_BID_AMOUNT,
+    bidPrice = DEFAULT_BID_AMOUNT,
     useCosigner = false,
   } = params;
 
@@ -139,7 +139,7 @@ export async function setupLegacyTest(
       // Bid on the NFT.
       const bidIx = await getBidInstructionAsync({
         owner: buyer,
-        amount: bidAmount,
+        amount: bidPrice,
         target: Target.AssetId,
         targetId: mint,
         cosigner: useCosigner ? cosigner : undefined,
@@ -181,8 +181,8 @@ export async function setupLegacyTest(
     signers,
     mint,
     bid: bid ?? undefined,
+    bidPrice,
     listingPrice,
     listing: listing ?? undefined,
-    bidAmount,
   };
 }
