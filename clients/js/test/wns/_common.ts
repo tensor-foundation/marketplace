@@ -44,6 +44,8 @@ export interface WnsTest {
   nft: WnsNft;
   state: Address;
   price: bigint;
+  listingPrice?: bigint;
+  bidPrice?: bigint;
   feeVault: Address;
   splMint?: Address;
 }
@@ -183,7 +185,18 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   }
 
   const state = listing ? listing! : bid!;
-  const price = listingPrice ?? bidPrice;
+  let price;
+  // Set max/min price to cover fees
+  switch (action) {
+    case TestAction.List: {
+      price = (listingPrice! * 15n) / 10n;
+      break;
+    }
+    case TestAction.Bid: {
+      price = (bidPrice! * 75n) / 100n;
+      break;
+    }
+  }
 
   // Derives fee vault from state account and airdrops keep-alive rent to it.
   const feeVault = await getAndFundFeeVault(client, state!);
@@ -195,6 +208,8 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
     splMint,
     state,
     price,
+    listingPrice: listingPrice ?? undefined,
+    bidPrice: bidPrice ?? undefined,
     feeVault,
   };
 }

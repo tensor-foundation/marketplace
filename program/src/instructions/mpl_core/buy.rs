@@ -173,14 +173,11 @@ pub fn process_buy_core<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
-
     let Fees {
+        taker_fee,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -191,6 +188,11 @@ pub fn process_buy_core<'info, 'b>(
 
     // No optional royalties.
     let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+
+    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+
+    require!(total_price <= max_amount, TcompError::PriceMismatch);
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     // Transfer the asset to the buyer.
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)

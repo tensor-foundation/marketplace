@@ -22,6 +22,7 @@ import {
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
+import { DEFAULT_BID_PRICE } from '../_common.js';
 
 test('it can take a bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -37,7 +38,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: buyer,
-    amount: 10,
+    amount: DEFAULT_BID_PRICE,
     target: Target.AssetId,
     targetId: mint,
   });
@@ -54,7 +55,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
     owner: buyer.address,
     seller,
     mint,
-    minAmount: 5,
+    minAmount: (DEFAULT_BID_PRICE * 7n) / 10n,
     creators: [seller.address],
   });
 

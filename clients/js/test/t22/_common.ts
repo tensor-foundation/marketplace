@@ -44,6 +44,8 @@ export interface T22Test {
   nft: T22NftReturn & { sellerFeeBasisPoints: bigint };
   state: Address;
   price: bigint;
+  listingPrice?: bigint;
+  bidPrice?: bigint;
   feeVault: Address;
   splMint?: Address;
 }
@@ -188,7 +190,18 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
   }
 
   const state = listing ? listing! : bid!;
-  const price = listingPrice ?? bidPrice;
+  let price;
+  // Set max/min price to cover fees
+  switch (action) {
+    case TestAction.List: {
+      price = (listingPrice! * 15n) / 10n;
+      break;
+    }
+    case TestAction.Bid: {
+      price = (bidPrice! * 80n) / 100n;
+      break;
+    }
+  }
 
   // Derives fee vault from state account and airdrops keep-alive rent to it.
   const feeVault = await getAndFundFeeVault(client, state!);
@@ -199,31 +212,9 @@ export async function setupT22Test(params: SetupTestParams): Promise<T22Test> {
     nft: { ...nft, sellerFeeBasisPoints },
     state,
     price,
+    listingPrice: listingPrice ?? undefined,
+    bidPrice: bidPrice ?? undefined,
     feeVault,
     splMint,
   };
 }
-
-// // Asserts that the T22 listing token acccount is closed.
-// export async function assertT22ListingTokenClosed(
-//   t: ExecutionContext,
-//   test: T22Test
-// ) {
-//   const { client, listing, nft } = test;
-//   const { mint } = nft;
-
-//   t.false(
-//     (
-//       await fetchEncodedAccount(
-//         client.rpc,
-//         (
-//           await findAtaPda({
-//             mint,
-//             owner: listing!,
-//             tokenProgramId: TOKEN22_PROGRAM_ID,
-//           })
-//         )[0]
-//       )
-//     ).exists
-//   );
-// }

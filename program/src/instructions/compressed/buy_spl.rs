@@ -227,7 +227,7 @@ pub fn process_buy_spl<'info>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
-    require!(amount <= max_amount, TcompError::PriceMismatch);
+
     require!(
         list_state.currency == Some(ctx.accounts.currency.key()),
         TcompError::CurrencyMismatch
@@ -238,10 +238,10 @@ pub fn process_buy_spl<'info>(
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
+        taker_fee,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
@@ -296,6 +296,10 @@ pub fn process_buy_spl<'info>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+
+    require!(total_price <= max_amount, TcompError::PriceMismatch);
 
     // --------------------------------------- token transfers
 

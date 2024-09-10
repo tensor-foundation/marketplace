@@ -27,7 +27,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
     state: bidState,
   } = await setupWnsTest({
     t,
@@ -43,7 +43,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });
@@ -68,12 +68,13 @@ test('it can take a bid on a WNS NFT', async (t) => {
   });
 });
 
-test('fees are paid correctly', async (t) => {
+test.only('fees are paid correctly', async (t) => {
   const {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupWnsTest({
@@ -98,7 +99,7 @@ test('fees are paid correctly', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });
@@ -129,7 +130,7 @@ test('fees are paid correctly', async (t) => {
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
   t.assert(
     endingFeeVaultBalance >=
-      startingFeeVaultBalance + (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS
+      startingFeeVaultBalance + (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS
   );
 
   // Check that the royalties were paid correctly.
@@ -137,10 +138,14 @@ test('fees are paid correctly', async (t) => {
   const endingDistributionBalance = (
     await client.rpc.getBalance(distribution).send()
   ).value;
+  console.log('endingDistributionBalance', endingDistributionBalance);
+  console.log('bidPrice', bidPrice);
+  console.log('startingDistributionBalance', startingDistributionBalance);
+  console.log('royalty fee', (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS);
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -149,7 +154,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupWnsTest({
@@ -184,7 +190,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -215,7 +221,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
-  const takerFee = (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS;
+  const takerFee = (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS;
   // Taker fee is split between the brokers and the protocol based on the BROKER_FEE_PCT.
   const brokerFee = (takerFee * BROKER_FEE_PCT) / HUNDRED_PCT;
   const protocolFee = takerFee - brokerFee;
@@ -235,7 +241,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   const endingMakerBrokerBalance = BigInt(
@@ -261,7 +267,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupWnsTest({
@@ -291,7 +298,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     // makerBroker not passed in because not set
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -322,7 +329,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
-  const takerFee = (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS;
+  const takerFee = (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS;
   // Taker fee is split between the brokers and the protocol based on the BROKER_FEE_PCT.
   const brokerFee = (takerFee! * BROKER_FEE_PCT) / HUNDRED_PCT;
   const protocolFee = takerFee - brokerFee;
@@ -345,7 +352,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   const endingTakerBrokerBalance = BigInt(

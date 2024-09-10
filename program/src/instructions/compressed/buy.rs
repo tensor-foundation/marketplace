@@ -192,16 +192,15 @@ pub fn process_buy<'info>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
+
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
     let Fees {
+        taker_fee,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -256,6 +255,11 @@ pub fn process_buy<'info>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+
+    require!(total_price <= max_amount, TcompError::PriceMismatch);
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     // --------------------------------------- sol transfers
 

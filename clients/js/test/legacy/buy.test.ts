@@ -25,11 +25,16 @@ import {
 import { setupLegacyTest } from './_common.js';
 
 test('it can buy an NFT', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+  });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
 
   // When a buyer buys the NFT.
@@ -37,7 +42,7 @@ test('it can buy an NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
   });
 
@@ -65,12 +70,17 @@ test('it can buy an NFT', async (t) => {
 });
 
 test('it can buy a Programmable NFT', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-      pNft: true,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+    pNft: true,
+  });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
 
   // When a buyer buys the NFT.
@@ -78,7 +88,7 @@ test('it can buy a Programmable NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [nftUpdateAuthority.address],
   });
@@ -147,12 +157,17 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
 });
 
 test('it can buy an NFT with a cosigner', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-      useCosigner: true,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+    useCosigner: true,
+  });
   const { nftOwner, nftUpdateAuthority, cosigner } = signers;
 
   // When a buyer buys the NFT.
@@ -161,7 +176,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     cosigner,
     creators: [nftUpdateAuthority.address],
   });
@@ -190,7 +205,12 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
-  const { client, signers, mint, listingPrice } = await setupLegacyTest({
+  const {
+    client,
+    signers,
+    mint,
+    price: maxPrice,
+  } = await setupLegacyTest({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -203,7 +223,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     // Missing cosigner!
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [nftUpdateAuthority.address],

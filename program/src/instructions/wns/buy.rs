@@ -10,7 +10,7 @@ use tensor_toolbox::{
     token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, Fees, BROKER_FEE_PCT,
 };
-use tensor_vipers::Validate;
+use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
@@ -170,14 +170,11 @@ pub fn process_buy_wns<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
-
     let Fees {
+        taker_fee,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -194,6 +191,11 @@ pub fn process_buy_wns<'info, 'b>(
         Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
         None,
     )?;
+
+    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+
+    require!(total_price <= max_amount, TcompError::PriceMismatch);
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     let approve_accounts = ApproveAccounts {
         payer: ctx.accounts.payer.to_account_info(),

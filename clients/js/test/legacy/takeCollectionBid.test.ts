@@ -77,7 +77,7 @@ test('it can take a bid on a legacy collection', async (t) => {
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -171,7 +171,7 @@ test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) 
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -244,7 +244,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -266,7 +266,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     cosigner: notCosigner,
     creators: [creatorKeypair.address],

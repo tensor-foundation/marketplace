@@ -210,12 +210,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupWnsTest({
+  const { client, signers, nft, listingPrice } = await setupWnsTest({
     t,
     action: TestAction.List,
   });
@@ -228,7 +223,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice - 1n, // <-- lower amount
+    maxAmount: listingPrice! - 1n, // <-- lower amount
     creators: [nftUpdateAuthority.address],
   });
 
@@ -243,12 +238,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
 });
 
 test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupWnsTest({
+  const { client, signers, nft, listingPrice } = await setupWnsTest({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -263,7 +253,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice - 1n,
+    maxAmount: listingPrice! - 1n,
     // Missing cosigner!
     creators: [nftUpdateAuthority.address],
   });
@@ -303,7 +293,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupWnsTest({
     t,
     action: TestAction.List,
@@ -317,7 +307,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
   });
 
@@ -337,7 +327,8 @@ test('fees are paid correctly', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,
@@ -361,7 +352,7 @@ test('fees are paid correctly', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
   });
 
@@ -407,7 +398,7 @@ test('fees are paid correctly', async (t) => {
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
   t.assert(
     endingFeeVaultBalance >=
-      startingFeeVaultBalance + (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS
+      startingFeeVaultBalance + (listingPrice! * TAKER_FEE_BPS) / BASIS_POINTS
   );
 
   // Check that the royalties were paid correctly.
@@ -418,7 +409,7 @@ test('fees are paid correctly', async (t) => {
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -428,7 +419,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,
@@ -462,7 +454,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice!,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     creators: [nftUpdateAuthority.address],
@@ -528,7 +520,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   const endingMakerBrokerBalance = BigInt(
@@ -555,7 +547,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupWnsTest({
     t,
@@ -584,7 +577,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     payer: buyer,
     mint,
     distribution,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
     creators: [nftUpdateAuthority.address],
@@ -653,7 +646,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +
-        (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+        (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   const endingTakerBrokerBalance = BigInt(

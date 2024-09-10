@@ -11,7 +11,7 @@ use tensor_toolbox::{
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, Fees, FromAcc, FromExternal, BROKER_FEE_PCT,
 };
-use tensor_vipers::Validate;
+use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, TakeEvent,
@@ -198,14 +198,12 @@ pub fn process_buy_legacy<'info, 'b>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     let Fees {
+        taker_fee,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -220,6 +218,11 @@ pub fn process_buy_legacy<'info, 'b>(
         metadata.token_standard,
         optional_royalty_pct,
     )?;
+
+    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+
+    require!(total_price <= max_amount, TcompError::PriceMismatch);
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     // transfer the NFT to the buyer
 
@@ -250,7 +253,6 @@ pub fn process_buy_legacy<'info, 'b>(
 
     let asset_id = ctx.accounts.mint.key();
 
-    // NOTE: The event doesn't record
     record_event(
         &TcompEvent::Taker(TakeEvent {
             taker: *ctx.accounts.buyer.key,
