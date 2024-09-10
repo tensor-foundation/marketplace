@@ -68,7 +68,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
   });
 });
 
-test.only('fees are paid correctly', async (t) => {
+test('fees are paid correctly', async (t) => {
   const {
     client,
     signers,
@@ -138,10 +138,6 @@ test.only('fees are paid correctly', async (t) => {
   const endingDistributionBalance = (
     await client.rpc.getBalance(distribution).send()
   ).value;
-  console.log('endingDistributionBalance', endingDistributionBalance);
-  console.log('bidPrice', bidPrice);
-  console.log('startingDistributionBalance', startingDistributionBalance);
-  console.log('royalty fee', (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS);
   t.assert(
     endingDistributionBalance ===
       startingDistributionBalance +

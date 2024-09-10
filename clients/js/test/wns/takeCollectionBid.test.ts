@@ -12,6 +12,11 @@ import {
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
+import {
+  intoAddress,
+  Mode,
+  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
+} from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   findBidStatePda,
@@ -30,11 +35,6 @@ import {
   TAKER_FEE_BPS,
   upsertMintProof,
 } from '../_common.js';
-import {
-  intoAddress,
-  Mode,
-  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
-} from '@tensor-foundation/whitelist';
 import { generateTreeOfSize } from '../_merkle.js';
 
 test('it can take a bid on a WNS collection', async (t) => {
@@ -121,7 +121,7 @@ test('it can take a bid on a WNS collection', async (t) => {
     whitelist,
     bidState,
     distribution,
-    minAmount: price,
+    minAmount: (price * 8n) / 10n, // minPrice
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });
@@ -280,7 +280,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount: (price * 8n) / 10n, // minPrice
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });
