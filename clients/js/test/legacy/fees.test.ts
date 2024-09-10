@@ -1,31 +1,31 @@
 import {
-    airdropFactory,
-    appendTransactionMessageInstruction,
-    assertAccountDecoded,
-    assertAccountExists,
-    fetchEncodedAccount,
-    fetchJsonParsedAccount,
-    lamports,
-    pipe,
+  airdropFactory,
+  appendTransactionMessageInstruction,
+  assertAccountDecoded,
+  assertAccountExists,
+  fetchEncodedAccount,
+  fetchJsonParsedAccount,
+  lamports,
+  pipe,
 } from '@solana/web3.js';
 import {
-    createDefaultNft,
-    findAtaPda,
+  createDefaultNft,
+  findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
-    createDefaultSolanaClient,
-    createDefaultTransaction,
-    generateKeyPairSignerWithSol,
-    getBalance,
-    ONE_SOL,
-    signAndSendTransaction,
+  createDefaultSolanaClient,
+  createDefaultTransaction,
+  generateKeyPairSignerWithSol,
+  getBalance,
+  ONE_SOL,
+  signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
 import {
-    findFeeVaultPda,
-    findListStatePda,
-    getBuyLegacyInstructionAsync,
-    getListLegacyInstructionAsync,
+  findFeeVaultPda,
+  findListStatePda,
+  getBuyLegacyInstructionAsync,
+  getListLegacyInstructionAsync,
 } from '../../src/index.js';
 
 const TOTAL_FEE_BP = 200n; // 2% of the price.
@@ -99,7 +99,7 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
     owner: owner.address,
     payer: buyer,
     mint,
-    maxAmount: price * 13n / 10n,
+    maxAmount: (price * 13n) / 10n,
     creators: [owner.address],
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
