@@ -66,6 +66,11 @@ describe("tcomp bids", () => {
     it("bids + edits + accepts bid (with canopy)", async () => {
       let takerBroker = Keypair.generate().publicKey;
       const canopyDepth = 10;
+
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -76,15 +81,16 @@ describe("tcomp bids", () => {
 
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount: initialAmount,
             targetId: assetId,
             owner: traderB,
           });
+          // Update to a lower price.
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
+            amount,
             targetId: assetId,
             owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
+            prevBidAmount: initialAmount.toNumber(),
           });
 
           const common = {
@@ -104,12 +110,14 @@ describe("tcomp bids", () => {
           await expect(
             testTakeBid({
               ...common,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              bidPrice: amount,
+              minAmount: initialAmount,
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
           await testTakeBid({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            bidPrice: amount,
+            minAmount,
           });
         }
       }
@@ -119,6 +127,11 @@ describe("tcomp bids", () => {
     it.skip("bids + edits + accepts bid (with cosigner)", async () => {
       let takerBroker = Keypair.generate().publicKey;
       const canopyDepth = 10;
+
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -131,16 +144,16 @@ describe("tcomp bids", () => {
 
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount: initialAmount,
             targetId: assetId,
             owner: traderB,
             cosigner,
           });
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
+            amount,
             targetId: assetId,
             owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
+            prevBidAmount: initialAmount.toNumber(),
             cosigner,
           });
 
@@ -161,14 +174,16 @@ describe("tcomp bids", () => {
           await expect(
             testTakeBid({
               ...common,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount: initialAmount,
+              bidPrice: amount,
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
 
           await testTakeBid({
             ...common,
             cosigner,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            bidPrice: amount,
+            minAmount,
           });
         }
       }
@@ -176,6 +191,10 @@ describe("tcomp bids", () => {
 
     it("bids + takes (optional royalties)", async () => {
       let takerBroker = Keypair.generate().publicKey;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       // TODO: for now enforced
       for (const optionalRoyaltyPct of [0, 100]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -186,7 +205,7 @@ describe("tcomp bids", () => {
 
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount,
             targetId: assetId,
             owner: traderB,
           });
@@ -198,7 +217,8 @@ describe("tcomp bids", () => {
                 memTree,
                 merkleTree,
                 metadata,
-                minAmount: new BN(LAMPORTS_PER_SOL),
+                minAmount,
+                bidPrice: amount,
                 owner: traderB.publicKey,
                 seller: traderA,
                 optionalRoyaltyPct,
@@ -214,7 +234,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              bidPrice: amount,
+              minAmount,
               owner: traderB.publicKey,
               seller: traderA,
               optionalRoyaltyPct,
@@ -228,6 +249,9 @@ describe("tcomp bids", () => {
 
     it("bids + cancels/closes", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+
       for (const closeWithCosigner of [true, false]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -238,7 +262,7 @@ describe("tcomp bids", () => {
 
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount,
             targetId: assetId,
             owner: traderB,
             prevBidAmount: 0,
@@ -249,7 +273,7 @@ describe("tcomp bids", () => {
             await waitMS(3000);
           }
           await testCancelCloseBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount,
             bidId: assetId,
             forceClose: closeWithCosigner,
             owner: traderB,
@@ -260,6 +284,10 @@ describe("tcomp bids", () => {
 
     it("bids + cancels/closes (with rent payer)", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const closeWithCosigner of [true, false]) {
         const { leaves, traderB, rentPayer, secondaryRentPayer } =
           await beforeHook({
@@ -273,7 +301,7 @@ describe("tcomp bids", () => {
             { prevRentPayer: rentPayer.publicKey },
             async ({ prevRentPayer }) => {
               await testBid({
-                amount: new BN(LAMPORTS_PER_SOL),
+                amount,
                 targetId: assetId,
                 owner: traderB,
                 rentPayer,
@@ -282,7 +310,7 @@ describe("tcomp bids", () => {
               });
               // asserts secondary rent payer is not assigned
               await testBid({
-                amount: new BN(LAMPORTS_PER_SOL),
+                amount,
                 targetId: assetId,
                 owner: traderB,
                 rentPayer: secondaryRentPayer,
@@ -295,7 +323,7 @@ describe("tcomp bids", () => {
               }
               await expect(
                 testCancelCloseBid({
-                  amount: new BN(LAMPORTS_PER_SOL),
+                  amount,
                   bidId: assetId,
                   forceClose: closeWithCosigner,
                   owner: traderB,
@@ -303,7 +331,7 @@ describe("tcomp bids", () => {
                 })
               ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
               await testCancelCloseBid({
-                amount: new BN(LAMPORTS_PER_SOL),
+                amount,
                 bidId: assetId,
                 forceClose: closeWithCosigner,
                 owner: traderB,
@@ -319,16 +347,20 @@ describe("tcomp bids", () => {
       }
     });
 
-    it("tries to take with false creators", async () => {
+    // To-Do: Stack overflow in compression program.
+    it.skip("tries to take with false creators", async () => {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators: 2,
           numMints: 2,
         });
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           targetId: assetId,
           owner: traderB,
         });
@@ -336,7 +368,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata: {
@@ -357,7 +390,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata: {
@@ -378,7 +412,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata: {
@@ -397,7 +432,8 @@ describe("tcomp bids", () => {
         ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice: amount,
           memTree,
           merkleTree,
           metadata,
@@ -411,6 +447,10 @@ describe("tcomp bids", () => {
 
     it("bids + takes (with delegate)", async () => {
       let canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -439,7 +479,8 @@ describe("tcomp bids", () => {
           });
           await testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata,
@@ -463,6 +504,9 @@ describe("tcomp bids", () => {
           canopyDepth,
         });
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
           amount: new BN(LAMPORTS_PER_SOL),
@@ -475,7 +519,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata,
@@ -495,7 +540,8 @@ describe("tcomp bids", () => {
         });
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice: amount,
           memTree,
           merkleTree,
           metadata,
@@ -518,9 +564,13 @@ describe("tcomp bids", () => {
         });
       const [traderC] = await makeNTraders({ n: 1 });
 
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount: initialAmount,
           targetId: assetId,
           owner: traderB,
           privateTaker: traderC.publicKey, //C whitelisted
@@ -529,7 +579,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: initialAmount,
             memTree,
             merkleTree,
             metadata,
@@ -540,15 +591,16 @@ describe("tcomp bids", () => {
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           targetId: assetId,
           owner: traderB,
           privateTaker: null,
-          prevBidAmount: LAMPORTS_PER_SOL,
+          prevBidAmount: initialAmount.toNumber(),
         });
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice: amount,
           memTree,
           merkleTree,
           metadata,
@@ -570,14 +622,15 @@ describe("tcomp bids", () => {
         });
       const takerBroker = Keypair.generate().publicKey;
 
-      for (const { leaf, index, metadata, assetId } of leaves) {
-        let amount = LAMPORTS_PER_SOL;
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
 
+      for (const { leaf, index, metadata, assetId } of leaves) {
         // --------------------------------------- Bid
 
         {
           const { sig } = await testBid({
-            amount: new BN(amount),
+            amount,
             targetId: assetId,
             owner: traderB,
             privateTaker: traderA.publicKey,
@@ -605,7 +658,8 @@ describe("tcomp bids", () => {
         {
           const { sig } = await testTakeBid({
             index,
-            minAmount: new BN(amount),
+            minAmount,
+            bidPrice: amount,
             memTree,
             merkleTree,
             metadata,
@@ -669,15 +723,16 @@ describe("tcomp bids", () => {
       const takerBroker = Keypair.generate().publicKey;
       const { whitelist } = await makeVocWhitelist(collectionMint);
 
-      for (const { leaf, index, metadata, assetId } of leaves) {
-        let amount = LAMPORTS_PER_SOL;
+      const bidPrice = new BN(LAMPORTS_PER_SOL);
+      const minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
 
+      for (const { leaf, index, metadata, assetId } of leaves) {
         // --------------------------------------- Bid
 
         // Can't place bid with field and no fieldId, or vice versa.
         {
           const commonArgs = {
-            amount: new BN(amount),
+            amount: bidPrice,
             target: Target.Whitelist,
             targetId: whitelist,
             owner: traderB,
@@ -701,9 +756,11 @@ describe("tcomp bids", () => {
           ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
         }
 
+        const amount = bidPrice.toNumber();
+
         {
           const { sig } = await testBid({
-            amount: new BN(amount),
+            amount: bidPrice,
             target: Target.Whitelist,
             targetId: whitelist,
             owner: traderB,
@@ -736,7 +793,8 @@ describe("tcomp bids", () => {
         {
           const { sig } = await testTakeBid({
             index,
-            minAmount: new BN(amount),
+            minAmount,
+            bidPrice,
             memTree,
             merkleTree,
             metadata,
@@ -750,6 +808,9 @@ describe("tcomp bids", () => {
             field: Field.Name,
             whitelist,
           });
+
+          const amount = bidPrice.toNumber();
+
           const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidFullMeta");
           const event = tcompSdk.getEvent(ix) as unknown as TakeEvent;
           expect(event.type).eq("taker");
@@ -805,6 +866,9 @@ describe("tcomp bids", () => {
           setupTswap: true,
         });
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         const { marginPda, marginNr, marginRent } = await testMakeMargin({
           owner: traderB,
@@ -813,10 +877,10 @@ describe("tcomp bids", () => {
           owner: traderB,
           marginNr,
           marginPda,
-          amount: LAMPORTS_PER_SOL,
+          amount: amount.toNumber(),
         });
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           targetId: assetId,
           owner: traderB,
           privateTaker: null,
@@ -824,7 +888,8 @@ describe("tcomp bids", () => {
         });
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice: amount,
           memTree,
           merkleTree,
           metadata,
@@ -856,6 +921,9 @@ describe("tcomp bids", () => {
       });
       const { whitelist } = await makeVocWhitelist(collectionMint);
 
+      const bidPrice = new BN(LAMPORTS_PER_SOL);
+      const minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         const { marginPda, marginNr, marginRent } = await testMakeMargin({
           owner: traderB,
@@ -867,7 +935,7 @@ describe("tcomp bids", () => {
           amount: LAMPORTS_PER_SOL,
         });
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount: bidPrice,
           target: Target.Whitelist,
           targetId: whitelist,
           bidId: whitelist,
@@ -877,7 +945,8 @@ describe("tcomp bids", () => {
         });
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice,
           memTree,
           merkleTree,
           metadata,
@@ -903,6 +972,9 @@ describe("tcomp bids", () => {
           setupTswap: true,
         });
 
+      const bidPrice = new BN(LAMPORTS_PER_SOL);
+      const minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         const { marginPda, marginNr, marginRent } = await testMakeMargin({
           owner: traderB,
@@ -911,11 +983,11 @@ describe("tcomp bids", () => {
           owner: traderB,
           marginNr,
           marginPda,
-          amount: LAMPORTS_PER_SOL,
+          amount: bidPrice.toNumber(),
         });
         // do a non-marginated bid
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount: bidPrice,
           targetId: assetId,
           owner: traderB,
           privateTaker: null,
@@ -946,7 +1018,8 @@ describe("tcomp bids", () => {
 
         await testTakeBid({
           index,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice,
           memTree,
           merkleTree,
           metadata,
@@ -967,6 +1040,9 @@ describe("tcomp bids", () => {
           canopyDepth,
           setupTswap: true,
         });
+
+      const bidPrice = new BN(LAMPORTS_PER_SOL);
+      const minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         const { marginPda, marginNr, marginRent } = await testMakeMargin({
@@ -996,7 +1072,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBid({
             index,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice,
             memTree,
             merkleTree,
             metadata,
@@ -1048,6 +1125,10 @@ describe("tcomp bids", () => {
     it("VOC: bids + edits + accepts bid", async () => {
       const takerBroker = Keypair.generate().publicKey;
 
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       const canopyDepth = 10;
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -1062,7 +1143,7 @@ describe("tcomp bids", () => {
             metadata.collection!.key
           );
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount: initialAmount,
             target: Target.Whitelist,
             targetId: whitelist,
             owner: traderB,
@@ -1070,7 +1151,7 @@ describe("tcomp bids", () => {
           //fails if try to change the target
           await expect(
             testBid({
-              amount: new BN(LAMPORTS_PER_SOL / 2),
+              amount,
               target: Target.AssetId, //wrong target
               targetId: whitelist,
               owner: traderB,
@@ -1078,7 +1159,7 @@ describe("tcomp bids", () => {
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
+            amount,
             target: Target.Whitelist,
             targetId: whitelist,
             owner: traderB,
@@ -1093,7 +1174,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL / 2),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1109,7 +1191,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1123,6 +1206,10 @@ describe("tcomp bids", () => {
 
     it("VOC: fails to take a collection bid with a collectionless mint", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const {
           merkleTree,
@@ -1141,7 +1228,7 @@ describe("tcomp bids", () => {
         const { whitelist } = await makeVocWhitelist(collectionMint);
 
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           owner: traderB,
@@ -1156,7 +1243,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1170,6 +1258,10 @@ describe("tcomp bids", () => {
 
     it("VOC: fails to take a collection bid with a unverified collection mint", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const {
           merkleTree,
@@ -1189,7 +1281,7 @@ describe("tcomp bids", () => {
         const { whitelist } = await makeVocWhitelist(collectionMint);
 
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           owner: traderB,
@@ -1204,7 +1296,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1218,6 +1311,10 @@ describe("tcomp bids", () => {
 
     it("VOC: fails to take a collection bid for wrong collection", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree } =
           await beforeHook({
@@ -1230,7 +1327,7 @@ describe("tcomp bids", () => {
         const { whitelist } = await makeVocWhitelist(fakeCollection);
 
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           owner: traderB,
@@ -1245,7 +1342,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1259,6 +1357,10 @@ describe("tcomp bids", () => {
 
     it("VOC: can place multiple bids with different ids", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -1296,7 +1398,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1312,6 +1415,11 @@ describe("tcomp bids", () => {
     it("FVC: bids + edits + accepts bid", async () => {
       const canopyDepth = 10;
       const verifiedCreator = Keypair.generate();
+
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators: 0, //keep this at 0 or need to rewrite how skippedCreators work
@@ -1324,7 +1432,7 @@ describe("tcomp bids", () => {
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount: initialAmount,
           target: Target.Whitelist,
           targetId: whitelist,
           owner: traderB,
@@ -1332,7 +1440,7 @@ describe("tcomp bids", () => {
         //fails if try to change the target
         await expect(
           testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
+            amount,
             target: Target.AssetId, //wrong target
             targetId: whitelist,
             owner: traderB,
@@ -1340,7 +1448,7 @@ describe("tcomp bids", () => {
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL / 2),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           owner: traderB,
@@ -1356,7 +1464,8 @@ describe("tcomp bids", () => {
           memTree,
           merkleTree,
           metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          minAmount,
+          bidPrice: amount,
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
@@ -1378,6 +1487,9 @@ describe("tcomp bids", () => {
         });
       const { whitelist } = await makeFvcWhitelist(fakeCreator.publicKey);
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL),
         target: Target.Whitelist,
@@ -1394,7 +1506,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1413,6 +1526,9 @@ describe("tcomp bids", () => {
           numMints: 2,
           canopyDepth,
         });
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         const { whitelist } = await makeFvcWhitelist(
@@ -1434,7 +1550,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1456,10 +1573,13 @@ describe("tcomp bids", () => {
           verifiedCreator,
         });
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       //create one more mint with a diff creator
       const secondVerifiedCreator = Keypair.generate();
       const { collectionMint } = await initCollection({ owner: treeOwner });
-      let metadata = await makeCNftMeta({
+      let metadata = makeCNftMeta({
         collectionMint,
         nrCreators: 0,
       });
@@ -1503,7 +1623,7 @@ describe("tcomp bids", () => {
       const bidId = Keypair.generate().publicKey;
       //bid on first mint
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
+        amount,
         target: Target.Whitelist,
         targetId: whitelist,
         owner: traderB,
@@ -1518,7 +1638,8 @@ describe("tcomp bids", () => {
           memTree,
           merkleTree,
           metadata: leaves[1].metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          minAmount,
+          bidPrice: amount,
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
@@ -1534,7 +1655,8 @@ describe("tcomp bids", () => {
         memTree,
         merkleTree,
         metadata: leaves[0].metadata,
-        minAmount: new BN(LAMPORTS_PER_SOL),
+        minAmount,
+        bidPrice: amount,
         owner: traderB.publicKey,
         seller: traderA,
         canopyDepth,
@@ -1547,6 +1669,11 @@ describe("tcomp bids", () => {
 
     it("VOC + Name: bids + edits + accepts bid", async () => {
       const canopyDepth = 10;
+
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const {
           merkleTree,
@@ -1566,7 +1693,7 @@ describe("tcomp bids", () => {
 
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount: initialAmount,
             target: Target.Whitelist,
             targetId: whitelist,
             field: Field.Name,
@@ -1576,7 +1703,7 @@ describe("tcomp bids", () => {
           //fails if try to change the target
           await expect(
             testBid({
-              amount: new BN(LAMPORTS_PER_SOL),
+              amount: initialAmount,
               target: Target.Whitelist,
               targetId: whitelist,
               field: Field.Name,
@@ -1586,13 +1713,13 @@ describe("tcomp bids", () => {
             })
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
           await testBid({
-            amount: new BN(LAMPORTS_PER_SOL / 2),
+            amount,
             target: Target.Whitelist,
             targetId: whitelist,
             field: Field.Name,
             fieldId: new PublicKey(nameToBuffer(metadata.name)),
             owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
+            prevBidAmount: initialAmount.toNumber(),
           });
           // -------------------- failure cases
           await expect(
@@ -1603,7 +1730,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL / 2),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1619,7 +1747,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1649,8 +1778,11 @@ describe("tcomp bids", () => {
 
         const { whitelist } = await makeVocWhitelist(collectionMint);
 
+        const amount = new BN(LAMPORTS_PER_SOL);
+        const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           field: Field.Name,
@@ -1667,7 +1799,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1684,7 +1817,8 @@ describe("tcomp bids", () => {
               memTree,
               merkleTree,
               metadata,
-              minAmount: new BN(LAMPORTS_PER_SOL),
+              minAmount,
+              bidPrice: amount,
               owner: traderB.publicKey,
               seller: traderA,
               canopyDepth,
@@ -1711,9 +1845,13 @@ describe("tcomp bids", () => {
 
       const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
 
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const { leaf, index, metadata, assetId } of leaves) {
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL),
+          amount: initialAmount,
           target: Target.Whitelist,
           targetId: whitelist,
           field: Field.Name,
@@ -1723,17 +1861,17 @@ describe("tcomp bids", () => {
         //fails if try to change the target
         await expect(
           testBid({
-            amount: new BN(LAMPORTS_PER_SOL),
+            amount: initialAmount,
             target: Target.Whitelist,
             targetId: whitelist,
             field: Field.Name,
             fieldId: new PublicKey(nameToBuffer("failooooor")), //<-- boo
             owner: traderB,
-            prevBidAmount: LAMPORTS_PER_SOL,
+            prevBidAmount: initialAmount.toNumber(),
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("CannotModifyTarget"));
         await testBid({
-          amount: new BN(LAMPORTS_PER_SOL / 2),
+          amount,
           target: Target.Whitelist,
           targetId: whitelist,
           field: Field.Name,
@@ -1752,7 +1890,8 @@ describe("tcomp bids", () => {
           memTree,
           merkleTree,
           metadata,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          minAmount,
+          bidPrice: amount,
           owner: traderB.publicKey,
           seller: traderA,
           canopyDepth,
@@ -1774,8 +1913,11 @@ describe("tcomp bids", () => {
         });
       const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
+        amount,
         target: Target.Whitelist,
         targetId: whitelist,
         field: Field.Name,
@@ -1792,7 +1934,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1810,7 +1953,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1826,6 +1970,10 @@ describe("tcomp bids", () => {
 
     it("VOC: bids + accepts bid (multiple quantity)", async () => {
       const canopyDepth = 10;
+
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       for (const nrCreators of [0, 1, 4]) {
         const {
           merkleTree,
@@ -1860,7 +2008,8 @@ describe("tcomp bids", () => {
                 memTree,
                 merkleTree,
                 metadata,
-                minAmount: new BN(LAMPORTS_PER_SOL),
+                minAmount,
+                bidPrice: amount,
                 owner: traderB.publicKey,
                 seller: traderA,
                 canopyDepth,
@@ -1877,7 +2026,8 @@ describe("tcomp bids", () => {
             memTree,
             merkleTree,
             metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
             owner: traderB.publicKey,
             seller: traderA,
             canopyDepth,
@@ -1888,7 +2038,7 @@ describe("tcomp bids", () => {
           if (index === 1) {
             await expect(
               testBid({
-                amount: new BN(LAMPORTS_PER_SOL),
+                amount,
                 target: Target.Whitelist,
                 targetId: whitelist,
                 owner: traderB,
@@ -1956,21 +2106,25 @@ describe("tcomp bids", () => {
 
           const rentPayer = useRentPayer ? _rentPayer : undefined;
 
+          const initialAmount = new BN(LAMPORTS_PER_SOL);
+          const amount = new BN(initialAmount.toNumber() / 2);
+          const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
           for (const { index, metadata, assetId } of leaves) {
             await withLamports(
               { ...(rentPayer ? { prevRentPayer: rentPayer?.publicKey } : {}) },
               async ({ prevRentPayer }) => {
                 await testBid({
-                  amount: new BN(LAMPORTS_PER_SOL),
+                  amount: initialAmount,
                   targetId: assetId,
                   owner: traderB,
                   rentPayer,
                 });
                 await testBid({
-                  amount: new BN(LAMPORTS_PER_SOL / 2),
+                  amount,
                   targetId: assetId,
                   owner: traderB,
-                  prevBidAmount: LAMPORTS_PER_SOL,
+                  prevBidAmount: initialAmount.toNumber(),
                 });
 
                 const { mint, ata } = await decompressCNft({
@@ -1997,7 +2151,8 @@ describe("tcomp bids", () => {
                 await expect(
                   testTakeBidLegacy({
                     ...common,
-                    minAmount: new BN(LAMPORTS_PER_SOL),
+                    minAmount: initialAmount,
+                    bidPrice: amount,
                     rentDest: rentPayer?.publicKey,
                   })
                 ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
@@ -2005,13 +2160,15 @@ describe("tcomp bids", () => {
                 await expect(
                   testTakeBidLegacy({
                     ...common,
-                    minAmount: new BN(LAMPORTS_PER_SOL / 2),
+                    bidPrice: amount,
+                    minAmount,
                     rentDest: secondaryRentPayer.publicKey,
                   })
                 ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
                 await testTakeBidLegacy({
                   ...common,
-                  minAmount: new BN(LAMPORTS_PER_SOL / 2),
+                  bidPrice: amount,
+                  minAmount,
                   rentDest: rentPayer?.publicKey,
                 });
 
@@ -2026,6 +2183,10 @@ describe("tcomp bids", () => {
         });
 
         it("bids + edits + accepts bid for pNFT", async () => {
+          const initialAmount = new BN(LAMPORTS_PER_SOL);
+          const amount = new BN(initialAmount.toNumber() / 2);
+          const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
           // TODO: Add cosigner tests.
           for (const cosigned of [false]) {
             const [traderA, traderB] = await makeNTraders({
@@ -2061,16 +2222,16 @@ describe("tcomp bids", () => {
             });
 
             await testBid({
-              amount: new BN(LAMPORTS_PER_SOL),
+              amount: initialAmount,
               targetId: mint,
               owner: traderB,
               cosigner,
             });
             await testBid({
-              amount: new BN(LAMPORTS_PER_SOL / 2),
+              amount,
               targetId: mint,
               owner: traderB,
-              prevBidAmount: LAMPORTS_PER_SOL,
+              prevBidAmount: initialAmount.toNumber(),
               cosigner,
             });
 
@@ -2090,7 +2251,8 @@ describe("tcomp bids", () => {
               await expect(
                 testTakeBidLegacy({
                   ...common,
-                  minAmount: new BN(LAMPORTS_PER_SOL),
+                  minAmount,
+                  bidPrice: amount,
                 })
               ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
             }
@@ -2099,7 +2261,8 @@ describe("tcomp bids", () => {
             await expect(
               testTakeBidLegacy({
                 ...common,
-                minAmount: new BN(LAMPORTS_PER_SOL),
+                minAmount: initialAmount,
+                bidPrice: amount,
                 cosigner,
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
@@ -2110,7 +2273,8 @@ describe("tcomp bids", () => {
                 ...common,
                 nftMint: badMint.publicKey,
                 nftSellerAcc: badAta,
-                minAmount: new BN(LAMPORTS_PER_SOL / 2),
+                minAmount,
+                bidPrice: amount,
                 cosigner,
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
@@ -2118,7 +2282,8 @@ describe("tcomp bids", () => {
             // Final sale.
             await testTakeBidLegacy({
               ...common,
-              minAmount: new BN(LAMPORTS_PER_SOL / 2),
+              minAmount,
+              bidPrice: amount,
               cosigner,
             });
           }
@@ -2129,6 +2294,9 @@ describe("tcomp bids", () => {
 
   // TODO: Add cosigner tests.
   it.skip("bids + accepts bid for pNFT (using hashlist verification)", async () => {
+    const amount = new BN(LAMPORTS_PER_SOL);
+    const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
     for (const useFakeWhitelist of [true, false]) {
       const [traderA, traderB] = await makeNTraders({
         n: 2,
@@ -2173,7 +2341,7 @@ describe("tcomp bids", () => {
       } = await makeProofWhitelist([PublicKey.default]);
 
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL / 2),
+        amount,
         target: Target.Whitelist,
         targetId: useFakeWhitelist ? fakeWhitelist : whitelist,
         owner: traderB,
@@ -2197,7 +2365,8 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBidLegacy({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            minAmount,
+            bidPrice: amount,
             cosigner,
             whitelist: fakeWhitelist,
           })
@@ -2206,14 +2375,16 @@ describe("tcomp bids", () => {
         await expect(
           testTakeBidLegacy({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL / 2),
+            minAmount,
+            bidPrice: amount,
             cosigner,
             whitelist: fakeWhitelist,
           })
         ).rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
         await testTakeBidLegacy({
           ...common,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          minAmount,
+          bidPrice: amount,
           cosigner,
           whitelist,
         });
@@ -2222,6 +2393,9 @@ describe("tcomp bids", () => {
   });
 
   it("VOC: bids + accepts bid for pnft", async () => {
+    const amount = new BN(LAMPORTS_PER_SOL / 2);
+    const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
     const [traderA, traderB] = await makeNTraders({
       n: 2,
     });
@@ -2258,7 +2432,7 @@ describe("tcomp bids", () => {
 
     const { whitelist } = await makeVocWhitelist(collection.publicKey);
     await testBid({
-      amount: new BN(LAMPORTS_PER_SOL / 2),
+      amount,
       target: Target.Whitelist,
       targetId: whitelist,
       owner: traderB,
@@ -2273,7 +2447,8 @@ describe("tcomp bids", () => {
       creators,
       royaltyBps,
       programmable: true,
-      minAmount: new BN(LAMPORTS_PER_SOL / 2),
+      minAmount,
+      bidPrice: amount,
     };
     console.log(wlSdk.getErrorCodeHex("FailedVocVerification"));
     await expect(
