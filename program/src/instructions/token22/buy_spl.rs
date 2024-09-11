@@ -332,7 +332,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-
     let asset_id = ctx.accounts.mint.key();
 
     record_event(
@@ -365,7 +364,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
         1,
         0,
     )?; // supply = 1, decimals = 0
-
 
     // --Pay fees in currency--
 

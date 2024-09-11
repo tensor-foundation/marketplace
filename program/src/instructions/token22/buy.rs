@@ -253,8 +253,6 @@ pub fn process_buy_t22<'info, 'b>(
         0,
     )?; // supply = 1, decimals = 0
 
-
-
     // pay fees
 
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.fee_vault, tcomp_fee)?;
