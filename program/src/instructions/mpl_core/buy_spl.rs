@@ -222,7 +222,7 @@ pub fn process_buy_core_spl<'info, 'b>(
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
-        taker_fee,
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
@@ -236,19 +236,6 @@ pub fn process_buy_core_spl<'info, 'b>(
 
     // No optional royalties.
     let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
-
-    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
-
-    require!(total_price <= max_amount, TcompError::PriceMismatch);
-
-    // Transfer the asset to the buyer.
-    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
-        .asset(&ctx.accounts.asset)
-        .authority(Some(&ctx.accounts.list_state.to_account_info()))
-        .new_owner(&ctx.accounts.buyer)
-        .payer(&ctx.accounts.payer) // pay for what?
-        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
-        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     let asset_id = ctx.accounts.asset.key();
 
@@ -272,6 +259,18 @@ pub fn process_buy_core_spl<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    // Transfer the asset to the buyer.
+    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.asset)
+        .authority(Some(&ctx.accounts.list_state.to_account_info()))
+        .new_owner(&ctx.accounts.buyer)
+        .payer(&ctx.accounts.payer) // pay for what?
+        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
+        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     // --Pay fees in currency--
 

@@ -238,7 +238,7 @@ pub fn process_buy_spl<'info>(
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
-        taker_fee,
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
@@ -252,6 +252,32 @@ pub fn process_buy_spl<'info>(
 
     let creator_fee =
         calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
+
+    // Record event before price check to make debugging easier.
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0, //quantity left
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    // Include royalty fees in the price to prevent frontrunning attacks.
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
 
     // --------------------------------------- nft transfer
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
@@ -275,31 +301,6 @@ pub fn process_buy_spl<'info>(
         signer: Some(ctx.accounts.list_state.deref().as_ref()),
         signer_seeds: Some(&ctx.accounts.list_state.seeds()),
     })?;
-
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0, //quantity left
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
-    )?;
-
-    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
-
-    require!(total_price <= max_amount, TcompError::PriceMismatch);
 
     // --------------------------------------- token transfers
 

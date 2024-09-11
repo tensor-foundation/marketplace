@@ -242,7 +242,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
-        taker_fee,
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
@@ -332,16 +332,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
-
-    require!(total_price <= max_amount, TcompError::PriceMismatch);
-
-    // Invoke the transfer.
-    tensor_transfer_checked(
-        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
-        1,
-        0,
-    )?; // supply = 1, decimals = 0
 
     let asset_id = ctx.accounts.mint.key();
 
@@ -365,6 +355,17 @@ pub fn process_buy_t22_spl<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    // Invoke the transfer.
+    tensor_transfer_checked(
+        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
+        1,
+        0,
+    )?; // supply = 1, decimals = 0
+
 
     // --Pay fees in currency--
 

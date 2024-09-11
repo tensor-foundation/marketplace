@@ -199,8 +199,11 @@ pub fn process_buy_legacy<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
+    // Only SOL supported in this handler.
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
+
     let Fees {
-        taker_fee,
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
@@ -219,10 +222,32 @@ pub fn process_buy_legacy<'info, 'b>(
         optional_royalty_pct,
     )?;
 
-    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
+    let asset_id = ctx.accounts.mint.key();
 
-    require!(total_price <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0,
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    // Include royalty fees in the price to prevent frontrunning attacks.
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
 
     // transfer the NFT to the buyer
 
@@ -249,29 +274,6 @@ pub fn process_buy_legacy<'info, 'b>(
             delegate: None,
         },
         Some(&[&ctx.accounts.list_state.seeds()]),
-    )?;
-
-    let asset_id = ctx.accounts.mint.key();
-
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0,
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     // pay fees

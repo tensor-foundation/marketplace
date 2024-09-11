@@ -622,19 +622,20 @@ describe("tcomp bids", () => {
         });
       const takerBroker = Keypair.generate().publicKey;
 
-      const amount = new BN(LAMPORTS_PER_SOL);
-      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+      const bidPrice = new BN(LAMPORTS_PER_SOL);
+      const minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
 
       for (const { leaf, index, metadata, assetId } of leaves) {
         // --------------------------------------- Bid
 
         {
           const { sig } = await testBid({
-            amount,
+            amount: bidPrice,
             targetId: assetId,
             owner: traderB,
             privateTaker: traderA.publicKey,
           });
+          const amount = bidPrice.toNumber();
           const ix = await fetchAndCheckSingleIxTx(sig!, "bid");
           const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
           expect(event.type).eq("maker");
@@ -659,7 +660,7 @@ describe("tcomp bids", () => {
           const { sig } = await testTakeBid({
             index,
             minAmount,
-            bidPrice: amount,
+            bidPrice,
             memTree,
             merkleTree,
             metadata,
@@ -670,6 +671,7 @@ describe("tcomp bids", () => {
             takerBroker,
             bidId: assetId,
           });
+          const amount = bidPrice.toNumber();
           const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidMetaHash");
           const event = tcompSdk.getEvent(ix) as unknown as TakeEvent;
           expect(event.type).eq("taker");

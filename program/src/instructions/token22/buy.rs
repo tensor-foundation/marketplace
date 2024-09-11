@@ -153,9 +153,11 @@ pub fn process_buy_t22<'info, 'b>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
+    // Only SOL supported in this handler.
+    require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     let Fees {
-        taker_fee,
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
@@ -219,17 +221,6 @@ pub fn process_buy_t22<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-    let total_price = unwrap_checked!({ amount.checked_add(taker_fee)?.checked_add(creator_fee) });
-
-    require!(total_price <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_none(), TcompError::CurrencyMismatch);
-
-    tensor_transfer_checked(
-        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
-        1,
-        0,
-    )?; // supply = 1, decimals = 0
-
     let asset_id = ctx.accounts.mint.key();
 
     record_event(
@@ -252,6 +243,17 @@ pub fn process_buy_t22<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    tensor_transfer_checked(
+        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
+        1,
+        0,
+    )?; // supply = 1, decimals = 0
+
+
 
     // pay fees
 
