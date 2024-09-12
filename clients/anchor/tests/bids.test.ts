@@ -347,8 +347,7 @@ describe("tcomp bids", () => {
       }
     });
 
-    // To-Do: Stack overflow in compression program.
-    it.skip("tries to take with false creators", async () => {
+    it("tries to take with false creators", async () => {
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
         await beforeHook({
           nrCreators: 2,

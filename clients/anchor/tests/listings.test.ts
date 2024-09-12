@@ -223,7 +223,7 @@ describe("tcomp listings", () => {
       });
 
       // TODO: Fix this test. Access violation in stack frame--compression program.
-      it.skip("tries to buy with false creators", async () => {
+      it("tries to buy with false creators", async () => {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
             nrCreators: currency ? 1 : 4,
