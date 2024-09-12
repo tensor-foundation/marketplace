@@ -1,41 +1,43 @@
 import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-  Address,
-  airdropFactory,
-  appendTransactionMessageInstruction,
-  assertAccountExists,
-  fetchEncodedAccount,
-  lamports,
-  pipe,
+    Address,
+    airdropFactory,
+    appendTransactionMessageInstruction,
+    assertAccountExists,
+    fetchEncodedAccount,
+    lamports,
+    pipe,
 } from '@solana/web3.js';
 import {
-  TokenStandard,
-  createDefaultNft,
+    TokenStandard,
+    createDefaultNft,
+    fetchMetadata,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
-  Client,
-  ONE_SOL,
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  createKeyPairSigner,
-  signAndSendTransaction,
+    Client,
+    ONE_SOL,
+    createDefaultSolanaClient,
+    createDefaultTransaction,
+    createKeyPairSigner,
+    signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
 import {
-  Target,
-  fetchBidStateFromSeeds,
-  findBidStatePda,
-  findListStatePda,
-  getBidInstructionAsync,
-  getListLegacyInstructionAsync,
+    Target,
+    fetchBidStateFromSeeds,
+    findBidStatePda,
+    findListStatePda,
+    getBidInstructionAsync,
+    getListLegacyInstructionAsync,
 } from '../../src';
 import {
-  DEFAULT_BID_PRICE,
-  DEFAULT_LISTING_PRICE,
-  SetupTestParams,
-  TestAction,
-  TestSigners,
-  assertTokenNftOwnedBy,
-  getTestSigners,
+    BASIS_POINTS,
+    DEFAULT_BID_PRICE,
+    DEFAULT_LISTING_PRICE,
+    SetupTestParams,
+    TestAction,
+    TestSigners,
+    assertTokenNftOwnedBy,
+    getTestSigners,
 } from '../_common';
 
 const OWNER_BYTES = [
@@ -92,7 +94,7 @@ export async function setupLegacyTest(
     : TokenStandard.NonFungible;
 
   // Mint an NFT.
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer,
     authority: nftUpdateAuthority,
@@ -176,9 +178,13 @@ export async function setupLegacyTest(
       throw new Error(`Unknown action: ${action}`);
   }
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+
+  // Calculate the max or min price from the price +/- royalties.
   const price = listingPrice
-    ? (listingPrice! * 15n) / 10n
-    : (BigInt(bidPrice!) * 80n) / 100n; // boost price to cover fees
+    ? (listingPrice! + (listingPrice! * BigInt(sellerFeeBasisPoints)/ BASIS_POINTS))
+    : (bidPrice! - (bidPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS);
 
   return {
     client,

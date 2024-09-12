@@ -46,8 +46,9 @@ test('it can take a bid on a T22 collection', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   const sellerFeeBasisPoints = 1000n;
-
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
@@ -124,7 +125,7 @@ test('it can take a bid on a T22 collection', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: (price * 8n) / 10n,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),

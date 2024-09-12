@@ -48,6 +48,8 @@ test('it can take a bid on a WNS collection', async (t) => {
 
   const sellerFeeBasisPoints = 100n;
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, distribution } = await createWnsNftInGroup({
@@ -121,7 +123,7 @@ test('it can take a bid on a WNS collection', async (t) => {
     whitelist,
     bidState,
     distribution,
-    minAmount: (price * 8n) / 10n, // minPrice
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });
@@ -170,8 +172,9 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   const sellerFeeBasisPoints = 1000n;
-
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   // Mint NFT
@@ -280,7 +283,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: (price * 8n) / 10n, // minPrice
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
   });

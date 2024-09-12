@@ -27,6 +27,7 @@ import {
 } from '../../src';
 import {
   assertTokenNftOwnedBy,
+  BASIS_POINTS,
   COMPUTE_300K_IX,
   DEFAULT_BID_PRICE,
   DEFAULT_LISTING_PRICE,
@@ -189,11 +190,14 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   // Set max/min price to cover fees
   switch (action) {
     case TestAction.List: {
-      price = (listingPrice! * 15n) / 10n;
+      price =
+        listingPrice! +
+        (listingPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
       break;
     }
     case TestAction.Bid: {
-      price = (bidPrice! * 75n) / 100n;
+      price =
+        bidPrice! - (bidPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
       break;
     }
   }
