@@ -1,43 +1,43 @@
 import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
-    Address,
-    airdropFactory,
-    appendTransactionMessageInstruction,
-    assertAccountExists,
-    fetchEncodedAccount,
-    lamports,
-    pipe,
+  Address,
+  airdropFactory,
+  appendTransactionMessageInstruction,
+  assertAccountExists,
+  fetchEncodedAccount,
+  lamports,
+  pipe,
 } from '@solana/web3.js';
 import {
-    TokenStandard,
-    createDefaultNft,
-    fetchMetadata,
+  TokenStandard,
+  createDefaultNft,
+  fetchMetadata,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
-    Client,
-    ONE_SOL,
-    createDefaultSolanaClient,
-    createDefaultTransaction,
-    createKeyPairSigner,
-    signAndSendTransaction,
+  Client,
+  ONE_SOL,
+  createDefaultSolanaClient,
+  createDefaultTransaction,
+  createKeyPairSigner,
+  signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
 import {
-    Target,
-    fetchBidStateFromSeeds,
-    findBidStatePda,
-    findListStatePda,
-    getBidInstructionAsync,
-    getListLegacyInstructionAsync,
+  Target,
+  fetchBidStateFromSeeds,
+  findBidStatePda,
+  findListStatePda,
+  getBidInstructionAsync,
+  getListLegacyInstructionAsync,
 } from '../../src';
 import {
-    BASIS_POINTS,
-    DEFAULT_BID_PRICE,
-    DEFAULT_LISTING_PRICE,
-    SetupTestParams,
-    TestAction,
-    TestSigners,
-    assertTokenNftOwnedBy,
-    getTestSigners,
+  BASIS_POINTS,
+  DEFAULT_BID_PRICE,
+  DEFAULT_LISTING_PRICE,
+  SetupTestParams,
+  TestAction,
+  TestSigners,
+  assertTokenNftOwnedBy,
+  getTestSigners,
 } from '../_common';
 
 const OWNER_BYTES = [
@@ -183,8 +183,9 @@ export async function setupLegacyTest(
 
   // Calculate the max or min price from the price +/- royalties.
   const price = listingPrice
-    ? (listingPrice! + (listingPrice! * BigInt(sellerFeeBasisPoints)/ BASIS_POINTS))
-    : (bidPrice! - (bidPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS);
+    ? listingPrice! +
+      (listingPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS
+    : bidPrice! - (bidPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   return {
     client,
