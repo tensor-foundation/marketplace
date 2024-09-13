@@ -10,7 +10,7 @@ use tensor_toolbox::{
     token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, Fees, BROKER_FEE_PCT,
 };
-use tensor_vipers::Validate;
+use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
@@ -169,15 +169,13 @@ pub fn process_buy_wns<'info, 'b>(
     let list_state = &ctx.accounts.list_state;
     let amount = list_state.amount;
     let currency = list_state.currency;
-
-    require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -194,6 +192,32 @@ pub fn process_buy_wns<'info, 'b>(
         Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
         None,
     )?;
+
+    let asset_id = ctx.accounts.mint.key();
+
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0, //quantity left
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
 
     let approve_accounts = ApproveAccounts {
         payer: ctx.accounts.payer.to_account_info(),
@@ -242,30 +266,6 @@ pub fn process_buy_wns<'info, 'b>(
             .with_signer(&[&ctx.accounts.list_state.seeds()]),
         1, // supply = 1
         0, // decimals = 0
-    )?;
-
-    let asset_id = ctx.accounts.mint.key();
-
-    // NOTE: The event doesn't record
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0, //quantity left
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     // --Pay fees in SOL--

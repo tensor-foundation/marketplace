@@ -12,6 +12,11 @@ import {
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
+import {
+  intoAddress,
+  Mode,
+  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
+} from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   findBidStatePda,
@@ -29,11 +34,6 @@ import {
   TAKER_FEE_BPS,
   upsertMintProof,
 } from '../_common.js';
-import {
-  intoAddress,
-  Mode,
-  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
-} from '@tensor-foundation/whitelist';
 import { generateTreeOfSize } from '../_merkle.js';
 
 test('it can take a bid on a T22 collection', async (t) => {
@@ -46,8 +46,9 @@ test('it can take a bid on a T22 collection', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   const sellerFeeBasisPoints = 1000n;
-
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
@@ -124,7 +125,7 @@ test('it can take a bid on a T22 collection', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),

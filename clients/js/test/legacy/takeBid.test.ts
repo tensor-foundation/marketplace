@@ -7,6 +7,7 @@ import {
 } from '@solana/web3.js';
 import {
   createDefaultNft,
+  fetchMetadata,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
@@ -22,13 +23,14 @@ import {
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
+import { BASIS_POINTS, DEFAULT_BID_PRICE } from '../_common.js';
 
 test('it can take a bid on a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
   const buyer = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: seller,
     authority: seller,
@@ -37,10 +39,17 @@ test('it can take a bid on a legacy NFT', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: buyer,
-    amount: 10,
+    amount: DEFAULT_BID_PRICE,
     target: Target.AssetId,
     targetId: mint,
   });
+
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+
+  const minPrice =
+    DEFAULT_BID_PRICE -
+    (DEFAULT_BID_PRICE * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // And the owner creates a bid on the NFT.
   await pipe(
@@ -54,7 +63,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
     owner: buyer.address,
     seller,
     mint,
-    minAmount: 5,
+    minAmount: minPrice,
     creators: [seller.address],
   });
 
