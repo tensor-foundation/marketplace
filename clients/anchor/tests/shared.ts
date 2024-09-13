@@ -1530,7 +1530,6 @@ export const testBuy = async ({
   merkleTree,
   metadata,
   maxAmount,
-  listingPrice,
   currency,
   takerBroker = null,
   makerBroker = null,
@@ -1549,7 +1548,6 @@ export const testBuy = async ({
   merkleTree: PublicKey;
   metadata: MetadataArgs;
   maxAmount: BN;
-  listingPrice: BN;
   currency: PublicKey | null;
   takerBroker?: PublicKey | null;
   makerBroker?: PublicKey | null;
@@ -1667,7 +1665,7 @@ export const testBuy = async ({
         TokenAccountNotFoundError
       );
 
-      const amount = listingPrice.toNumber();
+      const amount = maxAmount.toNumber();
       const creators = metadata.creators;
       const royaltyBps = metadata.sellerFeeBasisPoints;
 
@@ -2180,7 +2178,6 @@ export const testTakeBid = async ({
   delegate = seller,
   merkleTree,
   metadata,
-  bidPrice,
   minAmount,
   currency,
   makerBroker = null,
@@ -2205,7 +2202,6 @@ export const testTakeBid = async ({
   delegate?: Keypair;
   merkleTree: PublicKey;
   metadata: MetadataArgs;
-  bidPrice: BN;
   minAmount: BN;
   currency?: PublicKey;
   makerBroker?: PublicKey | null;
@@ -2329,7 +2325,7 @@ export const testTakeBid = async ({
         expect(prevQuantityFilled + 1).to.eq(filledQuantity);
       }
 
-      const amount = bidPrice.toNumber();
+      const amount = minAmount.toNumber();
       const creators = metadata.creators;
       const royaltyBps = metadata.sellerFeeBasisPoints;
 
@@ -2440,7 +2436,6 @@ export const testTakeBidLegacy = async ({
   owner,
   rentDest = owner,
   seller,
-  bidPrice,
   minAmount,
   currency,
   makerBroker = null,
@@ -2460,7 +2455,6 @@ export const testTakeBidLegacy = async ({
   owner: PublicKey;
   rentDest?: PublicKey;
   seller: Keypair;
-  bidPrice: BN;
   minAmount: BN;
   creators: Creator[];
   royaltyBps: number;
@@ -2574,7 +2568,7 @@ export const testTakeBidLegacy = async ({
         expect(prevQuantityFilled + 1).to.eq(filledQuantity);
       }
 
-      const amount = bidPrice.toNumber();
+      const amount = minAmount.toNumber();
 
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
@@ -2682,7 +2676,6 @@ export const testTakeBidT22 = async ({
   owner,
   rentDest = owner,
   seller,
-  bidPrice,
   minAmount,
   currency,
   makerBroker = null,
@@ -2698,7 +2691,6 @@ export const testTakeBidT22 = async ({
   owner: PublicKey;
   rentDest?: PublicKey;
   seller: Keypair;
-  bidPrice: BN;
   minAmount: BN;
   currency?: PublicKey;
   makerBroker?: PublicKey | null;
@@ -2813,7 +2805,7 @@ export const testTakeBidT22 = async ({
         expect(prevQuantityFilled + 1).to.eq(filledQuantity);
       }
 
-      const amount = bidPrice.toNumber();
+      const amount = minAmount.toNumber();
 
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
@@ -2871,7 +2863,6 @@ export const testTakeBidWns = async ({
   rentDest = owner,
   seller,
   minAmount,
-  bidPrice,
   collectionMint,
   currency,
   makerBroker = null,
@@ -2888,7 +2879,6 @@ export const testTakeBidWns = async ({
   rentDest?: PublicKey;
   seller: Keypair;
   minAmount: BN;
-  bidPrice: BN;
   collectionMint: PublicKey;
   currency?: PublicKey;
   makerBroker?: PublicKey | null;
@@ -3004,7 +2994,7 @@ export const testTakeBidWns = async ({
         expect(prevQuantityFilled + 1).to.eq(filledQuantity);
       }
 
-      const amount = bidPrice.toNumber();
+      const amount = minAmount.toNumber();
 
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
@@ -3060,7 +3050,6 @@ export const testTakeBidCore = async ({
   rentDest = owner,
   seller,
   minAmount,
-  bidPrice,
   collection,
   currency,
   makerBroker = null,
@@ -3077,7 +3066,6 @@ export const testTakeBidCore = async ({
   rentDest?: PublicKey;
   seller: Keypair;
   minAmount: BN;
-  bidPrice: BN;
   collection: PublicKey;
   currency?: PublicKey;
   makerBroker?: PublicKey | null;
@@ -3175,7 +3163,7 @@ export const testTakeBidCore = async ({
         expect(prevQuantityFilled + 1).to.eq(filledQuantity);
       }
 
-      const amount = bidPrice.toNumber();
+      const amount = minAmount.toNumber();
 
       //fees paid
       const feeAccLamports = await getLamports(feeVault);
@@ -3440,7 +3428,6 @@ export const testBuyCore = async ({
   collection,
   owner,
   buyer,
-  listingPrice,
   maxAmount,
   currency,
   takerBroker = null,
@@ -3454,7 +3441,6 @@ export const testBuyCore = async ({
   collection: PublicKey;
   owner: PublicKey;
   buyer: Keypair;
-  listingPrice: BN;
   maxAmount: BN;
   currency: PublicKey | null;
   takerBroker?: PublicKey | null;
@@ -3506,7 +3492,7 @@ export const testBuyCore = async ({
 
   let sig: string | undefined;
 
-  const feeVault = findFeeVaultPda({ stateAccount: listState });
+  const feeVault = await findFeeVaultPda({ stateAccount: listState });
 
   await withLamports(
     {
@@ -3552,7 +3538,7 @@ export const testBuyCore = async ({
       console.log("✅ bought", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
 
-      const amount = listingPrice.toNumber();
+      const amount = maxAmount.toNumber();
 
       //fees paid
       const { tcompFee, brokerFee } = calcFees(amount);

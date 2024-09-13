@@ -1,19 +1,37 @@
 import { BN } from "@coral-xyz/anchor";
-import { AddressLookupTableAccount, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+  AddressLookupTableAccount,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+} from "@solana/web3.js";
 import { isNullLike, waitMS } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
+import { MakeEvent, TakeEvent, MAKER_BROKER_PCT, Target } from "../src";
 import { makeNTraders } from "./account";
-import { createAssetWithCollection, createUmi } from "./metaplex_core";
+import { cpiEdit } from "./cpi_test";
 import {
   ALREADY_IN_USE_ERR,
   beforeAllHook,
+  beforeHook,
+  buildAndSendTx,
+  CONC_MERKLE_TREE_ERROR,
+  delegateCNft,
+  FEE_PCT,
+  fetchAndCheckSingleIxTx,
+  HAS_ONE_ERR,
   tcompSdk,
+  testBuy,
   testBuyCore,
+  testDelist,
   testDelistCore,
   testEdit,
+  testList,
   testListCore,
+  TEST_USDC,
 } from "./shared";
+import { createAssetWithCollection, createUmi } from "./metaplex_core";
 
 // Enables rejectedWith.
 chai.use(chaiAsPromised);
@@ -41,7 +59,7 @@ describe("[mpl-core] tcomp listings", () => {
         const umi = await createUmi();
         const [owner, buyer] = await makeNTraders({ n: 2 });
 
-        const royaltyBps = 500;
+        const royaltyBps = 10000;
         const { asset, collection } = await createAssetWithCollection(
           umi,
           owner.publicKey,
@@ -49,12 +67,8 @@ describe("[mpl-core] tcomp listings", () => {
           royaltyBps
         );
 
-        let initialAmount = new BN(LAMPORTS_PER_SOL);
-        let amount = initialAmount.mul(new BN(2));
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         const { listState } = await testListCore({
-          amount: initialAmount,
+          amount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           owner,
@@ -65,7 +79,7 @@ describe("[mpl-core] tcomp listings", () => {
         //can't list again
         await expect(
           testListCore({
-            amount: initialAmount,
+            amount: new BN(LAMPORTS_PER_SOL),
             asset,
             collection,
             owner,
@@ -75,7 +89,7 @@ describe("[mpl-core] tcomp listings", () => {
         ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
 
         await testEdit({
-          amount,
+          amount: new BN(LAMPORTS_PER_SOL * 2),
           owner,
           listState,
           currency,
@@ -86,8 +100,7 @@ describe("[mpl-core] tcomp listings", () => {
           testBuyCore({
             asset,
             collection,
-            listingPrice: initialAmount,
-            maxAmount: initialAmount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             buyer,
             owner: owner.publicKey,
             lookupTableAccount,
@@ -97,7 +110,7 @@ describe("[mpl-core] tcomp listings", () => {
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
         await testEdit({
-          amount,
+          amount: new BN(LAMPORTS_PER_SOL / 2),
           owner,
           listState,
           currency,
@@ -106,8 +119,7 @@ describe("[mpl-core] tcomp listings", () => {
         await testBuyCore({
           asset,
           collection,
-          listingPrice: amount,
-          maxAmount,
+          maxAmount: new BN(LAMPORTS_PER_SOL / 2),
           buyer,
           owner: owner.publicKey,
           lookupTableAccount,
@@ -120,7 +132,7 @@ describe("[mpl-core] tcomp listings", () => {
         const umi = await createUmi();
         const [owner, buyer] = await makeNTraders({ n: 2 });
 
-        const royaltyBps = 500;
+        const royaltyBps = 10000;
         const { asset, collection } = await createAssetWithCollection(
           umi,
           owner.publicKey,
@@ -129,11 +141,8 @@ describe("[mpl-core] tcomp listings", () => {
         );
         const [rentPayer] = await makeNTraders({ n: 1 });
 
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         await testListCore({
-          amount,
+          amount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           owner,
@@ -142,8 +151,7 @@ describe("[mpl-core] tcomp listings", () => {
         });
 
         await testBuyCore({
-          listingPrice: amount,
-          maxAmount,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           buyer,
@@ -159,7 +167,7 @@ describe("[mpl-core] tcomp listings", () => {
         const umi = await createUmi();
         const [owner, buyer] = await makeNTraders({ n: 2 });
 
-        const royaltyBps = 500;
+        const royaltyBps = 10000;
         const { asset, collection } = await createAssetWithCollection(
           umi,
           owner.publicKey,
@@ -167,11 +175,8 @@ describe("[mpl-core] tcomp listings", () => {
           royaltyBps
         );
 
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         await testListCore({
-          amount,
+          amount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           owner,
@@ -199,16 +204,13 @@ describe("[mpl-core] tcomp listings", () => {
         const umi = await createUmi();
         const [owner, buyer] = await makeNTraders({ n: 2 });
 
-        const royaltyBps = 500;
+        const royaltyBps = 10000;
         const { asset, collection } = await createAssetWithCollection(
           umi,
           owner.publicKey,
           undefined,
           royaltyBps
         );
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
 
         const { listState } = await testListCore({
           amount: new BN(LAMPORTS_PER_SOL),
@@ -223,8 +225,7 @@ describe("[mpl-core] tcomp listings", () => {
         //time expires, fails to buy
         await expect(
           testBuyCore({
-            listingPrice: amount,
-            maxAmount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             asset,
             collection,
             buyer,
@@ -243,8 +244,7 @@ describe("[mpl-core] tcomp listings", () => {
         });
 
         await testBuyCore({
-          listingPrice: amount,
-          maxAmount,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           buyer,
@@ -258,7 +258,7 @@ describe("[mpl-core] tcomp listings", () => {
         const umi = await createUmi();
         const [owner, buyer] = await makeNTraders({ n: 2 });
 
-        const royaltyBps = 500;
+        const royaltyBps = 10000;
         const { asset, collection } = await createAssetWithCollection(
           umi,
           owner.publicKey,
@@ -268,11 +268,8 @@ describe("[mpl-core] tcomp listings", () => {
 
         const [traderC] = await makeNTraders({ n: 1 });
 
-        let listingPrice = new BN(LAMPORTS_PER_SOL);
-        let maxPrice = listingPrice.mul(new BN(12)).div(new BN(10));
-
         await testListCore({
-          amount: listingPrice,
+          amount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           owner,
@@ -283,8 +280,7 @@ describe("[mpl-core] tcomp listings", () => {
         //fails to buy with wrong taker
         await expect(
           testBuyCore({
-            listingPrice,
-            maxAmount: maxPrice,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             asset,
             collection,
             buyer: traderC,
@@ -295,8 +291,7 @@ describe("[mpl-core] tcomp listings", () => {
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
 
         await testBuyCore({
-          listingPrice,
-          maxAmount: maxPrice,
+          maxAmount: new BN(LAMPORTS_PER_SOL),
           asset,
           collection,
           buyer,

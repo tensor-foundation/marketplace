@@ -37,7 +37,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupT22Test({
     t,
@@ -65,7 +65,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     owner: nftOwner.address,
     payer: payer,
     buyer: buyer.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -113,7 +113,7 @@ test('it can buy with a cosigner', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupT22Test({
     t,
@@ -141,7 +141,7 @@ test('it can buy with a cosigner', async (t) => {
     payer: payer,
     buyer: buyer.address,
     cosigner,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -184,7 +184,13 @@ test('it can buy with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const { client, signers, nft, listingPrice, splMint } = await setupT22Test({
+  const {
+    client,
+    signers,
+    nft,
+    price: listingPrice,
+    splMint,
+  } = await setupT22Test({
     t,
     action: TestAction.List,
     useSplToken: true,
@@ -208,7 +214,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     owner: nftOwner.address,
     payer: payer,
     buyer: buyer.address,
-    maxAmount: listingPrice! - 1n,
+    maxAmount: listingPrice - 1n,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -229,7 +235,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     client,
     signers,
     nft,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupT22Test({
     t,
@@ -258,7 +264,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     payer,
     buyer: buyer.address,
     // Missing cosigner!
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -283,7 +289,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     payer,
     buyer: buyer.address,
     cosigner: fakeCosigner, // Invalid cosigner
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -304,7 +310,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupT22Test({
     t,
@@ -331,7 +337,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     owner: nftOwner.address,
     payer,
     buyer: buyer.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -353,8 +359,7 @@ test('SPL fees are paid correctly', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupT22Test({
@@ -387,7 +392,7 @@ test('SPL fees are paid correctly', async (t) => {
     owner: nftOwner.address,
     payer,
     buyer: buyer.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -442,12 +447,12 @@ test('SPL fees are paid correctly', async (t) => {
   );
 
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
-  t.assert(feeVaultBalance === (listingPrice! * TAKER_FEE_BPS) / BASIS_POINTS);
+  t.assert(feeVaultBalance === (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS);
 
   // Royalties are paid to the creator ATA.
   t.assert(
     creatorBalance ===
-      BigInt(listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
+      BigInt(listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -457,8 +462,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupT22Test({
@@ -503,7 +507,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     buyer: buyer.address,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -584,8 +588,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupT22Test({
@@ -623,7 +626,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     payer,
     buyer: buyer.address,
     takerBroker: takerBroker.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
     creatorAtas: [nftUpdateAuthorityCurrencyAta],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),

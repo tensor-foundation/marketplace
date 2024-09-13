@@ -40,9 +40,6 @@ describe("tcomp listings", () => {
     lookupTableAccount = res.lookupTableAccount ?? undefined;
   });
 
-  let amount = new BN(LAMPORTS_PER_SOL);
-  let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
   for (const currency of [null, new PublicKey(TEST_USDC)]) {
     /// limit the number of creators to 0 or 1 when there is a currency
     /// as buy_spl requires more tx space
@@ -55,12 +52,6 @@ describe("tcomp listings", () => {
 
     describe(`Testing ${isNullLike(currency) ? "SOL" : "USDC"}`, () => {
       it("lists + edits + buys (no canopy)", async () => {
-        let initialAmount = new BN(LAMPORTS_PER_SOL);
-        let initialMaxAmount = initialAmount.mul(new BN(12)).div(new BN(10));
-
-        let amount = initialAmount.mul(new BN(2));
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const { nrCreators, canopyDepth } of [
           {
             nrCreators: 0,
@@ -88,7 +79,7 @@ describe("tcomp listings", () => {
 
           for (const { leaf, index, metadata, assetId } of leaves) {
             const { listState } = await testList({
-              amount: initialAmount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -101,7 +92,7 @@ describe("tcomp listings", () => {
             //can't list again
             await expect(
               testList({
-                amount: initialAmount,
+                amount: new BN(LAMPORTS_PER_SOL),
                 index,
                 memTree,
                 merkleTree,
@@ -112,9 +103,8 @@ describe("tcomp listings", () => {
                 canopyDepth,
               })
             ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
-            // Update to new amount.
             await testEdit({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL * 2),
               owner: traderA,
               listState,
               currency,
@@ -123,8 +113,7 @@ describe("tcomp listings", () => {
             await expect(
               testBuy({
                 index,
-                maxAmount: initialMaxAmount, // passed through to the program
-                listingPrice: initialAmount, // for test calculations
+                maxAmount: new BN(LAMPORTS_PER_SOL),
                 memTree,
                 merkleTree,
                 metadata,
@@ -135,20 +124,15 @@ describe("tcomp listings", () => {
                 canopyDepth,
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-
-            // Edit back to original amount.
             await testEdit({
-              amount: initialAmount,
+              amount: new BN(LAMPORTS_PER_SOL / 2),
               owner: traderA,
               listState,
               currency,
             });
-
-            // Buy with original amount.
             await testBuy({
               index,
-              maxAmount: initialMaxAmount,
-              listingPrice: initialAmount,
+              maxAmount: new BN(LAMPORTS_PER_SOL / 2),
               memTree,
               merkleTree,
               metadata,
@@ -163,9 +147,6 @@ describe("tcomp listings", () => {
       });
 
       it("lists + buys (optional royalties)", async () => {
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         // TODO: for now enforced
         for (const optionalRoyaltyPct of [0, 100]) {
           const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
@@ -176,7 +157,7 @@ describe("tcomp listings", () => {
 
           for (const { leaf, index, metadata, assetId } of leaves) {
             await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -189,8 +170,7 @@ describe("tcomp listings", () => {
               await expect(
                 testBuy({
                   index,
-                  maxAmount,
-                  listingPrice: amount,
+                  maxAmount: new BN(LAMPORTS_PER_SOL),
                   memTree,
                   merkleTree,
                   metadata,
@@ -206,8 +186,7 @@ describe("tcomp listings", () => {
             } else {
               await testBuy({
                 index,
-                maxAmount,
-                listingPrice: amount,
+                maxAmount: new BN(LAMPORTS_PER_SOL),
                 memTree,
                 merkleTree,
                 metadata,
@@ -222,7 +201,6 @@ describe("tcomp listings", () => {
         }
       });
 
-      // TODO: Fix this test. Access violation in stack frame--compression program.
       it("tries to buy with false creators", async () => {
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
@@ -230,12 +208,9 @@ describe("tcomp listings", () => {
             numMints: 2,
           });
 
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testList({
-            amount,
+            amount: new BN(LAMPORTS_PER_SOL),
             index,
             memTree,
             merkleTree,
@@ -248,8 +223,7 @@ describe("tcomp listings", () => {
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata: {
@@ -266,13 +240,11 @@ describe("tcomp listings", () => {
               currency,
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
-
           //fake shares
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata: {
@@ -289,13 +261,11 @@ describe("tcomp listings", () => {
               currency,
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
-
           //fake verified
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata: {
@@ -312,11 +282,9 @@ describe("tcomp listings", () => {
               currency,
             })
           ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
-
           await testBuy({
             index,
-            maxAmount,
-            listingPrice: amount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             memTree,
             merkleTree,
             metadata,
@@ -329,9 +297,6 @@ describe("tcomp listings", () => {
       });
 
       it("lists + buys (separate payer)", async () => {
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const nrCreators of capSplCreators([4])) {
           const { merkleTree, traderA, leaves, traderB, memTree, rentPayer } =
             await beforeHook({
@@ -344,7 +309,7 @@ describe("tcomp listings", () => {
 
           for (const { leaf, index, metadata, assetId } of leaves) {
             await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -356,8 +321,7 @@ describe("tcomp listings", () => {
             });
             await testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata,
@@ -375,13 +339,6 @@ describe("tcomp listings", () => {
 
       it("lists + edits + buys (with canopy)", async () => {
         let canopyDepth = 10;
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
-        let newAmount = new BN(LAMPORTS_PER_SOL * 2);
-        let newMaxAmount = newAmount.mul(new BN(12)).div(new BN(10));
-
         for (const nrCreators of capSplCreators([0, 1, 4])) {
           const {
             merkleTree,
@@ -395,7 +352,7 @@ describe("tcomp listings", () => {
 
           for (const { index, metadata } of leaves) {
             const { listState } = await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -407,18 +364,16 @@ describe("tcomp listings", () => {
               // lookupTableAccount, //<-- intentionally not passing
             });
             await testEdit({
-              amount: newAmount,
+              amount: new BN(LAMPORTS_PER_SOL * 2),
               owner: traderA,
               listState,
               currency,
             });
-
             //try to buy at the wrong price
             await expect(
               testBuy({
                 index,
-                maxAmount, // for amount
-                listingPrice: amount,
+                maxAmount: new BN(LAMPORTS_PER_SOL),
                 memTree,
                 merkleTree,
                 metadata,
@@ -431,13 +386,11 @@ describe("tcomp listings", () => {
                 // lookupTableAccount, //<-- intentionally not passing
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
-
             //try to buy with the wrong rent payer
             await expect(
               testBuy({
                 index,
-                maxAmount: newMaxAmount,
-                listingPrice: newAmount,
+                maxAmount: new BN(LAMPORTS_PER_SOL * 2),
                 memTree,
                 merkleTree,
                 metadata,
@@ -449,12 +402,9 @@ describe("tcomp listings", () => {
                 // lookupTableAccount, //<-- intentionally not passing
               })
             ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadRentDest"));
-
-            // Successfully buy with new amount.
             await testBuy({
               index,
-              maxAmount: newMaxAmount,
-              listingPrice: newAmount,
+              maxAmount: new BN(LAMPORTS_PER_SOL * 2),
               memTree,
               merkleTree,
               metadata,
@@ -472,10 +422,6 @@ describe("tcomp listings", () => {
 
       it("lists + buys (with delegate)", async () => {
         let canopyDepth = currency ? 11 : 10;
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const nrCreators of capSplCreators([0, 1, 4])) {
           const { merkleTree, traderA, leaves, traderB, memTree, rentPayer } =
             await beforeHook({ nrCreators, numMints: 2, canopyDepth });
@@ -494,7 +440,7 @@ describe("tcomp listings", () => {
             });
             //list using delegate
             await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -508,8 +454,7 @@ describe("tcomp listings", () => {
             });
             await testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata,
@@ -527,10 +472,6 @@ describe("tcomp listings", () => {
 
       it("lists + delists (with canopy)", async () => {
         let canopyDepth = 10;
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const nrCreators of capSplCreators([0, 1, 4])) {
           const {
             merkleTree,
@@ -544,7 +485,7 @@ describe("tcomp listings", () => {
 
           for (const { leaf, index, metadata, assetId } of leaves) {
             await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -591,17 +532,13 @@ describe("tcomp listings", () => {
 
       it("lists + delists (expired listing)", async () => {
         let canopyDepth = 10;
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const nrCreators of capSplCreators([0, 1, 4])) {
           const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
             await beforeHook({ nrCreators, numMints: 2, canopyDepth });
 
           for (const { leaf, index, metadata, assetId } of leaves) {
             await testList({
-              amount,
+              amount: new BN(LAMPORTS_PER_SOL),
               index,
               memTree,
               merkleTree,
@@ -638,10 +575,6 @@ describe("tcomp listings", () => {
 
       it("lists + edits + buys (expired listing)", async () => {
         let canopyDepth = 10;
-
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
           await beforeHook({
             nrCreators: currency ? 1 : 4,
@@ -651,7 +584,7 @@ describe("tcomp listings", () => {
 
         for (const { index, metadata } of leaves) {
           const { listState } = await testList({
-            amount,
+            amount: new BN(LAMPORTS_PER_SOL),
             index,
             memTree,
             merkleTree,
@@ -666,8 +599,7 @@ describe("tcomp listings", () => {
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata,
@@ -686,8 +618,7 @@ describe("tcomp listings", () => {
           });
           await testBuy({
             index,
-            maxAmount,
-            listingPrice: amount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             memTree,
             merkleTree,
             metadata,
@@ -709,12 +640,9 @@ describe("tcomp listings", () => {
           });
         const [traderC] = await makeNTraders({ n: 1 });
 
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const { leaf, index, metadata, assetId } of leaves) {
           await testList({
-            amount,
+            amount: new BN(LAMPORTS_PER_SOL),
             index,
             memTree,
             merkleTree,
@@ -728,8 +656,7 @@ describe("tcomp listings", () => {
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata,
@@ -741,8 +668,7 @@ describe("tcomp listings", () => {
           ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
           await testBuy({
             index,
-            maxAmount,
-            listingPrice: amount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             memTree,
             merkleTree,
             metadata,
@@ -764,12 +690,9 @@ describe("tcomp listings", () => {
           });
         const [traderC] = await makeNTraders({ n: 1 });
 
-        let amount = new BN(LAMPORTS_PER_SOL);
-        let maxAmount = amount.mul(new BN(12)).div(new BN(10));
-
         for (const { index, metadata } of leaves) {
           const { listState } = await testList({
-            amount,
+            amount: new BN(LAMPORTS_PER_SOL),
             index,
             memTree,
             merkleTree,
@@ -783,8 +706,7 @@ describe("tcomp listings", () => {
           await expect(
             testBuy({
               index,
-              maxAmount,
-              listingPrice: amount,
+              maxAmount: new BN(LAMPORTS_PER_SOL),
               memTree,
               merkleTree,
               metadata,
@@ -803,8 +725,7 @@ describe("tcomp listings", () => {
           });
           await testBuy({
             index,
-            maxAmount,
-            listingPrice: amount,
+            maxAmount: new BN(LAMPORTS_PER_SOL),
             memTree,
             merkleTree,
             metadata,
@@ -828,13 +749,13 @@ describe("tcomp listings", () => {
 
         const takerBroker = Keypair.generate().publicKey;
 
-        let listingPrice = new BN(LAMPORTS_PER_SOL);
-
         for (const { index, metadata, assetId } of leaves) {
+          let amount = LAMPORTS_PER_SOL;
+
           // --------------------------------------- List
 
           const { sig, listState } = await testList({
-            amount: listingPrice,
+            amount: new BN(amount),
             index,
             memTree,
             merkleTree,
@@ -846,7 +767,6 @@ describe("tcomp listings", () => {
           });
 
           {
-            const amount = listingPrice.toNumber();
             const ix = await fetchAndCheckSingleIxTx(sig!, "list");
             const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
             expect(event.type).eq("maker");
@@ -868,13 +788,11 @@ describe("tcomp listings", () => {
           // --------------------------------------- Edit (direct)
 
           //new settings
-          listingPrice = listingPrice.mul(new BN(2));
-          maxAmount = listingPrice.mul(new BN(12)).div(new BN(10));
-          let amount = listingPrice.toNumber();
+          amount = amount * 2;
 
           {
             const { sig } = await testEdit({
-              amount: listingPrice,
+              amount: new BN(amount),
               owner: traderA,
               privateTaker: traderC.publicKey,
               listState,
@@ -900,11 +818,14 @@ describe("tcomp listings", () => {
 
           // --------------------------------------- Edit (via cpi)
 
+          //new settings
+          amount = amount * 2;
+
           {
             const {
               tx: { ixs },
             } = await cpiEdit({
-              amount: listingPrice,
+              amount: new BN(amount),
               merkleTree,
               nonce: new BN(index),
               owner: traderA.publicKey,
@@ -932,8 +853,7 @@ describe("tcomp listings", () => {
           {
             const { sig } = await testBuy({
               index,
-              maxAmount,
-              listingPrice,
+              maxAmount: new BN(amount),
               memTree,
               merkleTree,
               metadata,

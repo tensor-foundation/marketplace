@@ -43,17 +43,14 @@ describe("[Token 2022] tcomp bids", () => {
         traderA.publicKey
       );
 
-      const amount = new BN(LAMPORTS_PER_SOL);
-      const minAmount = amount.mul(new BN(8)).div(new BN(10));
-
       await testBid({
-        amount,
+        amount: new BN(LAMPORTS_PER_SOL),
         targetId: mint,
         owner: traderB,
         cosigner,
       });
       await testBid({
-        amount,
+        amount: new BN(LAMPORTS_PER_SOL / 2),
         targetId: mint,
         owner: traderB,
         prevBidAmount: LAMPORTS_PER_SOL,
@@ -73,8 +70,7 @@ describe("[Token 2022] tcomp bids", () => {
         await expect(
           testTakeBidT22({
             ...common,
-            minAmount,
-            bidPrice: amount,
+            minAmount: new BN(LAMPORTS_PER_SOL),
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
       }
@@ -83,20 +79,18 @@ describe("[Token 2022] tcomp bids", () => {
       await expect(
         testTakeBidT22({
           ...common,
-          minAmount: amount.mul(new BN(12)).div(new BN(10)),
-          bidPrice: amount,
+          minAmount: new BN(LAMPORTS_PER_SOL),
           cosigner,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
-      // // Mismatch NFT.
+      // Mismatch NFT.
       await expect(
         testTakeBidT22({
           ...common,
           nftMint: badMint,
           nftSellerAcc: badAta,
-          minAmount,
-          bidPrice: amount,
+          minAmount: new BN(LAMPORTS_PER_SOL / 2),
           cosigner,
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
@@ -104,8 +98,7 @@ describe("[Token 2022] tcomp bids", () => {
       // Final sale.
       await testTakeBidT22({
         ...common,
-        bidPrice: amount,
-        minAmount,
+        minAmount: new BN(LAMPORTS_PER_SOL / 2),
         cosigner,
       });
     }

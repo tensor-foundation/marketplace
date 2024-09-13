@@ -8,7 +8,6 @@ import {
 } from '@solana/web3.js';
 import {
   createDefaultNft,
-  fetchMetadata,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
@@ -25,11 +24,7 @@ import {
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
-import {
-  BASIS_POINTS,
-  createWhitelistV2,
-  expectCustomError,
-} from '../_common.js';
+import { createWhitelistV2, expectCustomError } from '../_common.js';
 
 test('it can take a bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -38,7 +33,7 @@ test('it can take a bid on a legacy collection', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   // We create an NFT.
-  const { mint, metadata } = await createDefaultNft({
+  const { mint } = await createDefaultNft({
     client,
     payer: seller,
     authority: creatorKeypair,
@@ -53,12 +48,6 @@ test('it can take a bid on a legacy collection', async (t) => {
   });
 
   const price = 500_000_000n;
-
-  const md = (await fetchMetadata(client.rpc, metadata)).data;
-  const { sellerFeeBasisPoints } = md;
-
-  const minPrice =
-    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Create collection bid
   const bidId = (await generateKeyPairSigner()).address;
@@ -88,7 +77,7 @@ test('it can take a bid on a legacy collection', async (t) => {
     seller,
     whitelist,
     mint,
-    minAmount: minPrice,
+    minAmount: price,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -182,7 +171,7 @@ test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) 
     seller,
     whitelist,
     mint,
-    minAmount: (price * 7n) / 10n,
+    minAmount: price,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -255,7 +244,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: (price * 7n) / 10n,
+    minAmount: price,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -277,7 +266,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: (price * 7n) / 10n,
+    minAmount: price,
     bidState,
     cosigner: notCosigner,
     creators: [creatorKeypair.address],

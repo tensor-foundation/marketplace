@@ -10,7 +10,6 @@ import {
 } from '@solana/web3.js';
 import {
   createDefaultNft,
-  fetchMetadata,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
@@ -28,7 +27,6 @@ import {
   getBuyLegacyInstructionAsync,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
-import { BASIS_POINTS } from '../_common.js';
 
 const TOTAL_FEE_BP = 200n; // 2% of the price.
 const HUNDRED_BP = 10_000n;
@@ -52,7 +50,7 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
   const tokenAccountRent = 2_039_280n;
 
   // We create an NFT.
-  const { mint, metadata } = await createDefaultNft({
+  const { mint } = await createDefaultNft({
     client,
     payer: owner,
     authority: owner,
@@ -96,18 +94,12 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
   );
   const feeVaultBefore = BigInt(await getBalance(client, feeVault));
 
-  const md = (await fetchMetadata(client.rpc, metadata)).data;
-  const { sellerFeeBasisPoints } = md;
-
-  const maxPrice =
-    price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
-
   // When a buyer buys the NFT.
   const buyLegacyIx = await getBuyLegacyInstructionAsync({
     owner: owner.address,
     payer: buyer,
     mint,
-    maxAmount: maxPrice,
+    maxAmount: price,
     creators: [owner.address],
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,

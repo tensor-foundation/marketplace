@@ -50,7 +50,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -73,7 +73,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   await pipe(
@@ -118,7 +118,7 @@ test('it can buy with a cosigner', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -143,7 +143,7 @@ test('it can buy with a cosigner', async (t) => {
     buyer: buyer.address,
     distribution,
     cosigner,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   await pipe(
@@ -183,7 +183,13 @@ test('it can buy with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const { client, signers, nft, listingPrice, splMint } = await setupWnsTest({
+  const {
+    client,
+    signers,
+    nft,
+    price: listingPrice,
+    splMint,
+  } = await setupWnsTest({
     t,
     action: TestAction.List,
     useSplToken: true,
@@ -204,7 +210,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: listingPrice! - 1n,
+    maxAmount: listingPrice - 1n,
   });
 
   const promise = pipe(
@@ -222,7 +228,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     client,
     signers,
     nft,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -247,7 +253,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     buyer: buyer.address,
     distribution,
     // Missing cosigner!
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   let promise = pipe(
@@ -270,7 +276,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     buyer: buyer.address,
     distribution,
     cosigner: fakeCosigner, // Invalid cosigner
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   promise = pipe(
@@ -288,7 +294,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: maxPrice,
+    price: listingPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -311,7 +317,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   const sig = await pipe(
@@ -330,8 +336,7 @@ test('SPL fees are paid correctly', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -363,7 +368,7 @@ test('SPL fees are paid correctly', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   await pipe(
@@ -412,11 +417,11 @@ test('SPL fees are paid correctly', async (t) => {
   );
 
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
-  t.assert(feeVaultBalance === (listingPrice! * TAKER_FEE_BPS) / BASIS_POINTS);
+  t.assert(feeVaultBalance === (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS);
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -426,8 +431,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -471,7 +475,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     distribution,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   await pipe(
@@ -544,7 +548,7 @@ test('maker and taker brokers receive correct split', async (t) => {
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   t.assert(makerBrokerBalance === makerBrokerFee);
@@ -559,8 +563,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: listing,
-    price: maxPrice,
-    listingPrice,
+    price: listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -598,7 +601,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     buyer: buyer.address,
     distribution,
     takerBroker: takerBroker.address,
-    maxAmount: maxPrice,
+    maxAmount: listingPrice,
   });
 
   await pipe(
@@ -666,7 +669,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   // Taker broker still receives its share.
@@ -780,7 +783,7 @@ test('it can buy an NFT w/ a SPL token w/ multiple creators', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: (DEFAULT_LISTING_PRICE * 15n) / 10n,
+    maxAmount: DEFAULT_LISTING_PRICE,
   });
 
   await pipe(

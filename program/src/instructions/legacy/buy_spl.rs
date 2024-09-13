@@ -13,7 +13,7 @@ use tensor_toolbox::{
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
 };
-use tensor_vipers::{unwrap_checked, Validate};
+use tensor_vipers::Validate;
 
 use crate::{
     assert_decode_token_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
@@ -287,18 +287,16 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(
-        list_state.currency == Some(ctx.accounts.currency.key()),
-        TcompError::CurrencyMismatch
-    );
+    require!(amount <= max_amount, TcompError::PriceMismatch);
+    require!(currency.is_some(), TcompError::CurrencyMismatch);
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
-        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
+        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
@@ -313,34 +311,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         None,
         optional_royalty_pct,
     )?;
-
-    let asset_id = ctx.accounts.mint.key();
-
-    // NOTE: The event doesn't record
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0,
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
-    )?;
-
-    // Include royalty fees in the price to prevent frontrunning attacks.
-    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
-    require!(price <= max_amount, TcompError::PriceMismatch);
 
     // Transfer the NFT to the buyer
     transfer(
@@ -366,6 +336,30 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             delegate: None,
         },
         Some(&[&ctx.accounts.list_state.seeds()]),
+    )?;
+
+    let asset_id = ctx.accounts.mint.key();
+
+    // NOTE: The event doesn't record
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0,
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     // --Pay fees in currency--

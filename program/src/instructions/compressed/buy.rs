@@ -192,18 +192,16 @@ pub fn process_buy<'info>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
-
-    // No currency supported in this handler.
+    require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_none(), TcompError::CurrencyMismatch);
-
-    // Asset ID should match the one in the list state.
+    // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
     let Fees {
-        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
+        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -214,32 +212,6 @@ pub fn process_buy<'info>(
 
     let creator_fee =
         calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
-
-    // Record event before price check to make debugging easier.
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0, //quantity left
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
-    )?;
-
-    // Include royalty fees in the price to prevent frontrunning attacks.
-    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
-    require!(price <= max_amount, TcompError::PriceMismatch);
 
     // --------------------------------------- nft transfer
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
@@ -263,6 +235,27 @@ pub fn process_buy<'info>(
         signer: Some(&ctx.accounts.list_state.to_account_info()),
         signer_seeds: Some(&ctx.accounts.list_state.seeds()),
     })?;
+
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0, //quantity left
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
 
     // --------------------------------------- sol transfers
 
