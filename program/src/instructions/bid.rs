@@ -70,6 +70,9 @@ pub fn process_bid<'info>(
     // At least 1 seems reasonable, else why bother
     require!(quantity >= 1, TcompError::BadQuantity);
 
+    // Non-SOL currencies not supported yet.
+    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
+
     // only set rent_payer when initializing
     if bid_state.version == 0 {
         bid_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
@@ -95,7 +98,11 @@ pub fn process_bid<'info>(
         require!(field_id.is_none(), TcompError::BadBidField);
     }
 
-    // Can only be set once.
+    // User cannot set the target id to be the default pubkey to avoid them being able to re-edit these
+    // specific fields.
+    require!(target_id != Pubkey::default(), TcompError::WrongTargetId);
+
+    // Can only be set once, when the bid is first initialized the empty target id is the default pubkey.
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target.clone();
         bid_state.target_id = target_id;
