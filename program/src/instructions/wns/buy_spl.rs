@@ -19,9 +19,10 @@ use tensor_toolbox::{
 use tensor_vipers::Validate;
 
 use crate::{
-    assert_fee_vault_seeds, assert_list_state_seeds, assert_token_account, init_if_needed_ata,
-    program::MarketplaceProgram, record_event, InitIfNeededAtaParams, ListState, TakeEvent, Target,
-    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_associated_token_account, assert_fee_vault_seeds, assert_list_state_seeds,
+    assert_token_account, init_if_needed_ata, program::MarketplaceProgram, record_event,
+    InitIfNeededAtaParams, ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner,
+    CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -163,7 +164,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             &self.currency_token_program.key(),
         )?;
 
-        assert_token_account(
+        assert_associated_token_account(
             &self.list_ta.to_account_info(),
             &self.mint.key(),
             &self.list_state.key(),
