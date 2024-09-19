@@ -8,6 +8,15 @@
   Your one-stop-shop for your NFT needs.
 </p>
 
+## Status
+
+The new Marketplace program is currently deployed to devnet, and will get deployed to mainnet on October 2nd.
+
+| Devnet | Mainnet |
+| ------ | ------- |
+| v0.3.1 | -       |
+
+
 ## Programs
 
 This project contains the following programs:
