@@ -46,17 +46,23 @@ describe("[WNS Token 2022] tcomp bids", () => {
         0
       );
 
+      const amount = new BN(LAMPORTS_PER_SOL);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
+      // Create test bid.
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
+        amount: amount.div(new BN(2)),
         targetId: mint,
         owner: traderB,
         cosigner,
       });
+
+      // Update it to a higher price.
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL / 2),
+        amount,
         targetId: mint,
         owner: traderB,
-        prevBidAmount: LAMPORTS_PER_SOL,
+        prevBidAmount: amount.div(new BN(2)).toNumber(),
         cosigner,
       });
 
@@ -73,7 +79,8 @@ describe("[WNS Token 2022] tcomp bids", () => {
         await expect(
           testTakeBidWns({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            bidPrice: amount,
+            minAmount,
             collectionMint,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
@@ -83,7 +90,8 @@ describe("[WNS Token 2022] tcomp bids", () => {
       await expect(
         testTakeBidWns({
           ...common,
-          minAmount: new BN(LAMPORTS_PER_SOL),
+          bidPrice: amount,
+          minAmount: amount.mul(new BN(12)).div(new BN(10)),
           cosigner,
           collectionMint,
         })
@@ -95,7 +103,8 @@ describe("[WNS Token 2022] tcomp bids", () => {
           ...common,
           nftMint: badMint,
           nftSellerAcc: badAta,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          bidPrice: amount,
+          minAmount,
           cosigner,
           collectionMint,
         })
@@ -104,7 +113,8 @@ describe("[WNS Token 2022] tcomp bids", () => {
       // Final sale.
       await testTakeBidWns({
         ...common,
-        minAmount: new BN(LAMPORTS_PER_SOL / 2),
+        bidPrice: amount,
+        minAmount,
         cosigner,
         collectionMint,
       });

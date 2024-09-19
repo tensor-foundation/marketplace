@@ -1,9 +1,9 @@
 import { BN } from "@coral-xyz/anchor";
 import {
-  AddressLookupTableAccount,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
+    AddressLookupTableAccount,
+    Keypair,
+    LAMPORTS_PER_SOL,
+    PublicKey,
 } from "@solana/web3.js";
 import { nameToBuffer } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
@@ -11,18 +11,18 @@ import chaiAsPromised from "chai-as-promised";
 import { Field, MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
 import { makeNTraders } from "./account";
 import {
-  createAssetWithCollection,
-  createUmi,
-  getOwner,
+    createAssetWithCollection,
+    createUmi,
+    getOwner,
 } from "./metaplex_core";
 import {
-  beforeAllHook,
-  BROKER_FEE_PCT,
-  FEE_PCT,
-  fetchAndCheckSingleIxTx,
-  tcompSdk,
-  testBid,
-  testTakeBidCore,
+    beforeAllHook,
+    BROKER_FEE_PCT,
+    FEE_PCT,
+    fetchAndCheckSingleIxTx,
+    tcompSdk,
+    testBid,
+    testTakeBidCore,
 } from "./shared";
 import { makeVocWhitelist } from "./tswap";
 
@@ -60,17 +60,21 @@ describe("[mpl-core] tcomp bids", () => {
       const { asset: badAsset, collection: badCollection } =
         await createAssetWithCollection(umi, traderA.publicKey, undefined, 0);
 
+      const initialAmount = new BN(LAMPORTS_PER_SOL);
+      const amount = new BN(initialAmount.toNumber() / 2);
+      const minAmount = amount.mul(new BN(8)).div(new BN(10));
+
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
+        amount: initialAmount,
         targetId: asset,
         owner: traderB,
         cosigner,
       });
       await testBid({
-        amount: new BN(LAMPORTS_PER_SOL / 2),
+        amount,
         targetId: asset,
         owner: traderB,
-        prevBidAmount: LAMPORTS_PER_SOL,
+        prevBidAmount: initialAmount.toNumber(),
         cosigner,
       });
 
@@ -87,7 +91,8 @@ describe("[mpl-core] tcomp bids", () => {
         await expect(
           testTakeBidCore({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount,
+            bidPrice: amount,
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
       }
@@ -96,6 +101,7 @@ describe("[mpl-core] tcomp bids", () => {
       await expect(
         testTakeBidCore({
           ...common,
+          bidPrice: amount,
           minAmount: new BN(LAMPORTS_PER_SOL),
           cosigner,
         })
@@ -106,7 +112,8 @@ describe("[mpl-core] tcomp bids", () => {
         testTakeBidCore({
           ...common,
           asset: badAsset,
-          minAmount: new BN(LAMPORTS_PER_SOL / 2),
+          minAmount,
+          bidPrice: amount,
           cosigner,
           collection: badCollection,
         })
@@ -115,7 +122,8 @@ describe("[mpl-core] tcomp bids", () => {
       // Final sale.
       await testTakeBidCore({
         ...common,
-        minAmount: new BN(LAMPORTS_PER_SOL / 2),
+        minAmount,
+        bidPrice: amount,
         cosigner,
         collection,
         royaltyBps,
@@ -141,14 +149,15 @@ describe("[mpl-core] tcomp bids", () => {
     const takerBroker = Keypair.generate().publicKey;
     const { whitelist } = await makeVocWhitelist(collection);
 
-    let amount = LAMPORTS_PER_SOL;
+    let bidPrice = new BN(LAMPORTS_PER_SOL);
+    let minAmount = bidPrice.mul(new BN(8)).div(new BN(10));
 
     // --------------------------------------- Bid
 
     // Can't place bid with field and no fieldId, or vice versa.
     {
       const commonArgs = {
-        amount: new BN(amount),
+        amount: bidPrice,
         target: Target.Whitelist,
         targetId: whitelist,
         owner: traderB,
@@ -174,7 +183,7 @@ describe("[mpl-core] tcomp bids", () => {
 
     {
       const { sig } = await testBid({
-        amount: new BN(amount),
+        amount: bidPrice,
         target: Target.Whitelist,
         targetId: whitelist,
         owner: traderB,
@@ -183,6 +192,9 @@ describe("[mpl-core] tcomp bids", () => {
         privateTaker: traderA.publicKey,
         quantity: 2,
       });
+
+      const amount = bidPrice.toNumber();
+
       const ix = await fetchAndCheckSingleIxTx(sig!, "bid");
       const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
       expect(event.type).eq("maker");
@@ -206,7 +218,8 @@ describe("[mpl-core] tcomp bids", () => {
       const { sig } = await testTakeBidCore({
         asset,
         collection,
-        minAmount: new BN(amount),
+        minAmount,
+        bidPrice,
         seller: traderA,
         owner: traderB.publicKey,
         takerBroker,
@@ -214,6 +227,9 @@ describe("[mpl-core] tcomp bids", () => {
         whitelist,
         royaltyBps,
       });
+
+      const amount = bidPrice.toNumber();
+
       const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidCore");
       const event = tcompSdk.getEvent(ix) as unknown as TakeEvent;
       expect(event.type).eq("taker");

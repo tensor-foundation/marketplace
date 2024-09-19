@@ -35,7 +35,7 @@ test('it can buy an NFT', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -48,7 +48,7 @@ test('it can buy an NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice!,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -94,7 +94,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -108,7 +108,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice!,
     cosigner,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -150,12 +150,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupT22Test({
+  const { client, signers, nft, listingPrice } = await setupT22Test({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -184,12 +179,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
 });
 
 test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupT22Test({
+  const { client, signers, nft, listingPrice } = await setupT22Test({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -242,7 +232,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -255,7 +245,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -275,7 +265,8 @@ test('fees are paid correctly', async (t) => {
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -299,7 +290,7 @@ test('fees are paid correctly', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -365,7 +356,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -399,7 +391,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     creators: [nftUpdateAuthority.address],
@@ -491,7 +483,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -520,7 +513,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
     creators: [nftUpdateAuthority.address],

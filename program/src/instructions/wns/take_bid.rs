@@ -169,17 +169,19 @@ pub fn process_take_bid_wns<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
+    let bid_state = &ctx.accounts.bid_state;
     // validate mint account
     let seller_fee_basis_points = validate_mint(&ctx.accounts.mint.to_account_info())?;
+    let mint = ctx.accounts.mint.key();
+
+    let bid_price = bid_state.amount;
+
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
-        min_amount,
+        bid_price,
         None,
         Some(100), // <- enforced royalties
     )?;
-
-    let bid_state = &ctx.accounts.bid_state;
-    let mint = ctx.accounts.mint.key();
 
     match bid_state.target {
         Target::AssetId => {
@@ -247,7 +249,7 @@ pub fn process_take_bid_wns<'info>(
     approve(
         approve_accounts,
         ApproveParams {
-            price: min_amount,
+            price: bid_price,
             royalty_fee: creators_fee,
             signer_seeds: &[],
         },

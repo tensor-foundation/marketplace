@@ -11,7 +11,7 @@ use tensor_toolbox::{
     metaplex_core::{validate_asset, MetaplexCore},
     shard_num, transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
 };
-use tensor_vipers::{throw_err, Validate};
+use tensor_vipers::{throw_err, unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
@@ -214,16 +214,18 @@ pub fn process_buy_core_spl<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_some(), TcompError::CurrencyMismatch);
+    require!(
+        list_state.currency == Some(ctx.accounts.currency.key()),
+        TcompError::CurrencyMismatch
+    );
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
@@ -234,15 +236,6 @@ pub fn process_buy_core_spl<'info, 'b>(
 
     // No optional royalties.
     let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
-
-    // Transfer the asset to the buyer.
-    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
-        .asset(&ctx.accounts.asset)
-        .authority(Some(&ctx.accounts.list_state.to_account_info()))
-        .new_owner(&ctx.accounts.buyer)
-        .payer(&ctx.accounts.payer) // pay for what?
-        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
-        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     let asset_id = ctx.accounts.asset.key();
 
@@ -266,6 +259,18 @@ pub fn process_buy_core_spl<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    // Transfer the asset to the buyer.
+    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.asset)
+        .authority(Some(&ctx.accounts.list_state.to_account_info()))
+        .new_owner(&ctx.accounts.buyer)
+        .payer(&ctx.accounts.payer) // pay for what?
+        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
+        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     // --Pay fees in currency--
 
