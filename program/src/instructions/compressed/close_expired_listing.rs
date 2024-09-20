@@ -1,12 +1,17 @@
+use mpl_bubblegum::utils::get_asset_id;
 use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
 #[derive(Accounts)]
+#[instruction(nonce: u64)]
 pub struct CloseExpiredListing<'info> {
     #[account(
         mut,
-        seeds=[b"list_state".as_ref(), list_state.asset_id.as_ref()],
+        seeds=[
+            b"list_state".as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+        ],
         bump = list_state.bump[0],
         close = rent_destination,
         has_one = owner,
