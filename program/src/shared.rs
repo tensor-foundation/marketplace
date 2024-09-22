@@ -145,25 +145,13 @@ pub fn assert_associated_token_account(
     owner: &Pubkey,
     token_program: &Pubkey,
 ) -> Result<()> {
-    require!(
-        token_account_info.owner == token_program,
-        TcompError::InvalidTokenAccount
-    );
-
     let expected_ata = get_associated_token_address_with_program_id(owner, mint, token_program);
     require!(
         expected_ata == *token_account_info.key,
         TcompError::InvalidTokenAccount
     );
 
-    let mut data: &[u8] = &token_account_info.try_borrow_data()?;
-    let token_account = TokenAccount::try_deserialize(&mut data)?;
-
-    require!(
-        token_account.mint == *mint && token_account.owner == *owner,
-        TcompError::InvalidTokenAccount
-    );
-    Ok(())
+    assert_token_account(token_account_info, mint, owner, token_program)
 }
 
 pub struct InitIfNeededAtaParams<'info> {

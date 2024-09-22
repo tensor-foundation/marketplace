@@ -175,13 +175,17 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     if bid_state.quantity_left() == Ok(0) {
         // If fully filled, we want to close the bid even if it has some excess balance.
         // This prevents someone from sending lamports to the bid and preventing it from being closed.
-        // We send excess balance to back to the owner and rent to the rent destination.
+        // We send excess balance back to the owner and rent to the rent destination.
         let excess_balance = BidState::bid_balance(bid_state)?;
         if excess_balance > 0 {
-            transfer_lamports_from_pda(bid_state.deref().as_ref(), owner, excess_balance)?;
+            // If owner account is not rent-exempt we skip and the excess funds go to the rent destination.
+            transfer_lamports_from_pda_min_balance(
+                bid_state.deref().as_ref(),
+                owner,
+                excess_balance,
+            )?;
         }
 
-        BidState::verify_empty_balance(bid_state)?;
         close_account(
             &mut bid_state.to_account_info(),
             &mut rent_destination.to_account_info(),

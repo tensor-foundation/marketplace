@@ -1,8 +1,10 @@
+use mpl_bubblegum::utils::get_asset_id;
 use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
 #[derive(Accounts)]
+#[instruction(nonce: u64)]
 pub struct Delist<'info> {
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
@@ -17,7 +19,7 @@ pub struct Delist<'info> {
     #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
-            list_state.asset_id.as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump = list_state.bump[0],
         has_one = owner
