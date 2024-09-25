@@ -137,6 +137,23 @@ pub fn assert_token_account(
     Ok(())
 }
 
+/// Asserts that the given token account belongs to the provided mint, owner and token_program and is the derived
+/// associated token account for the given owner and mint.
+pub fn assert_associated_token_account(
+    token_account_info: &AccountInfo,
+    mint: &Pubkey,
+    owner: &Pubkey,
+    token_program: &Pubkey,
+) -> Result<()> {
+    let expected_ata = get_associated_token_address_with_program_id(owner, mint, token_program);
+    require!(
+        expected_ata == *token_account_info.key,
+        TcompError::InvalidTokenAccount
+    );
+
+    assert_token_account(token_account_info, mint, owner, token_program)
+}
+
 pub struct InitIfNeededAtaParams<'info> {
     pub ata: AccountInfo<'info>,
     pub payer: AccountInfo<'info>,

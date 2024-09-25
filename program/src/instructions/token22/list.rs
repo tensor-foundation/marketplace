@@ -35,7 +35,7 @@ pub struct ListT22<'info> {
     pub list_state: Box<Account<'info, ListState>>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = list_state,
