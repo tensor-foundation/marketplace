@@ -3934,20 +3934,18 @@
           {
             "name": "rentPayer",
             "docs": [
-              "owner is the rent payer when this is `None`"
+              "Owner is the rent payer when this is None.",
+              "Default Pubkey represents a None value."
             ],
-            "type": {
-              "defined": "NullableOption<Pubkey>"
-            }
+            "type": "publicKey"
           },
           {
             "name": "cosigner",
             "docs": [
-              "cosigner"
+              "Cosigner",
+              "Default Pubkey represents a None value."
             ],
-            "type": {
-              "defined": "NullableOption<Pubkey>"
-            }
+            "type": "publicKey"
           },
           {
             "name": "reserved1",
@@ -4067,18 +4065,19 @@
           },
           {
             "name": "cosigner",
-            "type": {
-              "defined": "NullableOption<Pubkey>"
-            }
+            "docs": [
+              "Cosigner",
+              "Default Pubkey represents a None value."
+            ],
+            "type": "publicKey"
           },
           {
             "name": "rentPayer",
             "docs": [
-              "owner is the rent payer when this is `None`"
+              "Owner is the rent payer when this is None.",
+              "Default Pubkey represents a None value."
             ],
-            "type": {
-              "defined": "NullableOption<Pubkey>"
-            }
+            "type": "publicKey"
           },
           {
             "name": "reserved",

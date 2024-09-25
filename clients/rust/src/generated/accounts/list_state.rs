@@ -31,9 +31,11 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is `None`
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
     pub rent_payer: NullableAddress,
-    /// cosigner
+    /// Cosigner
+    /// Default Pubkey represents a None value.
     pub cosigner: NullableAddress,
     #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
     pub reserved1: [u8; 64],

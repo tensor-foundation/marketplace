@@ -149,12 +149,11 @@ impl<'info> Validate<'info> for BuyWns<'info> {
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
-
         // Validate the cosigner if it's required.
-        if let Some(cosigner) = list_state.cosigner.value() {
+        if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
