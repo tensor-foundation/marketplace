@@ -46,8 +46,11 @@ pub struct BidState {
     pub maker_broker: Option<Pubkey>,
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
+    /// Cosigner
+    /// Default Pubkey represents a None value.
     pub cosigner: NullableAddress,
-    /// owner is the rent payer when this is `None`
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
     pub rent_payer: NullableAddress,
     pub reserved: [u8; 8],
     pub reserved1: [u8; 16],

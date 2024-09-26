@@ -95,10 +95,10 @@ impl<'info> Validate<'info> for TakeBidCompressed<'info> {
         );
 
         // check if the cosigner is required
-        if let Some(cosigner) = bid_state.cosigner.value() {
+        if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(bid_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())

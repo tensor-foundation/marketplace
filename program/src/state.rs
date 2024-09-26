@@ -1,5 +1,3 @@
-use tensor_toolbox::NullableOption;
-
 use crate::*;
 
 // (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
@@ -20,9 +18,9 @@ pub const LIST_STATE_DISCRIMINATOR: [u8; 8] = [78, 242, 89, 138, 161, 221, 176, 
 
 //(!!) sync with sdk.ts:getRentPayer()
 #[inline(always)]
-fn get_rent_payer(rent_payer: NullableOption<Pubkey>, owner: Pubkey) -> Pubkey {
-    if let Some(rent_payer) = rent_payer.value() {
-        *rent_payer
+fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
+    if rent_payer != Pubkey::default() {
+        rent_payer
     } else {
         owner
     }
@@ -44,10 +42,12 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is `None`
-    pub rent_payer: NullableOption<Pubkey>,
-    /// cosigner
-    pub cosigner: NullableOption<Pubkey>,
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
+    pub rent_payer: Pubkey,
+    /// Cosigner
+    /// Default Pubkey represents a None value.
+    pub cosigner: Pubkey,
     pub _reserved1: [u8; 64],
 }
 
@@ -110,9 +110,12 @@ pub struct BidState {
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
 
-    pub cosigner: NullableOption<Pubkey>,
-    /// owner is the rent payer when this is `None`
-    pub rent_payer: NullableOption<Pubkey>,
+    /// Cosigner
+    /// Default Pubkey represents a None value.
+    pub cosigner: Pubkey,
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
+    pub rent_payer: Pubkey,
 
     //borsh not implemented for u8;56
     pub _reserved: [u8; 8],

@@ -1,8 +1,5 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::{
-    metaplex_core::{validate_asset, MetaplexCore},
-    NullableOption,
-};
+use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
 
 use crate::*;
 
@@ -87,8 +84,13 @@ pub fn process_list_core<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
-    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
+    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.cosigner = ctx
+        .accounts
+        .cosigner
+        .as_ref()
+        .map(|c| c.key())
+        .unwrap_or_default();
     // serializes the account data
     list_state.exit(ctx.program_id)?;
 

@@ -1,5 +1,5 @@
 use mpl_bubblegum::utils::get_asset_id;
-use tensor_toolbox::{transfer_cnft, NullableOption, TransferArgs};
+use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
@@ -121,7 +121,7 @@ pub fn process_list<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
+    list_state.rent_payer = ctx.accounts.rent_payer.key();
 
     // Only set the cosigner if it's a signer and not a remaining account.
     list_state.cosigner = ctx
@@ -130,7 +130,7 @@ pub fn process_list<'info>(
         .as_ref()
         .filter(|cosigner| cosigner.is_signer)
         .map(|cosigner| cosigner.key())
-        .into();
+        .unwrap_or_default();
 
     // seriallizes the account data
     list_state.exit(ctx.program_id)?;

@@ -4,9 +4,8 @@ use anchor_spl::{
     token_2022::{close_account, CloseAccount, Token2022, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
-use tensor_toolbox::{
-    token_2022::{transfer::transfer_checked as tensor_transfer_checked, validate_mint},
-    NullableOption,
+use tensor_toolbox::token_2022::{
+    transfer::transfer_checked as tensor_transfer_checked, validate_mint,
 };
 
 use crate::{
@@ -116,8 +115,13 @@ pub fn process_list_t22<'info>(
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
-    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
+    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.cosigner = ctx
+        .accounts
+        .cosigner
+        .as_ref()
+        .map(|c| c.key())
+        .unwrap_or_default();
     // serializes the account data
     list_state.exit(ctx.program_id)?;
 

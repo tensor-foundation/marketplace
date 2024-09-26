@@ -65,9 +65,15 @@ export type ListState = {
   expiry: bigint;
   privateTaker: Option<Address>;
   makerBroker: Option<Address>;
-  /** owner is the rent payer when this is `None` */
+  /**
+   * Owner is the rent payer when this is None.
+   * Default Pubkey represents a None value.
+   */
   rentPayer: NullableAddress;
-  /** cosigner */
+  /**
+   * Cosigner
+   * Default Pubkey represents a None value.
+   */
   cosigner: NullableAddress;
   reserved1: ReadonlyUint8Array;
 };
@@ -82,9 +88,15 @@ export type ListStateArgs = {
   expiry: number | bigint;
   privateTaker: OptionOrNullable<Address>;
   makerBroker: OptionOrNullable<Address>;
-  /** owner is the rent payer when this is `None` */
+  /**
+   * Owner is the rent payer when this is None.
+   * Default Pubkey represents a None value.
+   */
   rentPayer: NullableAddressArgs;
-  /** cosigner */
+  /**
+   * Cosigner
+   * Default Pubkey represents a None value.
+   */
   cosigner: NullableAddressArgs;
   reserved1: ReadonlyUint8Array;
 };

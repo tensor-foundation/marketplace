@@ -86,8 +86,15 @@ export type BidState = {
   makerBroker: Option<Address>;
   margin: Option<Address>;
   updatedAt: bigint;
+  /**
+   * Cosigner
+   * Default Pubkey represents a None value.
+   */
   cosigner: NullableAddress;
-  /** owner is the rent payer when this is `None` */
+  /**
+   * Owner is the rent payer when this is None.
+   * Default Pubkey represents a None value.
+   */
   rentPayer: NullableAddress;
   reserved: Array<number>;
   reserved1: Array<number>;
@@ -113,8 +120,15 @@ export type BidStateArgs = {
   makerBroker: OptionOrNullable<Address>;
   margin: OptionOrNullable<Address>;
   updatedAt: number | bigint;
+  /**
+   * Cosigner
+   * Default Pubkey represents a None value.
+   */
   cosigner: NullableAddressArgs;
-  /** owner is the rent payer when this is `None` */
+  /**
+   * Owner is the rent payer when this is None.
+   * Default Pubkey represents a None value.
+   */
   rentPayer: NullableAddressArgs;
   reserved: Array<number>;
   reserved1: Array<number>;

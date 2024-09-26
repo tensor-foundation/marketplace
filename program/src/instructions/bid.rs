@@ -1,5 +1,5 @@
 use crate::*;
-use tensor_toolbox::{transfer_lamports_from_pda, NullableOption};
+use tensor_toolbox::transfer_lamports_from_pda;
 use tensorswap::instructions::assert_decode_margin_account;
 
 #[derive(Accounts)]
@@ -75,7 +75,7 @@ pub fn process_bid<'info>(
 
     // only set rent_payer when initializing
     if bid_state.version == 0 {
-        bid_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
+        bid_state.rent_payer = ctx.accounts.rent_payer.key();
     }
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [ctx.bumps.bid_state];
@@ -114,7 +114,7 @@ pub fn process_bid<'info>(
         // our api uses a bidTx ix when editing bids.
         match &ctx.accounts.cosigner {
             Some(cosigner) if cosigner.key() != ctx.accounts.owner.key() => {
-                bid_state.cosigner = NullableOption::new(cosigner.key());
+                bid_state.cosigner = cosigner.key();
             }
             _ => (),
         }

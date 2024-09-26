@@ -45,10 +45,10 @@ pub fn validate_cosigner<'info>(
     };
 
     // check if the cosigner is required
-    if let Some(cosigner) = list_state.cosigner.value() {
+    if list_state.cosigner != Pubkey::default() {
         let signer = maybe_cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-        require!(cosigner == signer.key, TcompError::BadCosigner);
+        require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
     }
 
     Ok(maybe_remaining)
