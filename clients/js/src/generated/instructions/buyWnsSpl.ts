@@ -38,6 +38,7 @@ import {
   resolveBuyerAta,
   resolveListAta,
   resolveWnsApprovePda,
+  resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
 import {
@@ -239,6 +240,11 @@ export function getBuyWnsSplInstructionDataCodec(): Codec<
   );
 }
 
+export type BuyWnsSplInstructionExtraArgs = {
+  collection: Address;
+  paymentMint?: Address;
+};
+
 export type BuyWnsSplAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultCurrencyTa extends string = string,
@@ -295,13 +301,15 @@ export type BuyWnsSplAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   approve?: Address<TAccountApprove>;
-  distribution: Address<TAccountDistribution>;
+  distribution?: Address<TAccountDistribution>;
   distributionCurrencyTa?: Address<TAccountDistributionCurrencyTa>;
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
+  collection: BuyWnsSplInstructionExtraArgs['collection'];
+  paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
   creators?: Array<Address>;
 };
 
@@ -559,6 +567,16 @@ export async function getBuyWnsSplInstructionAsync<
       ...(await resolveWnsApprovePda(resolverScope)),
     };
   }
+  if (!args.paymentMint) {
+    args.paymentMint =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.distribution.value) {
+    accounts.distribution = {
+      ...accounts.distribution,
+      ...(await resolveWnsDistributionPda(resolverScope)),
+    };
+  }
   if (!accounts.distributionCurrencyTa.value) {
     accounts.distributionCurrencyTa = {
       ...accounts.distributionCurrencyTa,
@@ -722,6 +740,8 @@ export type BuyWnsSplInput<
   extraMetas: Address<TAccountExtraMetas>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
+  collection: BuyWnsSplInstructionExtraArgs['collection'];
+  paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
   creators?: Array<Address>;
 };
 
@@ -913,6 +933,10 @@ export function getBuyWnsSplInstruction<
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!args.paymentMint) {
+    args.paymentMint =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.wnsProgram.value) {

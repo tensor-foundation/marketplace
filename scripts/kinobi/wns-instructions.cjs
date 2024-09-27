@@ -54,6 +54,15 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
+            distribution: {
+              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("collection"),
+                  k.argumentValueNode("paymentMint"),
+                ],
+              }),
+            },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -82,6 +91,17 @@ module.exports = function visitor(options) {
               },
             ),
           ],
+          arguments: {
+            collection: {
+              type: k.publicKeyTypeNode(),
+            },
+            paymentMint: {
+              type: k.publicKeyTypeNode(),
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
+              ),
+            },
+          },
         },
         buyWnsSpl: {
           accounts: {
@@ -191,6 +211,15 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
+            distribution: {
+              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("collection"),
+                  k.argumentValueNode("paymentMint"),
+                ],
+              }),
+            },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -225,6 +254,17 @@ module.exports = function visitor(options) {
               },
             ),
           ],
+          arguments: {
+            collection: {
+              type: k.publicKeyTypeNode(),
+            },
+            paymentMint: {
+              type: k.publicKeyTypeNode(),
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
+              ),
+            },
+          },
         },
         closeExpiredListingWns: {
           accounts: {
@@ -336,6 +376,15 @@ module.exports = function visitor(options) {
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },
+            distribution: {
+              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("collection"),
+                  k.argumentValueNode("paymentMint"),
+                ],
+              }),
+            },
             extraMetas: {
               defaultValue: k.resolverValueNode(
                 "resolveWnsExtraAccountMetasPda",
@@ -355,6 +404,17 @@ module.exports = function visitor(options) {
               ),
             },
           },
+          arguments: {
+            collection: {
+              type: k.publicKeyTypeNode(),
+            },
+            paymentMint: {
+              type: k.publicKeyTypeNode(),
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
+              ),
+            },
+          },
         },
         listWns: {
           accounts: {
@@ -368,6 +428,15 @@ module.exports = function visitor(options) {
                   k.accountValueNode("owner"),
                   k.accountValueNode("tokenProgram"),
                   k.accountValueNode("mint"),
+                ],
+              }),
+            },
+            distribution: {
+              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("collection"),
+                  k.argumentValueNode("paymentMint"),
                 ],
               }),
             },
@@ -404,6 +473,17 @@ module.exports = function visitor(options) {
               defaultValue: k.publicKeyValueNode(
                 "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
                 "tokenProgram",
+              ),
+            },
+          },
+          arguments: {
+            collection: {
+              type: k.publicKeyTypeNode(),
+            },
+            paymentMint: {
+              type: k.publicKeyTypeNode(),
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
               ),
             },
           },
@@ -448,6 +528,15 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode("resolveWnsApprovePda", {
                 importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
+              }),
+            },
+            distribution: {
+              defaultValue: k.resolverValueNode("resolveWnsDistributionPda", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("collection"),
+                  k.argumentValueNode("paymentMint"),
+                ],
               }),
             },
             extraMetas: {
@@ -504,6 +593,15 @@ module.exports = function visitor(options) {
               defaultValue: k.enumValueNode(
                 k.definedTypeLinkNode("TokenStandard", "resolvers"),
                 "ProgrammableNonFungible",
+              ),
+            },
+            collection: {
+              type: k.publicKeyTypeNode(),
+            },
+            paymentMint: {
+              type: k.publicKeyTypeNode(),
+              defaultValue: k.publicKeyValueNode(
+                "11111111111111111111111111111111",
               ),
             },
           },

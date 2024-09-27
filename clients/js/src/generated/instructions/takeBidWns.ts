@@ -39,6 +39,7 @@ import {
   resolveOwnerAta,
   resolveSellerAta,
   resolveWnsApprovePda,
+  resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
@@ -218,6 +219,8 @@ export function getTakeBidWnsInstructionDataCodec(): Codec<
 
 export type TakeBidWnsInstructionExtraArgs = {
   tokenStandard?: TokenStandardArgs;
+  collection: Address;
+  paymentMint?: Address;
 };
 
 export type TakeBidWnsAsyncInput<
@@ -267,12 +270,14 @@ export type TakeBidWnsAsyncInput<
   mintProof?: Address<TAccountMintProof>;
   rentDestination?: Address<TAccountRentDestination>;
   approve?: Address<TAccountApprove>;
-  distribution: Address<TAccountDistribution>;
+  distribution?: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
+  collection: TakeBidWnsInstructionExtraArgs['collection'];
+  paymentMint?: TakeBidWnsInstructionExtraArgs['paymentMint'];
   creators?: Array<Address>;
 };
 
@@ -472,6 +477,16 @@ export async function getTakeBidWnsInstructionAsync<
       ...(await resolveWnsApprovePda(resolverScope)),
     };
   }
+  if (!args.paymentMint) {
+    args.paymentMint =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.distribution.value) {
+    accounts.distribution = {
+      ...accounts.distribution,
+      ...(await resolveWnsDistributionPda(resolverScope)),
+    };
+  }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
@@ -612,6 +627,8 @@ export type TakeBidWnsInput<
   extraMetas: Address<TAccountExtraMetas>;
   minAmount: TakeBidWnsInstructionDataArgs['minAmount'];
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
+  collection: TakeBidWnsInstructionExtraArgs['collection'];
+  paymentMint?: TakeBidWnsInstructionExtraArgs['paymentMint'];
   creators?: Array<Address>;
 };
 
@@ -775,6 +792,10 @@ export function getTakeBidWnsInstruction<
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!args.paymentMint) {
+    args.paymentMint =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
