@@ -44,6 +44,7 @@ import {
   resolveListAta,
   resolveOwnerAta,
   resolveWnsApprovePda,
+  resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
@@ -203,6 +204,11 @@ export function getListWnsInstructionDataCodec(): Codec<
   );
 }
 
+export type ListWnsInstructionExtraArgs = {
+  collection: Address;
+  paymentMint?: Address;
+};
+
 export type ListWnsAsyncInput<
   TAccountOwner extends string = string,
   TAccountOwnerTa extends string = string,
@@ -233,7 +239,7 @@ export type ListWnsAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   approve?: Address<TAccountApprove>;
-  distribution: Address<TAccountDistribution>;
+  distribution?: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
@@ -244,6 +250,8 @@ export type ListWnsAsyncInput<
   expireInSec?: ListWnsInstructionDataArgs['expireInSec'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
+  collection: ListWnsInstructionExtraArgs['collection'];
+  paymentMint?: ListWnsInstructionExtraArgs['paymentMint'];
 };
 
 export async function getListWnsInstructionAsync<
@@ -392,6 +400,16 @@ export async function getListWnsInstructionAsync<
       ...(await resolveWnsApprovePda(resolverScope)),
     };
   }
+  if (!args.paymentMint) {
+    args.paymentMint =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.distribution.value) {
+    accounts.distribution = {
+      ...accounts.distribution,
+      ...(await resolveWnsDistributionPda(resolverScope)),
+    };
+  }
   if (!accounts.wnsProgram.value) {
     accounts.wnsProgram.value =
       'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM' as Address<'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM'>;
@@ -497,6 +515,8 @@ export type ListWnsInput<
   expireInSec?: ListWnsInstructionDataArgs['expireInSec'];
   privateTaker?: ListWnsInstructionDataArgs['privateTaker'];
   makerBroker?: ListWnsInstructionDataArgs['makerBroker'];
+  collection: ListWnsInstructionExtraArgs['collection'];
+  paymentMint?: ListWnsInstructionExtraArgs['paymentMint'];
 };
 
 export function getListWnsInstruction<
@@ -615,6 +635,10 @@ export function getListWnsInstruction<
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!args.paymentMint) {
+    args.paymentMint =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.wnsProgram.value) {

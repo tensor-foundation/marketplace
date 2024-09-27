@@ -35,6 +35,7 @@ import {
   resolveListAta,
   resolveOwnerAta,
   resolveWnsApprovePda,
+  resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
@@ -166,6 +167,11 @@ export function getDelistWnsInstructionDataCodec(): Codec<
   );
 }
 
+export type DelistWnsInstructionExtraArgs = {
+  collection: Address;
+  paymentMint?: Address;
+};
+
 export type DelistWnsAsyncInput<
   TAccountOwner extends string = string,
   TAccountOwnerTa extends string = string,
@@ -196,10 +202,12 @@ export type DelistWnsAsyncInput<
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   approve?: Address<TAccountApprove>;
-  distribution: Address<TAccountDistribution>;
+  distribution?: Address<TAccountDistribution>;
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas?: Address<TAccountExtraMetas>;
+  collection: DelistWnsInstructionExtraArgs['collection'];
+  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
 };
 
 export async function getDelistWnsInstructionAsync<
@@ -295,8 +303,11 @@ export async function getDelistWnsInstructionAsync<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolver scope.
-  const resolverScope = { programAddress, accounts };
+  const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
@@ -344,6 +355,16 @@ export async function getDelistWnsInstructionAsync<
     accounts.approve = {
       ...accounts.approve,
       ...(await resolveWnsApprovePda(resolverScope)),
+    };
+  }
+  if (!args.paymentMint) {
+    args.paymentMint =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.distribution.value) {
+    accounts.distribution = {
+      ...accounts.distribution,
+      ...(await resolveWnsDistributionPda(resolverScope)),
     };
   }
   if (!accounts.wnsProgram.value) {
@@ -440,6 +461,8 @@ export type DelistWnsInput<
   wnsProgram?: Address<TAccountWnsProgram>;
   distributionProgram?: Address<TAccountDistributionProgram>;
   extraMetas: Address<TAccountExtraMetas>;
+  collection: DelistWnsInstructionExtraArgs['collection'];
+  paymentMint?: DelistWnsInstructionExtraArgs['paymentMint'];
 };
 
 export function getDelistWnsInstruction<
@@ -533,6 +556,9 @@ export function getDelistWnsInstruction<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -556,6 +582,10 @@ export function getDelistWnsInstruction<
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!args.paymentMint) {
+    args.paymentMint =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.wnsProgram.value) {
