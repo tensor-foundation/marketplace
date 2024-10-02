@@ -29,6 +29,7 @@ fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
 // --------------------------------------- listing
 
 #[account]
+#[derive(InitSpace)]
 pub struct ListState {
     pub version: u8,
     pub bump: [u8; 1],
@@ -72,19 +73,20 @@ pub struct AssetListState {}
 // --------------------------------------- bidding
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Target {
     AssetId = 0,
     Whitelist = 1,
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Field {
     Name = 0,
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],
@@ -127,7 +129,7 @@ pub struct BidState {
 #[constant]
 #[allow(clippy::identity_op)]
 pub const BID_STATE_SIZE: usize =
-    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128;
+    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 8 + 32 + 32 + 56;
 
 impl BidState {
     pub fn can_buy_more(&self) -> bool {

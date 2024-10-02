@@ -21,18 +21,28 @@ pub struct BuySpl<'info> {
         associated_token::authority = fee_vault,
     )]
     pub fee_vault_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
+
     pub log_wrapper: Program<'info, Noop>,
+
     pub compression_program: Program<'info, SplAccountCompression>,
+
     pub system_program: Program<'info, System>,
+
     pub bubblegum_program: Program<'info, Bubblegum>,
+
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+
     pub token_program: Interface<'info, TokenInterface>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
+
     #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
@@ -43,6 +53,7 @@ pub struct BuySpl<'info> {
         constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
     /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
     pub buyer: UncheckedAccount<'info>,
 
@@ -53,6 +64,7 @@ pub struct BuySpl<'info> {
       token::authority = payer,
     )]
     pub payer_source: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: has_one = owner on list_state
     pub owner: UncheckedAccount<'info>,
     #[account(init_if_needed,
@@ -61,6 +73,7 @@ pub struct BuySpl<'info> {
       associated_token::authority = owner,
     )]
     pub owner_destination: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: list_state.currency
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
@@ -97,6 +110,7 @@ pub struct BuySpl<'info> {
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_destination: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub rent_payer: Signer<'info>,
 

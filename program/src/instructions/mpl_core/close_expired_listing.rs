@@ -13,6 +13,8 @@ pub struct CloseExpiredListingCore<'info> {
         bump = list_state.bump[0],
         close = rent_destination,
         has_one = owner,
+        constraint = list_state.asset_id == asset.key() @ TcompError::AssetIdMismatch,
+        constraint = list_state.expiry < Clock::get()?.unix_timestamp @ TcompError::ListingNotYetExpired
     )]
     pub list_state: Box<Account<'info, ListState>>,
 

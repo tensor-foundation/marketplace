@@ -4,7 +4,10 @@ use anchor_spl::{
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::types::AuthorizationData;
-use tensor_toolbox::token_metadata::{transfer, TransferArgs};
+use tensor_toolbox::{
+    mpl_token_auth_rules::ID as MPL_TOKEN_AUTH_RULES_ID,
+    token_metadata::{transfer, TransferArgs},
+};
 
 use crate::{
     program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
@@ -92,7 +95,7 @@ pub struct DelistLegacy<'info> {
     pub authorization_rules: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
-    //#[account(address = MPL_TOKEN_AUTH_RULES_ID)]
+    #[account(address = MPL_TOKEN_AUTH_RULES_ID)]
     pub authorization_rules_program: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below

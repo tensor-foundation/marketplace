@@ -29,7 +29,8 @@ pub struct ListT22<'info> {
             mint.key().as_ref(),
         ],
         bump,
-        space = LIST_STATE_SIZE,
+        space = 8 + ListState::INIT_SPACE,
+        constraint = 8 + ListState::INIT_SPACE == LIST_STATE_SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
