@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidCore<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: checked in assert_fee_account()
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -48,7 +48,7 @@ pub struct TakeBidCore<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 

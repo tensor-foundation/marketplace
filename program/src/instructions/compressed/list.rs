@@ -29,7 +29,8 @@ pub struct List<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    #[account(init, payer = rent_payer,
+    #[account(init,
+        payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
             get_asset_id(&merkle_tree.key(), nonce).as_ref()

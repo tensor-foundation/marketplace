@@ -11,7 +11,7 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: Checked in assert_fee_account().
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -99,7 +99,8 @@ pub struct BuySpl<'info> {
     pub rent_destination: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
-    // cosigner is checked in validate()
+
+    // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
