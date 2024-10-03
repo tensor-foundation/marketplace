@@ -6,6 +6,7 @@ use tensor_toolbox::{
 
 use crate::*;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct Buy<'info> {
     /// CHECK: Checked in assert_fee_account().
@@ -155,6 +156,7 @@ pub fn process_buy<'info>(
 
     // Validate the cosigner and fetch additional remaining account if it exists.
     // Cosigner could be a remaining account from an old client.
+    // TODO: I really dont get what we're trying to do here by stuffing cosigner into remaining accounts?
     let remaining_accounts =
         if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
             v.push(remaining_account);

@@ -19,10 +19,12 @@ use crate::{
     TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct BuyT22<'info> {
     /// CHECK: Seeds and program checked here, account has no state.
     #[account(mut,
+        // TODO: why are we sometimes checking seeds here and sometimes using the helper fn? cant we be consistent?
         seeds=[
             b"fee_vault".as_ref(),
             shard_num!(list_state),
@@ -130,6 +132,7 @@ impl<'info> Validate<'info> for BuyT22<'info> {
             TcompError::BrokerMismatch
         );
 
+        // TODO: why are we checking here manually instead of using the validate_cosigner helper fn? Inconsistent.
         // Validate the cosigner if it's required.
         if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

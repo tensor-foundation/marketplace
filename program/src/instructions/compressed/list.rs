@@ -32,6 +32,7 @@ pub struct List<'info> {
     #[account(init, payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
+            // TODO: any reason not taking this from the state itself?
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump,
@@ -72,6 +73,8 @@ pub fn process_list<'info>(
 
     // Validate the cosigner and fetch additional remaining account if it exists.
     // Cosigner could be a remaining account from an old client.
+    // TODO: I'm confused - why are we validating cosigner on a fresh struct that is guaranteed not to have it?
+    // TODO: why are we adding it to the remaining accounts, which are then directly passed into proof?
     let remaining_accounts =
         if let Some(remaining_account) = validate_cosigner(&ctx.accounts.cosigner, list_state)? {
             v.push(remaining_account);
@@ -123,6 +126,8 @@ pub fn process_list<'info>(
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.rent_payer.key();
 
+    // TODO: I wonder if this opens up room for error? The person creating the listing adds a cosigner, but forgets to make them a signer. Now they think it's stored, but it's not. 
+    // We arleady have the Option<> so there is a way for someone to not pass it. I wonder if we should hard error if a cosigner is passed but not a signer?
     // Only set the cosigner if it's a signer and not a remaining account.
     list_state.cosigner = ctx
         .accounts

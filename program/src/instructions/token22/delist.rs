@@ -13,6 +13,7 @@ use crate::{
     TcompEvent, TcompSigner,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct DelistT22<'info> {
     /// CHECK: the token transfer will fail if owner is wrong (signature error)

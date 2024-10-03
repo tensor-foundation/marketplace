@@ -8,11 +8,13 @@ use whitelist_program::{assert_decode_whitelist_generic, WhitelistType};
 
 use crate::{take_bid_common::*, *};
 
+// seeds ok
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {
     /// CHECK: Seeds checked here, account has no state.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream (dont make Signer coz either this or delegate will sign)
@@ -21,6 +23,7 @@ pub struct TakeBidCompressed<'info> {
     /// CHECK: downstream (dont make Signer coz either this or seller will sign)
     pub delegate: UncheckedAccount<'info>,
     /// CHECK: downstream
+
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
     pub log_wrapper: Program<'info, Noop>,
@@ -29,6 +32,7 @@ pub struct TakeBidCompressed<'info> {
     pub bubblegum_program: Program<'info, Bubblegum>,
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
     pub tensorswap_program: Program<'info, EscrowProgram>,
+
     /// CHECK: this ensures that specific asset_id belongs to specific owner
     #[account(mut,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_state.bid_id.as_ref()],
@@ -40,17 +44,20 @@ pub struct TakeBidCompressed<'info> {
     /// CHECK: has_one = owner on bid_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
+
     /// CHECK: none, can be anything
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: none, can be anything
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
+
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
     pub margin: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
+    // TODO: if we switch to using the helper fn, adjust the comment.
     // cosigner is checked in validate()
     pub cosigner: Option<Signer<'info>>,
     /// CHECK: bid_state.get_rent_payer()
@@ -94,6 +101,7 @@ impl<'info> Validate<'info> for TakeBidCompressed<'info> {
             TcompError::BrokerMismatch
         );
 
+        // TODO: why are we checking here manually instead of using the validate_cosigner helper fn? Inconsistent.
         // check if the cosigner is required
         if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

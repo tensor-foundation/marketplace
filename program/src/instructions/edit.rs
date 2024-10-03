@@ -1,5 +1,6 @@
 use crate::*;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct Edit<'info> {
     /// CHECK: this ensures that specific asset_id belongs to specific owner

@@ -2,11 +2,13 @@ use crate::*;
 use tensor_toolbox::transfer_lamports_from_pda;
 use tensorswap::instructions::assert_decode_margin_account;
 
+// seeds ok
 #[derive(Accounts)]
 #[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
     pub system_program: Program<'info, System>,
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+    // init_if_needed is ok here since we're using owner.key() in seeds
     #[account(init_if_needed, payer = rent_payer,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,

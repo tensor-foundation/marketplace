@@ -12,6 +12,7 @@ use crate::*;
 
 use self::program::MarketplaceProgram;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct BuyCore<'info> {
     /// CHECK: Checked in assert_fee_account() in validate().
@@ -67,6 +68,7 @@ pub struct BuyCore<'info> {
 
     pub system_program: Program<'info, System>,
 
+    // TODO: this comment is wrong.
     // cosigner is checked in validate()
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:

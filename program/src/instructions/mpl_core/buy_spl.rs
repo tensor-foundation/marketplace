@@ -18,6 +18,7 @@ use crate::{
     TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct BuyCoreSpl<'info> {
     /// CHECK: seeds and program checked here
@@ -162,6 +163,7 @@ impl<'info> Validate<'info> for BuyCoreSpl<'info> {
             TcompError::BrokerMismatch
         );
 
+        // TODO: why are we checking here manually instead of using the validate_cosigner helper fn? Inconsistent.
         // Validate the cosigner if it's required.
         if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

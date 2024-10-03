@@ -5,6 +5,7 @@ use crate::*;
 
 use self::program::MarketplaceProgram;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct CloseExpiredListingCore<'info> {
     #[account(

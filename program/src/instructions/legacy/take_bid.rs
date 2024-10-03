@@ -19,8 +19,10 @@ use crate::{
     CURRENT_TCOMP_VERSION,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
+    // TODO: why below and not here using a macro?
     /// CHECK: Seeds checked here, account has no state.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
@@ -65,6 +67,7 @@ pub struct TakeBidLegacy<'info> {
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //can't deserialize directly coz Anchor traits not implemented
+    // TODO: why below and not here using a macro?
     /// CHECK: assert_decode_metadata check seeds
     #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
@@ -174,6 +177,7 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
             TcompError::BrokerMismatch
         );
 
+        // TODO: why are we checking here manually instead of using the validate_cosigner helper fn? Inconsistent.
         // check if the cosigner is required
         if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

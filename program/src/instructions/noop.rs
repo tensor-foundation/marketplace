@@ -8,6 +8,7 @@ use crate::*;
 // Anchor discriminator length.
 const DISCRIMINATOR_LEN: usize = 8;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct TcompNoop<'info> {
     /// CHECK: has to be signed by an account owned by the program (data checked in the instruction)

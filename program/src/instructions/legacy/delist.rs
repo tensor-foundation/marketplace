@@ -11,6 +11,7 @@ use crate::{
     Target, TcompError, TcompEvent, TcompSigner,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct DelistLegacy<'info> {
     #[account(mut)]

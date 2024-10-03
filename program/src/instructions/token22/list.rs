@@ -13,6 +13,7 @@ use crate::{
     TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE, MAX_EXPIRY_SEC,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct ListT22<'info> {
     /// CHECK: the token transfer will fail if owner is wrong (signature error)
@@ -116,12 +117,14 @@ pub fn process_list_t22<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
+    // TODO: inconsisten with other list functions.
     list_state.cosigner = ctx
         .accounts
         .cosigner
         .as_ref()
         .map(|c| c.key())
         .unwrap_or_default();
+    // TODO: oh wow what is this, never seen this before?
     // serializes the account data
     list_state.exit(ctx.program_id)?;
 

@@ -9,6 +9,7 @@ use tensor_toolbox::token_2022::{
 use self::program::MarketplaceProgram;
 use crate::*;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct CloseExpiredListingT22<'info> {
     /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.

@@ -9,6 +9,7 @@ use crate::*;
 
 use self::program::MarketplaceProgram;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct CloseExpiredListingLegacy<'info> {
     /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.

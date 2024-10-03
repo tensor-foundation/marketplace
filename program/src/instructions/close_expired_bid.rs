@@ -2,6 +2,7 @@ use tensor_toolbox::transfer_lamports_from_pda;
 
 use crate::*;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct CloseExpiredBid<'info> {
     #[account(

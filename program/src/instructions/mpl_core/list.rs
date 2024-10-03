@@ -5,6 +5,7 @@ use crate::*;
 
 use self::program::MarketplaceProgram;
 
+// seeds ok
 #[derive(Accounts)]
 pub struct ListCore<'info> {
     /// CHECK: validated on instruction handler
@@ -85,6 +86,8 @@ pub fn process_list_core<'info>(
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
+
+    // TODO: this handling of storing cosigner is inconsistent with how its stored in the other list function. Make it consistent.
     list_state.cosigner = ctx
         .accounts
         .cosigner

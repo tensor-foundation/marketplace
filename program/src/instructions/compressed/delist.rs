@@ -3,6 +3,7 @@ use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
+// seeds ok
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
 pub struct Delist<'info> {
@@ -19,6 +20,7 @@ pub struct Delist<'info> {
     #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
+            // TODO: any reason not taking this from the state itself?
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump = list_state.bump[0],

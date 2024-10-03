@@ -31,6 +31,7 @@ pub fn validate_cosigner<'info>(
     // If an account is at the cosigner position we need to check if it was deliberately passed in by the client or if it's
     // actually a remaining account sent by an old client.
     let (maybe_cosigner, maybe_remaining) = if let Some(account) = cosigner {
+        // TODO: can creators absolutely never be signers? what if an attacker gets hold of a creator account?
         // This was deliberately passed in by the client if it was a signer, as the creators will never be signers.
         // If it's the crate it will be a `None` variant on the Option.
         if account.is_signer {
@@ -44,6 +45,7 @@ pub fn validate_cosigner<'info>(
         (None, None)
     };
 
+    // TODO: so you're saying that for backwards compatibitliy cosigner might be a remaining account. But you always check it here as a NON remaining account. So old ixs would fail?
     // check if the cosigner is required
     if list_state.cosigner != Pubkey::default() {
         let signer = maybe_cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

@@ -16,6 +16,7 @@ use crate::{
     MAX_EXPIRY_SEC,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct ListLegacy<'info> {
     /// CHECK: the token transfer will fail if owner is wrong (signature error)

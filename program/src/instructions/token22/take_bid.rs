@@ -22,6 +22,7 @@ use crate::{
     BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
 };
 
+// seeds ok
 #[derive(Accounts)]
 pub struct TakeBidT22<'info> {
     /// CHECK: Seeds checked here, account has no state.
@@ -131,6 +132,7 @@ impl<'info> Validate<'info> for TakeBidT22<'info> {
             TcompError::BrokerMismatch
         );
 
+        // TODO: why are we checking here manually instead of using the validate_cosigner helper fn? Inconsistent.
         // check if the cosigner is required
         if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;

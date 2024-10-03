@@ -8,19 +8,23 @@ use tensor_toolbox::{
 };
 
 use crate::*;
-
+// seeds ok
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
+    // √ checked in fee fault helper below
     /// CHECK: Seeds checked here, account has no state.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
+    // √ received fees
+    // √ owned by fee vault
     #[account(init_if_needed,
         payer = rent_payer,
         associated_token::mint = currency,
         associated_token::authority = fee_vault,
     )]
     pub fee_vault_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
     /// CHECK: downstream
@@ -44,23 +48,30 @@ pub struct BuySpl<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
     /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
+    /// √ correctly assigned as new leaf owner
     pub buyer: UncheckedAccount<'info>,
 
+    // √ signer
     pub payer: Signer<'info>,
 
+    // √ owned by payer
     #[account(mut,
       token::mint = currency,
       token::authority = payer,
     )]
     pub payer_source: Box<InterfaceAccount<'info, TokenAccount>>,
-    /// CHECK: has_one = owner on list_state
+
+    /// √ CHECK: has_one = owner on list_state
     pub owner: UncheckedAccount<'info>,
+
+    // √ CHECK: owned by owner
     #[account(init_if_needed,
       payer = rent_payer,
       associated_token::mint = currency,
       associated_token::authority = owner,
     )]
     pub owner_destination: Box<InterfaceAccount<'info, TokenAccount>>,
+    //√ checked by mint=currency
     /// CHECK: list_state.currency
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
@@ -70,6 +81,7 @@ pub struct BuySpl<'info> {
     )]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
+    // √ owned by taker broker
     #[account(init_if_needed,
         payer = rent_payer,
         associated_token::mint = currency,
@@ -84,6 +96,7 @@ pub struct BuySpl<'info> {
     )]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
+    // √ owned by maker broker
     #[account(init_if_needed,
         payer = rent_payer,
         associated_token::mint = currency,
@@ -92,6 +105,7 @@ pub struct BuySpl<'info> {
     )]
     pub maker_broker_currency_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
+    // √ CHECK: list_state.get_rent_payer()
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
@@ -99,6 +113,7 @@ pub struct BuySpl<'info> {
     pub rent_destination: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
+    // TODO: this comment is wrong.
     // cosigner is checked in validate()
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
