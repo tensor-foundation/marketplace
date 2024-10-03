@@ -56,7 +56,7 @@ pub struct TakeBidWns<'info> {
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
@@ -278,7 +278,7 @@ pub fn process_take_bid_wns<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin: &ctx.accounts.margin,
+        margin: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,

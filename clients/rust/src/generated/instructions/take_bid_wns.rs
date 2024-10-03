@@ -22,7 +22,7 @@ pub struct TakeBidWns {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin: solana_program::pubkey::Pubkey,
+    pub shared_escrow: solana_program::pubkey::Pubkey,
 
     pub whitelist: solana_program::pubkey::Pubkey,
 
@@ -111,7 +111,7 @@ impl TakeBidWns {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin,
+            self.shared_escrow,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -235,7 +235,7 @@ pub struct TakeBidWnsInstructionArgs {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin
+///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
@@ -261,7 +261,7 @@ pub struct TakeBidWnsBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin: Option<solana_program::pubkey::Pubkey>,
+    shared_escrow: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
@@ -326,8 +326,8 @@ impl TakeBidWnsBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin = Some(margin);
+    pub fn shared_escrow(&mut self, shared_escrow: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.shared_escrow = Some(shared_escrow);
         self
     }
     /// `[optional account, default to 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp']`
@@ -470,7 +470,7 @@ impl TakeBidWnsBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin: self.margin.expect("margin is not set"),
+            shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
             whitelist: self.whitelist.unwrap_or(solana_program::pubkey!(
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
@@ -529,7 +529,7 @@ pub struct TakeBidWnsCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -583,7 +583,7 @@ pub struct TakeBidWnsCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -636,7 +636,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin: accounts.margin,
+            shared_escrow: accounts.shared_escrow,
             whitelist: accounts.whitelist,
             seller_ta: accounts.seller_ta,
             mint: accounts.mint,
@@ -730,7 +730,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin.key,
+            *self.shared_escrow.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -836,7 +836,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin.clone());
+        account_infos.push(self.shared_escrow.clone());
         account_infos.push(self.whitelist.clone());
         account_infos.push(self.seller_ta.clone());
         account_infos.push(self.mint.clone());
@@ -878,7 +878,7 @@ impl<'a, 'b> TakeBidWnsCpi<'a, 'b> {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin
+///   6. `[writable]` shared_escrow
 ///   7. `[]` whitelist
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
@@ -911,7 +911,7 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin: None,
+            shared_escrow: None,
             whitelist: None,
             seller_ta: None,
             mint: None,
@@ -982,11 +982,11 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin(
+    pub fn shared_escrow(
         &mut self,
-        margin: &'b solana_program::account_info::AccountInfo<'a>,
+        shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin = Some(margin);
+        self.instruction.shared_escrow = Some(shared_escrow);
         self
     }
     #[inline(always)]
@@ -1192,7 +1192,10 @@ impl<'a, 'b> TakeBidWnsCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin: self.instruction.margin.expect("margin is not set"),
+            shared_escrow: self
+                .instruction
+                .shared_escrow
+                .expect("shared_escrow is not set"),
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
@@ -1275,7 +1278,7 @@ struct TakeBidWnsCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    shared_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,

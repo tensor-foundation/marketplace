@@ -48,7 +48,7 @@ pub struct TakeBidCompressed<'info> {
     pub maker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
     // cosigner is checked in validate()
@@ -147,7 +147,7 @@ impl<'info> TakeBidCompressed<'info> {
         take_bid_shared(TakeBidArgs {
             bid_state: &mut self.bid_state,
             seller: &self.seller,
-            margin: &self.margin,
+            margin: &self.shared_escrow,
             owner: &self.owner,
             rent_destination: &self.rent_destination,
             maker_broker: &self.maker_broker,

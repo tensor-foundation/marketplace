@@ -58,7 +58,7 @@ export type TakeBidT22Instruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMargin extends string | IAccountMeta<string> = string,
+  TAccountSharedEscrow extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
@@ -109,9 +109,9 @@ export type TakeBidT22Instruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMargin extends string
-        ? WritableAccount<TAccountMargin>
-        : TAccountMargin,
+      TAccountSharedEscrow extends string
+        ? WritableAccount<TAccountSharedEscrow>
+        : TAccountSharedEscrow,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
@@ -201,7 +201,7 @@ export type TakeBidT22AsyncInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
@@ -221,7 +221,7 @@ export type TakeBidT22AsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   sellerTa?: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
@@ -248,7 +248,7 @@ export async function getTakeBidT22InstructionAsync<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountSellerTa extends string,
   TAccountMint extends string,
@@ -269,7 +269,7 @@ export async function getTakeBidT22InstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -292,7 +292,7 @@ export async function getTakeBidT22InstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -318,7 +318,7 @@ export async function getTakeBidT22InstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
@@ -361,9 +361,6 @@ export async function getTakeBidT22InstructionAsync<
       ...accounts.feeVault,
       ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
     };
-  }
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.owner.value);
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
@@ -433,7 +430,7 @@ export async function getTakeBidT22InstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
@@ -460,7 +457,7 @@ export async function getTakeBidT22InstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -485,7 +482,7 @@ export type TakeBidT22Input<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountSellerTa extends string = string,
   TAccountMint extends string = string,
@@ -505,7 +502,7 @@ export type TakeBidT22Input<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   sellerTa: Address<TAccountSellerTa>;
   mint: Address<TAccountMint>;
@@ -532,7 +529,7 @@ export function getTakeBidT22Instruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountSellerTa extends string,
   TAccountMint extends string,
@@ -553,7 +550,7 @@ export function getTakeBidT22Instruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -575,7 +572,7 @@ export function getTakeBidT22Instruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountMargin,
+  TAccountSharedEscrow,
   TAccountWhitelist,
   TAccountSellerTa,
   TAccountMint,
@@ -600,7 +597,7 @@ export function getTakeBidT22Instruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     sellerTa: { value: input.sellerTa ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
@@ -629,9 +626,6 @@ export function getTakeBidT22Instruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.owner.value);
-  }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
@@ -688,7 +682,7 @@ export function getTakeBidT22Instruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.sellerTa),
       getAccountMeta(accounts.mint),
@@ -715,7 +709,7 @@ export function getTakeBidT22Instruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountSellerTa,
     TAccountMint,
@@ -745,7 +739,7 @@ export type ParsedTakeBidT22Instruction<
     owner: TAccountMetas[3];
     takerBroker?: TAccountMetas[4] | undefined;
     makerBroker?: TAccountMetas[5] | undefined;
-    margin: TAccountMetas[6];
+    sharedEscrow: TAccountMetas[6];
     whitelist: TAccountMetas[7];
     sellerTa: TAccountMetas[8];
     mint: TAccountMetas[9];
@@ -796,7 +790,7 @@ export function parseTakeBidT22Instruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      margin: getNextAccount(),
+      sharedEscrow: getNextAccount(),
       whitelist: getNextAccount(),
       sellerTa: getNextAccount(),
       mint: getNextAccount(),
