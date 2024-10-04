@@ -67,6 +67,7 @@ pub fn assert_decode_token_account(
         token_account.mint == *mint && token_account.owner == *authority,
         TcompError::InvalidTokenAccount
     );
+    // TODO: are we okay if it's prog A when we actually expect prog B? Like is this check too lose?
     require!(
         TOKEN_PROGRAMS.contains(&account.owner.to_string().as_str()),
         TcompError::InvalidTokenAccount
@@ -122,6 +123,7 @@ pub fn assert_token_account(
     token_account_info: &AccountInfo,
     mint: &Pubkey,
     owner: &Pubkey,
+    // TODO: why are we passing in token_program instead of using a hardcoded one? can a malicious one be passed in?
     token_program: &Pubkey,
 ) -> Result<()> {
     require!(
@@ -192,5 +194,6 @@ pub fn init_if_needed_ata(params: InitIfNeededAtaParams) -> Result<()> {
         },
     );
 
+    // TODO: interesting, never seen this before
     create_idempotent(ctx)
 }

@@ -3,6 +3,7 @@ use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
 pub struct CloseExpiredListing<'info> {
@@ -51,6 +52,7 @@ pub fn process_close_expired_listing<'info>(
         TcompError::ListingNotYetExpired
     );
 
+    // TODO: asset_id check. Shoujld compare asset_id that you get with these params with the one actually stored in listing.
     transfer_cnft(TransferArgs {
         root,
         nonce,

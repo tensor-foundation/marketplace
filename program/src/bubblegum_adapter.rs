@@ -149,6 +149,7 @@ impl From<Collection> for TCollection {
     }
 }
 
+// gud
 #[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TMetadataArgs {
     /// The name of the asset

@@ -80,8 +80,10 @@ pub fn process_list_core<'info>(
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            // TODO: no checked math?
             Clock::get()?.unix_timestamp + expire_in_i64
         }
+        // TODO: no checked math?
         None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
     };
     list_state.expiry = expiry;

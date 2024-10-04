@@ -7,6 +7,7 @@ use tensor_toolbox::{
 use crate::*;
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct Buy<'info> {
     /// CHECK: Checked in assert_fee_account().
@@ -152,6 +153,7 @@ pub fn process_buy<'info>(
     let list_state = &ctx.accounts.list_state;
 
     // In case we have an extra remaining account.
+    // TODO: no checked math?
     let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.

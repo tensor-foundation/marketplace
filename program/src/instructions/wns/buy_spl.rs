@@ -146,6 +146,8 @@ pub struct BuyWnsSpl<'info> {
 
 impl<'info> Validate<'info> for BuyWnsSpl<'info> {
     fn validate(&self) -> Result<()> {
+        // TODO: hm why do we have to do all this shit manually?
+
         assert_fee_vault_seeds(
             &self.fee_vault.to_account_info(),
             &self.list_state.to_account_info(),

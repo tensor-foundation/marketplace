@@ -1,6 +1,7 @@
 use crate::*;
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct Edit<'info> {
     /// CHECK: this ensures that specific asset_id belongs to specific owner
@@ -27,6 +28,7 @@ pub fn process_edit<'info>(
 ) -> Result<()> {
     let list_state = &mut ctx.accounts.list_state;
     list_state.amount = amount;
+    // TODO: ooooof is it a good idea to let them edit currency? what can go wrong?
     list_state.currency = currency;
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
@@ -38,6 +40,7 @@ pub fn process_edit<'info>(
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            // TODO: no checked math?
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         None => current_expiry,

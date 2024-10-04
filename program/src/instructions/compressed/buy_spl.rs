@@ -9,6 +9,7 @@ use tensor_toolbox::{
 
 use crate::*;
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
     // √ checked in fee fault helper below
@@ -124,6 +125,7 @@ pub struct BuySpl<'info> {
 
 impl<'info> Validate<'info> for BuySpl<'info> {
     fn validate(&self) -> Result<()> {
+        // TODO: is there a reason these validation checks are done differently between ixs? Eg this account is checked via anchor in legacy ix
         assert_fee_account(
             &self.fee_vault.to_account_info(),
             &self.list_state.to_account_info(),
@@ -194,7 +196,9 @@ pub fn process_buy_spl<'info>(
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
 
+    // TODO: do we even do anything with this v? what's the point of it?
     // In case we have an extra remaining account.
+    // TODO: no checked math?
     let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.
@@ -208,12 +212,14 @@ pub fn process_buy_spl<'info>(
             ctx.remaining_accounts
         };
 
+    // TODO: should we really have this in the oss contract?
     // NB: TRoll hardcodes Some(100) to match
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled
     );
 
+    // TODO: is there a world where creator accounts are not passed in first that leads to damage?
     let (creator_accounts, remaining_accounts) = remaining_accounts.split_at(creator_shares.len());
     let (creator_ata_accounts, proof_accounts) = remaining_accounts.split_at(creator_shares.len());
     let creator_accounts_with_ata = creator_accounts
@@ -250,6 +256,7 @@ pub fn process_buy_spl<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
+    // TODO: make this a constant and link to it from everywhere?
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
 
     let Fees {

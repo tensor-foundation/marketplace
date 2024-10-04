@@ -148,6 +148,7 @@ pub fn process_buy_core<'info, 'b>(
     let list_state = &ctx.accounts.list_state;
 
     // In case we have an extra remaining account.
+    // TODO: no checked math?
     let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.

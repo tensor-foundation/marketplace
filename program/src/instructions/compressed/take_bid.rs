@@ -9,6 +9,7 @@ use whitelist_program::{assert_decode_whitelist_generic, WhitelistType};
 use crate::{take_bid_common::*, *};
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct TakeBidCompressed<'info> {
     /// CHECK: Seeds checked here, account has no state.
@@ -186,6 +187,7 @@ pub fn handler_full_meta<'info>(
     min_amount: u64,
     optional_royalty_pct: Option<u16>,
 ) -> Result<()> {
+    // TODO: how come we require this in some buy/take_bid ixs and not others?
     require!(
         optional_royalty_pct == Some(100),
         TcompError::OptionalRoyaltiesNotYetEnabled
@@ -228,6 +230,7 @@ pub fn handler_full_meta<'info>(
                         verified: collection.verified,
                     });
 
+            // TODO: we can remove this
             // Block selling into Tensorian Shards bids (shards useless: protect uninformed bidders).
             if let Some(coll) = &collection {
                 require!(
@@ -256,6 +259,7 @@ pub fn handler_full_meta<'info>(
                     whitelist.verify_whitelist_tcomp(collection, creators)?;
                 }
                 WhitelistType::V2(whitelist) => {
+                    //none makes sense because tcomp never uses proof
                     whitelist.verify(&collection, &creators, &None)?;
                 }
             }

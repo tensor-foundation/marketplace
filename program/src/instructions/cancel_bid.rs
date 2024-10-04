@@ -3,6 +3,7 @@ use tensor_toolbox::transfer_lamports_from_pda;
 use crate::*;
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct CancelBid<'info> {
     #[account(

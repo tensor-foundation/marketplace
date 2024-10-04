@@ -9,6 +9,7 @@ use crate::*;
 const DISCRIMINATOR_LEN: usize = 8;
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 pub struct TcompNoop<'info> {
     /// CHECK: has to be signed by an account owned by the program (data checked in the instruction)

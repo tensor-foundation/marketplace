@@ -3,6 +3,7 @@ use tensor_toolbox::transfer_lamports_from_pda;
 use tensorswap::instructions::assert_decode_margin_account;
 
 // seeds ok
+// logic ok
 #[derive(Accounts)]
 #[instruction(bid_id: Pubkey)]
 pub struct Bid<'info> {
@@ -40,6 +41,7 @@ impl<'info> Bid<'info> {
     }
 }
 
+// TODO: why keep this around
 impl<'info> Validate<'info> for Bid<'info> {
     fn validate(&self) -> Result<()> {
         Ok(())
@@ -111,6 +113,7 @@ pub fn process_bid<'info>(
         bid_state.field.clone_from(&field);
         bid_state.field_id = field_id;
 
+        // TODO: so cosigner can only be used for collection bids, we okay with that?
         // SECURITY RISK: do NOT store the cosigner if it's the owner's signer key
         // otherwise on editing bids a trait bid will be made a normal bid. \
         // our api uses a bidTx ix when editing bids.
@@ -147,6 +150,7 @@ pub fn process_bid<'info>(
         Some(expire_in_sec) => {
             let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            // TODO: no checked math?
             Clock::get()?.unix_timestamp + expire_in_i64
         }
         // When creating bid for the first time.
@@ -223,6 +227,7 @@ pub fn process_bid<'info>(
                     diff,
                 )?;
             } else {
+                // TODO: do we need to check if this is is exactly 0? Can anything bad happen if it is?
                 let diff = unwrap_int!(deposit_amount.checked_sub(bid_balance));
                 ctx.accounts
                     .transfer_lamports(&ctx.accounts.bid_state.to_account_info(), diff)?;

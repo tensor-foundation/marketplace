@@ -224,6 +224,7 @@ impl<'info> BuyLegacySpl<'info> {
     fn transfer_currency(&self, to: &AccountInfo<'info>, amount: u64) -> Result<()> {
         transfer_checked(
             CpiContext::new(
+                // TODO: can this ever go wrong if a wrong program is called?
                 self.currency_token_program.to_account_info(),
                 TransferChecked {
                     from: self.payer_currency_ta.to_account_info(),
@@ -412,6 +413,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     // Close the list token account.
     close_account(
         CpiContext::new(
+            // TODO: can this ever go wrong if a wrong program is called?
             ctx.accounts.token_program.to_account_info(),
             CloseAccount {
                 account: ctx.accounts.list_ta.to_account_info(),

@@ -302,6 +302,7 @@ pub fn process_buy_core_spl<'info, 'b>(
     // Pay creator royalties.
     if let Some(Royalties { creators, .. }) = royalties {
         let creators_len = creators.len();
+        // TODO: no checked math?
         if ctx.remaining_accounts.len() < creators_len * 2 {
             throw_err!(TcompError::InsufficientRemainingAccounts);
         }

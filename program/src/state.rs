@@ -13,6 +13,7 @@ pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/
 #[constant]
 pub const MAKER_BROKER_PCT: u64 = 80; // Out of 100
 
+// TODO: can you check these to make sure they're correct? Doesnt disc change really easily when fields change? Seems VERY dangerous to just hardcord liek this?
 pub const BID_STATE_DISCRIMINATOR: [u8; 8] = [155, 197, 5, 97, 189, 60, 8, 183];
 pub const LIST_STATE_DISCRIMINATOR: [u8; 8] = [78, 242, 89, 138, 161, 221, 176, 75];
 
@@ -54,6 +55,7 @@ pub struct ListState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
+// end shoujld be 32 *2 + 64, not 128
 pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128;
 
 impl ListState {
@@ -126,6 +128,7 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
+//8 + 32 + 32 +8 + 16 +32 instead of 128 at the end
 pub const BID_STATE_SIZE: usize =
     8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128;
 

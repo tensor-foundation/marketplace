@@ -28,6 +28,7 @@ pub struct TakeBidArgs<'a, 'info> {
     pub system_prog: &'a Program<'info, System>,
 }
 
+// gud
 pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let TakeBidArgs {
         bid_state,
