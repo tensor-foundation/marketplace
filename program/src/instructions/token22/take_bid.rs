@@ -255,7 +255,7 @@ pub fn process_take_bid_t22<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin: &ctx.accounts.shared_escrow,
+        escrow: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
@@ -272,8 +272,8 @@ pub fn process_take_bid_t22<'info>(
         optional_royalty_pct: None,
         seller_fee_basis_points,
         creator_accounts: &creator_accounts,
-        tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.escrow_program,
+        marketplace_prog: &ctx.accounts.marketplace_program,
+        escrow_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

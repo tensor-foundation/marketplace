@@ -147,7 +147,7 @@ impl<'info> TakeBidCompressed<'info> {
         take_bid_shared(TakeBidArgs {
             bid_state: &mut self.bid_state,
             seller: &self.seller,
-            margin: &self.shared_escrow,
+            escrow: &self.shared_escrow,
             owner: &self.owner,
             rent_destination: &self.rent_destination,
             maker_broker: &self.maker_broker,
@@ -160,8 +160,8 @@ impl<'info> TakeBidCompressed<'info> {
             optional_royalty_pct,
             seller_fee_basis_points,
             creator_accounts,
-            tcomp_prog: &self.marketplace_program,
-            tswap_prog: &self.tensorswap_program,
+            marketplace_prog: &self.marketplace_program,
+            escrow_prog: &self.tensorswap_program,
             system_prog: &self.system_program,
         })
     }

@@ -1,7 +1,8 @@
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
-    CalcFeesArgs, CreatorFeeMode, Fees, FromAcc, TCreator, BROKER_FEE_PCT,
+    calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_checked,
+    transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc, TCreator,
+    BROKER_FEE_PCT,
 };
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
 
@@ -10,7 +11,7 @@ use crate::*;
 pub struct TakeBidArgs<'a, 'info> {
     pub bid_state: &'a mut Account<'info, BidState>,
     pub seller: &'a AccountInfo<'info>,
-    pub margin: &'a UncheckedAccount<'info>,
+    pub escrow: &'a UncheckedAccount<'info>,
     pub owner: &'a UncheckedAccount<'info>,
     pub rent_destination: &'a UncheckedAccount<'info>,
     pub maker_broker: &'a Option<UncheckedAccount<'info>>,
@@ -23,8 +24,8 @@ pub struct TakeBidArgs<'a, 'info> {
     pub optional_royalty_pct: Option<u16>,
     pub seller_fee_basis_points: u16,
     pub creator_accounts: &'a [AccountInfo<'info>],
-    pub tcomp_prog: &'a Program<'info, crate::program::MarketplaceProgram>,
-    pub tswap_prog: &'a Program<'info, EscrowProgram>,
+    pub marketplace_prog: &'a Program<'info, crate::program::MarketplaceProgram>,
+    pub escrow_prog: &'a Program<'info, EscrowProgram>,
     pub system_prog: &'a Program<'info, System>,
 }
 
@@ -32,7 +33,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let TakeBidArgs {
         bid_state,
         seller,
-        margin,
+        escrow,
         owner,
         rent_destination,
         maker_broker,
@@ -45,8 +46,8 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         optional_royalty_pct,
         seller_fee_basis_points,
         creator_accounts,
-        tcomp_prog,
-        tswap_prog,
+        marketplace_prog,
+        escrow_prog,
         system_prog,
     } = args;
 
@@ -95,7 +96,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
             currency,
             asset_id: Some(asset_id),
         }),
-        tcomp_prog,
+        marketplace_prog,
         TcompSigner::Bid(bid_state),
     )?;
 
@@ -103,18 +104,18 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     //if margin is used, move money into bid first
     if let Some(margin_pubkey) = bid_state.margin {
-        let decoded_margin_account = assert_decode_margin_account(margin, owner)?;
+        let decoded_margin_account = assert_decode_margin_account(escrow, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
         require!(
             decoded_margin_account.owner == *owner.key,
             TcompError::BadMargin
         );
-        require!(*margin.key == margin_pubkey, TcompError::BadMargin);
+        require!(*escrow.key == margin_pubkey, TcompError::BadMargin);
         tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
             CpiContext::new(
-                tswap_prog.to_account_info(),
+                escrow_prog.to_account_info(),
                 tensorswap::cpi::accounts::WithdrawMarginAccountCpiTcomp {
-                    margin_account: margin.to_account_info(),
+                    margin_account: escrow.to_account_info(),
                     bid_state: bid_state.to_account_info(),
                     owner: owner.to_account_info(),
                     //transfer to bid state
@@ -134,13 +135,13 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     // Pay fees
     transfer_lamports_from_pda(bid_state.deref().as_ref(), fee_vault, tcomp_fee)?;
 
-    transfer_lamports_from_pda_min_balance(
+    transfer_lamports_checked(
         bid_state.deref().as_ref(),
         maker_broker.as_deref().unwrap_or(fee_vault),
         maker_broker_fee,
     )?;
 
-    transfer_lamports_from_pda_min_balance(
+    transfer_lamports_checked(
         bid_state.deref().as_ref(),
         taker_broker.as_deref().unwrap_or(fee_vault),
         taker_broker_fee,
@@ -179,11 +180,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         let excess_balance = BidState::bid_balance(bid_state)?;
         if excess_balance > 0 {
             // If owner account is not rent-exempt we skip and the excess funds go to the rent destination.
-            transfer_lamports_from_pda_min_balance(
-                bid_state.deref().as_ref(),
-                owner,
-                excess_balance,
-            )?;
+            transfer_lamports_checked(bid_state.deref().as_ref(), owner, excess_balance)?;
         }
 
         close_account(
@@ -192,20 +189,5 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         )?;
     }
 
-    Ok(())
-}
-
-/// transfers lamports, skipping the transfer if not rent exempt
-fn transfer_lamports_from_pda_min_balance<'info>(
-    from_pda: &AccountInfo<'info>,
-    to: &AccountInfo<'info>,
-    lamports: u64,
-) -> Result<()> {
-    let rent = Rent::get()?.minimum_balance(to.data_len());
-    if unwrap_int!(to.lamports().checked_add(lamports)) < rent {
-        //Skip because can't fund less than rent exempt.
-        return Ok(());
-    }
-    transfer_lamports_from_pda(from_pda, to, lamports)?;
     Ok(())
 }
