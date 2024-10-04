@@ -155,7 +155,7 @@ module.exports = function visitor(options) {
                 },
               ),
             },
-            margin: {
+            sharedEscrow: {
               defaultValue: k.accountValueNode("owner"),
             },
             rentDestination: {

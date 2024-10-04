@@ -154,7 +154,7 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            margin: {
+            sharedEscrow: {
               defaultValue: k.accountValueNode("tensorswapProgram"),
             },
             feeVault: {
@@ -187,7 +187,7 @@ module.exports = function visitor(options) {
             rentDestination: {
               defaultValue: k.accountValueNode("owner"),
             },
-            margin: {
+            sharedEscrow: {
               defaultValue: k.accountValueNode("tensorswapProgram"),
             },
             feeVault: {

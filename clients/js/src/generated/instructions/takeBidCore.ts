@@ -197,7 +197,7 @@ export type TakeBidCoreAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  sharedEscrow: Address<TAccountSharedEscrow>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -317,6 +317,9 @@ export async function getTakeBidCoreInstructionAsync<
       ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
     };
   }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
@@ -426,7 +429,7 @@ export type TakeBidCoreInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  sharedEscrow: Address<TAccountSharedEscrow>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -535,6 +538,9 @@ export function getTakeBidCoreInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
+  }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;

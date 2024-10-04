@@ -280,7 +280,7 @@ export type TakeBidCompressedMetaHashAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  sharedEscrow: Address<TAccountSharedEscrow>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -458,6 +458,9 @@ export async function getTakeBidCompressedMetaHashInstructionAsync<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.tensorswapProgram.value);
+  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
@@ -576,7 +579,7 @@ export type TakeBidCompressedMetaHashInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  sharedEscrow: Address<TAccountSharedEscrow>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -738,6 +741,9 @@ export function getTakeBidCompressedMetaHashInstruction<
   if (!accounts.tensorswapProgram.value) {
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
+  }
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.tensorswapProgram.value);
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
