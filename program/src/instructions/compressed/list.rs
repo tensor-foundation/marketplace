@@ -114,14 +114,8 @@ pub fn process_list<'info>(
     list_state.currency = currency;
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
-        }
-        None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
-    };
+
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.rent_payer.key();
 

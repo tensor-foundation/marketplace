@@ -54,6 +54,17 @@ pub fn validate_cosigner<'info>(
     Ok(maybe_remaining)
 }
 
+pub fn assert_expiry(expire_in_sec: Option<u64>, current_expiry: Option<i64>) -> Result<i64> {
+    Ok(match expire_in_sec {
+        Some(expire_in_sec) => {
+            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
+            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            Clock::get()?.unix_timestamp + expire_in_i64
+        }
+        None => current_expiry.unwrap_or(Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC),
+    })
+}
+
 pub fn assert_decode_token_account(
     mint: &Pubkey,
     authority: &Pubkey,
