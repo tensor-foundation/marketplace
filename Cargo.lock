@@ -2404,9 +2404,9 @@ dependencies = [
 
 [[package]]
 name = "tensor-vipers"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
+checksum = "264654b48a8f359d62a7bef00997eb14550834b464ad4aab27923f105af93cc0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

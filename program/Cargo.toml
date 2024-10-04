@@ -64,7 +64,7 @@ tensor-toolbox = { version = "0.3.0", default-features = false, features = [
     "mpl-core",
     "token-2022",
 ] }
-tensor-vipers = { version = "1.0.0" }
+tensor-vipers = { version = "1.0.1" }
 tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", features = [
     "cpi",
 ] }

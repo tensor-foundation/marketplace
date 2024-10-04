@@ -210,7 +210,7 @@ pub fn process_bid<'info>(
             }
             //(!)We do NOT transfer lamports to margin if insufficient, assume done in a separate ix if needed
         }
-        // Not marginated
+        // Not marginated (or closed margin account = user's responsibility for trying to pass in a closed account)
         Err(_) => {
             if bid_balance > deposit_amount {
                 let diff = unwrap_int!(bid_balance.checked_sub(deposit_amount));
