@@ -71,3 +71,6 @@ tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@g
 whitelist-program = { rev = "71e0013", package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
     "cpi",
 ] }
+
+[lints.rust]
+unused_must_use = "deny"

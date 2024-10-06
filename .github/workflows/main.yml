@@ -135,7 +135,7 @@ jobs:
         uses: tensor-foundation/actions/cargo@v2
         with:
           command: clippy
-          args: --all-targets --all-features --no-deps
+          args: --all-targets --all-features --no-deps -- -D warnings
 
   build_programs:
     name: Programs
