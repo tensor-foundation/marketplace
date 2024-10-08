@@ -99,7 +99,7 @@ pub struct BuySpl<'info> {
     pub rent_destination: UncheckedAccount<'info>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
-    // cosigner is checked in validate()
+    // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
@@ -180,7 +180,7 @@ pub fn process_buy_spl<'info>(
     let list_state = &ctx.accounts.list_state;
 
     // In case we have an extra remaining account.
-    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+    let mut v: Vec<AccountInfo<'_>> = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.
     // Cosigner could be a remaining account from an old client.
@@ -235,7 +235,7 @@ pub fn process_buy_spl<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         protocol_fee: tcomp_fee,

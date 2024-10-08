@@ -67,7 +67,7 @@ pub struct BuyCore<'info> {
 
     pub system_program: Program<'info, System>,
 
-    // cosigner is checked in validate()
+    // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
