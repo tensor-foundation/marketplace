@@ -10,12 +10,13 @@ use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees,
     metaplex_core::{validate_asset, MetaplexCore},
     shard_num, transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
+    MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::{throw_err, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, TNSR_CURRENCY,
 };
 
 #[derive(Accounts)]
@@ -219,7 +220,7 @@ pub fn process_buy_core_spl<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_some(), TcompError::CurrencyMismatch);
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         protocol_fee: tcomp_fee,
@@ -229,13 +230,13 @@ pub fn process_buy_core_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(royalty_fee, amount, Some(100))?;
 
     // Transfer the asset to the buyer.
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)

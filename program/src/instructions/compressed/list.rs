@@ -128,7 +128,7 @@ pub fn process_list<'info>(
         .map(|cosigner| cosigner.key())
         .unwrap_or_default();
 
-    // seriallizes the account data
+    // serializes the account data so the record event emits the correct data
     list_state.exit(ctx.program_id)?;
 
     record_event(

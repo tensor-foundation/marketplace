@@ -5,7 +5,7 @@ use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_asset, MetaplexCore},
     transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc,
-    FromExternal, BROKER_FEE_PCT,
+    FromExternal, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 
 use crate::*;
@@ -184,13 +184,13 @@ pub fn process_buy_core<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(royalty_fee, amount, Some(100))?;
 
     // Transfer the asset to the buyer.
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)

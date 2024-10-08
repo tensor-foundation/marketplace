@@ -56,7 +56,7 @@ pub struct TakeBidWns<'info> {
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
@@ -174,7 +174,6 @@ pub fn process_take_bid_wns<'info>(
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         min_amount,
-        None,
         Some(100), // <- enforced royalties
     )?;
 
@@ -216,7 +215,11 @@ pub fn process_take_bid_wns<'info>(
                 let length = std::cmp::min(token_metadata.name.len(), name_arr.len());
                 name_arr[..length].copy_from_slice(&token_metadata.name.as_bytes()[..length]);
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }
@@ -278,7 +281,7 @@ pub fn process_take_bid_wns<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin: &ctx.accounts.margin,
+        escrow: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
@@ -291,8 +294,8 @@ pub fn process_take_bid_wns<'info>(
         optional_royalty_pct: None,
         seller_fee_basis_points: 0, // <- royalty value was already paid on approve
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.escrow_program,
+        marketplace_prog: &ctx.accounts.marketplace_program,
+        escrow_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

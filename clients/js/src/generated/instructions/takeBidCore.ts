@@ -50,7 +50,7 @@ export type TakeBidCoreInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMargin extends string | IAccountMeta<string> = string,
+  TAccountSharedEscrow extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
@@ -97,9 +97,9 @@ export type TakeBidCoreInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMargin extends string
-        ? WritableAccount<TAccountMargin>
-        : TAccountMargin,
+      TAccountSharedEscrow extends string
+        ? WritableAccount<TAccountSharedEscrow>
+        : TAccountSharedEscrow,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
@@ -179,7 +179,7 @@ export type TakeBidCoreAsyncInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountAsset extends string = string,
   TAccountCollection extends string = string,
@@ -197,7 +197,7 @@ export type TakeBidCoreAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -220,7 +220,7 @@ export async function getTakeBidCoreInstructionAsync<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountAsset extends string,
   TAccountCollection extends string,
@@ -239,7 +239,7 @@ export async function getTakeBidCoreInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountAsset,
     TAccountCollection,
@@ -260,7 +260,7 @@ export async function getTakeBidCoreInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountAsset,
     TAccountCollection,
@@ -284,7 +284,7 @@ export async function getTakeBidCoreInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     asset: { value: input.asset ?? null, isWritable: true },
     collection: { value: input.collection ?? null, isWritable: false },
@@ -317,8 +317,8 @@ export async function getTakeBidCoreInstructionAsync<
       ...(await resolveFeeVaultPdaFromBidState(resolverScope)),
     };
   }
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.owner.value);
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
@@ -363,7 +363,7 @@ export async function getTakeBidCoreInstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.asset),
       getAccountMeta(accounts.collection),
@@ -388,7 +388,7 @@ export async function getTakeBidCoreInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountAsset,
     TAccountCollection,
@@ -411,7 +411,7 @@ export type TakeBidCoreInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountAsset extends string = string,
   TAccountCollection extends string = string,
@@ -429,7 +429,7 @@ export type TakeBidCoreInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist?: Address<TAccountWhitelist>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
@@ -452,7 +452,7 @@ export function getTakeBidCoreInstruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountAsset extends string,
   TAccountCollection extends string,
@@ -471,7 +471,7 @@ export function getTakeBidCoreInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountAsset,
     TAccountCollection,
@@ -491,7 +491,7 @@ export function getTakeBidCoreInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountMargin,
+  TAccountSharedEscrow,
   TAccountWhitelist,
   TAccountAsset,
   TAccountCollection,
@@ -514,7 +514,7 @@ export function getTakeBidCoreInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     asset: { value: input.asset ?? null, isWritable: true },
     collection: { value: input.collection ?? null, isWritable: false },
@@ -538,8 +538,8 @@ export function getTakeBidCoreInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.owner.value);
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.owner.value);
   }
   if (!accounts.whitelist.value) {
     accounts.whitelist.value =
@@ -584,7 +584,7 @@ export function getTakeBidCoreInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.asset),
       getAccountMeta(accounts.collection),
@@ -609,7 +609,7 @@ export function getTakeBidCoreInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountAsset,
     TAccountCollection,
@@ -637,7 +637,7 @@ export type ParsedTakeBidCoreInstruction<
     owner: TAccountMetas[3];
     takerBroker?: TAccountMetas[4] | undefined;
     makerBroker?: TAccountMetas[5] | undefined;
-    margin: TAccountMetas[6];
+    sharedEscrow: TAccountMetas[6];
     whitelist: TAccountMetas[7];
     asset: TAccountMetas[8];
     collection?: TAccountMetas[9] | undefined;
@@ -686,7 +686,7 @@ export function parseTakeBidCoreInstruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      margin: getNextAccount(),
+      sharedEscrow: getNextAccount(),
       whitelist: getNextAccount(),
       asset: getNextAccount(),
       collection: getNextOptionalAccount(),

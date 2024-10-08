@@ -480,7 +480,7 @@ module.exports = function visitor(options) {
               ),
             },
             // Needs to default to a mutable account.
-            margin: {
+            sharedEscrow: {
               defaultValue: k.accountValueNode("owner"),
             },
             rentDestination: {

@@ -8,33 +8,23 @@
       "value": "1"
     },
     {
-      "name": "TCOMP_FEE_BPS",
-      "type": "u64",
-      "value": "200"
-    },
-    {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
       "value": "31536000"
-    },
-    {
-      "name": "MAKER_BROKER_PCT",
-      "type": "u64",
-      "value": "80"
     },
     {
       "name": "LIST_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 32 * 2 + 64"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 8 + 32 + 32 + 56"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 8 + 32 + 32 + 8 + 16 + 32"
     }
   ],
   "instructions": [
@@ -370,19 +360,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -557,19 +541,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -664,28 +642,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
@@ -767,28 +736,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -887,28 +847,19 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "dataHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "creatorHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
@@ -994,7 +945,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -1027,19 +978,13 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
           "name": "metaHash",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -1149,7 +1094,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -1182,10 +1127,7 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -1952,7 +1894,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -2244,17 +2186,13 @@
           "name": "mint",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "T22 asset mint."
-          ]
+          "docs": ["T22 asset mint."]
         },
         {
           "name": "currency",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         },
         {
           "name": "owner",
@@ -2593,7 +2531,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -2825,17 +2763,13 @@
           "name": "mint",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "WNS asset mint."
-          ]
+          "docs": ["WNS asset mint."]
         },
         {
           "name": "currency",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         },
         {
           "name": "owner",
@@ -3216,9 +3150,7 @@
           "isMut": false,
           "isSigner": false,
           "isOptional": true,
-          "docs": [
-            "SPL token mint of the currency."
-          ]
+          "docs": ["SPL token mint of the currency."]
         }
       ],
       "args": [
@@ -3282,7 +3214,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -3560,9 +3492,7 @@
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Token Program used for the currency."
-          ]
+          "docs": ["Token Program used for the currency."]
         },
         {
           "name": "associatedTokenProgram",
@@ -3810,7 +3740,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -3891,10 +3821,7 @@
           {
             "name": "bump",
             "type": {
-              "array": [
-                "u8",
-                1
-              ]
+              "array": ["u8", 1]
             }
           },
           {
@@ -3941,19 +3868,13 @@
           },
           {
             "name": "cosigner",
-            "docs": [
-              "Cosigner",
-              "Default Pubkey represents a None value."
-            ],
+            "docs": ["Cosigner", "Default Pubkey represents a None value."],
             "type": "publicKey"
           },
           {
             "name": "reserved1",
             "type": {
-              "array": [
-                "u8",
-                64
-              ]
+              "array": ["u8", 64]
             }
           }
         ]
@@ -3978,10 +3899,7 @@
           {
             "name": "bump",
             "type": {
-              "array": [
-                "u8",
-                1
-              ]
+              "array": ["u8", 1]
             }
           },
           {
@@ -4065,10 +3983,7 @@
           },
           {
             "name": "cosigner",
-            "docs": [
-              "Cosigner",
-              "Default Pubkey represents a None value."
-            ],
+            "docs": ["Cosigner", "Default Pubkey represents a None value."],
             "type": "publicKey"
           },
           {
@@ -4082,28 +3997,19 @@
           {
             "name": "reserved",
             "type": {
-              "array": [
-                "u8",
-                8
-              ]
+              "array": ["u8", 8]
             }
           },
           {
             "name": "reserved1",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "array": ["u8", 16]
             }
           },
           {
             "name": "reserved2",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         ]
@@ -4163,23 +4069,17 @@
         "fields": [
           {
             "name": "name",
-            "docs": [
-              "The name of the asset"
-            ],
+            "docs": ["The name of the asset"],
             "type": "string"
           },
           {
             "name": "symbol",
-            "docs": [
-              "The symbol for the asset"
-            ],
+            "docs": ["The symbol for the asset"],
             "type": "string"
           },
           {
             "name": "uri",
-            "docs": [
-              "URI pointing to JSON representing the asset"
-            ],
+            "docs": ["URI pointing to JSON representing the asset"],
             "type": "string"
           },
           {
@@ -4199,9 +4099,7 @@
           },
           {
             "name": "editionNonce",
-            "docs": [
-              "nonce for easy calculation of editions, if present"
-            ],
+            "docs": ["nonce for easy calculation of editions, if present"],
             "type": {
               "option": "u8"
             }
@@ -4219,9 +4117,7 @@
           },
           {
             "name": "collection",
-            "docs": [
-              "Collection"
-            ],
+            "docs": ["Collection"],
             "type": {
               "option": {
                 "defined": "TCollection"
@@ -4230,9 +4126,7 @@
           },
           {
             "name": "uses",
-            "docs": [
-              "Uses"
-            ],
+            "docs": ["Uses"],
             "type": {
               "option": {
                 "defined": "TUses"
@@ -4449,9 +4343,7 @@
         "fields": [
           {
             "name": "seeds",
-            "docs": [
-              "The vector of derivation seeds."
-            ],
+            "docs": ["The vector of derivation seeds."],
             "type": {
               "vec": "bytes"
             }
@@ -4466,15 +4358,10 @@
         "fields": [
           {
             "name": "proof",
-            "docs": [
-              "The merkle proof."
-            ],
+            "docs": ["The merkle proof."],
             "type": {
               "vec": {
-                "array": [
-                  "u8",
-                  32
-                ]
+                "array": ["u8", 32]
               }
             }
           }
@@ -4563,9 +4450,7 @@
         "variants": [
           {
             "name": "Pubkey",
-            "fields": [
-              "publicKey"
-            ]
+            "fields": ["publicKey"]
           },
           {
             "name": "Seeds",
@@ -4585,9 +4470,7 @@
           },
           {
             "name": "Number",
-            "fields": [
-              "u64"
-            ]
+            "fields": ["u64"]
           }
         ]
       }

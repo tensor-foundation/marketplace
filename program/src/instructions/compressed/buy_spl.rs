@@ -4,7 +4,7 @@ use anchor_spl::token_interface::{
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
     transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, Fees,
-    MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
+    MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 
 use crate::*;
@@ -195,7 +195,7 @@ pub fn process_buy_spl<'info>(
     let list_state = &ctx.accounts.list_state;
 
     // In case we have an extra remaining account.
-    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+    let mut v: Vec<AccountInfo<'_>> = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.
     // Cosigner could be a remaining account from an old client.
@@ -250,7 +250,7 @@ pub fn process_buy_spl<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         protocol_fee: tcomp_fee,
@@ -260,13 +260,12 @@ pub fn process_buy_spl<'info>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    let creator_fee =
-        calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // --------------------------------------- nft transfer
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"

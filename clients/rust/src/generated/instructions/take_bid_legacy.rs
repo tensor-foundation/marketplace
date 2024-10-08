@@ -23,7 +23,7 @@ pub struct TakeBidLegacy {
 
     pub maker_broker: Option<solana_program::pubkey::Pubkey>,
 
-    pub margin: solana_program::pubkey::Pubkey,
+    pub shared_escrow: solana_program::pubkey::Pubkey,
 
     pub whitelist: Option<solana_program::pubkey::Pubkey>,
 
@@ -122,7 +122,7 @@ impl TakeBidLegacy {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.margin,
+            self.shared_escrow,
             false,
         ));
         if let Some(whitelist) = self.whitelist {
@@ -330,7 +330,7 @@ pub struct TakeBidLegacyInstructionArgs {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin
+///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
@@ -361,7 +361,7 @@ pub struct TakeBidLegacyBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     taker_broker: Option<solana_program::pubkey::Pubkey>,
     maker_broker: Option<solana_program::pubkey::Pubkey>,
-    margin: Option<solana_program::pubkey::Pubkey>,
+    shared_escrow: Option<solana_program::pubkey::Pubkey>,
     whitelist: Option<solana_program::pubkey::Pubkey>,
     seller_ta: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
@@ -434,8 +434,8 @@ impl TakeBidLegacyBuilder {
         self
     }
     #[inline(always)]
-    pub fn margin(&mut self, margin: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.margin = Some(margin);
+    pub fn shared_escrow(&mut self, shared_escrow: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.shared_escrow = Some(shared_escrow);
         self
     }
     /// `[optional account]`
@@ -645,7 +645,7 @@ impl TakeBidLegacyBuilder {
             owner: self.owner.expect("owner is not set"),
             taker_broker: self.taker_broker,
             maker_broker: self.maker_broker,
-            margin: self.margin.expect("margin is not set"),
+            shared_escrow: self.shared_escrow.expect("shared_escrow is not set"),
             whitelist: self.whitelist,
             seller_ta: self.seller_ta.expect("seller_ta is not set"),
             mint: self.mint.expect("mint is not set"),
@@ -704,7 +704,7 @@ pub struct TakeBidLegacyCpiAccounts<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -768,7 +768,7 @@ pub struct TakeBidLegacyCpi<'a, 'b> {
 
     pub maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
-    pub margin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 
@@ -831,7 +831,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             owner: accounts.owner,
             taker_broker: accounts.taker_broker,
             maker_broker: accounts.maker_broker,
-            margin: accounts.margin,
+            shared_escrow: accounts.shared_escrow,
             whitelist: accounts.whitelist,
             seller_ta: accounts.seller_ta,
             mint: accounts.mint,
@@ -930,7 +930,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
             ));
         }
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.margin.key,
+            *self.shared_escrow.key,
             false,
         ));
         if let Some(whitelist) = self.whitelist {
@@ -1119,7 +1119,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
         if let Some(maker_broker) = self.maker_broker {
             account_infos.push(maker_broker.clone());
         }
-        account_infos.push(self.margin.clone());
+        account_infos.push(self.shared_escrow.clone());
         if let Some(whitelist) = self.whitelist {
             account_infos.push(whitelist.clone());
         }
@@ -1184,7 +1184,7 @@ impl<'a, 'b> TakeBidLegacyCpi<'a, 'b> {
 ///   3. `[writable]` owner
 ///   4. `[writable, optional]` taker_broker
 ///   5. `[writable, optional]` maker_broker
-///   6. `[writable]` margin
+///   6. `[writable]` shared_escrow
 ///   7. `[optional]` whitelist
 ///   8. `[writable]` seller_ta
 ///   9. `[]` mint
@@ -1222,7 +1222,7 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
             owner: None,
             taker_broker: None,
             maker_broker: None,
-            margin: None,
+            shared_escrow: None,
             whitelist: None,
             seller_ta: None,
             mint: None,
@@ -1301,11 +1301,11 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn margin(
+    pub fn shared_escrow(
         &mut self,
-        margin: &'b solana_program::account_info::AccountInfo<'a>,
+        shared_escrow: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.margin = Some(margin);
+        self.instruction.shared_escrow = Some(shared_escrow);
         self
     }
     /// `[optional account]`
@@ -1582,7 +1582,10 @@ impl<'a, 'b> TakeBidLegacyCpiBuilder<'a, 'b> {
 
             maker_broker: self.instruction.maker_broker,
 
-            margin: self.instruction.margin.expect("margin is not set"),
+            shared_escrow: self
+                .instruction
+                .shared_escrow
+                .expect("shared_escrow is not set"),
 
             whitelist: self.instruction.whitelist,
 
@@ -1663,7 +1666,7 @@ struct TakeBidLegacyCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     taker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     maker_broker: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    margin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    shared_escrow: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     seller_ta: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
