@@ -19,6 +19,7 @@ use tensor_vipers::Validate;
 use crate::{
     assert_decode_token_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
     ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
+    TNSR_CURRENCY,
 };
 
 #[derive(Accounts)]
@@ -260,7 +261,9 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     // If broker acounts are present, we need the currency token accounts from them.
     let (maker_broker_currency_ta, remaining) =
         if let Some(maker_broker) = &ctx.accounts.maker_broker {
-            let (account, remaining) = remaining.split_first().unwrap();
+            let (account, remaining) = remaining
+                .split_first()
+                .ok_or(TcompError::InsufficientRemainingAccounts)?;
             assert_decode_token_account(&mint, &maker_broker.key(), account)?;
 
             (Some(account), remaining)
@@ -270,7 +273,9 @@ pub fn process_buy_legacy_spl<'info, 'b>(
 
     let (taker_broker_currency_ta, _remaining) =
         if let Some(taker_broker) = &ctx.accounts.taker_broker {
-            let (account, remaining) = remaining.split_first().unwrap();
+            let (account, remaining) = remaining
+                .split_first()
+                .ok_or(TcompError::InsufficientRemainingAccounts)?;
             assert_decode_token_account(&mint, &taker_broker.key(), account)?;
 
             (Some(account), remaining)
@@ -290,7 +295,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     require!(amount <= max_amount, TcompError::PriceMismatch);
     require!(currency.is_some(), TcompError::CurrencyMismatch);
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         protocol_fee: tcomp_fee,

@@ -47,7 +47,7 @@ pub struct ListState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128;
+pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 32 * 2 + 64;
 
 impl ListState {
     pub fn seeds(&self) -> [&[u8]; 3] {
@@ -119,8 +119,25 @@ pub struct BidState {
 // (!) INCLUSIVE of discriminator (8 bytes)
 #[constant]
 #[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize =
-    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128;
+pub const BID_STATE_SIZE: usize = 8
+    + 1
+    + 1
+    + (32 * 2)
+    + 1
+    + 32
+    + 2
+    + 33
+    + 4 * 2
+    + 8
+    + 33
+    + 8
+    + (33 * 3)
+    + 8
+    + 32
+    + 32
+    + 8
+    + 16
+    + 32;
 
 impl BidState {
     pub fn can_buy_more(&self) -> bool {

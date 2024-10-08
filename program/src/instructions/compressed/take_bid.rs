@@ -261,7 +261,11 @@ pub fn handler_full_meta<'info>(
                 let mut name_arr = [0u8; 32];
                 name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }

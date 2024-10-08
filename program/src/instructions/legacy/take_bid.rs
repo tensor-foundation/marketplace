@@ -21,7 +21,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: Seeds checked in validate, account has no state.
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -249,7 +249,11 @@ pub fn process_take_bid_legacy<'info>(
                 let mut name_arr = [0u8; 32];
                 name_arr[..metadata.name.len()].copy_from_slice(metadata.name.as_bytes());
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }

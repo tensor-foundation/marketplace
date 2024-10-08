@@ -271,7 +271,11 @@ pub fn process_take_bid_core<'info>(
                 let mut name_arr = [0u8; 32];
                 name_arr[..asset.name.len()].copy_from_slice(asset.name.as_bytes());
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }

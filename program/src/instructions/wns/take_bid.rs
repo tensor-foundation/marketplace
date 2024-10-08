@@ -215,7 +215,11 @@ pub fn process_take_bid_wns<'info>(
                 let length = std::cmp::min(token_metadata.name.len(), name_arr.len());
                 name_arr[..length].copy_from_slice(&token_metadata.name.as_bytes()[..length]);
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }

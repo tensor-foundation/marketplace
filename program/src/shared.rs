@@ -5,6 +5,7 @@ use anchor_spl::{
 use tensor_toolbox::{fees, shard_num, TensorError};
 
 use crate::*;
+pub const TNSR_CURRENCY: &str = "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6";
 
 const TOKEN_PROGRAMS: [&str; 2] = [
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
