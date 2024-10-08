@@ -110,10 +110,10 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     //if escrow is used, move money into bid first
     if let Some(escrow_pubkey) = bid_state.margin {
-        let decoded_margin_account = assert_decode_escrow_account(escrow, owner)?;
+        let decoded_escrow_account = assert_decode_escrow_account(escrow, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
         require!(
-            decoded_margin_account.owner == *owner.key,
+            decoded_escrow_account.owner == *owner.key,
             TcompError::BadMargin
         );
         require!(*escrow.key == escrow_pubkey, TcompError::BadMargin);
