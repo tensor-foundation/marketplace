@@ -17,14 +17,14 @@
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128"
+      "value": "8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 32 * 2 + 64"
     },
     {
       "name": "BID_STATE_SIZE",
       "type": {
         "defined": "usize"
       },
-      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 8 + 32 + 32 + 56"
+      "value": "8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 8 + 32 + 32 + 8 + 16 + 32"
     }
   ],
   "instructions": [
@@ -984,7 +984,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -1139,7 +1139,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -1942,7 +1942,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -2583,7 +2583,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -3272,7 +3272,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },
@@ -3800,7 +3800,7 @@
           "isOptional": true
         },
         {
-          "name": "margin",
+          "name": "sharedEscrow",
           "isMut": true,
           "isSigner": false
         },

@@ -48,7 +48,7 @@ pub struct TakeBidCompressed<'info> {
     pub maker_broker: Option<UncheckedAccount<'info>>,
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
     // cosigner is checked in validate()
@@ -147,7 +147,7 @@ impl<'info> TakeBidCompressed<'info> {
         take_bid_shared(TakeBidArgs {
             bid_state: &mut self.bid_state,
             seller: &self.seller,
-            margin: &self.margin,
+            escrow: &self.shared_escrow,
             owner: &self.owner,
             rent_destination: &self.rent_destination,
             maker_broker: &self.maker_broker,
@@ -160,8 +160,8 @@ impl<'info> TakeBidCompressed<'info> {
             optional_royalty_pct,
             seller_fee_basis_points,
             creator_accounts,
-            tcomp_prog: &self.marketplace_program,
-            tswap_prog: &self.tensorswap_program,
+            marketplace_prog: &self.marketplace_program,
+            escrow_prog: &self.tensorswap_program,
             system_prog: &self.system_program,
         })
     }
@@ -261,7 +261,11 @@ pub fn handler_full_meta<'info>(
                 let mut name_arr = [0u8; 32];
                 name_arr[..meta_args.name.len()].copy_from_slice(meta_args.name.as_bytes());
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }

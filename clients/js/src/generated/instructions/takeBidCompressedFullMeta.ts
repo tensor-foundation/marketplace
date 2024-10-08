@@ -111,7 +111,7 @@ export type TakeBidCompressedFullMetaInstruction<
   TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMargin extends string | IAccountMeta<string> = string,
+  TAccountSharedEscrow extends string | IAccountMeta<string> = string,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
@@ -165,9 +165,9 @@ export type TakeBidCompressedFullMetaInstruction<
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMargin extends string
-        ? WritableAccount<TAccountMargin>
-        : TAccountMargin,
+      TAccountSharedEscrow extends string
+        ? WritableAccount<TAccountSharedEscrow>
+        : TAccountSharedEscrow,
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
@@ -334,7 +334,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
   TAccountRentDestination extends string = string,
@@ -354,7 +354,7 @@ export type TakeBidCompressedFullMetaAsyncInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -397,7 +397,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
   TAccountRentDestination extends string,
@@ -418,7 +418,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -447,7 +447,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -485,7 +485,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -541,8 +541,8 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.tensorswapProgram.value);
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.tensorswapProgram.value);
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
@@ -584,7 +584,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentDestination),
@@ -617,7 +617,7 @@ export async function getTakeBidCompressedFullMetaInstructionAsync<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -642,7 +642,7 @@ export type TakeBidCompressedFullMetaInput<
   TAccountOwner extends string = string,
   TAccountTakerBroker extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMargin extends string = string,
+  TAccountSharedEscrow extends string = string,
   TAccountWhitelist extends string = string,
   TAccountCosigner extends string = string,
   TAccountRentDestination extends string = string,
@@ -662,7 +662,7 @@ export type TakeBidCompressedFullMetaInput<
   owner: Address<TAccountOwner>;
   takerBroker?: Address<TAccountTakerBroker>;
   makerBroker?: Address<TAccountMakerBroker>;
-  margin?: Address<TAccountMargin>;
+  sharedEscrow?: Address<TAccountSharedEscrow>;
   whitelist: Address<TAccountWhitelist>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -705,7 +705,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountOwner extends string,
   TAccountTakerBroker extends string,
   TAccountMakerBroker extends string,
-  TAccountMargin extends string,
+  TAccountSharedEscrow extends string,
   TAccountWhitelist extends string,
   TAccountCosigner extends string,
   TAccountRentDestination extends string,
@@ -726,7 +726,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -753,7 +753,7 @@ export function getTakeBidCompressedFullMetaInstruction<
   TAccountOwner,
   TAccountTakerBroker,
   TAccountMakerBroker,
-  TAccountMargin,
+  TAccountSharedEscrow,
   TAccountWhitelist,
   TAccountCosigner,
   TAccountRentDestination
@@ -790,7 +790,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    margin: { value: input.margin ?? null, isWritable: true },
+    sharedEscrow: { value: input.sharedEscrow ?? null, isWritable: true },
     whitelist: { value: input.whitelist ?? null, isWritable: false },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
@@ -834,8 +834,8 @@ export function getTakeBidCompressedFullMetaInstruction<
     accounts.tensorswapProgram.value =
       'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN' as Address<'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN'>;
   }
-  if (!accounts.margin.value) {
-    accounts.margin.value = expectSome(accounts.tensorswapProgram.value);
+  if (!accounts.sharedEscrow.value) {
+    accounts.sharedEscrow.value = expectSome(accounts.tensorswapProgram.value);
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
@@ -877,7 +877,7 @@ export function getTakeBidCompressedFullMetaInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.takerBroker),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.margin),
+      getAccountMeta(accounts.sharedEscrow),
       getAccountMeta(accounts.whitelist),
       getAccountMeta(accounts.cosigner),
       getAccountMeta(accounts.rentDestination),
@@ -910,7 +910,7 @@ export function getTakeBidCompressedFullMetaInstruction<
     TAccountOwner,
     TAccountTakerBroker,
     TAccountMakerBroker,
-    TAccountMargin,
+    TAccountSharedEscrow,
     TAccountWhitelist,
     TAccountCosigner,
     TAccountRentDestination
@@ -940,7 +940,7 @@ export type ParsedTakeBidCompressedFullMetaInstruction<
     owner: TAccountMetas[12];
     takerBroker?: TAccountMetas[13] | undefined;
     makerBroker?: TAccountMetas[14] | undefined;
-    margin: TAccountMetas[15];
+    sharedEscrow: TAccountMetas[15];
     whitelist: TAccountMetas[16];
     cosigner?: TAccountMetas[17] | undefined;
     rentDestination: TAccountMetas[18];
@@ -990,7 +990,7 @@ export function parseTakeBidCompressedFullMetaInstruction<
       owner: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      margin: getNextAccount(),
+      sharedEscrow: getNextAccount(),
       whitelist: getNextAccount(),
       cosigner: getNextOptionalAccount(),
       rentDestination: getNextAccount(),

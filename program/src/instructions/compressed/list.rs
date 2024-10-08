@@ -116,11 +116,18 @@ pub fn process_list<'info>(
     list_state.maker_broker = maker_broker;
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
+            let expire_in_i64 =
+                i64::try_from(expire_in_sec).map_err(|_| TcompError::ExpiryTooLarge)?;
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
+            Clock::get()?
+                .unix_timestamp
+                .checked_add(expire_in_i64)
+                .ok_or(TcompError::ExpiryTooLarge)?
         }
-        None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
+        None => Clock::get()?
+            .unix_timestamp
+            .checked_add(MAX_EXPIRY_SEC)
+            .ok_or(TcompError::ExpiryTooLarge)?,
     };
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.rent_payer.key();
@@ -134,7 +141,7 @@ pub fn process_list<'info>(
         .map(|cosigner| cosigner.key())
         .unwrap_or_default();
 
-    // seriallizes the account data
+    // serializes the account data so the record event emits the correct data
     list_state.exit(ctx.program_id)?;
 
     record_event(
