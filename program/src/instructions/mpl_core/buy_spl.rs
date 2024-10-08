@@ -111,7 +111,7 @@ pub struct BuyCoreSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
-        constraint = taker_broker.is_some() @ TcompError::MissingBroker
+        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 

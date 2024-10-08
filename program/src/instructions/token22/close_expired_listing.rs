@@ -66,10 +66,6 @@ pub fn process_close_expired_listing_t22<'info>(
     ctx: Context<'_, '_, '_, 'info, CloseExpiredListingT22<'info>>,
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
-    require!(
-        list_state.expiry < Clock::get()?.unix_timestamp,
-        TcompError::ListingNotYetExpired
-    );
 
     // validates the mint
 
