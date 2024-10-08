@@ -97,10 +97,11 @@ pub struct BuyCoreSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
+        constraint = taker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut,
         constraint = maker_broker_ta.is_some()
     )]
@@ -110,6 +111,7 @@ pub struct BuyCoreSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
+        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 

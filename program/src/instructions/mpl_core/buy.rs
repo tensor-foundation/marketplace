@@ -51,7 +51,7 @@ pub struct BuyCore<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -67,7 +67,7 @@ pub struct BuyCore<'info> {
 
     pub system_program: Program<'info, System>,
 
-    // cosigner is checked in handler
+    // cosigner is checked in handler: validate_cosigner()
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)

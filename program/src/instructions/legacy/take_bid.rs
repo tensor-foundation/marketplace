@@ -21,7 +21,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
-    /// CHECK: Seeds checked in validate, account has no state.
+    /// CHECK: checked in assert_fee_account()
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -37,7 +37,7 @@ pub struct TakeBidLegacy<'info> {
     )]
     pub bid_state: Box<Account<'info, BidState>>,
 
-    // Owner needs to be passed in as mutable account, so we reassign lamports back to them
+    // Owner needs to be passed in as mutable account, so we can reassign lamports back to them
     /// CHECK: has_one = owner on bid_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
@@ -46,7 +46,7 @@ pub struct TakeBidLegacy<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 

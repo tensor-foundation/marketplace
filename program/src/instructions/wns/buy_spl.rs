@@ -219,7 +219,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             TcompError::BrokerMismatch
         );
 
-        //taker_broker accs are both None or Some
+        // taker_broker accs are both None or Some
         #[rustfmt::skip]
         require!(
             (self.taker_broker.is_some() && self.taker_broker_currency_ta.is_some()) ||

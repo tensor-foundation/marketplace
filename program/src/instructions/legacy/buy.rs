@@ -6,7 +6,9 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees, fees, is_royalty_enforced, shard_num,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, is_royalty_enforced,
+    mpl_token_auth_rules::ID as MPL_TOKEN_AUTH_RULES_ID,
+    shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
     CreatorFeeMode, Fees, FromAcc, FromExternal, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
@@ -75,7 +77,7 @@ pub struct BuyLegacy<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -123,7 +125,7 @@ pub struct BuyLegacy<'info> {
     pub authorization_rules: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
-    //#[account(address = MPL_TOKEN_AUTH_RULES_ID)]
+    #[account(address = MPL_TOKEN_AUTH_RULES_ID)]
     pub authorization_rules_program: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below

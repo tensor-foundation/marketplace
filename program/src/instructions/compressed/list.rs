@@ -29,13 +29,15 @@ pub struct List<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    #[account(init, payer = rent_payer,
+    #[account(init,
+        payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump,
-        space = LIST_STATE_SIZE,
+        space = 8 + ListState::INIT_SPACE,
+        constraint = 8 + ListState::INIT_SPACE == LIST_STATE_SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 

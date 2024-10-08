@@ -22,6 +22,7 @@ fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
 // --------------------------------------- listing
 
 #[account]
+#[derive(InitSpace)]
 pub struct ListState {
     pub version: u8,
     pub bump: [u8; 1],
@@ -65,19 +66,20 @@ pub struct AssetListState {}
 // --------------------------------------- bidding
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Target {
     AssetId = 0,
     Whitelist = 1,
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Field {
     Name = 0,
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],

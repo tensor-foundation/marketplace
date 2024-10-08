@@ -78,7 +78,7 @@ pub struct BuyT22<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 

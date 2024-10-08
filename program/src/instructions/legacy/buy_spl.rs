@@ -106,7 +106,7 @@ pub struct BuyLegacySpl<'info> {
     )]
     pub payer_currency_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
