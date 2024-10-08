@@ -1,7 +1,8 @@
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
     transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, Fees, FromAcc,
-    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
+    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT, MAKER_BROKER_PCT,
+    TAKER_FEE_BPS,
 };
 
 use crate::*;
@@ -205,13 +206,12 @@ pub fn process_buy<'info>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    let creator_fee =
-        calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // --------------------------------------- nft transfer
     // (!) Has to go before lamport transfers to prevent "sum of account balances before and after instruction do not match"
