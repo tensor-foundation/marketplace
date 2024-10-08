@@ -11,12 +11,13 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
     },
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, TCreator, BROKER_FEE_PCT,
+    MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -247,7 +248,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -323,7 +324,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         }
 
         // No optional royalties.
-        let creator_fee = calc_creators_fee(*seller_fee, amount, None, Some(100))?;
+        let creator_fee = calc_creators_fee(*seller_fee, amount, Some(100))?;
 
         (creator_data, creator_infos, creator_fee)
     } else {
