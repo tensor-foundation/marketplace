@@ -4,7 +4,10 @@ use tensor_toolbox::{
     transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc, TCreator,
     BROKER_FEE_PCT,
 };
-use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
+use tensorswap::{
+    instructions::assert_decode_margin_account as assert_decode_escrow_account,
+    program::EscrowProgram,
+};
 
 use crate::*;
 
@@ -102,15 +105,15 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     // --------------------------------------- sol transfers
 
-    //if margin is used, move money into bid first
-    if let Some(margin_pubkey) = bid_state.margin {
-        let decoded_margin_account = assert_decode_margin_account(escrow, owner)?;
+    //if escrow is used, move money into bid first
+    if let Some(escrow_pubkey) = bid_state.margin {
+        let decoded_margin_account = assert_decode_escrow_account(escrow, owner)?;
         //doesn't hurt to check again (even though we checked when bidding)
         require!(
             decoded_margin_account.owner == *owner.key,
             TcompError::BadMargin
         );
-        require!(*escrow.key == margin_pubkey, TcompError::BadMargin);
+        require!(*escrow.key == escrow_pubkey, TcompError::BadMargin);
         tensorswap::cpi::withdraw_margin_account_cpi_tcomp(
             CpiContext::new(
                 escrow_prog.to_account_info(),
