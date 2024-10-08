@@ -1226,7 +1226,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.3.0",
+ "tensor-toolbox 0.5.0",
  "tensor-vipers",
  "whitelist-program",
 ]
@@ -2385,9 +2385,9 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.3.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afac38c888eca208989efb9a77048101e117ab5023940ef7d359350acfb11d16"
+checksum = "b1e060f90f279c4561375157d870d5111a1907c1f0257709b8c0778a96454622"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2404,9 +2404,9 @@ dependencies = [
 
 [[package]]
 name = "tensor-vipers"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
+checksum = "264654b48a8f359d62a7bef00997eb14550834b464ad4aab27923f105af93cc0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

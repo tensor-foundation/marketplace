@@ -1,7 +1,8 @@
 use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, close_account, transfer_creators_fee, transfer_lamports_from_pda,
-    CalcFeesArgs, CreatorFeeMode, Fees, FromAcc, TCreator, BROKER_FEE_PCT,
+    calc_creators_fee, calc_fees, close_account, is_royalty_enforced, transfer_creators_fee,
+    transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc, TCreator,
+    BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensorswap::{instructions::assert_decode_margin_account, program::EscrowProgram};
 
@@ -66,7 +67,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -74,8 +75,11 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
-        token_standard,
-        optional_royalty_pct,
+        if is_royalty_enforced(token_standard) {
+            Some(100)
+        } else {
+            optional_royalty_pct
+        },
     )?;
 
     record_event(

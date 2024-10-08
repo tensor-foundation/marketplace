@@ -6,19 +6,18 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    assert_fee_account, calc_creators_fee, calc_fees, fees,
+    assert_fee_account, calc_creators_fee, calc_fees, fees, is_royalty_enforced,
     mpl_token_auth_rules::ID as MPL_TOKEN_AUTH_RULES_ID,
     shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, transfer_lamports, transfer_lamports_checked, CalcFeesArgs,
-    CreatorFeeMode, Fees, FromAcc, FromExternal, BROKER_FEE_PCT,
+    CreatorFeeMode, Fees, FromAcc, FromExternal, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::Validate;
 
 use crate::{
     program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, TakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT,
-    TCOMP_FEE_BPS,
+    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -211,7 +210,7 @@ pub fn process_buy_legacy<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -219,8 +218,11 @@ pub fn process_buy_legacy<'info, 'b>(
     let creator_fee = calc_creators_fee(
         metadata.seller_fee_basis_points,
         amount,
-        metadata.token_standard,
-        optional_royalty_pct,
+        if is_royalty_enforced(metadata.token_standard) {
+            Some(100)
+        } else {
+            optional_royalty_pct
+        },
     )?;
 
     // transfer the NFT to the buyer

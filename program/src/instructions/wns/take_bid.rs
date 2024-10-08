@@ -174,7 +174,6 @@ pub fn process_take_bid_wns<'info>(
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         min_amount,
-        None,
         Some(100), // <- enforced royalties
     )?;
 

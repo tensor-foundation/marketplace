@@ -11,14 +11,14 @@ use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
-    transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
+    transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT,
+    TAKER_FEE_BPS,
 };
 use tensor_vipers::Validate;
 
 use crate::{
     assert_decode_token_account, program::MarketplaceProgram, record_event, AuthorizationDataLocal,
     ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
-    MAKER_BROKER_PCT, TCOMP_FEE_BPS,
 };
 
 #[derive(Accounts)]
@@ -300,7 +300,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -308,7 +308,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     let creator_fee = calc_creators_fee(
         metadata.seller_fee_basis_points,
         amount,
-        None,
         optional_royalty_pct,
     )?;
 

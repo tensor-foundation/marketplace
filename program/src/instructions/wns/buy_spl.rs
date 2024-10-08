@@ -6,7 +6,6 @@ use anchor_spl::{
         close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked,
     },
 };
-use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
@@ -14,7 +13,7 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked,
         wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     },
-    CalcFeesArgs, Fees, BROKER_FEE_PCT,
+    CalcFeesArgs, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::Validate;
 
@@ -22,7 +21,7 @@ use crate::{
     assert_associated_token_account, assert_fee_vault_seeds, assert_list_state_seeds,
     assert_token_account, init_if_needed_ata, program::MarketplaceProgram, record_event,
     InitIfNeededAtaParams, ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner,
-    CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -338,7 +337,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -348,8 +347,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
-        Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
-        None,
+        Some(100), // <- enforced royalties
     )?;
 
     // Approve the transfer using WNS' approval ix. This will CPI into the distribution program

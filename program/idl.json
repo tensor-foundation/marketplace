@@ -8,19 +8,9 @@
       "value": "1"
     },
     {
-      "name": "TCOMP_FEE_BPS",
-      "type": "u64",
-      "value": "200"
-    },
-    {
       "name": "MAX_EXPIRY_SEC",
       "type": "i64",
       "value": "31536000"
-    },
-    {
-      "name": "MAKER_BROKER_PCT",
-      "type": "u64",
-      "value": "80"
     },
     {
       "name": "LIST_STATE_SIZE",
