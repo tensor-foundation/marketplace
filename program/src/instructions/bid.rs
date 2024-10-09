@@ -20,7 +20,6 @@ pub struct Bid<'info> {
     #[account(mut)]
     pub shared_escrow: UncheckedAccount<'info>,
     // cosigner
-    #[account(constraint = cosigner.key() != owner.key())]
     pub cosigner: Option<Signer<'info>>,
     #[account(mut)]
     pub rent_payer: Signer<'info>,
