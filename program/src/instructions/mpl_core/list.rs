@@ -76,21 +76,7 @@ pub fn process_list_core<'info>(
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
 
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 =
-                i64::try_from(expire_in_sec).map_err(|_| TcompError::ExpiryTooLarge)?;
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?
-                .unix_timestamp
-                .checked_add(expire_in_i64)
-                .ok_or(TcompError::ExpiryTooLarge)?
-        }
-        None => Clock::get()?
-            .unix_timestamp
-            .checked_add(MAX_EXPIRY_SEC)
-            .ok_or(TcompError::ExpiryTooLarge)?,
-    };
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
     list_state.cosigner = ctx

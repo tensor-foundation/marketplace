@@ -113,6 +113,7 @@ pub struct BuySpl<'info> {
 
     #[account(mut)]
     pub rent_payer: Signer<'info>,
+
     // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:

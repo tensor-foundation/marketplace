@@ -11,9 +11,8 @@ use tensor_toolbox::{
 };
 
 use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    assert_expiry, program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState,
+    MakeEvent, Target, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
 };
 
 #[derive(Accounts)]
@@ -155,20 +154,7 @@ pub fn process_list_legacy<'info>(
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
 
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 =
-                i64::try_from(expire_in_sec).map_err(|_| TcompError::ExpiryTooLarge)?;
-            Clock::get()?
-                .unix_timestamp
-                .checked_add(expire_in_i64)
-                .ok_or(TcompError::ExpiryTooLarge)?
-        }
-        None => Clock::get()?
-            .unix_timestamp
-            .checked_add(MAX_EXPIRY_SEC)
-            .ok_or(TcompError::ExpiryTooLarge)?,
-    };
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
     list_state.rent_payer = ctx.accounts.payer.key();
     list_state.cosigner = ctx

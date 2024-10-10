@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::{
-    mpl_token_auth_rules::ID as MPL_TOKEN_AUTH_RULES_ID,
+    mpl_token_auth_rules,
     token_metadata::{transfer, TransferArgs},
 };
 
@@ -95,7 +95,7 @@ pub struct DelistLegacy<'info> {
     pub authorization_rules: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
-    #[account(address = MPL_TOKEN_AUTH_RULES_ID)]
+    #[account(address = mpl_token_auth_rules::ID)]
     pub authorization_rules_program: Option<UncheckedAccount<'info>>,
 
     /// CHECK: address below
