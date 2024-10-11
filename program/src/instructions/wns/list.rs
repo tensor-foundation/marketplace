@@ -11,7 +11,7 @@ use tensor_toolbox::token_2022::{
 
 use crate::{
     assert_expiry, program::MarketplaceProgram, record_event, ListState, MakeEvent, Target,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -30,8 +30,7 @@ pub struct ListWns<'info> {
             mint.key().as_ref(),
         ],
         bump,
-        space = 8 + ListState::INIT_SPACE,
-        constraint = 8 + ListState::INIT_SPACE == LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
