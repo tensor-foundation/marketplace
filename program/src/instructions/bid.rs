@@ -10,8 +10,7 @@ pub struct Bid<'info> {
     #[account(init_if_needed, payer = rent_payer,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,
-        space = 8 + BidState::INIT_SPACE,
-        constraint = 8 + BidState::INIT_SPACE == BID_STATE_SIZE,
+        space = BidState::SIZE,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
     #[account(mut)]

@@ -1,6 +1,6 @@
 {
   "name": "@tensor-foundation/marketplace",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Your one-stop-shop for your NFT needs.",
   "sideEffects": false,
   "module": "./dist/src/index.mjs",

@@ -8,6 +8,7 @@ pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/
 
 pub const BID_STATE_DISCRIMINATOR: [u8; 8] = [155, 197, 5, 97, 189, 60, 8, 183];
 pub const LIST_STATE_DISCRIMINATOR: [u8; 8] = [78, 242, 89, 138, 161, 221, 176, 75];
+pub const DISCRIMINATOR_SIZE: usize = 8;
 
 //(!!) sync with sdk.ts:getRentPayer()
 #[inline(always)]
@@ -45,12 +46,9 @@ pub struct ListState {
     pub _reserved1: [u8; 64],
 }
 
-// (!) INCLUSIVE of discriminator (8 bytes)
-#[constant]
-#[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 32 * 2 + 64;
-
 impl ListState {
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
+
     pub fn seeds(&self) -> [&[u8]; 3] {
         [b"list_state".as_ref(), self.asset_id.as_ref(), &self.bump]
     }
@@ -118,30 +116,9 @@ pub struct BidState {
     pub _reserved2: [u8; 32],
 }
 
-// (!) INCLUSIVE of discriminator (8 bytes)
-#[constant]
-#[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize = 8
-    + 1
-    + 1
-    + (32 * 2)
-    + 1
-    + 32
-    + 2
-    + 33
-    + 4 * 2
-    + 8
-    + 33
-    + 8
-    + (33 * 3)
-    + 8
-    + 32
-    + 32
-    + 8
-    + 16
-    + 32;
-
 impl BidState {
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
+
     pub fn can_buy_more(&self) -> bool {
         self.filled_quantity < self.quantity
     }

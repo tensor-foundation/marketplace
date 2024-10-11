@@ -20,8 +20,7 @@ pub struct ListCore<'info> {
             asset.key.as_ref(),
         ],
         bump,
-        space = 8 + ListState::INIT_SPACE,
-        constraint = 8 + ListState::INIT_SPACE == LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 

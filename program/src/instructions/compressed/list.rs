@@ -36,8 +36,7 @@ pub struct List<'info> {
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump,
-        space = 8 + ListState::INIT_SPACE,
-        constraint = 8 + ListState::INIT_SPACE == LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
