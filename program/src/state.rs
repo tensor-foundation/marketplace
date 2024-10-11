@@ -47,7 +47,7 @@ pub struct ListState {
 }
 
 impl ListState {
-    pub const SIZE: usize = Self::INIT_SPACE + DISCRIMINATOR_SIZE;
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
 
     pub fn seeds(&self) -> [&[u8]; 3] {
         [b"list_state".as_ref(), self.asset_id.as_ref(), &self.bump]
@@ -117,7 +117,7 @@ pub struct BidState {
 }
 
 impl BidState {
-    pub const SIZE: usize = Self::INIT_SPACE + DISCRIMINATOR_SIZE;
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
 
     pub fn can_buy_more(&self) -> bool {
         self.filled_quantity < self.quantity
