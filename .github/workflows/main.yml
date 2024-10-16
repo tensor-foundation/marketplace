@@ -78,15 +78,16 @@ jobs:
         working-directory: ./clients/js
         run: pnpm lint
 
-      - name: No only tests
+      - name: No only or skip tests
         working-directory: ./clients/js
         run: |
           FILES=$(find test -type f -name '*.test.ts')
           EXIT_CODE=0
 
           while read FILE; do
-            if grep -Eq 'test.only\(' $FILE; then
-              echo "Error: '$FILE' contains 'test.only'"
+            if grep -Eq 'test.only\(|describe.only\(|test.skip\(|describe.skip\(' $FILE; then
+              echo "Error: '$FILE' contains '.only' or '.skip'"
+              grep -En 'test.only\(|describe.only\(|test.skip\(|describe.skip\(' $FILE
               EXIT_CODE=1
             fi
           done <<< "$FILES"
