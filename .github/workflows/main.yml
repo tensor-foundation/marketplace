@@ -87,7 +87,6 @@ jobs:
           while read FILE; do
             if grep -Eq 'test.only\(|describe.only\(|test.skip\(|describe.skip\(' $FILE; then
               echo "Error: '$FILE' contains '.only' or '.skip'"
-              grep -En 'test.only\(|describe.only\(|test.skip\(|describe.skip\(' $FILE
               EXIT_CODE=1
             fi
           done <<< "$FILES"
