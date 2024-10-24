@@ -55,6 +55,7 @@
     "@tensor-foundation/mpl-token-metadata": "^0.1.1",
     "@tensor-foundation/test-helpers": "^0.2.1",
     "@tensor-foundation/whitelist": "^0.1.0",
+    "@tensor-foundation/escrow": "^0.1.0",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

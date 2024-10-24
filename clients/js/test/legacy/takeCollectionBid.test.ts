@@ -5,26 +5,60 @@ import {
   fetchJsonParsedAccount,
   generateKeyPairSigner,
   pipe,
+  SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS,
 } from '@solana/web3.js';
 import {
   createDefaultNft,
+  createDefaultNftInCollection,
   findAtaPda,
+  TokenStandard,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
+  LAMPORTS_PER_SOL,
   signAndSendTransaction,
+  TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
-import { Mode } from '@tensor-foundation/whitelist';
+import {
+  findMintProofV2Pda,
+  getInitUpdateMintProofV2InstructionAsync,
+  intoAddress,
+  Mode,
+  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
+  TENSOR_WHITELIST_ERROR__FAILED_FVC_VERIFICATION,
+  TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION,
+  TENSOR_WHITELIST_ERROR__FAILED_VOC_VERIFICATION,
+} from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
+  TENSOR_MARKETPLACE_ERROR__CREATOR_MISMATCH,
   Target,
+  fetchBidStateFromSeeds,
+  fetchMaybeBidStateFromSeeds,
   findBidStatePda,
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
 } from '../../src/index.js';
-import { createWhitelistV2, expectCustomError } from '../_common.js';
+import {
+  BASIS_POINTS,
+  BROKER_FEE_PCT,
+  createWhitelistV2,
+  expectCustomError,
+  expectGenericError,
+  initTswap,
+  MAKER_BROKER_FEE_PCT,
+  TAKER_BROKER_FEE_PCT,
+  TAKER_FEE_BPS,
+} from '../_common.js';
+import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
+import { generateTreeOfSize } from '../_merkle.js';
 
 test('it can take a bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -280,4 +314,830 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
 
   // Then a custom error gets thrown
   await expectCustomError(t, promiseIncorrectCosigner, BAD_COSIGNER_ERROR_CODE);
+});
+
+test('it automatically closes the bid state account if filledQuantity === quantity', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidOwner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair = await generateKeyPairSignerWithSol(client);
+
+  // Mint NFT 1
+  const { mint: mint1 } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creatorKeypair,
+    owner: seller,
+  });
+
+  // Mint NFT 2
+  const { mint: mint2 } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creatorKeypair,
+    owner: seller,
+  });
+
+  // Create whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
+  });
+
+  // Create collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const bidIx = await getBidInstructionAsync({
+    owner: bidOwner,
+    amount: 1n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    quantity: 2,
+  });
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Then the bid state account should exist
+  const bidState = await fetchBidStateFromSeeds(client.rpc, {
+    owner: bidOwner.address,
+    bidId,
+  });
+  t.is(bidState.data.filledQuantity, 0);
+
+  // When the seller takes the bid once ....
+  const takeBidIx1 = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint: mint1,
+    minAmount: 1n,
+    bidState: bidState.address,
+    creators: [creatorKeypair.address],
+  });
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx1, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // The bid state still exists and its filledQuantity is updated
+  const bidState2 = await fetchBidStateFromSeeds(client.rpc, {
+    owner: bidOwner.address,
+    bidId,
+  });
+  t.is(bidState2.data.filledQuantity, 1);
+
+  // When the seller takes the bid again ....
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint: mint2,
+    minAmount: 1n,
+    bidState: bidState2.address,
+    creators: [creatorKeypair.address],
+  });
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // The bid state no longer exists
+  const bidState3 = await fetchMaybeBidStateFromSeeds(client.rpc, {
+    owner: bidOwner.address,
+    bidId,
+  });
+  t.false(bidState3.exists);
+});
+
+test('it pays fees and royalties correctly', async (t) => {
+  const ROYALTIES_BASIS_POINTS = 500n;
+  const client = createDefaultSolanaClient();
+  const bidOwner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair1 = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair2 = await generateKeyPairSignerWithSol(client);
+  const makerBroker = await generateKeyPairSigner();
+  const takerBroker = await generateKeyPairSigner();
+
+  // Mint pNFT
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creatorKeypair1,
+    owner: seller,
+    standard: TokenStandard.ProgrammableNonFungible,
+    creators: [
+      { address: creatorKeypair1.address, verified: true, share: 70 },
+      { address: creatorKeypair2.address, verified: false, share: 30 },
+    ],
+  });
+
+  // Create whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creatorKeypair1,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair1.address }],
+  });
+
+  // Create collection bid with maker broker specified
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidOwner.address,
+    bidId,
+  });
+  const bidAmount = LAMPORTS_PER_SOL / 2n;
+  const bidIx = await getBidInstructionAsync({
+    owner: bidOwner,
+    amount: bidAmount,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    makerBroker: makerBroker.address,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const creator1BalanceBefore = await client.rpc
+    .getBalance(creatorKeypair1.address)
+    .send();
+  const creator2BalanceBefore = await client.rpc
+    .getBalance(creatorKeypair2.address)
+    .send();
+  const makerBrokerBalanceBefore = await client.rpc
+    .getBalance(makerBroker.address)
+    .send();
+  const takerBrokerBalanceBefore = await client.rpc
+    .getBalance(takerBroker.address)
+    .send();
+  const sellerBalanceBefore = await client.rpc
+    .getBalance(seller.address)
+    .send();
+
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 500_000,
+  });
+
+  // When the seller takes the bid...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: bidAmount,
+    bidState: bidState,
+    creators: [creatorKeypair1.address, creatorKeypair2.address],
+    makerBroker: makerBroker.address,
+    takerBroker: takerBroker.address,
+  });
+
+  const tx = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  const txCost = (
+    await client.rpc
+      .getTransaction(tx, { maxSupportedTransactionVersion: 0 })
+      .send()
+  )?.meta?.fee;
+  const tokenAta = (await findAtaPda({ mint, owner: bidOwner.address }))[0];
+  const tokenAtaRent = await client.rpc.getBalance(tokenAta).send();
+
+  // Then the seller received the correct amount...
+  const sellerBalanceAfter = await client.rpc.getBalance(seller.address).send();
+  t.assert(
+    BigInt(sellerBalanceAfter.value) ===
+      sellerBalanceBefore.value +
+        bidAmount -
+        (bidAmount * TAKER_FEE_BPS) / BASIS_POINTS - // 2% taker fees
+        (bidAmount * BigInt(ROYALTIES_BASIS_POINTS)) / BASIS_POINTS - //  5% royalties
+        txCost! - // tx costs
+        tokenAtaRent.value // mint ata rent
+  );
+
+  // ...and the creators should have received the correct amount...
+  const creator1BalanceAfter = await client.rpc
+    .getBalance(creatorKeypair1.address)
+    .send();
+  const creator2BalanceAfter = await client.rpc
+    .getBalance(creatorKeypair2.address)
+    .send();
+  t.assert(
+    BigInt(creator1BalanceAfter.value) ===
+      creator1BalanceBefore.value +
+        (((bidAmount * ROYALTIES_BASIS_POINTS) / BASIS_POINTS) * 70n) / 100n // 70% of 5%
+  );
+  t.assert(
+    BigInt(creator2BalanceAfter.value) ===
+      creator2BalanceBefore.value +
+        (((bidAmount * ROYALTIES_BASIS_POINTS) / BASIS_POINTS) * 30n) / 100n // 30% of 5%
+  );
+
+  // ...and the brokers should have received the correct amount
+  const makerBrokerBalanceAfter = await client.rpc
+    .getBalance(makerBroker.address)
+    .send();
+  const takerBrokerBalanceAfter = await client.rpc
+    .getBalance(takerBroker.address)
+    .send();
+  t.assert(
+    BigInt(makerBrokerBalanceAfter.value) ===
+      makerBrokerBalanceBefore.value +
+        (((((bidAmount * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
+          100n) *
+          MAKER_BROKER_FEE_PCT) /
+          100n // 80% (maker split) of 50% (broker pct) of 2% (taker fee)
+  );
+  t.assert(
+    BigInt(takerBrokerBalanceAfter.value) ===
+      takerBrokerBalanceBefore.value +
+        (((((bidAmount * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
+          100n) *
+          TAKER_BROKER_FEE_PCT) /
+          100n // 20% (maker split) of 50% (broker pct) of 2% (taker fee)
+  );
+});
+
+test('it uses escrow funds when the bid is taken', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidOwner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creatorKeypair = await generateKeyPairSignerWithSol(client);
+  const bidAmount = LAMPORTS_PER_SOL / 2n;
+  await initTswap(client);
+
+  // Create escrow
+  const marginAccount = (
+    await findMarginAccountPda({
+      owner: bidOwner.address,
+      tswap: TSWAP_SINGLETON,
+      marginNr: 0,
+    })
+  )[0];
+  const escrowIx = await getInitMarginAccountInstructionAsync({
+    owner: bidOwner,
+    marginAccount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(escrowIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Deposit SOL to escrow
+  const depositIx = await getDepositMarginAccountInstructionAsync({
+    owner: bidOwner,
+    marginAccount,
+    lamports: bidAmount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(depositIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create Whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creatorKeypair,
+    conditions: [{ mode: Mode.FVC, value: creatorKeypair.address }],
+  });
+
+  // Create NFT
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creatorKeypair,
+    owner: seller,
+  });
+
+  // Create Collection Bid attached to escrow
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidOwner.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidOwner,
+    amount: bidAmount,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    sharedEscrow: marginAccount,
+    quantity: 2, // we set quantity to 2 to not have to deal with getting account rent back because the account auto-closes
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidOwner),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const bidOwnerBalanceBefore = await client.rpc
+    .getBalance(bidOwner.address)
+    .send();
+  const sharedEscrowBalanceBefore = await client.rpc
+    .getBalance(marginAccount)
+    .send();
+
+  // When the seller takes the bid...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidOwner.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: bidAmount,
+    sharedEscrow: marginAccount,
+    bidState,
+    creators: [creatorKeypair.address],
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const bidOwnerBalanceAfter = await client.rpc
+    .getBalance(bidOwner.address)
+    .send();
+  const sharedEscrowBalanceAfter = await client.rpc
+    .getBalance(marginAccount)
+    .send();
+
+  // Then the bid owner has had no change in balance...
+  t.assert(bidOwnerBalanceAfter.value === bidOwnerBalanceBefore.value);
+  // ...and the shared escrow has paid out the bid amount
+  t.assert(
+    sharedEscrowBalanceAfter.value ===
+      sharedEscrowBalanceBefore.value - bidAmount
+  );
+});
+
+test('mint has to match the whitelist - VOC', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const { collection: collectionMint, item: mint } =
+    await createDefaultNftInCollection({
+      client,
+      payer: seller,
+      owner: seller,
+      authority: updateAuthority,
+      creators: [{ address: creator.address, verified: false, share: 100 }],
+    });
+
+  const { item: wrongMint } = await createDefaultNftInCollection({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: updateAuthority,
+    creators: [{ address: creator.address, verified: false, share: 100 }],
+  });
+
+  const { mint: mintUnverified } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: updateAuthority,
+    collectionMint: collectionMint.mint,
+  });
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority,
+    conditions: [{ mode: Mode.VOC, value: collectionMint.mint }],
+  });
+
+  // Create a collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid with a mint of a different collection...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: wrongMint.mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...it should fail with the correct error
+  await expectCustomError(
+    t,
+    tx,
+    TENSOR_WHITELIST_ERROR__FAILED_VOC_VERIFICATION
+  );
+
+  // When the seller takes the bid with the unverified mint pointing to the correct collection mint...
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintUnverified,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ... it fails with the correct error
+  await expectCustomError(
+    t,
+    tx2,
+    TENSOR_WHITELIST_ERROR__FAILED_VOC_VERIFICATION
+  );
+
+  // When the seller takes the bid with the correct mint...
+  const takeBidIx3 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint.mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.is(typeof tx3, 'string');
+});
+
+test('mint has to match the whitelist - FVC', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const { mint: mintInCollection } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: creator,
+    creators: [{ address: creator.address, verified: true, share: 100 }],
+  });
+
+  const { mint: mintNotInCollection } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: creator,
+    // verified set to false (!)
+    creators: [{ address: creator.address, verified: false, share: 100 }],
+  });
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions: [{ mode: Mode.FVC, value: creator.address }],
+  });
+
+  // Create a collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid with the mint with first creator unverified...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintNotInCollection,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail with the correct error
+  await expectCustomError(
+    t,
+    tx,
+    TENSOR_WHITELIST_ERROR__FAILED_FVC_VERIFICATION
+  );
+
+  // When the seller takes the bid with the mint with first creator verified...
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintInCollection,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx2 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.is(typeof tx2, 'string');
+});
+
+test('mint has to match the whitelist - rootHash', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const mintInTree = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: creator,
+  });
+
+  const mintNotInTree = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: creator,
+  });
+
+  const {
+    root,
+    proofs: [p],
+  } = await generateTreeOfSize(1, [mintInTree.mint]);
+  const proof = p;
+  const conditions = [{ mode: Mode.MerkleTree, value: intoAddress(root) }];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Create a collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Upsert mint proof for the mint in the tree...
+  const [mintProofPdaInTree] = await findMintProofV2Pda({
+    mint: mintInTree.mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint: mintInTree.mint,
+      mintProof: mintProofPdaInTree,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid with the mint not in the tree...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintNotInTree.mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail with the correct error
+  await expectCustomError(
+    t,
+    tx,
+    TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION
+  );
+
+  // This also fails when passing a real mintProof account (from a different mint)
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintNotInTree.mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+    mintProof: mintProofPdaInTree,
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  await expectCustomError(t, tx2, TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF);
+
+  // When the seller takes the bid with the mint in the tree (and thus whitelist)...
+  const takeBidIxInTree = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mintInTree.mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+    mintProof: mintProofPdaInTree,
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.is(typeof tx3, 'string');
+});
+
+test('it has to specify creators', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+  const notCreator = await generateKeyPairSignerWithSol(client);
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller,
+    authority: creator,
+  });
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions: [{ mode: Mode.FVC, value: creator.address }],
+  });
+
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid without specifying creators...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail with a generic error
+  await expectGenericError(
+    t,
+    tx,
+    SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS
+  );
+
+  // When the seller takes the bid with an incorrect creator...
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [notCreator.address],
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx2, 15003); // TENSOR_ERROR__CREATOR_MISMATCH
+
+  // When the seller takes the bid with the correct creator...
+  const takeBidIx3 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.is(typeof tx3, 'string');
 });

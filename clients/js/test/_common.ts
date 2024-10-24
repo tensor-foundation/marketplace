@@ -13,6 +13,7 @@ import {
   pipe,
   Signature,
   SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  SolanaErrorCode,
   TransactionSigner,
 } from '@solana/web3.js';
 import {
@@ -23,6 +24,7 @@ import {
   ONE_SOL,
   signAndSendTransaction,
   TOKEN_PROGRAM_ID,
+  TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
 import {
   Condition,
@@ -36,6 +38,8 @@ import { ExecutionContext } from 'ava';
 import bs58 from 'bs58';
 import { v4 } from 'uuid';
 import { findFeeVaultPda } from '../src';
+import { getAndFundOwner } from './legacy/_common';
+import { getInitUpdateTswapInstruction } from '@tensor-foundation/escrow';
 
 export const COMPUTE_300K_IX = (() => {
   return getSetComputeUnitLimitInstruction({
@@ -79,6 +83,7 @@ export const BROKER_FEE_PCT = 50n;
 export const BROKER_FEE_BPS = 5000n;
 export const HUNDRED_PCT = 100n;
 export const MAKER_BROKER_FEE_PCT = 80n;
+export const TAKER_BROKER_FEE_PCT = 20n;
 export const BASIS_POINTS = 10_000n;
 export const TLOCK_PREMIUM_FEE_BPS = 2500n;
 
@@ -376,3 +381,34 @@ export async function upsertMintProof({
 
   return { mintProof };
 }
+
+export const initTswap = async (client: Client) => {
+  const tswapOwner = await getAndFundOwner(client);
+
+  const tswap = TSWAP_SINGLETON;
+
+  const initTswapIx = getInitUpdateTswapInstruction({
+    tswap,
+    owner: tswapOwner,
+    newOwner: tswapOwner,
+    feeVault: DEFAULT_PUBKEY, // Dummy fee vault
+    cosigner: tswapOwner,
+    config: { feeBps: 0 },
+  });
+  await pipe(
+    await createDefaultTransaction(client, tswapOwner),
+    (tx) => appendTransactionMessageInstruction(initTswapIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+};
+
+export const expectGenericError = async (
+  t: ExecutionContext,
+  promise: Promise<unknown>,
+  code: number
+) => {
+  const error = await t.throwsAsync<Error & { context: { logs: string[] } }>(
+    promise
+  );
+  t.true(isSolanaError(error.cause!, code as SolanaErrorCode));
+};
