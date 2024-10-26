@@ -921,7 +921,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "tensor-toolbox 0.1.0",
- "tensor-vipers",
+ "tensor-vipers 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1227,7 +1227,7 @@ dependencies = [
  "static_assertions",
  "tensor-escrow",
  "tensor-toolbox 0.5.0",
- "tensor-vipers",
+ "tensor-vipers 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "whitelist-program",
 ]
 
@@ -2380,14 +2380,13 @@ dependencies = [
  "spl-account-compression",
  "spl-noop",
  "spl-token-metadata-interface",
- "tensor-vipers",
+ "tensor-vipers 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "tensor-toolbox"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1e060f90f279c4561375157d870d5111a1907c1f0257709b8c0778a96454622"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#9161c9f360664ab84860f7dd86656cae49fd9f46"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2399,7 +2398,7 @@ dependencies = [
  "spl-account-compression",
  "spl-noop",
  "spl-token-metadata-interface",
- "tensor-vipers",
+ "tensor-vipers 1.0.1 (git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset)",
 ]
 
 [[package]]
@@ -2407,6 +2406,16 @@ name = "tensor-vipers"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "264654b48a8f359d62a7bef00997eb14550834b464ad4aab27923f105af93cc0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "num-traits",
+]
+
+[[package]]
+name = "tensor-vipers"
+version = "1.0.1"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#9161c9f360664ab84860f7dd86656cae49fd9f46"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2640,7 +2649,7 @@ dependencies = [
  "anchor-spl",
  "mpl-token-metadata",
  "tensor-toolbox 0.1.0",
- "tensor-vipers",
+ "tensor-vipers 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

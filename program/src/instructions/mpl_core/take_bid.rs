@@ -1,16 +1,11 @@
 use anchor_lang::prelude::*;
-use metaplex_core::{
-    accounts::BaseAssetV1,
-    fetch_plugin,
-    instructions::TransferV1CpiBuilder,
-    types::{PluginType, Royalties, UpdateAuthority, VerifiedCreators},
-};
+use metaplex_core::{accounts::BaseAssetV1, instructions::TransferV1CpiBuilder};
 use mpl_token_metadata::types::{
     Collection as LegacyCollection, Creator as LegacyCreator, TokenStandard,
 };
 use tensor_toolbox::{
     assert_fee_account,
-    metaplex_core::{validate_asset, MetaplexCore},
+    metaplex_core::{validate_core_asset, MetaplexCore},
 };
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
@@ -93,80 +88,6 @@ pub struct TakeBidCore<'info> {
     // 1. creators (1-5)
 }
 
-struct WhitelistAsset {
-    pub collection: Option<LegacyCollection>,
-    /// Creators used for whitelist verification (fine to include verified = false creators).
-    pub whitelist_creators: Option<Vec<LegacyCreator>>,
-    pub royalty_creators: Option<Vec<LegacyCreator>>,
-    pub seller_fee_basis_points: u16,
-}
-
-impl<'info> TakeBidCore<'info> {
-    fn validate_core_asset(&self) -> Result<WhitelistAsset> {
-        let royalties = validate_asset(
-            &self.asset.to_account_info(),
-            self.collection
-                .as_ref()
-                .map(|a| a.to_account_info())
-                .as_ref(),
-        )?;
-
-        let royalty_fee = if let Some(Royalties { basis_points, .. }) = royalties {
-            basis_points
-        } else {
-            0
-        };
-
-        let asset = BaseAssetV1::try_from(self.asset.as_ref())?;
-
-        // Fetch the verified creators from the MPL Core asset and map into the expected type
-        // for whitelist verification.
-        let verified_creators: Option<Vec<LegacyCreator>> =
-            fetch_plugin::<BaseAssetV1, VerifiedCreators>(
-                &self.asset.to_account_info(),
-                PluginType::VerifiedCreators,
-            )
-            .map(|(_, verified_creators, _)| {
-                verified_creators
-                    .signatures
-                    .into_iter()
-                    .map(|c| LegacyCreator {
-                        address: c.address,
-                        share: 0, // No share on VerifiedCreators on MPL Core assets. This is separate from creators used in royalties.
-                        verified: c.verified,
-                    })
-                    .collect()
-            })
-            .ok();
-
-        let collection = match asset.update_authority {
-            UpdateAuthority::Collection(address) => Some(LegacyCollection {
-                key: address,
-                verified: true, // mpl-core collections are always verified
-            }),
-            _ => None,
-        };
-
-        let royalty_creators = royalties.map(|r| {
-            r.creators
-                .into_iter()
-                .map(|creator| LegacyCreator {
-                    address: creator.address,
-                    share: creator.percentage,
-                    verified: false, // mpl-core does not have a concept of "verified" creator for royalties
-                })
-                .collect()
-        });
-
-        Ok(WhitelistAsset {
-            collection,
-            whitelist_creators: verified_creators,
-            royalty_creators,
-            seller_fee_basis_points: royalty_fee,
-        })
-    }
-}
-
 impl<'info> Validate<'info> for TakeBidCore<'info> {
     fn validate(&self) -> Result<()> {
         assert_fee_account(
@@ -216,7 +137,10 @@ pub fn process_take_bid_core<'info>(
     min_amount: u64,
 ) -> Result<()> {
     // validate the asset account and extract royalty and whitelist info from it.
-    let asset = ctx.accounts.validate_core_asset()?;
+    let asset = validate_core_asset(
+        &ctx.accounts.asset.to_account_info(),
+        ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
+    )?;
 
     let bid_state = &ctx.accounts.bid_state;
     let asset_id = ctx.accounts.asset.key();
@@ -267,6 +191,25 @@ pub fn process_take_bid_core<'info>(
 
             let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
 
+            // Map to legacy collection type
+            let legacy_collection = asset.collection.map(|c| LegacyCollection {
+                key: c,
+                verified: true, // mpl-core collections are always verified
+            });
+
+            // Map to legacy creators type
+            let legacy_creators: Option<Vec<LegacyCreator>> =
+                asset.whitelist_creators.as_ref().map(|creators| {
+                    creators
+                        .iter()
+                        .map(|c| LegacyCreator {
+                            address: c.address,
+                            share: 0, // No share on VerifiedCreators on MPL Core assets. This is separate from creators used in royalties.
+                            verified: c.verified,
+                        })
+                        .collect()
+                });
+
             match whitelist_type {
                 WhitelistType::V1(whitelist) => {
                     //prioritize merkle tree if proof present
@@ -282,20 +225,20 @@ pub fn process_take_bid_core<'info>(
 
                         let collection = asset.collection.unwrap();
 
-                        if collection.key != *collection_info.key {
+                        if collection != *collection_info.key {
                             msg!("Asset collection account does not match the provided collection account");
                             return Err(TcompError::MissingCollection.into());
                         }
 
-                        whitelist.verify_whitelist_tcomp(Some(collection), None)?;
-                    } else if let Some(creators) = asset.whitelist_creators {
-                        whitelist.verify_whitelist_tcomp(None, Some(creators))?;
+                        whitelist.verify_whitelist_tcomp(legacy_collection, None)?;
+                    } else if asset.whitelist_creators.is_some() {
+                        whitelist.verify_whitelist_tcomp(None, legacy_creators)?;
                     } else {
                         return Err(TcompError::MissingWhitelistMethod.into());
                     }
                 }
                 WhitelistType::V2(whitelist) => {
-                    whitelist.verify(&asset.collection, &asset.whitelist_creators, &mint_proof)?;
+                    whitelist.verify(&legacy_collection, &legacy_creators, &mint_proof)?;
                 }
             }
         }
@@ -350,7 +293,7 @@ pub fn process_take_bid_core<'info>(
             .collect(),
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: asset.seller_fee_basis_points,
+        seller_fee_basis_points: asset.royalty_fee_bps,
         creator_accounts: ctx.remaining_accounts,
         marketplace_prog: &ctx.accounts.marketplace_program,
         escrow_prog: &ctx.accounts.escrow_program,
