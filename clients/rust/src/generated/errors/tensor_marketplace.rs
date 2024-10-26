@@ -148,6 +148,9 @@ pub enum TensorMarketplaceError {
     /// 6145 - missing creator ATA
     #[error("missing creator ATA")]
     MissingCreatorATA = 0x1801,
+    /// 6146 - No whitelist method provided
+    #[error("No whitelist method provided")]
+    MissingWhitelistMethod = 0x1802,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

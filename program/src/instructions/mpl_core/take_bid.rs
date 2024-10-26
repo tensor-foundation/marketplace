@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
 use metaplex_core::{
     accounts::BaseAssetV1,
+    fetch_plugin,
     instructions::TransferV1CpiBuilder,
-    types::{Royalties, UpdateAuthority},
+    types::{PluginType, Royalties, UpdateAuthority, VerifiedCreators},
 };
-use mpl_token_metadata::types::{Collection, TokenStandard};
+use mpl_token_metadata::types::{
+    Collection as LegacyCollection, Creator as LegacyCreator, TokenStandard,
+};
 use tensor_toolbox::{
     assert_fee_account,
     metaplex_core::{validate_asset, MetaplexCore},
@@ -90,6 +93,80 @@ pub struct TakeBidCore<'info> {
     // 1. creators (1-5)
 }
 
+struct WhitelistAsset {
+    pub collection: Option<LegacyCollection>,
+    /// Creators used for whitelist verification (fine to include verified = false creators).
+    pub whitelist_creators: Option<Vec<LegacyCreator>>,
+    pub royalty_creators: Option<Vec<LegacyCreator>>,
+    pub seller_fee_basis_points: u16,
+}
+
+impl<'info> TakeBidCore<'info> {
+    fn validate_core_asset(&self) -> Result<WhitelistAsset> {
+        let royalties = validate_asset(
+            &self.asset.to_account_info(),
+            self.collection
+                .as_ref()
+                .map(|a| a.to_account_info())
+                .as_ref(),
+        )?;
+
+        let royalty_fee = if let Some(Royalties { basis_points, .. }) = royalties {
+            basis_points
+        } else {
+            0
+        };
+
+        let asset = BaseAssetV1::try_from(self.asset.as_ref())?;
+
+        // Fetch the verified creators from the MPL Core asset and map into the expected type
+        // for whitelist verification.
+        let verified_creators: Option<Vec<LegacyCreator>> =
+            fetch_plugin::<BaseAssetV1, VerifiedCreators>(
+                &self.asset.to_account_info(),
+                PluginType::VerifiedCreators,
+            )
+            .map(|(_, verified_creators, _)| {
+                verified_creators
+                    .signatures
+                    .into_iter()
+                    .map(|c| LegacyCreator {
+                        address: c.address,
+                        share: 0, // No share on VerifiedCreators on MPL Core assets. This is separate from creators used in royalties.
+                        verified: c.verified,
+                    })
+                    .collect()
+            })
+            .ok();
+
+        let collection = match asset.update_authority {
+            UpdateAuthority::Collection(address) => Some(LegacyCollection {
+                key: address,
+                verified: true, // mpl-core collections are always verified
+            }),
+            _ => None,
+        };
+
+        let royalty_creators = royalties.map(|r| {
+            r.creators
+                .into_iter()
+                .map(|creator| LegacyCreator {
+                    address: creator.address,
+                    share: creator.percentage,
+                    verified: false, // mpl-core does not have a concept of "verified" creator for royalties
+                })
+                .collect()
+        });
+
+        Ok(WhitelistAsset {
+            collection,
+            whitelist_creators: verified_creators,
+            royalty_creators,
+            seller_fee_basis_points: royalty_fee,
+        })
+    }
+}
+
 impl<'info> Validate<'info> for TakeBidCore<'info> {
     fn validate(&self) -> Result<()> {
         assert_fee_account(
@@ -138,29 +215,11 @@ pub fn process_take_bid_core<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
-    // validate the asset account
-    let royalties = validate_asset(
-        &ctx.accounts.asset,
-        ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
-    )?;
+    // validate the asset account and extract royalty and whitelist info from it.
+    let asset = ctx.accounts.validate_core_asset()?;
 
     let bid_state = &ctx.accounts.bid_state;
     let asset_id = ctx.accounts.asset.key();
-
-    let (creators, seller_fee, token_standard) = if let Some(Royalties {
-        creators,
-        basis_points,
-        ..
-    }) = royalties
-    {
-        (
-            creators,
-            basis_points,
-            TokenStandard::ProgrammableNonFungible,
-        )
-    } else {
-        (vec![], 0, TokenStandard::NonFungible)
-    };
 
     match bid_state.target {
         Target::AssetId => {
@@ -215,48 +274,28 @@ pub fn process_take_bid_core<'info>(
                         require!(mint_proof.is_some(), TcompError::BadMintProof);
 
                         whitelist.verify_whitelist(None, mint_proof)?;
-                    } else if let Some(collection) = &ctx.accounts.collection {
-                        let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
-
-                        if let UpdateAuthority::Collection(c) = asset.update_authority {
-                            if c != *collection.key {
-                                msg!("Asset collection account does not match the provided collection account");
-                                return Err(TcompError::MissingCollection.into());
-                            }
-
-                            whitelist.verify_whitelist_tcomp(
-                                Some(Collection {
-                                    key: collection.key(),
-                                    // there is no verify flag on Core, but only the collection update authority
-                                    // can set a collection
-                                    verified: true,
-                                }),
-                                // creators have no verified flag on Core, they can't be used
-                                None,
-                            )?;
-                        } else {
+                    } else if let Some(collection_info) = &ctx.accounts.collection {
+                        if asset.collection.is_none() {
                             msg!("Asset has no collection set");
                             return Err(TcompError::MissingCollection.into());
                         }
+
+                        let collection = asset.collection.unwrap();
+
+                        if collection.key != *collection_info.key {
+                            msg!("Asset collection account does not match the provided collection account");
+                            return Err(TcompError::MissingCollection.into());
+                        }
+
+                        whitelist.verify_whitelist_tcomp(Some(collection), None)?;
+                    } else if let Some(creators) = asset.whitelist_creators {
+                        whitelist.verify_whitelist_tcomp(None, Some(creators))?;
                     } else {
-                        return Err(TcompError::MissingCollection.into());
+                        return Err(TcompError::MissingWhitelistMethod.into());
                     }
                 }
                 WhitelistType::V2(whitelist) => {
-                    let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
-
-                    let collection = match asset.update_authority {
-                        UpdateAuthority::Collection(address) => Some(Collection {
-                            key: address,
-                            verified: true, // Only the collection update authority can set a collection, so this is always verified.
-                        }),
-                        _ => None,
-                    };
-
-                    // creators have no verified flag on Core, they can't be used
-                    let creators = None;
-
-                    whitelist.verify(&collection, &creators, &mint_proof)?;
+                    whitelist.verify(&asset.collection, &asset.whitelist_creators, &mint_proof)?;
                 }
             }
         }
@@ -302,11 +341,16 @@ pub fn process_take_bid_core<'info>(
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
-        token_standard: Some(token_standard),
-        creators: creators.into_iter().map(Into::into).collect(),
+        token_standard: Some(TokenStandard::ProgrammableNonFungible),
+        creators: asset
+            .royalty_creators
+            .unwrap_or_default()
+            .into_iter()
+            .map(Into::into)
+            .collect(),
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: seller_fee,
+        seller_fee_basis_points: asset.seller_fee_basis_points,
         creator_accounts: ctx.remaining_accounts,
         marketplace_prog: &ctx.accounts.marketplace_program,
         escrow_prog: &ctx.accounts.escrow_program,
