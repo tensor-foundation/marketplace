@@ -28,17 +28,21 @@ test('it can delist a listed core asset', async (t) => {
   const payer = await generateKeyPairSignerWithSol(client);
   const updateAuthority = await generateKeyPairSigner();
   const owner = await generateKeyPairSigner();
+  const creator = await generateKeyPairSigner();
 
   const price = 100_000_000n;
 
   // Create a MPL core asset.
-  const asset = await createDefaultAsset(
+  const asset = await createDefaultAsset({
     client,
+    authority: updateAuthority,
+    owner: owner.address,
+    royalties: {
+      creators: [{ address: creator.address, percentage: 100 }],
+      basisPoints: 500,
+    },
     payer,
-    updateAuthority.address,
-    owner.address,
-    true // withRoyalties
-  );
+  });
 
   // Owner is the current owner.
   t.like(await fetchAssetV1(client.rpc, asset.address), <AssetV1>(<unknown>{

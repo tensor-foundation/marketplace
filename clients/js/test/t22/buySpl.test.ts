@@ -90,7 +90,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -103,7 +103,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 });
 
@@ -166,7 +166,7 @@ test('it can buy with a cosigner', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -179,7 +179,7 @@ test('it can buy with a cosigner', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 });
 
@@ -417,7 +417,7 @@ test('SPL fees are paid correctly', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -430,7 +430,7 @@ test('SPL fees are paid correctly', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 
   const feeVaultBalance = BigInt(
@@ -532,7 +532,7 @@ test('maker and taker brokers receive correct split', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -545,7 +545,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     client,
     mint,
     owner: buyer.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 
   const feeVaultBalance = BigInt(
@@ -651,7 +651,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -664,7 +664,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     client,
     mint,
     owner: buyer.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 
   const feeVaultBalance = BigInt(

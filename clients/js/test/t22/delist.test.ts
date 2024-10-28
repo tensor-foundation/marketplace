@@ -52,7 +52,7 @@ test('it can delist a listed T22 asset', async (t) => {
           await findAtaPda({
             mint,
             owner: listing!,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )

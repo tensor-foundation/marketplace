@@ -42,7 +42,7 @@ test('it can buy an NFT', async (t) => {
     await getTestSetup();
 
   // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: nftOwner.address,
@@ -53,6 +53,7 @@ test('it can buy an NFT', async (t) => {
   const listIx = await getListWnsInstructionAsync({
     owner: nftOwner,
     mint,
+    collection: group,
     distribution,
     amount: 1n,
   });
@@ -71,6 +72,7 @@ test('it can buy an NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: 2n,
     creators: [nftUpdateAuthority.address],
@@ -95,7 +97,7 @@ test('it can buy an NFT', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -109,7 +111,7 @@ test('it can buy an NFT', async (t) => {
       await findAtaPda({
         mint,
         owner: buyer.address,
-        tokenProgramId: TOKEN22_PROGRAM_ID,
+        tokenProgram: TOKEN22_PROGRAM_ID,
       })
     )[0]
   );
@@ -127,7 +129,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     await getTestSetup();
 
   // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: nftOwner.address,
@@ -138,6 +140,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
   const listIx = await getListWnsInstructionAsync({
     owner: nftOwner,
     mint,
+    collection: group,
     distribution,
     amount: 1,
     cosigner,
@@ -156,6 +159,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
   const buyIx = await getBuyWnsInstructionAsync({
     owner: nftOwner.address,
     payer: buyer,
+    collection: group,
     distribution,
     mint,
     maxAmount: 2,
@@ -182,7 +186,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -196,7 +200,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
       await findAtaPda({
         mint,
         owner: buyer.address,
-        tokenProgramId: TOKEN22_PROGRAM_ID,
+        tokenProgram: TOKEN22_PROGRAM_ID,
       })
     )[0]
   );
@@ -220,13 +224,14 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     action: TestAction.List,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution } = nft;
+  const { mint, distribution, group } = nft;
 
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsInstructionAsync({
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: listingPrice - 1n, // <-- lower amount
     creators: [nftUpdateAuthority.address],
@@ -254,7 +259,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     useCosigner: true,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution } = nft;
+  const { mint, group, distribution } = nft;
 
   const fakeCosigner = await generateKeyPairSigner();
 
@@ -262,6 +267,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: listingPrice - 1n,
     // Missing cosigner!
@@ -282,6 +288,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: listingPrice! - 1n,
     cosigner: fakeCosigner,
@@ -309,13 +316,14 @@ test('buying emits a self-CPI logging event', async (t) => {
     action: TestAction.List,
   });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution } = nft;
+  const { mint, group, distribution } = nft;
 
   // When a buyer buys the NFT.
   const buyIx = await getBuyWnsInstructionAsync({
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
@@ -345,7 +353,7 @@ test('fees are paid correctly', async (t) => {
   });
 
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -360,6 +368,7 @@ test('fees are paid correctly', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
+    collection: group,
     distribution,
     maxAmount: listingPrice,
     creators: [nftUpdateAuthority.address],
@@ -384,7 +393,7 @@ test('fees are paid correctly', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -438,7 +447,7 @@ test('maker and taker brokers receive correct split', async (t) => {
 
   const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
     signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -462,6 +471,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     payer: buyer,
     mint,
     distribution,
+    collection: group,
     maxAmount: listingPrice!,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
@@ -487,7 +497,7 @@ test('maker and taker brokers receive correct split', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -564,7 +574,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   });
 
   const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -584,6 +594,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     payer: buyer,
     mint,
     distribution,
+    collection: group,
     maxAmount: listingPrice,
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
@@ -609,7 +620,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )

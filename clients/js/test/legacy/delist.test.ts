@@ -28,7 +28,7 @@ test('it can delist a legacy NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   // And we list the NFT.
@@ -72,7 +72,7 @@ test('it can delist a legacy Programmable NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
     standard: TokenStandard.ProgrammableNonFungible,
   });
 

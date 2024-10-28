@@ -81,7 +81,7 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     client,
     payer,
     authority: updateAuthority,
-    owner,
+    owner: owner.address,
   });
 
   // List the NFT.
@@ -242,7 +242,7 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     client,
     payer,
     authority: updateAuthority,
-    owner,
+    owner: owner.address,
     creators,
   });
 

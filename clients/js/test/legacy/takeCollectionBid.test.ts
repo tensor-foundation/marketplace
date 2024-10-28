@@ -4,6 +4,7 @@ import {
   fetchEncodedAccount,
   fetchJsonParsedAccount,
   generateKeyPairSigner,
+  getAddressDecoder,
   pipe,
   SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS,
 } from '@solana/web3.js';
@@ -11,6 +12,7 @@ import {
   createDefaultNft,
   createDefaultNftInCollection,
   findAtaPda,
+  printSupply,
   TokenStandard,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
@@ -19,6 +21,8 @@ import {
   generateKeyPairSignerWithSol,
   LAMPORTS_PER_SOL,
   signAndSendTransaction,
+  TENSOR_ERROR__CREATOR_MISMATCH,
+  TENSOR_ERROR__INSUFFICIENT_BALANCE,
   TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
 import {
@@ -33,7 +37,10 @@ import {
 } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
-  TENSOR_MARKETPLACE_ERROR__CREATOR_MISMATCH,
+  Field,
+  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
+  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
+  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
   Target,
   fetchBidStateFromSeeds,
   fetchMaybeBidStateFromSeeds,
@@ -49,6 +56,7 @@ import {
   expectGenericError,
   initTswap,
   MAKER_BROKER_FEE_PCT,
+  sleep,
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common.js';
@@ -71,7 +79,7 @@ test('it can take a bid on a legacy collection', async (t) => {
     client,
     payer: seller,
     authority: creatorKeypair,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Create whitelist
@@ -167,7 +175,7 @@ test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) 
     client,
     payer: seller,
     authority: notCreator,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Create whitelist
@@ -239,7 +247,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     client,
     payer: seller,
     authority: creatorKeypair,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Create whitelist
@@ -289,10 +297,12 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const BAD_COSIGNER_ERROR_CODE = 6132;
-
   // Then a custom error gets thrown
-  await expectCustomError(t, promiseNoCosigner, BAD_COSIGNER_ERROR_CODE);
+  await expectCustomError(
+    t,
+    promiseNoCosigner,
+    TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER
+  );
 
   // When the seller tries to take the bid with specifying an incorrect cosigner
   const takeBidIxIncorrectCosigner = await getTakeBidLegacyInstructionAsync({
@@ -313,7 +323,11 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
   );
 
   // Then a custom error gets thrown
-  await expectCustomError(t, promiseIncorrectCosigner, BAD_COSIGNER_ERROR_CODE);
+  await expectCustomError(
+    t,
+    promiseIncorrectCosigner,
+    TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER
+  );
 });
 
 test('it automatically closes the bid state account if filledQuantity === quantity', async (t) => {
@@ -327,7 +341,7 @@ test('it automatically closes the bid state account if filledQuantity === quanti
     client,
     payer: seller,
     authority: creatorKeypair,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Mint NFT 2
@@ -335,7 +349,7 @@ test('it automatically closes the bid state account if filledQuantity === quanti
     client,
     payer: seller,
     authority: creatorKeypair,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Create whitelist
@@ -430,7 +444,7 @@ test('it pays fees and royalties correctly', async (t) => {
     client,
     payer: seller,
     authority: creatorKeypair1,
-    owner: seller,
+    owner: seller.address,
     standard: TokenStandard.ProgrammableNonFungible,
     creators: [
       { address: creatorKeypair1.address, verified: true, share: 70 },
@@ -621,7 +635,7 @@ test('it uses escrow funds when the bid is taken', async (t) => {
     client,
     payer: seller,
     authority: creatorKeypair,
-    owner: seller,
+    owner: seller.address,
   });
 
   // Create Collection Bid attached to escrow
@@ -698,7 +712,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
     await createDefaultNftInCollection({
       client,
       payer: seller,
-      owner: seller,
+      owner: seller.address,
       authority: updateAuthority,
       creators: [{ address: creator.address, verified: false, share: 100 }],
     });
@@ -706,7 +720,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
   const { item: wrongMint } = await createDefaultNftInCollection({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: updateAuthority,
     creators: [{ address: creator.address, verified: false, share: 100 }],
   });
@@ -714,7 +728,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
   const { mint: mintUnverified } = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: updateAuthority,
     collectionMint: collectionMint.mint,
   });
@@ -821,7 +835,7 @@ test('mint has to match the whitelist - FVC', async (t) => {
   const { mint: mintInCollection } = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: creator,
     creators: [{ address: creator.address, verified: true, share: 100 }],
   });
@@ -829,7 +843,7 @@ test('mint has to match the whitelist - FVC', async (t) => {
   const { mint: mintNotInCollection } = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: creator,
     // verified set to false (!)
     creators: [{ address: creator.address, verified: false, share: 100 }],
@@ -913,14 +927,14 @@ test('mint has to match the whitelist - rootHash', async (t) => {
   const mintInTree = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: creator,
   });
 
   const mintNotInTree = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: creator,
   });
 
@@ -1051,7 +1065,7 @@ test('it has to specify creators', async (t) => {
   const { mint } = await createDefaultNft({
     client,
     payer: seller,
-    owner: seller,
+    owner: seller.address,
     authority: creator,
   });
 
@@ -1120,7 +1134,7 @@ test('it has to specify creators', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should fail
-  await expectCustomError(t, tx2, 15003); // TENSOR_ERROR__CREATOR_MISMATCH
+  await expectCustomError(t, tx2, TENSOR_ERROR__CREATOR_MISMATCH);
 
   // When the seller takes the bid with the correct creator...
   const takeBidIx3 = await getTakeBidLegacyInstructionAsync({
@@ -1140,4 +1154,444 @@ test('it has to specify creators', async (t) => {
   );
   // ...it should succeed
   t.is(typeof tx3, 'string');
+});
+
+test('it has to match the name field if set', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+
+  const correctName = 'Test';
+  const incorrectName = 'test';
+
+  const data = {
+    name: correctName,
+    symbol: 'EXNFT',
+    uri: 'https://example.com/nft',
+    sellerFeeBasisPoints: 500,
+    creators: [
+      {
+        address: authority.address,
+        verified: true,
+        share: 100,
+      },
+    ],
+    printSupply: printSupply('Zero'),
+    tokenStandard: TokenStandard.NonFungible,
+    collection: undefined,
+    ruleSet: undefined,
+  };
+
+  const incorrectData = {
+    ...data,
+    name: incorrectName,
+  };
+  const { mint: correctMint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: authority,
+    owner: seller.address,
+    data,
+  });
+
+  const { mint: incorrectMint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: authority,
+    owner: seller.address,
+    data: incorrectData,
+  });
+
+  // Create Whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.FVC, value: authority.address }],
+  });
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    // (!)
+    field: Field.Name,
+    fieldId: getAddressDecoder().decode(
+      new TextEncoder()
+        .encode(correctName)
+        .slice(0, 32)
+        .reduce((arr, byte, i) => {
+          arr[i] = byte;
+          return arr;
+        }, new Uint8Array(32))
+    ),
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid with the incorrect mint...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: incorrectMint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [authority.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID);
+
+  // When the seller takes the bid with the correct mint...
+  const takeBidIx2 = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: correctMint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [authority.address],
+  });
+
+  const tx2 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.is(typeof tx2, 'string');
+});
+
+test('it cannot take an expired bid', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority,
+    owner: seller.address,
+  });
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.FVC, value: authority.address }],
+  });
+
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    expireInSec: 1n,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Sleep for 5 seconds to let the bid expire
+  await sleep(5000);
+
+  // When the seller tries to take the bid...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [authority.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BID_EXPIRED);
+});
+
+test('it cannot take a bid when the escrow balance is insufficient', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+  const price = LAMPORTS_PER_SOL / 4n;
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority,
+    owner: seller.address,
+  });
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.FVC, value: authority.address }],
+  });
+
+  // Create Escrow
+  const marginAccount = (
+    await findMarginAccountPda({
+      owner: bidder.address,
+      tswap: TSWAP_SINGLETON,
+      marginNr: 0,
+    })
+  )[0];
+  const escrowIx = await getInitMarginAccountInstructionAsync({
+    owner: bidder,
+    marginAccount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(escrowIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Deposit SOL to escrow
+  const depositIx = await getDepositMarginAccountInstructionAsync({
+    owner: bidder,
+    marginAccount,
+    // (!) bidder deposits 1 lamports less than the bid amount
+    lamports: price - 1n,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(depositIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: price,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    //(!)
+    sharedEscrow: marginAccount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller tries to take the bid...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: price,
+    bidState,
+    //(!)
+    sharedEscrow: marginAccount,
+    creators: [authority.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx, TENSOR_ERROR__INSUFFICIENT_BALANCE);
+});
+
+test('it enforced pNFT royalties', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority,
+    owner: seller.address,
+    standard: TokenStandard.ProgrammableNonFungible,
+  });
+
+  // Create Whitelist
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.FVC, value: authority.address }],
+  });
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const creatorRoyaltyReceiverBalanceBefore = (
+    await client.rpc.getBalance(authority.address).send()
+  ).value;
+
+  // Even when the seller tries to take the bid with optionalRoyalties set to 0...
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [authority.address],
+    optionalRoyaltyPct: 0,
+  });
+
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 400_000,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...the tx passes, but royalties have been paid
+  const creatorRoyaltyReceiverBalanceAfter = (
+    await client.rpc.getBalance(authority.address).send()
+  ).value;
+  const royaltyPaid =
+    creatorRoyaltyReceiverBalanceAfter - creatorRoyaltyReceiverBalanceBefore;
+  t.is(royaltyPaid, ((LAMPORTS_PER_SOL / 2n) * 500n) / BASIS_POINTS);
+});
+
+test('it correctly handles optional royalties', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+
+  const price = LAMPORTS_PER_SOL / 10n;
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.FVC, value: authority.address }],
+  });
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: price,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    quantity: 5,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const correctTestRoyalties = [0, 33, 70, 100];
+  for (const royaltyPct of correctTestRoyalties) {
+    const { mint } = await createDefaultNft({
+      client,
+      payer: seller,
+      authority,
+      owner: seller.address,
+      standard: TokenStandard.NonFungible,
+    });
+
+    const creatorRoyaltyReceiverBalanceBefore = (
+      await client.rpc.getBalance(authority.address).send()
+    ).value;
+    const takeBidIx = await getTakeBidLegacyInstructionAsync({
+      owner: bidder.address,
+      seller,
+      whitelist,
+      mint,
+      minAmount: price,
+      bidState,
+      creators: [authority.address],
+      optionalRoyaltyPct: royaltyPct,
+    });
+
+    await pipe(
+      await createDefaultTransaction(client, seller),
+      (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+      (tx) => signAndSendTransaction(client, tx)
+    );
+
+    // ...the tx passes and royalties have been paid correctly
+    const creatorRoyaltyReceiverBalanceAfter = (
+      await client.rpc.getBalance(authority.address).send()
+    ).value;
+    const royaltyPaid =
+      creatorRoyaltyReceiverBalanceAfter - creatorRoyaltyReceiverBalanceBefore;
+    // optional royalties == 5% of price * royaltyPct / 100
+    t.is(
+      royaltyPaid,
+      (price * 500n * BigInt(royaltyPct)) / BASIS_POINTS / 100n
+    );
+  }
 });

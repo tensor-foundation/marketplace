@@ -96,7 +96,7 @@ export async function setupLegacyTest(
     client,
     payer,
     authority: nftUpdateAuthority,
-    owner: nftOwner,
+    owner: nftOwner.address,
     standard,
   });
 

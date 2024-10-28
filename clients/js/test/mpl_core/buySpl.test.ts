@@ -71,13 +71,16 @@ test('it can buy a listed core asset using a SPL token', async (t) => {
   t.is(buyerAtaBalance, Number(initialSupply));
 
   // Create a MPL core asset that has 5% royalties.
-  const asset = await createDefaultAsset(
+  const asset = await createDefaultAsset({
     client,
+    authority: updateAuthority,
+    owner: owner.address,
+    royalties: {
+      creators: [{ address: updateAuthority.address, percentage: 100 }],
+      basisPoints: 500,
+    },
     payer,
-    updateAuthority.address,
-    owner.address,
-    true // withRoyalties
-  );
+  });
 
   // Owner is the current owner.
   t.like(await fetchAssetV1(client.rpc, asset.address), <AssetV1>(<unknown>{

@@ -26,7 +26,7 @@ test('it can list an NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -64,7 +64,7 @@ test('it can list a Programmable NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
     standard: TokenStandard.ProgrammableNonFungible,
   });
 
@@ -109,7 +109,7 @@ test('it can list an NFT with a cosigner', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const cosigner = await generateKeyPairSigner();
@@ -149,7 +149,7 @@ test('it can list a Programmable NFT with a cosigner', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
     standard: TokenStandard.ProgrammableNonFungible,
   });
 

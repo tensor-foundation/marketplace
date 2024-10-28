@@ -27,7 +27,7 @@ test('it can close an expired listing', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -90,7 +90,7 @@ test('it cannot close an active listing', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const listLegacyIx = await getListLegacyInstructionAsync({
@@ -152,7 +152,7 @@ test('it can close an expired listing with another payer', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const listLegacyIx = await getListLegacyInstructionAsync({

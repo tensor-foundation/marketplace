@@ -11,7 +11,6 @@ import {
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
 import {
-  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
   TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_ENABLED,
   Target,
   fetchBidStateFromSeeds,
@@ -32,7 +31,7 @@ test('it can bid on an NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const bidIx = await getBidInstructionAsync({
@@ -74,7 +73,7 @@ test('it cannot make a single NFT bid with a non-sol currency', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   // Create SPL token
@@ -122,7 +121,7 @@ test('it can create a bid attached to shared escrow, owner doesnt need to transf
     client,
     payer: mintOwner,
     authority: mintOwner,
-    owner: mintOwner,
+    owner: mintOwner.address,
   });
 
   const [marginAccount] = await findMarginAccountPda({
@@ -185,7 +184,7 @@ test('it can create a bid attached to shared escrow, owner doesnt need to transf
   t.is(BigInt(afterBalance.value), beforeBalance.value - 5000n - rent);
 });
 
-test.skip('it cannot make a bid with cosigner set to the original signer', async (t) => {
+test("it cannot set the cosigner field if it's specified as the owner", async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
 
@@ -193,7 +192,7 @@ test.skip('it cannot make a bid with cosigner set to the original signer', async
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const bidIx = await getBidInstructionAsync({
@@ -204,11 +203,17 @@ test.skip('it cannot make a bid with cosigner set to the original signer', async
     cosigner: owner,
   });
 
-  const tx = pipe(
+  await pipe(
     await createDefaultTransaction(client, owner),
     (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER);
+  const bidState = await fetchBidStateFromSeeds(client.rpc, {
+    owner: owner.address,
+    bidId: mint,
+  });
+
+  // The cosigner field should be null
+  t.is(bidState.data.cosigner, null);
 });

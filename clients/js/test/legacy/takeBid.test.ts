@@ -37,7 +37,7 @@ test('it can take a bid on a legacy NFT', async (t) => {
     client,
     payer: seller,
     authority: seller,
-    owner: seller,
+    owner: seller.address,
   });
 
   const bidIx = await getBidInstructionAsync({
@@ -103,7 +103,7 @@ test('it has to specify the correct makerBroker', async (t) => {
     client,
     payer: seller,
     authority: seller,
-    owner: seller,
+    owner: seller.address,
   });
 
   const bidIx = await getBidInstructionAsync({
@@ -185,14 +185,14 @@ test('it has to specify the correct privateTaker', async (t) => {
     client,
     payer: notPrivateTaker,
     authority: mintAuthority,
-    owner: notPrivateTaker,
+    owner: notPrivateTaker.address,
   });
 
   const { mint: mintOwnedByPrivateTaker } = await createDefaultNft({
     client,
     payer: privateTaker,
     authority: mintAuthority,
-    owner: privateTaker,
+    owner: privateTaker.address,
   });
 
   // Bid on the NFT but specify another privateTaker
@@ -280,7 +280,7 @@ test('it has to specify the correct cosigner', async (t) => {
     client,
     payer: seller,
     authority: seller,
-    owner: seller,
+    owner: seller.address,
   });
 
   const bidIx = await getBidInstructionAsync({
@@ -360,14 +360,14 @@ test('it has to match the specified targetId', async (t) => {
     client,
     payer: seller,
     authority: seller,
-    owner: seller,
+    owner: seller.address,
   });
 
   const { mint: mint2 } = await createDefaultNft({
     client,
     payer: seller,
     authority: seller,
-    owner: seller,
+    owner: seller.address,
   });
 
   const [bidState] = await findBidStatePda({

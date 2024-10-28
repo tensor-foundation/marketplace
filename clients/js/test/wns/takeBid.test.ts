@@ -35,7 +35,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
   });
 
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution } = nft;
+  const { mint, group, distribution } = nft;
 
   // When the seller takes the bid.
   const takeBidIx = await getTakeBidWnsInstructionAsync({
@@ -43,6 +43,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
+    collection: group,
     minAmount: bidPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
@@ -82,7 +83,7 @@ test('fees are paid correctly', async (t) => {
   });
 
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -98,6 +99,7 @@ test('fees are paid correctly', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
+    collection: group,
     minAmount: bidPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
@@ -160,7 +162,7 @@ test('maker and taker brokers receive correct split', async (t) => {
 
   const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
     signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -184,6 +186,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
+    collection: group,
     minAmount: bidPrice,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
@@ -271,7 +274,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   });
 
   const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
-  const { mint, distribution, sellerFeeBasisPoints } = nft;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
     (await client.rpc.getBalance(feeVault).send()).value
@@ -291,6 +294,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     seller: nftOwner, // NFT holder--the seller
     mint,
     distribution,
+    collection: group,
     minAmount: bidPrice,
     // makerBroker not passed in because not set
     takerBroker: takerBroker.address,

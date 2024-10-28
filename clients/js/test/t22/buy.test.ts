@@ -71,7 +71,7 @@ test('it can buy an NFT', async (t) => {
           await findAtaPda({
             mint,
             owner: listing!,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -132,7 +132,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
           await findAtaPda({
             mint,
             owner: listing!,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -322,7 +322,7 @@ test('fees are paid correctly', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -424,7 +424,7 @@ test('maker and taker brokers receive correct split', async (t) => {
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -545,7 +545,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
           await findAtaPda({
             mint,
             owner: listing,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )

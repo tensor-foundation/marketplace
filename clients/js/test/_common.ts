@@ -412,3 +412,6 @@ export const expectGenericError = async (
   );
   t.true(isSolanaError(error.cause!, code as SolanaErrorCode));
 };
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

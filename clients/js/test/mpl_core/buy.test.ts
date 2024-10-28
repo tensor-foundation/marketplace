@@ -36,13 +36,16 @@ test('it can buy a listed core asset with SOL', async (t) => {
   const maxPrice = 125_000_000n;
 
   // Create a MPL core asset.
-  const asset = await createDefaultAsset(
+  const asset = await createDefaultAsset({
     client,
     payer,
-    updateAuthority.address,
-    owner.address,
-    true // withRoyalties
-  );
+    authority: updateAuthority,
+    owner: owner.address,
+    royalties: {
+      creators: [{ address: updateAuthority.address, percentage: 100 }],
+      basisPoints: 500,
+    },
+  });
 
   // Owner is the current owner.
   t.like(await fetchAssetV1(client.rpc, asset.address), <AssetV1>(<unknown>{
@@ -63,7 +66,6 @@ test('it can buy a listed core asset with SOL', async (t) => {
     payer,
     amount: price,
   });
-  t.pass();
 
   await pipe(
     await createDefaultTransaction(client, payer),

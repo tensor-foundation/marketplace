@@ -15,7 +15,6 @@ import {
 import { Mode } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
-  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
   TENSOR_MARKETPLACE_ERROR__CURRENCY_NOT_YET_ENABLED,
   Target,
   fetchBidStateFromSeeds,
@@ -131,7 +130,7 @@ test('it can create a collection bid attached to shared escrow, owner doesnt nee
     client,
     payer: mintOwner,
     authority: mintOwner,
-    owner: mintOwner,
+    owner: mintOwner.address,
   });
 
   const [marginAccount] = await findMarginAccountPda({
@@ -250,7 +249,7 @@ test('it can create multiple collection bids on the same collection', async (t) 
   t.is(bid2.data.amount, 2n);
 });
 
-test.skip('it cannot make a collection bid with cosigner set to the original signer', async (t) => {
+test('it cannot set the cosigner field if it is specified as the owner', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
 
@@ -260,19 +259,27 @@ test.skip('it cannot make a collection bid with cosigner set to the original sig
     conditions: [{ mode: Mode.FVC, value: owner.address }],
   });
 
+  const bidId = (await generateKeyPairSigner()).address;
   const bidIx = await getBidInstructionAsync({
     owner,
     amount: 1,
     target: Target.Whitelist,
     targetId: whitelist,
     cosigner: owner,
+    bidId,
   });
 
-  const tx = pipe(
+  await pipe(
     await createDefaultTransaction(client, owner),
     (tx) => appendTransactionMessageInstruction(bidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER);
+  const bidState = await fetchBidStateFromSeeds(client.rpc, {
+    owner: owner.address,
+    bidId,
+  });
+
+  // The cosigner field should be null
+  t.is(bidState.data.cosigner, null);
 });

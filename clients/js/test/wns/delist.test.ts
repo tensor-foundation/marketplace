@@ -26,13 +26,14 @@ test('it can delist a listed WNS asset', async (t) => {
     action: TestAction.List,
   });
   const { nftOwner } = signers;
-  const { mint, distribution } = nft;
+  const { mint, group, distribution } = nft;
 
   // When a buyer buys the NFT.
   const ix = await getDelistWnsInstructionAsync({
     owner: nftOwner,
     mint,
     distribution,
+    collection: group,
   });
 
   await pipe(
@@ -53,7 +54,7 @@ test('it can delist a listed WNS asset', async (t) => {
           await findAtaPda({
             mint,
             owner: listing!,
-            tokenProgramId: TOKEN22_PROGRAM_ID,
+            tokenProgram: TOKEN22_PROGRAM_ID,
           })
         )[0]
       )
@@ -66,6 +67,6 @@ test('it can delist a listed WNS asset', async (t) => {
     client,
     mint,
     owner: nftOwner.address,
-    tokenProgramAddress: TOKEN22_PROGRAM_ID,
+    tokenProgram: TOKEN22_PROGRAM_ID,
   });
 });

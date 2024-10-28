@@ -50,7 +50,7 @@ test('it can take a bid on a WNS collection', async (t) => {
   const price = 500_000_000n;
 
   // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: seller.address,
@@ -121,6 +121,7 @@ test('it can take a bid on a WNS collection', async (t) => {
     whitelist,
     bidState,
     distribution,
+    collection: group,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
@@ -174,8 +175,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
   const price = 500_000_000n;
 
   // Mint NFT
-  // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: seller.address,
@@ -278,6 +278,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mint: otherMint,
     distribution,
     mintProof,
+    collection: group,
     whitelist,
     bidState,
     minAmount: price,
@@ -304,6 +305,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     whitelist,
     bidState,
     distribution,
+    collection: group,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
