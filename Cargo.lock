@@ -2386,7 +2386,7 @@ dependencies = [
 [[package]]
 name = "tensor-toolbox"
 version = "0.5.0"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#9161c9f360664ab84860f7dd86656cae49fd9f46"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#e083d37cc9e64809522442e3cdd29b687fca5658"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2415,7 +2415,7 @@ dependencies = [
 [[package]]
 name = "tensor-vipers"
 version = "1.0.1"
-source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#9161c9f360664ab84860f7dd86656cae49fd9f46"
+source = "git+ssh://git@github.com/tensor-foundation/toolbox.git?branch=feat/validate-asset#e083d37cc9e64809522442e3cdd29b687fca5658"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

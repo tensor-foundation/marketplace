@@ -3,7 +3,7 @@ import {
   AddressLookupTableAccount,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  PublicKey
 } from "@solana/web3.js";
 import { nameToBuffer } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
@@ -13,7 +13,7 @@ import { makeNTraders } from "./account";
 import {
   createAssetWithCollection,
   createUmi,
-  getOwner,
+  getOwner
 } from "./metaplex_core";
 import {
   beforeAllHook,
@@ -22,7 +22,7 @@ import {
   fetchAndCheckSingleIxTx,
   tcompSdk,
   testBid,
-  testTakeBidCore,
+  testTakeBidCore
 } from "./shared";
 import { makeVocWhitelist } from "./tswap";
 
@@ -43,7 +43,7 @@ describe("[mpl-core] tcomp bids", () => {
     // TODO: Add cosigner tests.
     for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
-        n: 2,
+        n: 2
       });
 
       const cosigner = cosigned ? Keypair.generate() : undefined;
@@ -64,14 +64,14 @@ describe("[mpl-core] tcomp bids", () => {
         amount: new BN(LAMPORTS_PER_SOL),
         targetId: asset,
         owner: traderB,
-        cosigner,
+        cosigner
       });
       await testBid({
         amount: new BN(LAMPORTS_PER_SOL / 2),
         targetId: asset,
         owner: traderB,
         prevBidAmount: LAMPORTS_PER_SOL,
-        cosigner,
+        cosigner
       });
 
       const common = {
@@ -80,14 +80,14 @@ describe("[mpl-core] tcomp bids", () => {
         collection,
         owner: traderB.publicKey,
         seller: traderA,
-        lookupTableAccount,
+        lookupTableAccount
       };
 
       if (cosigned) {
         await expect(
           testTakeBidCore({
             ...common,
-            minAmount: new BN(LAMPORTS_PER_SOL),
+            minAmount: new BN(LAMPORTS_PER_SOL)
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
       }
@@ -97,7 +97,7 @@ describe("[mpl-core] tcomp bids", () => {
         testTakeBidCore({
           ...common,
           minAmount: new BN(LAMPORTS_PER_SOL),
-          cosigner,
+          cosigner
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
@@ -108,7 +108,7 @@ describe("[mpl-core] tcomp bids", () => {
           asset: badAsset,
           minAmount: new BN(LAMPORTS_PER_SOL / 2),
           cosigner,
-          collection: badCollection,
+          collection: badCollection
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
 
@@ -118,7 +118,7 @@ describe("[mpl-core] tcomp bids", () => {
         minAmount: new BN(LAMPORTS_PER_SOL / 2),
         cosigner,
         collection,
-        royaltyBps,
+        royaltyBps
       });
 
       // check ownership
@@ -153,13 +153,13 @@ describe("[mpl-core] tcomp bids", () => {
         targetId: whitelist,
         owner: traderB,
         privateTaker: traderA.publicKey,
-        quantity: 2,
+        quantity: 2
       };
       await expect(
         testBid({
           ...commonArgs,
           field: Field.Name,
-          fieldId: null,
+          fieldId: null
         })
       ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
 
@@ -167,7 +167,7 @@ describe("[mpl-core] tcomp bids", () => {
         testBid({
           ...commonArgs,
           field: null,
-          fieldId: new PublicKey(nameToBuffer(name)),
+          fieldId: new PublicKey(nameToBuffer(name))
         })
       ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
     }
@@ -181,7 +181,7 @@ describe("[mpl-core] tcomp bids", () => {
         field: Field.Name,
         fieldId: new PublicKey(nameToBuffer(name)),
         privateTaker: traderA.publicKey,
-        quantity: 2,
+        quantity: 2
       });
       const ix = await fetchAndCheckSingleIxTx(sig!, "bid");
       const event = tcompSdk.getEvent(ix) as unknown as MakeEvent;
@@ -212,7 +212,7 @@ describe("[mpl-core] tcomp bids", () => {
         takerBroker,
         bidId: whitelist,
         whitelist,
-        royaltyBps,
+        royaltyBps
       });
       const ix = await fetchAndCheckSingleIxTx(sig!, "takeBidCore");
       const event = tcompSdk.getEvent(ix) as unknown as TakeEvent;

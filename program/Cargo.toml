@@ -69,6 +69,11 @@ tensor-toolbox = { git = "ssh://git@github.com/tensor-foundation/toolbox.git", b
     "mpl-core",
     "token-2022",
 ] }
+# tensor-toolbox = { path = "../../toolbox/toolbox", features = [
+#     "cnft",
+#     "mpl-core",
+#     "token-2022",
+# ] }
 tensor-vipers = { version = "1.0.1" }
 tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", features = [
     "cpi",

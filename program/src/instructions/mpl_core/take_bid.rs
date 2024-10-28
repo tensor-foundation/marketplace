@@ -265,7 +265,6 @@ pub fn process_take_bid_core<'info>(
     }
 
     // transfer the NFT
-
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.seller.to_account_info()))
