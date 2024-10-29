@@ -722,8 +722,6 @@ test('it has to match the specified targetId', async (t) => {
   const seller = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
   const sellerFeeBasisPoints = DEFAULT_SFBP;
-  const correctName = 'Test Token';
-  const incorrectName = 'Incorrect Token';
 
   const nft = await createT22NftWithRoyalties({
     client,
@@ -733,7 +731,7 @@ test('it has to match the specified targetId', async (t) => {
     freezeAuthority: null,
     decimals: 0,
     data: {
-      name: correctName,
+      name: 'Test Token',
       symbol: 'TT',
       uri: 'https://example.com',
     },
@@ -751,7 +749,7 @@ test('it has to match the specified targetId', async (t) => {
     freezeAuthority: null,
     decimals: 0,
     data: {
-      name: incorrectName,
+      name: 'Test Token',
       symbol: 'TT',
       uri: 'https://example.com',
     },

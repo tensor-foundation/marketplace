@@ -667,6 +667,10 @@ test('it uses escrow funds when the bid is taken', async (t) => {
     .getBalance(marginAccount)
     .send();
 
+  const computeIx = getSetComputeUnitLimitInstruction({
+    units: 500_000,
+  });
+
   // When the seller takes the bid...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
     owner: bidOwner.address,
@@ -681,6 +685,7 @@ test('it uses escrow funds when the bid is taken', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -1349,6 +1354,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   const seller = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
   const price = LAMPORTS_PER_SOL / 4n;
+  await initTswap(client);
 
   const { mint } = await createDefaultNft({
     client,

@@ -1,21 +1,36 @@
 import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
+  generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
 import {
+  createDefaultSolanaClient,
   createDefaultTransaction,
+  createWnsNftInGroup,
+  generateKeyPairSignerWithSol,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
-import { getTakeBidWnsInstructionAsync } from '../../src/index.js';
+import {
+  findBidStatePda,
+  getBidInstructionAsync,
+  getTakeBidWnsInstructionAsync,
+  Target,
+  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
+  TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH,
+  TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
+  TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID,
+} from '../../src/index.js';
 import {
   assertTokenNftOwnedBy,
   BASIS_POINTS,
   BROKER_FEE_PCT,
   COMPUTE_500K_IX,
+  expectCustomError,
   HUNDRED_PCT,
+  LAMPORTS_PER_SOL,
   MAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
   TestAction,
@@ -360,4 +375,388 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   t.assert(
     endingTakerBrokerBalance === startingTakerBrokerBalance + takerBrokerFee
   );
+});
+
+test('it has to specify the correct makerBroker', async (t) => {
+  const client = createDefaultSolanaClient();
+  const seller = await generateKeyPairSignerWithSol(client);
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSignerWithSol(client);
+  const makerBroker = await generateKeyPairSignerWithSol(client);
+
+  // Mint NFT
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: updateAuthority,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.AssetId,
+    targetId: mint,
+    makerBroker: makerBroker.address,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId: mint,
+  });
+
+  // If makerBroker is not specified, it should fail.
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    seller,
+    owner: bidder.address,
+    mint,
+    distribution,
+    collection: group,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH);
+
+  // If makerBroker is specified incorrectly, it should fail.
+  const wrongMakerBroker = await generateKeyPairSignerWithSol(client);
+
+  const takeBidIx2 = await getTakeBidWnsInstructionAsync({
+    seller,
+    owner: bidder.address,
+    mint,
+    distribution,
+    collection: group,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    makerBroker: wrongMakerBroker.address,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+  });
+  const tx2 = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx2, TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH);
+
+  // If makerBroker is specified correctly, it should succeed.
+  const takeBidIx3 = await getTakeBidWnsInstructionAsync({
+    seller,
+    owner: bidder.address,
+    mint,
+    distribution,
+    collection: group,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    makerBroker: makerBroker.address,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+  });
+  const txHash = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  t.is(typeof txHash, 'string');
+});
+
+test('it has to specify the correct privateTaker', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const privateTaker = await generateKeyPairSignerWithSol(client);
+  const notPrivateTaker = await generateKeyPairSignerWithSol(client);
+
+  const {
+    mint: mintOwnedByPrivateTaker,
+    distribution,
+    group,
+  } = await createWnsNftInGroup({
+    client,
+    payer: privateTaker,
+    owner: privateTaker.address,
+    authority: mintAuthority,
+  });
+
+  const {
+    mint: mintOwnedByNotPrivateTaker,
+    distribution: distribution2,
+    group: group2,
+  } = await createWnsNftInGroup({
+    client,
+    payer: notPrivateTaker,
+    owner: notPrivateTaker.address,
+    authority: mintAuthority,
+  });
+
+  // Bid on the NFT but specify another privateTaker
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId: mintOwnedByNotPrivateTaker,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 4n,
+    target: Target.AssetId,
+    targetId: mintOwnedByNotPrivateTaker,
+    privateTaker: privateTaker.address,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When NotPrivateTaker tries to take the bid with privateTaker set to PrivateTaker, it fails.
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    seller: notPrivateTaker,
+    owner: bidder.address,
+    mint: mintOwnedByNotPrivateTaker,
+    minAmount: LAMPORTS_PER_SOL / 4n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, notPrivateTaker),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED);
+
+  // But when the privateTaker is set and equals the actual seller, it succeeds.
+  const [bidState2] = await findBidStatePda({
+    owner: bidder.address,
+    bidId: mintOwnedByPrivateTaker,
+  });
+  const bidIx2 = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 4n,
+    target: Target.AssetId,
+    targetId: mintOwnedByPrivateTaker,
+    privateTaker: privateTaker.address,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx2 = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller: privateTaker,
+    mint: mintOwnedByPrivateTaker,
+    minAmount: LAMPORTS_PER_SOL / 4n,
+    bidState: bidState2,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution: distribution2,
+    collection: group2,
+  });
+
+  const tx2 = await pipe(
+    await createDefaultTransaction(client, privateTaker),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  t.is(typeof tx2, 'string');
+});
+
+test('it has to specify the correct cosigner', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const cosigner = await generateKeyPairSignerWithSol(client);
+  const notCosigner = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSigner();
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: mintAuthority,
+  });
+
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId: mint,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.AssetId,
+    targetId: mint,
+    cosigner,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the cosigner is not set, it should fail.
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER);
+
+  // When the cosigner is set to the wrong address, it should fail too.
+  const takeBidIx2 = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    cosigner: notCosigner,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx2, TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER);
+
+  // When the cosigner is signing, it should succeed.
+  const takeBidIx3 = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    mint,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    cosigner,
+    creators: [creator.address],
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  t.is(typeof tx3, 'string');
+});
+
+test('it has to match the specified targetId', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: mintAuthority,
+  });
+
+  const {
+    mint: mint2,
+    group: group2,
+    distribution: distribution2,
+  } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: mintAuthority,
+  });
+
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId: mint,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.AssetId,
+    targetId: mint,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the targetId is incorrect, it should fail.
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    mint: mint2,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution: distribution2,
+    collection: group2,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID);
+
+  // When the targetId is correct, it should succeed.
+  const takeBidIx2 = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    mint,
+    minAmount: 5,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx2 = await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  t.is(typeof tx2, 'string');
 });

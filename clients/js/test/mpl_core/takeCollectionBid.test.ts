@@ -38,6 +38,7 @@ import {
   createWhitelistV2,
   expectCustomError,
   expectGenericError,
+  initTswap,
   sleep,
 } from '../_common.js';
 import {
@@ -571,6 +572,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   const seller = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
   const price = LAMPORTS_PER_SOL / 4n;
+  await initTswap(client);
 
   const [mint, collection] = await createDefaultAssetWithCollection({
     client,

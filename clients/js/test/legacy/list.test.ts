@@ -3,10 +3,12 @@ import {
   appendTransactionMessageInstruction,
   generateKeyPairSigner,
   pipe,
+  some,
 } from '@solana/web3.js';
 import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
+  createAndMintTo,
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
@@ -184,6 +186,52 @@ test('it can list a Programmable NFT with a cosigner', async (t) => {
       amount: 1n,
       assetId: mint,
       cosigner: cosigner.address,
+    },
+  });
+});
+
+test('it can list with an SPL token as currency', async (t) => {
+  const client = createDefaultSolanaClient();
+  const owner = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSigner();
+  const initialSupply = 1000000n;
+
+  const [{ mint: currency }] = await createAndMintTo({
+    client,
+    mintAuthority,
+    payer: owner,
+    recipient: owner.address,
+    decimals: 0,
+    initialSupply,
+  });
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: mintAuthority,
+    owner: owner.address,
+  });
+
+  // If we list the NFT...
+  const listLegacyIx = await getListLegacyInstructionAsync({
+    payer: owner,
+    owner,
+    mint,
+    currency: currency,
+    amount: 100n,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ... the list state should exist with the correct currency
+  const listing = await fetchListStateFromSeeds(client.rpc, { mint });
+  t.like(listing, {
+    data: {
+      currency: some(currency),
     },
   });
 });
