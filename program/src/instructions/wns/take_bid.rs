@@ -1,14 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::spl_token_2022,
+    token_2022::spl_token_2022::{
+        self,
+        extension::{BaseStateWithExtensions, StateWithExtensions},
+        state::Mint as Mint2022,
+    },
     token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
-use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee,
+    token_2022::extension::get_variable_len_extension,
     token_2022::{
         transfer::transfer_checked as tensor_transfer_checked,
         wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
@@ -207,8 +211,8 @@ pub fn process_take_bid_wns<'info>(
                 let mint_info = &ctx.accounts.mint.to_account_info();
                 let token_metadata = {
                     let buffer = mint_info.try_borrow_data()?;
-                    let state = TlvStateBorrowed::unpack(&buffer)?;
-                    state.get_first_variable_len_value::<TokenMetadata>()?
+                    let mint = StateWithExtensions::<Mint2022>::unpack(&buffer)?;
+                    get_variable_len_extension::<TokenMetadata>(mint.get_tlv_data())?
                 };
 
                 let mut name_arr = [0u8; 32];
