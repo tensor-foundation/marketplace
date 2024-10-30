@@ -1,13 +1,11 @@
 use anchor_lang::prelude::*;
-use metaplex_core::{
-    accounts::BaseAssetV1,
-    instructions::TransferV1CpiBuilder,
-    types::{Royalties, UpdateAuthority},
+use metaplex_core::{accounts::BaseAssetV1, instructions::TransferV1CpiBuilder};
+use mpl_token_metadata::types::{
+    Collection as LegacyCollection, Creator as LegacyCreator, TokenStandard,
 };
-use mpl_token_metadata::types::{Collection, TokenStandard};
 use tensor_toolbox::{
     assert_fee_account,
-    metaplex_core::{validate_asset, MetaplexCore},
+    metaplex_core::{validate_core_asset, MetaplexCore},
 };
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
@@ -138,29 +136,14 @@ pub fn process_take_bid_core<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
-    // validate the asset account
-    let royalties = validate_asset(
-        &ctx.accounts.asset,
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
+    let asset = validate_core_asset(
+        &ctx.accounts.asset.to_account_info(),
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
 
     let bid_state = &ctx.accounts.bid_state;
     let asset_id = ctx.accounts.asset.key();
-
-    let (creators, seller_fee, token_standard) = if let Some(Royalties {
-        creators,
-        basis_points,
-        ..
-    }) = royalties
-    {
-        (
-            creators,
-            basis_points,
-            TokenStandard::ProgrammableNonFungible,
-        )
-    } else {
-        (vec![], 0, TokenStandard::NonFungible)
-    };
 
     match bid_state.target {
         Target::AssetId => {
@@ -208,55 +191,42 @@ pub fn process_take_bid_core<'info>(
 
             let whitelist_type = assert_decode_whitelist_generic(&ctx.accounts.whitelist)?;
 
+            // Map to legacy collection type
+            let legacy_collection = asset.collection.map(|c| LegacyCollection {
+                key: c,
+                verified: true, // mpl-core collections are always verified
+            });
+
+            // Map to legacy creators type
+            let legacy_creators: Option<Vec<LegacyCreator>> =
+                asset.whitelist_creators.as_ref().map(|creators| {
+                    creators
+                        .iter()
+                        .map(|c| LegacyCreator {
+                            address: c.address,
+                            share: 0, // No share on VerifiedCreators on MPL Core assets. This is separate from creators used in royalties.
+                            verified: c.verified,
+                        })
+                        .collect()
+                });
+
             match whitelist_type {
                 WhitelistType::V1(whitelist) => {
                     //prioritize merkle tree if proof present
                     if whitelist.root_hash != ZERO_ARRAY {
                         require!(mint_proof.is_some(), TcompError::BadMintProof);
 
+                        // use separate method here because `verify_whitelist_tcomp` does not support Merkle proofs
+                        // once whitelist v1 is deprecated we can clean this up to only use V2
                         whitelist.verify_whitelist(None, mint_proof)?;
-                    } else if let Some(collection) = &ctx.accounts.collection {
-                        let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
-
-                        if let UpdateAuthority::Collection(c) = asset.update_authority {
-                            if c != *collection.key {
-                                msg!("Asset collection account does not match the provided collection account");
-                                return Err(TcompError::MissingCollection.into());
-                            }
-
-                            whitelist.verify_whitelist_tcomp(
-                                Some(Collection {
-                                    key: collection.key(),
-                                    // there is no verify flag on Core, but only the collection update authority
-                                    // can set a collection
-                                    verified: true,
-                                }),
-                                // creators have no verified flag on Core, they can't be used
-                                None,
-                            )?;
-                        } else {
-                            msg!("Asset has no collection set");
-                            return Err(TcompError::MissingCollection.into());
-                        }
                     } else {
-                        return Err(TcompError::MissingCollection.into());
+                        // `verify_whitelist_tcomp` handles the priority order of VOC/FVC and
+                        // validates collection/FVC match what's expected
+                        whitelist.verify_whitelist_tcomp(legacy_collection, legacy_creators)?;
                     }
                 }
                 WhitelistType::V2(whitelist) => {
-                    let asset = BaseAssetV1::try_from(ctx.accounts.asset.as_ref())?;
-
-                    let collection = match asset.update_authority {
-                        UpdateAuthority::Collection(address) => Some(Collection {
-                            key: address,
-                            verified: true, // Only the collection update authority can set a collection, so this is always verified.
-                        }),
-                        _ => None,
-                    };
-
-                    // creators have no verified flag on Core, they can't be used
-                    let creators = None;
-
-                    whitelist.verify(&collection, &creators, &mint_proof)?;
+                    whitelist.verify(&legacy_collection, &legacy_creators, &mint_proof)?;
                 }
             }
         }
@@ -283,7 +253,6 @@ pub fn process_take_bid_core<'info>(
     }
 
     // transfer the NFT
-
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.seller.to_account_info()))
@@ -302,11 +271,16 @@ pub fn process_take_bid_core<'info>(
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
-        token_standard: Some(token_standard),
-        creators: creators.into_iter().map(Into::into).collect(),
+        token_standard: Some(TokenStandard::ProgrammableNonFungible),
+        creators: asset
+            .royalty_creators
+            .unwrap_or_default()
+            .into_iter()
+            .map(Into::into)
+            .collect(),
         min_amount,
         optional_royalty_pct: None,
-        seller_fee_basis_points: seller_fee,
+        seller_fee_basis_points: asset.royalty_fee_bps,
         creator_accounts: ctx.remaining_accounts,
         marketplace_prog: &ctx.accounts.marketplace_program,
         escrow_prog: &ctx.accounts.escrow_program,
