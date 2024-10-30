@@ -1,5 +1,5 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::metaplex_core::{validate_core_asset, MetaplexCore};
 
 use crate::*;
 
@@ -44,7 +44,7 @@ pub fn process_close_expired_listing_core<'info>(
     ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
-    validate_asset(
+    validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
