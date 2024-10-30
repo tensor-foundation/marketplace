@@ -136,7 +136,7 @@ pub fn process_take_bid_core<'info>(
     // Passing these in so seller doesn't get rugged
     min_amount: u64,
 ) -> Result<()> {
-    // validate the asset account and extract royalty and whitelist info from it.
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
     let asset = validate_core_asset(
         &ctx.accounts.asset.to_account_info(),
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
@@ -216,25 +216,13 @@ pub fn process_take_bid_core<'info>(
                     if whitelist.root_hash != ZERO_ARRAY {
                         require!(mint_proof.is_some(), TcompError::BadMintProof);
 
+                        // use separate method here because `verify_whitelist_tcomp` does not support Merkle proofs
+                        // once whitelist v1 is deprecated we can clean this up to only use V2
                         whitelist.verify_whitelist(None, mint_proof)?;
-                    } else if let Some(collection_info) = &ctx.accounts.collection {
-                        if asset.collection.is_none() {
-                            msg!("Asset has no collection set");
-                            return Err(TcompError::MissingCollection.into());
-                        }
-
-                        let collection = asset.collection.unwrap();
-
-                        if collection != *collection_info.key {
-                            msg!("Asset collection account does not match the provided collection account");
-                            return Err(TcompError::MissingCollection.into());
-                        }
-
-                        whitelist.verify_whitelist_tcomp(legacy_collection, None)?;
-                    } else if asset.whitelist_creators.is_some() {
-                        whitelist.verify_whitelist_tcomp(None, legacy_creators)?;
                     } else {
-                        return Err(TcompError::MissingWhitelistMethod.into());
+                        // `verify_whitelist_tcomp` handles the priority order of VOC/FVC and
+                        // validates collection/FVC match what's expected
+                        whitelist.verify_whitelist_tcomp(legacy_collection, legacy_creators)?;
                     }
                 }
                 WhitelistType::V2(whitelist) => {

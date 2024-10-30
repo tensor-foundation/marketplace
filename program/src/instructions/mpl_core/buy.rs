@@ -158,8 +158,7 @@ pub fn process_buy_core<'info, 'b>(
             ctx.remaining_accounts
         };
 
-    // validate the asset account
-    // validate the asset account
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
     let asset = validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
