@@ -48,11 +48,10 @@ import {
   type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
-  resolveCreatorPath,
   resolveFeeVaultPdaFromListState,
-  resolveProofPath,
   resolveTreeAuthorityPda,
-} from '../../hooked';
+} from '@tensor-foundation/resolvers';
+import { resolveCreatorPath, resolveProofPath } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,

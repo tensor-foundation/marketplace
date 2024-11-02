@@ -40,7 +40,7 @@
     "@noble/hashes": "^1.4.0",
     "@solana-program/system": "^0.5.0",
     "@solana/web3.js": "2.0.0-preview.3",
-    "@tensor-foundation/resolvers": "^0.2.1",
+    "@tensor-foundation/resolvers": "file:../../../toolkit/resolvers",
     "@types/node": "^22.0.0",
     "bs58": "^6.0.0",
     "merkletreejs": "^0.4.0"

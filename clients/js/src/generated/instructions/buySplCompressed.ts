@@ -50,7 +50,7 @@ import {
 import {
   resolveFeeVaultPdaFromListState,
   resolveTreeAuthorityPda,
-} from '../../hooked';
+} from '@tensor-foundation/resolvers';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,

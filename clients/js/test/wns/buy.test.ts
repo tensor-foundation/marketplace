@@ -9,8 +9,11 @@ import {
 } from '@solana/web3.js';
 import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 import {
+  createAndMintTo,
+  createDefaultSolanaClient,
   createDefaultTransaction,
   createWnsNftInGroup,
+  generateKeyPairSignerWithSol,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
@@ -20,7 +23,11 @@ import {
   getBuyWnsInstructionAsync,
   getListWnsInstructionAsync,
   TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
+  TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH,
+  TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH,
+  TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED,
   TENSOR_MARKETPLACE_ERROR__PRICE_MISMATCH,
+  TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
 } from '../../src/index.js';
 import {
   assertTcompNoop,
@@ -32,6 +39,7 @@ import {
   getTestSetup,
   HUNDRED_PCT,
   MAKER_BROKER_FEE_PCT,
+  sleep,
   TAKER_FEE_BPS,
   TestAction,
 } from '../_common.js';
@@ -675,4 +683,287 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   t.assert(
     endingTakerBrokerBalance === startingTakerBrokerBalance + takerBrokerFee
   );
+});
+
+test('it cannot buy a listing that specified a different currency', async (t) => {
+  const client = createDefaultSolanaClient();
+  const lister = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const buyer = await generateKeyPairSignerWithSol(client);
+
+  const [{ mint: currency }] = await createAndMintTo({
+    client,
+    mintAuthority,
+    payer: buyer,
+    recipient: buyer.address,
+    decimals: 0,
+    initialSupply: 1_000_000_000n,
+  });
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: lister,
+    owner: lister.address,
+    authority: mintAuthority,
+    paymentMint: currency,
+  });
+
+  const listIx = await getListWnsInstructionAsync({
+    payer: lister,
+    owner: lister,
+    mint,
+    currency,
+    amount: 100n,
+    collection: group,
+    distribution,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(listIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const buyIx = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: buyer,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH);
+});
+
+test('it has to specify the correct maker broker', async (t) => {
+  const client = createDefaultSolanaClient();
+  const lister = await generateKeyPairSignerWithSol(client);
+  const buyer = await generateKeyPairSignerWithSol(client);
+  const makerBroker = await generateKeyPairSignerWithSol(client);
+  const notMakerBroker = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: lister,
+    owner: lister.address,
+    authority: mintAuthority,
+  });
+
+  const listIx = await getListWnsInstructionAsync({
+    payer: lister,
+    owner: lister,
+    mint,
+    amount: 100n,
+    // (!)
+    makerBroker: makerBroker.address,
+    collection: group,
+    distribution,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(listIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // If the buyer tries to buy the NFT without a maker broker...
+  const buyIx = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: buyer,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    creators: [creator.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then we expect a broker mismatch error.
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH);
+
+  // If the buyer tries to buy the NFT with a different maker broker...
+  const buyIx2 = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: buyer,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    makerBroker: notMakerBroker.address,
+    creators: [creator.address],
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then we expect a broker mismatch error.
+  await expectCustomError(t, tx2, TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH);
+
+  // If the buyer tries to buy the NFT with the correct maker broker...
+  const buyIx3 = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: buyer,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    makerBroker: makerBroker.address,
+    creators: [creator.address],
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then the transaction should succeed.
+  t.is(typeof tx3, 'string');
+});
+
+test('it has to respect the correct private taker', async (t) => {
+  const client = createDefaultSolanaClient();
+  const lister = await generateKeyPairSignerWithSol(client);
+  const privateTaker = await generateKeyPairSignerWithSol(client);
+  const notPrivateTaker = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: lister,
+    owner: lister.address,
+    authority: mintAuthority,
+  });
+
+  const listIx = await getListWnsInstructionAsync({
+    payer: lister,
+    owner: lister,
+    mint,
+    amount: 100n,
+    privateTaker: privateTaker.address,
+    collection: group,
+    distribution,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, lister),
+    (tx) => appendTransactionMessageInstruction(listIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // If a different buyer tries to buy the NFT...
+  const buyIx2 = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: notPrivateTaker,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    creators: [creator.address],
+  });
+
+  const tx2 = pipe(
+    await createDefaultTransaction(client, notPrivateTaker),
+    (tx) => appendTransactionMessageInstruction(buyIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then we expect a taker not allowed error.
+  await expectCustomError(t, tx2, TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED);
+
+  // If the specified private taker buys the NFT...
+  const buyIx3 = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: privateTaker,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    creators: [creator.address],
+  });
+
+  const tx3 = await pipe(
+    await createDefaultTransaction(client, privateTaker),
+    (tx) => appendTransactionMessageInstruction(buyIx3, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then the transaction should succeed.
+  t.is(typeof tx3, 'string');
+});
+
+test('it cannot buy an expired listing', async (t) => {
+  const client = createDefaultSolanaClient();
+  const lister = await generateKeyPairSignerWithSol(client);
+  const buyer = await generateKeyPairSignerWithSol(client);
+  const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: lister,
+    owner: lister.address,
+    authority: mintAuthority,
+  });
+
+  const listIx = await getListWnsInstructionAsync({
+    payer: lister,
+    owner: lister,
+    mint,
+    amount: 100n,
+    expireInSec: 1,
+    collection: group,
+    distribution,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, lister),
+    (tx) => appendTransactionMessageInstruction(listIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Sleep for 5 seconds to let the listing expire.
+  await sleep(5000);
+
+  // If the buyer tries to buy the expired listing...
+  const buyIx = await getBuyWnsInstructionAsync({
+    owner: lister.address,
+    payer: buyer,
+    mint,
+    distribution,
+    collection: group,
+    maxAmount: 100n,
+    creators: [creator.address],
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // ...then we expect a listing expired error.
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED);
 });

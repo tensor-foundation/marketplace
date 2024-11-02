@@ -47,6 +47,7 @@ import {
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
+  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
@@ -54,7 +55,6 @@ import {
   resolveTokenMetadataProgramFromTokenStandard,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

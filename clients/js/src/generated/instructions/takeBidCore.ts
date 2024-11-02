@@ -34,7 +34,7 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { resolveFeeVaultPdaFromBidState } from '../../hooked';
+import { resolveFeeVaultPdaFromBidState } from '@tensor-foundation/resolvers';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,

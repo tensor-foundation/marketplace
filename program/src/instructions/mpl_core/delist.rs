@@ -1,5 +1,5 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::metaplex_core::{validate_core_asset, MetaplexCore};
 
 use crate::*;
 
@@ -46,7 +46,7 @@ pub struct DelistCore<'info> {
 pub fn process_delist_core<'info>(
     ctx: Context<'_, '_, '_, 'info, DelistCore<'info>>,
 ) -> Result<()> {
-    validate_asset(
+    validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;

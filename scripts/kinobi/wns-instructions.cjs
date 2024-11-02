@@ -17,6 +17,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
@@ -109,12 +110,14 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
             },
             feeVaultCurrencyTa: {
               defaultValue: k.resolverValueNode("resolveFeeVaultCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("feeVault"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -124,6 +127,7 @@ module.exports = function visitor(options) {
             },
             payerCurrencyTa: {
               defaultValue: k.resolverValueNode("resolvePayerCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("payer"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -133,6 +137,7 @@ module.exports = function visitor(options) {
             },
             ownerCurrencyTa: {
               defaultValue: k.resolverValueNode("resolveOwnerCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -144,6 +149,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveDistributionCurrencyAta",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("distribution"),
                     k.accountValueNode("currencyTokenProgram"),
@@ -157,6 +163,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveMakerBrokerCurrencyAta",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("makerBroker"),
                     k.accountValueNode("currencyTokenProgram"),
@@ -170,6 +177,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveTakerBrokerCurrencyAta",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("takerBroker"),
                     k.accountValueNode("currencyTokenProgram"),
@@ -494,6 +502,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("bidState")],
                 },
               ),
@@ -562,7 +571,8 @@ module.exports = function visitor(options) {
               }),
             },
             bidTa: {
-              defaultValue: k.resolverValueNode("resolveBidTa", {
+              defaultValue: k.resolverValueNode("resolveBidAta", {
+                importFrom: "resolvers",
                 dependsOn: [k.accountValueNode("mint")],
               }),
             },

@@ -1446,7 +1446,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   await expectCustomError(t, tx, TENSOR_ERROR__INSUFFICIENT_BALANCE);
 });
 
-test('it enforced pNFT royalties', async (t) => {
+test('it enforces pNFT royalties', async (t) => {
   const client = createDefaultSolanaClient();
   const bidder = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);

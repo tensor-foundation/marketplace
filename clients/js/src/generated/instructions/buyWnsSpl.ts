@@ -36,20 +36,18 @@ import {
 } from '@solana/web3.js';
 import {
   resolveBuyerAta,
-  resolveListAta,
-  resolveWnsApprovePda,
-  resolveWnsDistributionPda,
-  resolveWnsExtraAccountMetasPda,
-} from '@tensor-foundation/resolvers';
-import {
   resolveDistributionCurrencyAta,
   resolveFeeVaultCurrencyAta,
   resolveFeeVaultPdaFromListState,
+  resolveListAta,
   resolveMakerBrokerCurrencyAta,
   resolveOwnerCurrencyAta,
   resolvePayerCurrencyAta,
   resolveTakerBrokerCurrencyAta,
-} from '../../hooked';
+  resolveWnsApprovePda,
+  resolveWnsDistributionPda,
+  resolveWnsExtraAccountMetasPda,
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

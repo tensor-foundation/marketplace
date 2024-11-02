@@ -331,7 +331,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-    // Invoke the transfer.
+    msg!("About to transfer NFT with token program: {}", ctx.accounts.token_program.key());
     tensor_transfer_checked(
         transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
         1,
@@ -363,13 +363,13 @@ pub fn process_buy_t22_spl<'info, 'b>(
 
     // --Pay fees in currency--
 
-    // Protocol fee.
+    msg!("About to transfer protocol fee with token program: {}", ctx.accounts.currency_token_program.key());
     ctx.accounts.transfer_currency(
         ctx.accounts.fee_vault_currency_ta.deref().as_ref(),
         tcomp_fee,
     )?;
 
-    // Maker broker fee.
+    msg!("About to transfer maker broker fee with token program: {}", ctx.accounts.currency_token_program.key());
     ctx.accounts.transfer_currency(
         ctx.accounts
             .maker_broker_currency_ta
@@ -380,7 +380,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         maker_broker_fee,
     )?;
 
-    // Taker broker fee.
+    msg!("About to transfer taker broker fee with token program: {}", ctx.accounts.currency_token_program.key());
     ctx.accounts.transfer_currency(
         ctx.accounts
             .taker_broker_currency_ta
@@ -398,7 +398,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         .zip(creator_ta_accounts.iter())
         .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
         .collect::<Vec<_>>();
-
+    msg!("About to transfer creators fee with token program: {}", ctx.accounts.currency_token_program.key());
     // Pay creator royalties.
     if royalties.is_some() {
         transfer_creators_fee(
@@ -417,11 +417,11 @@ pub fn process_buy_t22_spl<'info, 'b>(
         )?;
     }
 
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    msg!("About to transfer to seller with token program: {}", ctx.accounts.currency_token_program.key());
     ctx.accounts
         .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
-    // Close the list token account.
+    msg!("About to close account with token program: {}", ctx.accounts.token_program.key());
     close_account(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),

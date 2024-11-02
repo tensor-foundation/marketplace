@@ -34,8 +34,11 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { resolveBuyerAta, resolveListAta } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
+import {
+  resolveBuyerAta,
+  resolveFeeVaultPdaFromListState,
+  resolveListAta,
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

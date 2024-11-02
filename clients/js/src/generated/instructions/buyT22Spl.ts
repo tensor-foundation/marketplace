@@ -34,15 +34,17 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { resolveBuyerAta, resolveListAta } from '@tensor-foundation/resolvers';
 import {
+  resolveBuyerAta,
+  resolveCreatorsCurrencyAta,
   resolveFeeVaultCurrencyAta,
   resolveFeeVaultPdaFromListState,
+  resolveListAta,
   resolveMakerBrokerCurrencyAta,
   resolveOwnerCurrencyAta,
   resolvePayerCurrencyAta,
   resolveTakerBrokerCurrencyAta,
-} from '../../hooked';
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -205,6 +207,11 @@ export function getBuyT22SplInstructionDataCodec(): Codec<
   );
 }
 
+export type BuyT22SplInstructionExtraArgs = {
+  creators: Array<Address>;
+  creatorsCurrencyTa: Array<Address>;
+};
+
 export type BuyT22SplAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultCurrencyTa extends string = string,
@@ -256,8 +263,8 @@ export type BuyT22SplAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyT22SplInstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
-  creatorAtas?: Array<Address>;
+  creators: BuyT22SplInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuyT22SplInstructionExtraArgs['creatorsCurrencyTa'];
   transferHookAccounts: Array<Address>;
 };
 
@@ -479,6 +486,9 @@ export async function getBuyT22SplInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!args.creatorsCurrencyTa) {
+    args.creatorsCurrencyTa = await resolveCreatorsCurrencyAta(resolverScope);
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = [
@@ -486,7 +496,7 @@ export async function getBuyT22SplInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorAtas ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -609,8 +619,8 @@ export type BuyT22SplInput<
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyT22SplInstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
-  creatorAtas?: Array<Address>;
+  creators: BuyT22SplInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuyT22SplInstructionExtraArgs['creatorsCurrencyTa'];
   transferHookAccounts: Array<Address>;
 };
 
@@ -781,7 +791,7 @@ export function getBuyT22SplInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorAtas ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),

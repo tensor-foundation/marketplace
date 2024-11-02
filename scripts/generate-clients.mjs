@@ -33,6 +33,7 @@ kinobi.update(
       account: "treeAuthority",
       ignoreIfOptional: true,
       defaultValue: k.resolverValueNode("resolveTreeAuthorityPda", {
+        importFrom: "resolvers",
         dependsOn: [
           k.accountValueNode("merkleTree"),
           k.accountValueNode("bubblegumProgram"),
@@ -433,6 +434,44 @@ kinobi.update(
   ]),
 );
 
+// Overwrite tokenProgram's defaultValue for all T22 ixs
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    {
+      select: (node) => {
+        const names = [
+          "buyT22",
+          "buyT22Spl",
+          "closeExpiredListingT22",
+          "delistT22",
+          "listT22",
+          "takeBidT22",
+        ];
+        return (
+          k.isNode(node, "instructionNode") && names.includes(node.name)
+        );
+      },
+      transform: (node) => {
+        k.assertIsNode(node, "instructionNode");
+        return {
+          ...node,
+          accounts: node.accounts.map(account => 
+            account.name === "tokenProgram" 
+              ? {
+                  ...account,
+                  defaultValue: k.publicKeyValueNode(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                    "tokenProgram"
+                  )
+                }
+              : account
+          )
+        };
+      },
+    },
+  ]),
+);
+
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
 kinobi.accept(
@@ -465,6 +504,8 @@ kinobi.accept(
       "resolveWnsExtraAccountMetasPda",
       "resolveTreeAuthorityPda",
       "resolveBidIdOnCreate",
+      "resolveCreatorsCurrencyAta",
+      "resolveBrokersCurrencyAta",
     ],
     dependencyMap: {
       resolvers: "@tensor-foundation/resolvers",

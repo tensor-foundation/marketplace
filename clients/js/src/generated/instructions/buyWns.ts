@@ -36,12 +36,12 @@ import {
 } from '@solana/web3.js';
 import {
   resolveBuyerAta,
+  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveWnsApprovePda,
   resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

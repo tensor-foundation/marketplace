@@ -51,6 +51,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
@@ -77,6 +78,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
@@ -161,6 +163,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("bidState")],
                 },
               ),
@@ -194,6 +197,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("bidState")],
                 },
               ),

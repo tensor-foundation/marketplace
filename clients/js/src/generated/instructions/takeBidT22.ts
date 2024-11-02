@@ -36,11 +36,11 @@ import {
 } from '@solana/web3.js';
 import {
   TokenStandard,
+  resolveFeeVaultPdaFromBidState,
   resolveOwnerAta,
   resolveSellerAta,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromBidState } from '../../hooked';
 import { findBidStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

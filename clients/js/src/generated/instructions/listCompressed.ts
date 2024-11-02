@@ -42,10 +42,10 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
+import { resolveTreeAuthorityPda } from '@tensor-foundation/resolvers';
 import {
   resolveProofPath,
   resolveRemainingSignerWithOwnerOrDelegate,
-  resolveTreeAuthorityPda,
 } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {

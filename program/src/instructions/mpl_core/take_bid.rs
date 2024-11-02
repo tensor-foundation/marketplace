@@ -2,12 +2,12 @@ use anchor_lang::prelude::*;
 use metaplex_core::{
     accounts::BaseAssetV1,
     instructions::TransferV1CpiBuilder,
-    types::{Royalties, UpdateAuthority},
+    types::UpdateAuthority,
 };
 use mpl_token_metadata::types::{Collection, TokenStandard};
 use tensor_toolbox::{
     assert_fee_account,
-    metaplex_core::{validate_asset, MetaplexCore},
+    metaplex_core::{validate_core_asset, MetaplexCore},
 };
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
@@ -139,27 +139,24 @@ pub fn process_take_bid_core<'info>(
     min_amount: u64,
 ) -> Result<()> {
     // validate the asset account
-    let royalties = validate_asset(
+    let core_asset = validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-
     let bid_state = &ctx.accounts.bid_state;
     let asset_id = ctx.accounts.asset.key();
 
-    let (creators, seller_fee, token_standard) = if let Some(Royalties {
-        creators,
-        basis_points,
-        ..
-    }) = royalties
-    {
-        (
+    let (creators, seller_fee, token_standard) = match core_asset.royalty_creators {
+        Some(creators) if core_asset.royalty_fee_bps > 0 => (
             creators,
-            basis_points,
+            core_asset.royalty_fee_bps,
             TokenStandard::ProgrammableNonFungible,
-        )
-    } else {
-        (vec![], 0, TokenStandard::NonFungible)
+        ),
+        _ => (
+            vec![],
+            0,
+            TokenStandard::NonFungible,
+        ),
     };
 
     match bid_state.target {
