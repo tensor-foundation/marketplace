@@ -37,7 +37,14 @@ import {
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
 } from '../../src';
 import { computeIx } from '../legacy/_common';
-import { BASIS_POINTS, BROKER_FEE_PCT, MAKER_BROKER_FEE_PCT, sleep, TAKER_BROKER_FEE_PCT, TAKER_FEE_BPS } from '../_common';
+import {
+  BASIS_POINTS,
+  BROKER_FEE_PCT,
+  MAKER_BROKER_FEE_PCT,
+  sleep,
+  TAKER_BROKER_FEE_PCT,
+  TAKER_FEE_BPS,
+} from '../_common';
 
 test('it can buy a listed core asset using a SPL token', async (t) => {
   const client = createDefaultSolanaClient();
@@ -374,7 +381,6 @@ test('it has to specify the correct maker broker', async (t) => {
     makerBroker: makerBroker.address,
   });
 
-   
   const tx3 = await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
@@ -395,7 +401,6 @@ test('it has to specify the correct cosigner', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
   const price = 100_000_000n;
-
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -791,14 +796,13 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-    // Then the lister received the correct amount...
-    const listerBalanceAfter = await client.rpc
-      .getTokenAccountBalance(listerAta)
-      .send();
+  // Then the lister received the correct amount...
+  const listerBalanceAfter = await client.rpc
+    .getTokenAccountBalance(listerAta)
+    .send();
   t.assert(
     BigInt(listerBalanceAfter.value.amount) ===
-      BigInt(listerBalanceBefore.value.amount) +
-        price 
+      BigInt(listerBalanceBefore.value.amount) + price
   );
 
   // ...and the creators should have received the correct amount...
@@ -829,16 +833,14 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   t.assert(
     BigInt(makerBrokerBalanceAfter.value.amount) ===
       BigInt(makerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           MAKER_BROKER_FEE_PCT) /
           100n // 80% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
   t.assert(
     BigInt(takerBrokerBalanceAfter.value.amount) ===
       BigInt(takerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           TAKER_BROKER_FEE_PCT) /
           100n // 20% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
@@ -851,7 +853,7 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
-  const price = 100_000_000n; 
+  const price = 100_000_000n;
 
   const [{ mint: currencyT22 }] = await createAndMintTo({
     client,
@@ -957,4 +959,4 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
   );
 
   t.is(typeof tx2, 'string');
-})
+});

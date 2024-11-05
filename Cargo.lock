@@ -1241,7 +1241,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.6.0",
+ "tensor-toolbox 0.7.0",
  "tensor-vipers 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "whitelist-program",
 ]
@@ -2400,7 +2400,7 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

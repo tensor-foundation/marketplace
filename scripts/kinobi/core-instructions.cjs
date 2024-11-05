@@ -215,6 +215,9 @@ module.exports = function visitor(options) {
             listState: {
               defaultValue: k.pdaValueNode("assetListState"),
             },
+            rentDestination: {
+              defaultValue: k.accountValueNode("owner"),
+            },
           },
         },
         delistCore: {

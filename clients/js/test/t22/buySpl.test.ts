@@ -709,7 +709,6 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   t.assert(takerBrokerBalance === takerBrokerFee);
 });
 
-
 test('it cannot buy a SOL listing with a different SPL token', async (t) => {
   const client = createDefaultSolanaClient();
   const lister = await generateKeyPairSignerWithSol(client);
@@ -913,7 +912,6 @@ test('it has to specify the correct maker broker', async (t) => {
     transferHookAccounts: nft.extraAccountMetas.map((a) => a.address),
   });
 
-   
   const tx3 = await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
@@ -1226,14 +1224,13 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-    // Then the lister received the correct amount...
-    const listerBalanceAfter = await client.rpc
-      .getTokenAccountBalance(listerAta)
-      .send();
+  // Then the lister received the correct amount...
+  const listerBalanceAfter = await client.rpc
+    .getTokenAccountBalance(listerAta)
+    .send();
   t.assert(
     BigInt(listerBalanceAfter.value.amount) ===
-      BigInt(listerBalanceBefore.value.amount) +
-        price 
+      BigInt(listerBalanceBefore.value.amount) + price
   );
 
   // ...and the creators should have received the correct amount...
@@ -1243,8 +1240,8 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   t.assert(
     BigInt(creatorBalanceAfter.value.amount) ===
       BigInt(creatorBalanceBefore.value.amount) +
-        (((price * ROYALTIES_BASIS_POINTS) / BASIS_POINTS) // 5%
-  ));
+        (price * ROYALTIES_BASIS_POINTS) / BASIS_POINTS // 5%
+  );
 
   // ...and the brokers should have received the correct amount
   const makerBrokerBalanceAfter = await client.rpc
@@ -1256,16 +1253,14 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   t.assert(
     BigInt(makerBrokerBalanceAfter.value.amount) ===
       BigInt(makerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           MAKER_BROKER_FEE_PCT) /
           100n // 80% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
   t.assert(
     BigInt(takerBrokerBalanceAfter.value.amount) ===
       BigInt(takerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           TAKER_BROKER_FEE_PCT) /
           100n // 20% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
@@ -1278,7 +1273,7 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
-  const price = 100_000_000n; 
+  const price = 100_000_000n;
 
   const [{ mint: currencyT22 }] = await createAndMintTo({
     client,
@@ -1341,7 +1336,9 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     mint: nftListedForT22.mint,
     currency: currencyT22,
     amount: price,
-    transferHookAccounts: nftListedForT22.extraAccountMetas.map((a) => a.address),
+    transferHookAccounts: nftListedForT22.extraAccountMetas.map(
+      (a) => a.address
+    ),
   });
 
   await pipe(
@@ -1357,7 +1354,9 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     mint: nftListedForLegacy.mint,
     currency: currencyLegacy,
     amount: price,
-    transferHookAccounts: nftListedForLegacy.extraAccountMetas.map((a) => a.address),
+    transferHookAccounts: nftListedForLegacy.extraAccountMetas.map(
+      (a) => a.address
+    ),
   });
 
   await pipe(
@@ -1375,7 +1374,9 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     owner: lister.address,
     maxAmount: price,
     creators: [creator.address],
-    transferHookAccounts: nftListedForT22.extraAccountMetas.map((a) => a.address),
+    transferHookAccounts: nftListedForT22.extraAccountMetas.map(
+      (a) => a.address
+    ),
     // (!)
     currencyTokenProgram: TOKEN22_PROGRAM_ID,
   });
@@ -1397,7 +1398,9 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     owner: lister.address,
     maxAmount: price,
     creators: [creator.address],
-    transferHookAccounts: nftListedForLegacy.extraAccountMetas.map((a) => a.address),
+    transferHookAccounts: nftListedForLegacy.extraAccountMetas.map(
+      (a) => a.address
+    ),
     // (!)
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
@@ -1410,4 +1413,4 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
   );
 
   t.is(typeof tx2, 'string');
-})
+});

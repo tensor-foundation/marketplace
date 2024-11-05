@@ -8,6 +8,7 @@ import {
 import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
+  ANCHOR_ERROR__CONSTRAINT_HAS_ONE,
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
@@ -18,7 +19,9 @@ import {
   findListStatePda,
   getDelistLegacyInstructionAsync,
   getListLegacyInstructionAsync,
+  TENSOR_MARKETPLACE_ERROR__BAD_RENT_DEST,
 } from '../../src/index.js';
+import { expectCustomError } from '../_common.js';
 
 test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -115,4 +118,86 @@ test('it can delist a legacy Programmable NFT', async (t) => {
   // Then the listing account should have been closed.
   const account = await fetchEncodedAccount(client.rpc, listing);
   t.false(account.exists);
+});
+
+test('the wrong owner cannot delist', async (t) => {
+  const client = createDefaultSolanaClient();
+  const owner = await generateKeyPairSignerWithSol(client);
+  const wrongOwner = await generateKeyPairSignerWithSol(client);
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: owner,
+    owner: owner.address,
+  });
+
+  const listLegacyIx = await getListLegacyInstructionAsync({
+    owner,
+    mint,
+    amount: 1,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [listState] = await findListStatePda({ mint });
+
+  const delistLegacyIx = await getDelistLegacyInstructionAsync({
+    owner: wrongOwner,
+    listState,
+    mint,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, wrongOwner),
+    (tx) => appendTransactionMessageInstruction(delistLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, ANCHOR_ERROR__CONSTRAINT_HAS_ONE);
+});
+test('the account rent destination cannot differ from the list state rent payer', async (t) => {
+  const client = createDefaultSolanaClient();
+  const owner = await generateKeyPairSignerWithSol(client);
+  const wrongRentDestination = await generateKeyPairSignerWithSol(client);
+
+  const { mint } = await createDefaultNft({
+    client,
+    payer: owner,
+    authority: owner,
+    owner: owner.address,
+  });
+
+  const listLegacyIx = await getListLegacyInstructionAsync({
+    owner,
+    mint,
+    amount: 1,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [listState] = await findListStatePda({ mint });
+
+  const delistLegacyIx = await getDelistLegacyInstructionAsync({
+    owner,
+    listState,
+    mint,
+    rentDestination: wrongRentDestination.address,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, owner),
+    (tx) => appendTransactionMessageInstruction(delistLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BAD_RENT_DEST);
 });

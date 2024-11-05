@@ -244,9 +244,18 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listState: { defaultValue: k.pdaValueNode("listState") },
-            
+            listState: { defaultValue: k.pdaValueNode("listState") }, 
           },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
         },
         delistT22: {
           accounts: {

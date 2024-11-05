@@ -689,7 +689,6 @@ test('it has to specify the correct maker broker', async (t) => {
   const creator = await generateKeyPairSignerWithSol(client);
   const sellerFeeBasisPoints = 1000n;
 
-
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
     payer: lister,

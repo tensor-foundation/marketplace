@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -161,6 +162,7 @@ export type CloseExpiredListingT22AsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  transferHookAccounts: Array<Address>;
 };
 
 export async function getCloseExpiredListingT22InstructionAsync<
@@ -233,8 +235,11 @@ export async function getCloseExpiredListingT22InstructionAsync<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolver scope.
-  const resolverScope = { programAddress, accounts };
+  const resolverScope = { programAddress, accounts, args };
 
   // Resolve default values.
   if (!accounts.owner.value) {
@@ -279,6 +284,11 @@ export async function getCloseExpiredListingT22InstructionAsync<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -293,6 +303,7 @@ export async function getCloseExpiredListingT22InstructionAsync<
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getCloseExpiredListingT22InstructionDataEncoder().encode({}),
@@ -338,6 +349,7 @@ export type CloseExpiredListingT22Input<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
+  transferHookAccounts: Array<Address>;
 };
 
 export function getCloseExpiredListingT22Instruction<
@@ -408,6 +420,9 @@ export function getCloseExpiredListingT22Instruction<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
   if (!accounts.owner.value) {
     accounts.owner.value = expectTransactionSigner(
@@ -434,6 +449,11 @@ export function getCloseExpiredListingT22Instruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = args.transferHookAccounts.map(
+    (address) => ({ address, role: AccountRole.READONLY })
+  );
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -448,6 +468,7 @@ export function getCloseExpiredListingT22Instruction<
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getCloseExpiredListingT22InstructionDataEncoder().encode({}),

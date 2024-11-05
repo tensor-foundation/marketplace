@@ -4,7 +4,10 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
-import { createDefaultNft, findAtaPda } from '@tensor-foundation/mpl-token-metadata';
+import {
+  createDefaultNft,
+  findAtaPda,
+} from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createAndMintTo,
@@ -525,7 +528,7 @@ test('it has to respect the correct private taker', async (t) => {
     payer: privateTaker,
     mint,
     maxAmount: 100n,
-    creators: [mintAuthority.address],  
+    creators: [mintAuthority.address],
   });
 
   const tx3 = await pipe(
@@ -738,9 +741,7 @@ test('it enforces pNFT royalties', async (t) => {
     authority: creator,
     owner: lister.address,
     standard: TokenStandard.ProgrammableNonFungible,
-    creators: [
-      { address: creator.address, verified: true, share: 100 },
-    ],
+    creators: [{ address: creator.address, verified: true, share: 100 }],
   });
 
   const listIx = await getListLegacyInstructionAsync({
@@ -810,14 +811,14 @@ test('it respects the optionalRoyaltyPct arg', async (t) => {
       standard: TokenStandard.NonFungible,
       creators: [{ address: creator.address, verified: true, share: 100 }],
     });
-  
+
     const listIx = await getListLegacyInstructionAsync({
       payer: lister,
       owner: lister,
       mint,
       amount: listingPrice,
     });
-  
+
     await pipe(
       await createDefaultTransaction(client, lister),
       (tx) => appendTransactionMessageInstruction(listIx, tx),
@@ -850,8 +851,10 @@ test('it respects the optionalRoyaltyPct arg', async (t) => {
     t.assert(
       BigInt(creatorBalanceAfter.value) ===
         creatorBalanceBefore.value +
-          (((listingPrice * BigInt(ROYALTIES_BASIS_POINTS)) / BigInt(BASIS_POINTS)) * BigInt(optionalRoyaltyPct)) /
-          100n // optionalRoyaltyPct% of 5%
+          (((listingPrice * BigInt(ROYALTIES_BASIS_POINTS)) /
+            BigInt(BASIS_POINTS)) *
+            BigInt(optionalRoyaltyPct)) /
+            100n // optionalRoyaltyPct% of 5%
     );
   }
 });

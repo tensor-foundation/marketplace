@@ -37,7 +37,14 @@ import {
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
 } from '../../src';
 import { computeIx } from './_common';
-import { BASIS_POINTS, BROKER_FEE_PCT, MAKER_BROKER_FEE_PCT, sleep, TAKER_BROKER_FEE_PCT, TAKER_FEE_BPS } from '../_common';
+import {
+  BASIS_POINTS,
+  BROKER_FEE_PCT,
+  MAKER_BROKER_FEE_PCT,
+  sleep,
+  TAKER_BROKER_FEE_PCT,
+  TAKER_FEE_BPS,
+} from '../_common';
 import { TokenStandard } from '@tensor-foundation/resolvers';
 
 test('it can buy an NFT paying using a SPL token', async (t) => {
@@ -157,8 +164,6 @@ test('it can buy an NFT paying using a SPL token', async (t) => {
     creatorsCurrencyTa: [updateAuthorityCurrencyTa],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
-
-
 
   await pipe(
     await createDefaultTransaction(client, buyer),
@@ -318,8 +323,6 @@ test('it can buy an NFT paying using a SPL token w/ four creators', async (t) =>
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
-
-
   await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
@@ -383,8 +386,6 @@ test('it cannot buy a SOL listing with a different SPL token', async (t) => {
     creators: [mintAuthority.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
-
-
 
   const tx = pipe(
     await createDefaultTransaction(client, buyer),
@@ -470,8 +471,6 @@ test('it has to specify the correct maker broker', async (t) => {
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
-
-
   const tx = pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
@@ -520,7 +519,6 @@ test('it has to specify the correct maker broker', async (t) => {
     makerBroker: makerBroker.address,
   });
 
-   
   const tx3 = await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
@@ -541,7 +539,6 @@ test('it has to specify the correct cosigner', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
   const price = 100_000_000n;
-
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -914,14 +911,13 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-    // Then the lister received the correct amount...
-    const listerBalanceAfter = await client.rpc
-      .getTokenAccountBalance(listerAta)
-      .send();
+  // Then the lister received the correct amount...
+  const listerBalanceAfter = await client.rpc
+    .getTokenAccountBalance(listerAta)
+    .send();
   t.assert(
     BigInt(listerBalanceAfter.value.amount) ===
-      BigInt(listerBalanceBefore.value.amount) +
-        price 
+      BigInt(listerBalanceBefore.value.amount) + price
   );
 
   // ...and the creators should have received the correct amount...
@@ -952,16 +948,14 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   t.assert(
     BigInt(makerBrokerBalanceAfter.value.amount) ===
       BigInt(makerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           MAKER_BROKER_FEE_PCT) /
           100n // 80% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
   t.assert(
     BigInt(takerBrokerBalanceAfter.value.amount) ===
       BigInt(takerBrokerBalanceBefore.value.amount) +
-        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) /
-          100n) *
+        (((((price * TAKER_FEE_BPS) / BASIS_POINTS) * BROKER_FEE_PCT) / 100n) *
           TAKER_BROKER_FEE_PCT) /
           100n // 20% (maker split) of 50% (broker pct) of 2% (taker fee)
   );
@@ -1046,9 +1040,9 @@ test('pNFT royalties are enforced', async (t) => {
   t.assert(
     BigInt(creatorBalanceAfter.value.amount) ===
       BigInt(creatorBalanceBefore.value.amount) +
-        price * ROYALTIES_BASIS_POINTS / BASIS_POINTS
+        (price * ROYALTIES_BASIS_POINTS) / BASIS_POINTS
   );
-})
+});
 
 test('optional royalties are respected', async (t) => {
   const ROYALTIES_BASIS_POINTS = 500n;
@@ -1103,11 +1097,10 @@ test('optional royalties are respected', async (t) => {
       (tx) => signAndSendTransaction(client, tx)
     );
 
-
     const creatorBalanceBefore = await client.rpc
       .getTokenAccountBalance(creatorAta)
       .send();
-    
+
     const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
       owner: lister.address,
       payer: buyer,
@@ -1133,10 +1126,12 @@ test('optional royalties are respected', async (t) => {
     t.assert(
       BigInt(creatorBalanceAfter.value.amount) ===
         BigInt(creatorBalanceBefore.value.amount) +
-          price * ROYALTIES_BASIS_POINTS / BASIS_POINTS * BigInt(royaltyPct) / 100n
+          (((price * ROYALTIES_BASIS_POINTS) / BASIS_POINTS) *
+            BigInt(royaltyPct)) /
+            100n
     );
-  };
-})
+  }
+});
 
 test('it works cross-program (NFT - legacy, SPL - T22)', async (t) => {
   const client = createDefaultSolanaClient();
@@ -1145,7 +1140,7 @@ test('it works cross-program (NFT - legacy, SPL - T22)', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
-  const price = 100_000_000n; 
+  const price = 100_000_000n;
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -1198,4 +1193,4 @@ test('it works cross-program (NFT - legacy, SPL - T22)', async (t) => {
   );
 
   t.is(typeof tx, 'string');
-})
+});

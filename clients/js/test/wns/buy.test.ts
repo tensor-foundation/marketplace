@@ -751,8 +751,6 @@ test('it has to specify the correct maker broker', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
-
-
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer: lister,
@@ -848,7 +846,6 @@ test('it has to respect the correct private taker', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
-
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer: lister,
@@ -919,7 +916,6 @@ test('it cannot buy an expired listing', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
-
 
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
