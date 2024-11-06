@@ -46,7 +46,6 @@ import {
 import {
   TokenStandard,
   resolveAuthorizationRulesProgramFromTokenStandard,
-  resolveBidAta,
   resolveBidTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
   resolveFeeVaultPdaFromBidState,
@@ -59,7 +58,7 @@ import {
   resolveTokenMetadataProgramFromTokenStandard,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
-import { findBidStatePda } from '../pdas';
+import { findBidStatePda, findBidTaPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
@@ -596,7 +595,9 @@ export async function getTakeBidLegacyInstructionAsync<
     };
   }
   if (!accounts.bidTa.value) {
-    accounts.bidTa = { ...accounts.bidTa, ...resolveBidAta(resolverScope) };
+    accounts.bidTa.value = await findBidTaPda({
+      mint: expectAddress(accounts.mint.value),
+    });
   }
   if (!accounts.bidTokenRecord.value) {
     accounts.bidTokenRecord = {
@@ -753,7 +754,7 @@ export type TakeBidLegacyInput<
   sysvarInstructions?: Address<TAccountSysvarInstructions>;
   authorizationRulesProgram?: Address<TAccountAuthorizationRulesProgram>;
   /** Implicitly checked via transfer. Will fail if wrong account */
-  bidTa?: Address<TAccountBidTa>;
+  bidTa: Address<TAccountBidTa>;
   bidTokenRecord?: Address<TAccountBidTokenRecord>;
   authorizationRules?: Address<TAccountAuthorizationRules>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -969,9 +970,6 @@ export function getTakeBidLegacyInstruction<
       ...accounts.authorizationRulesProgram,
       ...resolveAuthorizationRulesProgramFromTokenStandard(resolverScope),
     };
-  }
-  if (!accounts.bidTa.value) {
-    accounts.bidTa = { ...accounts.bidTa, ...resolveBidAta(resolverScope) };
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =

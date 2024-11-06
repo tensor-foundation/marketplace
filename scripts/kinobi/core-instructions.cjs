@@ -202,7 +202,7 @@ module.exports = function visitor(options) {
               },
             ),
             k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creatorsCurrencyAta"),
+              k.argumentValueNode("creatorsCurrencyTa"),
               {
                 isWritable: true,
                 isOptional: true,

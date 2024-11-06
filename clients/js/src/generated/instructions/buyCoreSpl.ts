@@ -256,7 +256,6 @@ export type BuyCoreSplAsyncInput<
   maxAmount: BuyCoreSplInstructionDataArgs['maxAmount'];
   creators: BuyCoreSplInstructionExtraArgs['creators'];
   creatorsCurrencyTa?: BuyCoreSplInstructionExtraArgs['creatorsCurrencyTa'];
-  creatorsCurrencyAta?: Array<Address>;
 };
 
 export async function getBuyCoreSplInstructionAsync<
@@ -465,7 +464,7 @@ export async function getBuyCoreSplInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsCurrencyAta ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -581,7 +580,6 @@ export type BuyCoreSplInput<
   maxAmount: BuyCoreSplInstructionDataArgs['maxAmount'];
   creators: BuyCoreSplInstructionExtraArgs['creators'];
   creatorsCurrencyTa?: BuyCoreSplInstructionExtraArgs['creatorsCurrencyTa'];
-  creatorsCurrencyAta?: Array<Address>;
 };
 
 export function getBuyCoreSplInstruction<
@@ -741,7 +739,7 @@ export function getBuyCoreSplInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsCurrencyAta ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),

@@ -341,8 +341,6 @@ export type BuyLegacySplAsyncInput<
   tokenStandard?: BuyLegacySplInstructionExtraArgs['tokenStandard'];
   brokersCurrencyTa?: BuyLegacySplInstructionExtraArgs['brokersCurrencyTa'];
   creatorsCurrencyTa?: BuyLegacySplInstructionExtraArgs['creatorsCurrencyTa'];
-  creatorsCurrencyAta?: Array<Address>;
-  brokersCurrencyAta?: Array<Address>;
 };
 
 export async function getBuyLegacySplInstructionAsync<
@@ -638,11 +636,11 @@ export async function getBuyLegacySplInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsCurrencyAta ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.brokersCurrencyAta ?? []).map((address) => ({
+    ...(args.brokersCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -789,8 +787,6 @@ export type BuyLegacySplInput<
   tokenStandard?: BuyLegacySplInstructionExtraArgs['tokenStandard'];
   brokersCurrencyTa?: BuyLegacySplInstructionExtraArgs['brokersCurrencyTa'];
   creatorsCurrencyTa?: BuyLegacySplInstructionExtraArgs['creatorsCurrencyTa'];
-  creatorsCurrencyAta?: Array<Address>;
-  brokersCurrencyAta?: Array<Address>;
 };
 
 export function getBuyLegacySplInstruction<
@@ -1013,11 +1009,11 @@ export function getBuyLegacySplInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsCurrencyAta ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.brokersCurrencyAta ?? []).map((address) => ({
+    ...(args.brokersCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),

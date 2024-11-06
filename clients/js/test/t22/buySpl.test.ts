@@ -27,6 +27,7 @@ import {
   TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH,
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
   TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED,
+  findListStatePda,
 } from '../../src/index.js';
 import {
   assertTcompNoop,
@@ -912,15 +913,16 @@ test('it has to specify the correct maker broker', async (t) => {
     transferHookAccounts: nft.extraAccountMetas.map((a) => a.address),
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyT22SplIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ... it should succeed.
-  t.is(typeof tx3, 'string');
+  // ... it should succeed and the listing should be closed.
+  const [listState] = await findListStatePda({ mint: nft.mint });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it has to specify the correct private taker', async (t) => {
@@ -1019,15 +1021,16 @@ test('it has to specify the correct private taker', async (t) => {
     transferHookAccounts: nft.extraAccountMetas.map((a) => a.address),
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyT22SplIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ... it should succeed.
-  t.is(typeof tx2, 'string');
+  // ... it should succeed and the listing should be closed.
+  const [listState] = await findListStatePda({ mint: nft.mint });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it cannot buy an expired listing', async (t) => {
@@ -1381,14 +1384,15 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     currencyTokenProgram: TOKEN22_PROGRAM_ID,
   });
 
-  const tx = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyT22SplIxT22, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx, 'string');
+  const listStateT22 = await findListStatePda({ mint: nftListedForT22.mint });
+  t.false((await fetchEncodedAccount(client.rpc, listStateT22[0])).exists);
 
   const buyT22SplIxLegacy = await getBuyT22SplInstructionAsync({
     mint: nftListedForLegacy.mint,
@@ -1405,12 +1409,15 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyT22SplIxLegacy, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  const listStateLegacy = await findListStatePda({
+    mint: nftListedForLegacy.mint,
+  });
+  t.false((await fetchEncodedAccount(client.rpc, listStateLegacy[0])).exists);
 });

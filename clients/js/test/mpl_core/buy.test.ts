@@ -162,7 +162,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     asset: asset.address,
     owner: lister,
     payer: mintAuthority,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     currency,
   });
 
@@ -177,7 +177,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 
@@ -213,7 +213,7 @@ test('it has to specify the correct maker broker', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     // (!)
     makerBroker: makerBroker.address,
   });
@@ -230,7 +230,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 
@@ -249,7 +249,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     makerBroker: notMakerBroker.address,
     creators: [mintAuthority.address],
   });
@@ -269,19 +269,20 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     makerBroker: makerBroker.address,
     creators: [mintAuthority.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the list state should be closed.
+  const [listState] = await findListStatePda({ mint: asset.address });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it has to specify the correct cosigner', async (t) => {
@@ -306,7 +307,7 @@ test('it has to specify the correct cosigner', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     cosigner,
   });
 
@@ -322,7 +323,7 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 
@@ -341,7 +342,7 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     cosigner: notCosigner,
     creators: [mintAuthority.address],
   });
@@ -361,19 +362,20 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     cosigner,
     creators: [mintAuthority.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
-    (tx) => signAndSendTransaction(client, tx)
+    (tx) => signAndSendTransaction(client, tx, { skipPreflight: true })
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the list state should be closed.
+  const [listState] = await findListStatePda({ mint: asset.address });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it has to respect the correct private taker', async (t) => {
@@ -398,7 +400,7 @@ test('it has to respect the correct private taker', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     privateTaker: privateTaker.address,
   });
 
@@ -414,7 +416,7 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: notPrivateTaker,
     buyer: notPrivateTaker.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 
@@ -433,18 +435,19 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: privateTaker,
     buyer: privateTaker.address,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the list state should be closed.
+  const [listState] = await findListStatePda({ mint: asset.address });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it cannot buy an expired listing', async (t) => {
@@ -468,7 +471,7 @@ test('it cannot buy an expired listing', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     expireInSec: 1,
   });
 
@@ -486,7 +489,7 @@ test('it cannot buy an expired listing', async (t) => {
     asset: asset.address,
     owner: lister.address,
     payer: buyer,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     creators: [mintAuthority.address],
   });
 

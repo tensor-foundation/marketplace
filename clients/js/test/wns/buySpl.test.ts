@@ -1022,15 +1022,16 @@ test('it has to specify the correct maker broker', async (t) => {
     collection: group,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyWnsSplIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ... it should succeed.
-  t.is(typeof tx3, 'string');
+  // ... it should succeed and the list state should be closed.
+  const [listing] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 });
 
 test('it has to specify the correct private taker', async (t) => {
@@ -1119,15 +1120,16 @@ test('it has to specify the correct private taker', async (t) => {
     collection: group,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyWnsSplIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ... it should succeed.
-  t.is(typeof tx2, 'string');
+  // ... it should succeed and the list state should be closed.
+  const [listing] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 });
 
 test('it cannot buy an expired listing', async (t) => {
@@ -1457,14 +1459,15 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     currencyTokenProgram: TOKEN22_PROGRAM_ID,
   });
 
-  const tx = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyWnsSplIxT22, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx, 'string');
+  const listStateT22 = await findListStatePda({ mint: mintT22 });
+  t.false((await fetchEncodedAccount(client.rpc, listStateT22[0])).exists);
 
   const buyWnsSplIxLegacy = await getBuyWnsSplInstructionAsync({
     mint: mintLegacy,
@@ -1479,12 +1482,13 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     currencyTokenProgram: TOKEN_PROGRAM_ID,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(buyWnsSplIxLegacy, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  const listStateLegacy = await findListStatePda({ mint: mintLegacy });
+  t.false((await fetchEncodedAccount(client.rpc, listStateLegacy[0])).exists);
 });

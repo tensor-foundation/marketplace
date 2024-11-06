@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -252,7 +251,6 @@ export type BuyWnsAsyncInput<
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export async function getBuyWnsInstructionAsync<
@@ -457,11 +455,6 @@ export async function getBuyWnsInstructionAsync<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -486,7 +479,6 @@ export async function getBuyWnsInstructionAsync<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(
@@ -567,7 +559,6 @@ export type BuyWnsInput<
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export function getBuyWnsInstruction<
@@ -726,11 +717,6 @@ export function getBuyWnsInstruction<
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -755,7 +741,6 @@ export function getBuyWnsInstruction<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(

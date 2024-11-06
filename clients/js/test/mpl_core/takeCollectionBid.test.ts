@@ -1,5 +1,6 @@
 import {
   appendTransactionMessageInstruction,
+  fetchEncodedAccount,
   generateKeyPairSigner,
   getAddressDecoder,
   pipe,
@@ -140,13 +141,13 @@ test('mint has to match the whitelist - VOC', async (t) => {
     collection: collection.address,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should succeed
-  t.is(typeof tx3, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('mint has to match the whitelist - rootHash', async (t) => {
@@ -277,13 +278,13 @@ test('mint has to match the whitelist - rootHash', async (t) => {
     mintProof: mintProofPdaInTree,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIxInTree, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should succeed
-  t.is(typeof tx3, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to specify creators', async (t) => {
@@ -387,13 +388,13 @@ test('it has to specify creators', async (t) => {
     collection: collection.address,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should succeed
-  t.is(typeof tx3, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to match the name field if set', async (t) => {
@@ -493,13 +494,13 @@ test('it has to match the name field if set', async (t) => {
     collection: collection.address,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should succeed
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it cannot take an expired bid', async (t) => {

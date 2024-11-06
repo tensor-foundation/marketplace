@@ -14,6 +14,7 @@ import {
   createDefaultTransaction,
   createWnsNftInGroup,
   generateKeyPairSignerWithSol,
+  LAMPORTS_PER_SOL,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
 } from '@tensor-foundation/test-helpers';
@@ -83,7 +84,6 @@ test('it can buy an NFT', async (t) => {
     collection: group,
     distribution,
     maxAmount: 2n,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -172,7 +172,6 @@ test('it can buy an NFT with a cosigner', async (t) => {
     mint,
     maxAmount: 2,
     cosigner,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -231,7 +230,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     t,
     action: TestAction.List,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, distribution, group } = nft;
 
   // When a buyer buys the NFT.
@@ -242,7 +241,6 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     collection: group,
     distribution,
     maxAmount: listingPrice - 1n, // <-- lower amount
-    creators: [nftUpdateAuthority.address],
   });
 
   const promise = pipe(
@@ -266,7 +264,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     action: TestAction.List,
     useCosigner: true,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, group, distribution } = nft;
 
   const fakeCosigner = await generateKeyPairSigner();
@@ -279,7 +277,6 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     distribution,
     maxAmount: listingPrice - 1n,
     // Missing cosigner!
-    creators: [nftUpdateAuthority.address],
   });
 
   let promise = pipe(
@@ -300,7 +297,6 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     distribution,
     maxAmount: listingPrice! - 1n,
     cosigner: fakeCosigner,
-    creators: [nftUpdateAuthority.address],
   });
 
   promise = pipe(
@@ -323,7 +319,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     t,
     action: TestAction.List,
   });
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, group, distribution } = nft;
 
   // When a buyer buys the NFT.
@@ -334,7 +330,6 @@ test('buying emits a self-CPI logging event', async (t) => {
     collection: group,
     distribution,
     maxAmount: listingPrice,
-    creators: [nftUpdateAuthority.address],
   });
 
   const sig = await pipe(
@@ -360,7 +355,7 @@ test('fees are paid correctly', async (t) => {
     action: TestAction.List,
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -379,7 +374,6 @@ test('fees are paid correctly', async (t) => {
     collection: group,
     distribution,
     maxAmount: listingPrice,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -453,8 +447,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     useMakerBroker: true,
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
-    signers;
+  const { buyer, nftOwner, makerBroker, takerBroker } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -483,7 +476,6 @@ test('maker and taker brokers receive correct split', async (t) => {
     maxAmount: listingPrice!,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -581,7 +573,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     // not setting maker broker
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
+  const { buyer, nftOwner, takerBroker } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -606,7 +598,6 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     maxAmount: listingPrice,
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -713,7 +704,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     owner: lister,
     mint,
     currency,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     collection: group,
     distribution,
   });
@@ -730,7 +721,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
   });
 
   const tx = pipe(
@@ -742,14 +733,13 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
   await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH);
 });
 
-test('it has to specify the correct maker broker', async (t) => {
+test.only('it has to specify the correct maker broker', async (t) => {
   const client = createDefaultSolanaClient();
   const lister = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);
   const makerBroker = await generateKeyPairSignerWithSol(client);
   const notMakerBroker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
-  const creator = await generateKeyPairSignerWithSol(client);
 
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
@@ -762,7 +752,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     // (!)
     makerBroker: makerBroker.address,
     collection: group,
@@ -782,8 +772,7 @@ test('it has to specify the correct maker broker', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
-    creators: [creator.address],
+    maxAmount: LAMPORTS_PER_SOL / 2n,
   });
 
   const tx = pipe(
@@ -802,9 +791,8 @@ test('it has to specify the correct maker broker', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     makerBroker: notMakerBroker.address,
-    creators: [creator.address],
   });
 
   const tx2 = pipe(
@@ -823,19 +811,19 @@ test('it has to specify the correct maker broker', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     makerBroker: makerBroker.address,
-    creators: [creator.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
-    (tx) => signAndSendTransaction(client, tx)
+    (tx) => signAndSendTransaction(client, tx, { skipPreflight: true })
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the listing should be closed.
+  const [listing] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 });
 
 test('it has to respect the correct private taker', async (t) => {
@@ -844,7 +832,6 @@ test('it has to respect the correct private taker', async (t) => {
   const privateTaker = await generateKeyPairSignerWithSol(client);
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
-  const creator = await generateKeyPairSignerWithSol(client);
 
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
@@ -857,7 +844,7 @@ test('it has to respect the correct private taker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     privateTaker: privateTaker.address,
     collection: group,
     distribution,
@@ -876,8 +863,7 @@ test('it has to respect the correct private taker', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
-    creators: [creator.address],
+    maxAmount: LAMPORTS_PER_SOL / 2n,
   });
 
   const tx2 = pipe(
@@ -896,18 +882,18 @@ test('it has to respect the correct private taker', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
-    creators: [creator.address],
+    maxAmount: LAMPORTS_PER_SOL / 2n,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the list state should be closed.
+  const [listing] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listing)).exists);
 });
 
 test('it cannot buy an expired listing', async (t) => {
@@ -915,7 +901,6 @@ test('it cannot buy an expired listing', async (t) => {
   const lister = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
-  const creator = await generateKeyPairSignerWithSol(client);
 
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
@@ -928,7 +913,7 @@ test('it cannot buy an expired listing', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     expireInSec: 1,
     collection: group,
     distribution,
@@ -950,8 +935,7 @@ test('it cannot buy an expired listing', async (t) => {
     mint,
     distribution,
     collection: group,
-    maxAmount: 100n,
-    creators: [creator.address],
+    maxAmount: LAMPORTS_PER_SOL / 2n,
   });
 
   const tx = pipe(

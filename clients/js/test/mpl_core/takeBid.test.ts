@@ -273,13 +273,13 @@ test('it has to specify the correct makerBroker', async (t) => {
     creators: [creator.address],
     makerBroker: makerBroker.address,
   });
-  const txHash = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof txHash, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to specify the correct privateTaker', async (t) => {
@@ -377,13 +377,13 @@ test('it has to specify the correct privateTaker', async (t) => {
     bidState: bidState2,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState2)).exists);
 });
 
 test('it has to specify the correct cosigner', async (t) => {
@@ -473,13 +473,13 @@ test('it has to specify the correct cosigner', async (t) => {
     bidState,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx3, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to match the specified targetId', async (t) => {
@@ -556,11 +556,11 @@ test('it has to match the specified targetId', async (t) => {
     creators: [creator.address],
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });

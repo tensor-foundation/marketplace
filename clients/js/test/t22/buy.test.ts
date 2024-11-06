@@ -16,6 +16,7 @@ import {
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
 import {
+  findListStatePda,
   getBuyT22InstructionAsync,
   getListT22InstructionAsync,
   TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
@@ -32,6 +33,7 @@ import {
   BROKER_FEE_PCT,
   expectCustomError,
   HUNDRED_PCT,
+  LAMPORTS_PER_SOL,
   MAKER_BROKER_FEE_PCT,
   sleep,
   TAKER_FEE_BPS,
@@ -651,7 +653,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     owner: lister,
     mint,
     currency,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
 
@@ -665,7 +667,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
@@ -682,7 +684,10 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
 test('it has to specify the correct maker broker', async (t) => {
   const client = createDefaultSolanaClient();
   const lister = await generateKeyPairSignerWithSol(client);
-  const buyer = await generateKeyPairSignerWithSol(client);
+  const buyer = await generateKeyPairSignerWithSol(
+    client,
+    2n * LAMPORTS_PER_SOL
+  );
   const makerBroker = await generateKeyPairSignerWithSol(client);
   const notMakerBroker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
@@ -711,7 +716,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL,
     // (!)
     makerBroker: makerBroker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -728,7 +733,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
@@ -747,7 +752,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL,
     makerBroker: notMakerBroker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
@@ -767,23 +772,21 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     makerBroker: makerBroker.address,
     creators: [creator.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, buyer),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
-    (tx) => signAndSendTransaction(client, tx, { skipPreflight: true })
+    (tx) => signAndSendTransaction(client, tx)
   );
 
-  const test = await client.rpc.getTransaction(tx3).send();
-  t.log(test);
-
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the listing should be closed.
+  const [listState] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it has to respect the correct private taker', async (t) => {
@@ -817,7 +820,7 @@ test('it has to respect the correct private taker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     privateTaker: privateTaker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -833,7 +836,7 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: notPrivateTaker,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
@@ -852,19 +855,20 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: privateTaker,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(buyIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // ...then the transaction should succeed.
-  t.is(typeof tx3, 'string');
+  // ...then the transaction should succeed and the listing should be closed.
+  const [listState] = await findListStatePda({ mint });
+  t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 });
 
 test('it cannot buy an expired listing', async (t) => {
@@ -897,7 +901,7 @@ test('it cannot buy an expired listing', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: 100n,
+    amount: LAMPORTS_PER_SOL / 2n,
     expireInSec: 1,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -916,7 +920,7 @@ test('it cannot buy an expired listing', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: 100n,
+    maxAmount: LAMPORTS_PER_SOL / 2n,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });

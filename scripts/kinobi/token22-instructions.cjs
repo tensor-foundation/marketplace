@@ -392,10 +392,9 @@ module.exports = function visitor(options) {
               }),
             },
             bidTa: {
-              defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom: "resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+              defaultValue: k.pdaValueNode("bidTa", [
+                k.pdaSeedValueNode("mint", k.accountValueNode("mint")),
+              ]),
             },
             bidState: {
               defaultValue: k.pdaValueNode("bidState", [

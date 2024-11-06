@@ -477,13 +477,13 @@ test('it has to specify creators', async (t) => {
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
-  // ...it should succeed
-  t.is(typeof tx3, 'string');
+  // ...it should succeed and the bid should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to match the name field if set', async (t) => {
@@ -628,13 +628,13 @@ test('it has to match the name field if set', async (t) => {
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
-  // ...it should succeed
-  t.is(typeof tx2, 'string');
+  // ...it should succeed and the bid should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it cannot take an expired bid', async (t) => {

@@ -491,7 +491,6 @@ kinobi.accept(
       "resolveListAta",
       "resolveOwnerAta",
       "resolveSellerAta",
-      "resolveBidTa",
       "resolveBuyerTokenRecordFromTokenStandard",
       "resolveListTokenRecordFromTokenStandard",
       "resolveOwnerTokenRecordFromTokenStandard",

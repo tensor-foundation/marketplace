@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -278,7 +277,6 @@ export type TakeBidWnsAsyncInput<
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
   collection: TakeBidWnsInstructionExtraArgs['collection'];
   paymentMint?: TakeBidWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export async function getTakeBidWnsInstructionAsync<
@@ -505,11 +503,6 @@ export async function getTakeBidWnsInstructionAsync<
     args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -537,7 +530,6 @@ export async function getTakeBidWnsInstructionAsync<
       getAccountMeta(accounts.wnsProgram),
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidWnsInstructionDataEncoder().encode(
@@ -629,7 +621,6 @@ export type TakeBidWnsInput<
   tokenStandard?: TakeBidWnsInstructionExtraArgs['tokenStandard'];
   collection: TakeBidWnsInstructionExtraArgs['collection'];
   paymentMint?: TakeBidWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export function getTakeBidWnsInstruction<
@@ -809,11 +800,6 @@ export function getTakeBidWnsInstruction<
     args.tokenStandard = TokenStandard.ProgrammableNonFungible;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -841,7 +827,6 @@ export function getTakeBidWnsInstruction<
       getAccountMeta(accounts.wnsProgram),
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getTakeBidWnsInstructionDataEncoder().encode(

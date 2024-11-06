@@ -1,7 +1,6 @@
 import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
-  generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
 import {
@@ -49,7 +48,7 @@ test('it can take a bid on a WNS NFT', async (t) => {
     action: TestAction.Bid,
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, group, distribution } = nft;
 
   // When the seller takes the bid.
@@ -61,7 +60,6 @@ test('it can take a bid on a WNS NFT', async (t) => {
     collection: group,
     minAmount: bidPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -97,7 +95,7 @@ test('fees are paid correctly', async (t) => {
     action: TestAction.Bid,
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+  const { buyer, nftOwner } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -117,7 +115,6 @@ test('fees are paid correctly', async (t) => {
     collection: group,
     minAmount: bidPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -175,8 +172,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     useMakerBroker: true,
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority, makerBroker, takerBroker } =
-    signers;
+  const { buyer, nftOwner, makerBroker, takerBroker } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -206,7 +202,6 @@ test('maker and taker brokers receive correct split', async (t) => {
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -288,7 +283,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     // not setting maker broker
   });
 
-  const { buyer, nftOwner, nftUpdateAuthority, takerBroker } = signers;
+  const { buyer, nftOwner, takerBroker } = signers;
   const { mint, group, distribution, sellerFeeBasisPoints } = nft;
 
   const startingFeeVaultBalance = BigInt(
@@ -314,7 +309,6 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     // makerBroker not passed in because not set
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -464,13 +458,13 @@ test('it has to specify the correct makerBroker', async (t) => {
     bidState,
     tokenProgram: TOKEN22_PROGRAM_ID,
   });
-  const txHash = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof txHash, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to specify the correct privateTaker', async (t) => {
@@ -571,13 +565,13 @@ test('it has to specify the correct privateTaker', async (t) => {
     collection: group2,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, privateTaker),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState2)).exists);
 });
 
 test('it has to specify the correct cosigner', async (t) => {
@@ -587,7 +581,6 @@ test('it has to specify the correct cosigner', async (t) => {
   const cosigner = await generateKeyPairSignerWithSol(client);
   const notCosigner = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);
-  const creator = await generateKeyPairSigner();
 
   const { mint, group, distribution } = await createWnsNftInGroup({
     client,
@@ -663,20 +656,19 @@ test('it has to specify the correct cosigner', async (t) => {
     mint,
     minAmount: LAMPORTS_PER_SOL / 2n,
     cosigner,
-    creators: [creator.address],
     bidState,
     tokenProgram: TOKEN22_PROGRAM_ID,
     distribution,
     collection: group,
   });
 
-  const tx3 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx3, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx3, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it has to match the specified targetId', async (t) => {
@@ -752,11 +744,11 @@ test('it has to match the specified targetId', async (t) => {
     collection: group,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });

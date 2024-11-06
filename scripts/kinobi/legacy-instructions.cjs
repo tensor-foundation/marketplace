@@ -244,14 +244,14 @@ module.exports = function visitor(options) {
               },
             ),
             k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creatorsCurrencyAta"),
+              k.argumentValueNode("creatorsCurrencyTa"),
               {
                 isWritable: true,
                 isOptional: true,
               },
             ),
             k.instructionRemainingAccountsNode(
-              k.argumentValueNode("brokersCurrencyAta"),
+              k.argumentValueNode("brokersCurrencyTa"),
               {
                 isWritable: true,
                 isOptional: true,
@@ -590,10 +590,9 @@ module.exports = function visitor(options) {
               }),
             },
             bidTa: {
-              defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom: "resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+              defaultValue: k.pdaValueNode("bidTa", [
+                k.pdaSeedValueNode("mint", k.accountValueNode("mint")),
+              ]),
             },
             bidState: {
               defaultValue: k.pdaValueNode("bidState", [

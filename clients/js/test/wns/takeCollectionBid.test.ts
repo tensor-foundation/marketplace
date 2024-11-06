@@ -51,6 +51,7 @@ import {
   getDepositMarginAccountInstructionAsync,
   getInitMarginAccountInstructionAsync,
 } from '@tensor-foundation/escrow';
+import { computeIx } from '../legacy/_common.js';
 
 test('it can take a bid on a WNS collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -139,7 +140,6 @@ test('it can take a bid on a WNS collection', async (t) => {
     collection: group,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -298,7 +298,6 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     bidState,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   let promise = pipe(
@@ -323,7 +322,6 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     collection: group,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   promise = pipe(
@@ -472,13 +470,14 @@ test('it has to match the name field if set', async (t) => {
     collection: group,
   });
 
-  const tx2 = await pipe(
+  await pipe(
     await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
   // ...it should succeed
-  t.is(typeof tx2, 'string');
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
 
 test('it cannot take an expired bid', async (t) => {

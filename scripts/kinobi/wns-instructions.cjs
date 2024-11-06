@@ -83,15 +83,6 @@ module.exports = function visitor(options) {
               ),
             },
           },
-          remainingAccounts: [
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creators"),
-              {
-                isWritable: true,
-                isOptional: true,
-              },
-            ),
-          ],
           arguments: {
             collection: {
               type: k.publicKeyTypeNode(),
@@ -253,15 +244,6 @@ module.exports = function visitor(options) {
               ),
             },
           },
-          remainingAccounts: [
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creators"),
-              {
-                isWritable: true,
-                isOptional: true,
-              },
-            ),
-          ],
           arguments: {
             collection: {
               type: k.publicKeyTypeNode(),
@@ -571,10 +553,9 @@ module.exports = function visitor(options) {
               }),
             },
             bidTa: {
-              defaultValue: k.resolverValueNode("resolveBidAta", {
-                importFrom: "resolvers",
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+              defaultValue: k.pdaValueNode("bidTa", [
+                k.pdaSeedValueNode("mint", k.accountValueNode("mint")),
+              ]),
             },
             bidState: {
               defaultValue: k.pdaValueNode("bidState", [
@@ -588,15 +569,6 @@ module.exports = function visitor(options) {
               ),
             },
           },
-          remainingAccounts: [
-            k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creators"),
-              {
-                isWritable: true,
-                isOptional: true,
-              },
-            ),
-          ],
           arguments: {
             tokenStandard: {
               type: k.definedTypeLinkNode("TokenStandard", "resolvers"),
