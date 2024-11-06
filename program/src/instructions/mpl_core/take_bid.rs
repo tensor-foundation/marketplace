@@ -1,14 +1,7 @@
 use anchor_lang::prelude::*;
-<<<<<<< HEAD
-use metaplex_core::{
-    accounts::BaseAssetV1,
-    instructions::TransferV1CpiBuilder,
-    types::UpdateAuthority,
-=======
 use metaplex_core::{accounts::BaseAssetV1, instructions::TransferV1CpiBuilder};
 use mpl_token_metadata::types::{
     Collection as LegacyCollection, Creator as LegacyCreator, TokenStandard,
->>>>>>> main
 };
 use tensor_toolbox::{
     assert_fee_account,

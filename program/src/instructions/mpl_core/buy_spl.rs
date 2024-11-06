@@ -4,10 +4,6 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 use metaplex_core::instructions::TransferV1CpiBuilder;
-<<<<<<< HEAD
-use mpl_token_metadata::types::TokenStandard;
-=======
->>>>>>> main
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees,

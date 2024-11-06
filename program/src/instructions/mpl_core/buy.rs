@@ -1,9 +1,5 @@
 use anchor_lang::solana_program::{program::invoke, system_instruction};
 use metaplex_core::instructions::TransferV1CpiBuilder;
-<<<<<<< HEAD
-use mpl_token_metadata::types::TokenStandard;
-=======
->>>>>>> main
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
     metaplex_core::{validate_core_asset, MetaplexCore},
