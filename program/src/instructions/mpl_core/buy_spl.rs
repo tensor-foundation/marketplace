@@ -4,7 +4,10 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 use metaplex_core::instructions::TransferV1CpiBuilder;
+<<<<<<< HEAD
 use mpl_token_metadata::types::TokenStandard;
+=======
+>>>>>>> main
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees,
@@ -203,16 +206,11 @@ pub fn process_buy_core_spl<'info, 'b>(
     // validate the mint
     let list_state = &ctx.accounts.list_state;
 
-    // validate the asset account
-    let core_asset = validate_core_asset(
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
+    let asset = validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-    let (royalty_fee, _) = if core_asset.royalty_fee_bps > 0 {
-        (core_asset.royalty_fee_bps, TokenStandard::ProgrammableNonFungible)
-    } else {
-        (0, TokenStandard::NonFungible)
-    };
 
     let amount = list_state.amount;
     let currency = list_state.currency;
@@ -236,7 +234,7 @@ pub fn process_buy_core_spl<'info, 'b>(
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(royalty_fee, amount, Some(100))?;
+    let creator_fee = calc_creators_fee(asset.royalty_fee_bps, amount, Some(100))?;
 
     // Transfer the asset to the buyer.
     TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
@@ -301,7 +299,7 @@ pub fn process_buy_core_spl<'info, 'b>(
     )?;
 
     // Pay creator royalties.
-    if let Some(creators) = core_asset.royalty_creators {
+    if let Some(creators) = asset.royalty_creators {
         let creators_len = creators.len();
         if ctx.remaining_accounts.len() < creators_len * 2 {
             throw_err!(TcompError::InsufficientRemainingAccounts);

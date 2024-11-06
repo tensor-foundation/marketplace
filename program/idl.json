@@ -4824,6 +4824,11 @@
       "code": 6145,
       "name": "MissingCreatorATA",
       "msg": "missing creator ATA"
+    },
+    {
+      "code": 6146,
+      "name": "MissingWhitelistMethod",
+      "msg": "No whitelist method provided"
     }
   ],
   "metadata": {

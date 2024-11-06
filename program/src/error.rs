@@ -141,4 +141,7 @@ pub enum TcompError {
 
     #[msg("missing creator ATA")]
     MissingCreatorATA = 145,
+
+    #[msg("No whitelist method provided")]
+    MissingWhitelistMethod = 146,
 }
