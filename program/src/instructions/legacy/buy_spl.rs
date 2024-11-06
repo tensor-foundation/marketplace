@@ -9,7 +9,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees, mpl_token_auth_rules, shard_num, is_royalty_enforced,
+    calc_creators_fee, calc_fees, fees, is_royalty_enforced, mpl_token_auth_rules, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT,
     TAKER_FEE_BPS,
@@ -265,21 +265,21 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             let (account, remaining) = remaining
                 .split_first()
                 .ok_or(TcompError::InsufficientRemainingAccounts)?;
-            
-                // Create ATA if it doesn't exist
-                if account.data_is_empty() {
-                    anchor_spl::associated_token::create(CpiContext::new(
-                        ctx.accounts.associated_token_program.to_account_info(),
-                        anchor_spl::associated_token::Create {
-                            payer: ctx.accounts.payer.to_account_info(),
-                            associated_token: account.to_account_info(),
-                            authority: maker_broker.to_account_info(),
-                            mint: ctx.accounts.currency.to_account_info(),
-                            system_program: ctx.accounts.system_program.to_account_info(),
-                            token_program: ctx.accounts.currency_token_program.to_account_info(),
-                        },
-                    ))?;
-                }
+
+            // Create ATA if it doesn't exist
+            if account.data_is_empty() {
+                anchor_spl::associated_token::create(CpiContext::new(
+                    ctx.accounts.associated_token_program.to_account_info(),
+                    anchor_spl::associated_token::Create {
+                        payer: ctx.accounts.payer.to_account_info(),
+                        associated_token: account.to_account_info(),
+                        authority: maker_broker.to_account_info(),
+                        mint: ctx.accounts.currency.to_account_info(),
+                        system_program: ctx.accounts.system_program.to_account_info(),
+                        token_program: ctx.accounts.currency_token_program.to_account_info(),
+                    },
+                ))?;
+            }
 
             assert_decode_token_account(&currency, &maker_broker.key(), account)?;
 
@@ -293,7 +293,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             let (account, remaining) = remaining
                 .split_first()
                 .ok_or(TcompError::InsufficientRemainingAccounts)?;
-            
+
             // Create ATA if it doesn't exist
             if account.data_is_empty() {
                 anchor_spl::associated_token::create(CpiContext::new(
@@ -308,7 +308,7 @@ pub fn process_buy_legacy_spl<'info, 'b>(
                     },
                 ))?;
             }
-            
+
             assert_decode_token_account(&currency, &taker_broker.key(), account)?;
 
             (Some(account), remaining)

@@ -107,7 +107,7 @@ pub fn process_close_expired_listing_wns<'info>(
     // no need for royalty enforcement here
     approve(
         approve_accounts,
-        ApproveParams::no_royalties_with_signer_seeds(&[&ctx.accounts.list_state.seeds()]), 
+        ApproveParams::no_royalties_with_signer_seeds(&[&ctx.accounts.list_state.seeds()]),
     )?;
 
     // transfer the NFT
