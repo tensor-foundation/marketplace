@@ -40,7 +40,7 @@
     "@noble/hashes": "^1.4.0",
     "@solana-program/system": "^0.5.0",
     "@solana/web3.js": "2.0.0-preview.3",
-    "@tensor-foundation/resolvers": "file:../../../toolkit/resolvers",
+    "@tensor-foundation/resolvers": "^0.2.5",
     "@types/node": "^22.0.0",
     "bs58": "^6.0.0",
     "merkletreejs": "^0.4.0"
@@ -51,7 +51,7 @@
     "@solana-program/token": "0.1.4",
     "@solana/eslint-config-solana": "^3.0.0",
     "@solana/web3.js": "2.0.0-preview.3",
-    "@tensor-foundation/mpl-core": "file:../../../toolkit/mpl-core",
+    "@tensor-foundation/mpl-core": "^0.3.1",
     "@tensor-foundation/mpl-token-metadata": "^0.5.0",
     "@tensor-foundation/test-helpers": "^0.5.0",
     "@tensor-foundation/whitelist": "^0.3.0",
