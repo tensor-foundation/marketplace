@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "name": "marketplace_program",
   "constants": [
     {
@@ -4818,7 +4818,7 @@
     {
       "code": 6144,
       "name": "InvalidTokenAccount",
-      "msg": "invalidtoken account"
+      "msg": "invalid token account"
     },
     {
       "code": 6145,

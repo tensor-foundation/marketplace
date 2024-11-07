@@ -94,7 +94,7 @@ export const TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_REMAINING_ACCOUNTS = 0x17fd;
 export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER = 0x17fe; // 6142
 /** MissingBrokerTokenAccount: missing broker token account */
 export const TENSOR_MARKETPLACE_ERROR__MISSING_BROKER_TOKEN_ACCOUNT = 0x17ff; // 6143
-/** InvalidTokenAccount: invalidtoken account */
+/** InvalidTokenAccount: invalid token account */
 export const TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT = 0x1800; // 6144
 /** MissingCreatorATA: missing creator ATA */
 export const TENSOR_MARKETPLACE_ERROR__MISSING_CREATOR_A_T_A = 0x1801; // 6145
@@ -182,7 +182,7 @@ if (process.env.NODE_ENV !== 'production') {
     [TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_BALANCE]: `insufficient balance`,
     [TENSOR_MARKETPLACE_ERROR__INSUFFICIENT_REMAINING_ACCOUNTS]: `insufficient remaining accounts`,
     [TENSOR_MARKETPLACE_ERROR__INVALID_FEE_ACCOUNT]: `invalid fee account`,
-    [TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT]: `invalidtoken account`,
+    [TENSOR_MARKETPLACE_ERROR__INVALID_TOKEN_ACCOUNT]: `invalid token account`,
     [TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED]: `listing has expired`,
     [TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED]: `listing not yet expired`,
     [TENSOR_MARKETPLACE_ERROR__MAKER_BROKER_NOT_YET_ENABLED]: `maker broker not yet enabled`,

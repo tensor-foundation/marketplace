@@ -142,8 +142,8 @@ pub enum TensorMarketplaceError {
     /// 6143 - missing broker token account
     #[error("missing broker token account")]
     MissingBrokerTokenAccount = 0x17FF,
-    /// 6144 - invalidtoken account
-    #[error("invalidtoken account")]
+    /// 6144 - invalid token account
+    #[error("invalid token account")]
     InvalidTokenAccount = 0x1800,
     /// 6145 - missing creator ATA
     #[error("missing creator ATA")]
