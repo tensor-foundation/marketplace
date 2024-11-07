@@ -41,7 +41,7 @@ import {
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { computeIx } from '../legacy/_common';
 
 test('it can buy a listed core asset with SOL', async (t) => {
   const client = createDefaultSolanaClient();
@@ -560,10 +560,6 @@ test('it pays royalties and fees correctly', async (t) => {
   const listerBalanceBefore = await client.rpc
     .getBalance(lister.address)
     .send();
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 500_000,
-  });
 
   const listStateRent = await client.rpc
     .getBalance((await findListStatePda({ mint: asset.address }))[0])

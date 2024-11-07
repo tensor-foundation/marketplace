@@ -1,4 +1,3 @@
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   appendTransactionMessageInstruction,
   assertAccountExists,
@@ -22,6 +21,7 @@ import {
   TENSOR_MARKETPLACE_ERROR__BAD_RENT_DEST,
 } from '../../src/index.js';
 import { expectCustomError } from '../_common.js';
+import { computeIx } from './_common.js';
 
 test('it can delist a legacy NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -77,10 +77,6 @@ test('it can delist a legacy Programmable NFT', async (t) => {
     authority: owner,
     owner: owner.address,
     standard: TokenStandard.ProgrammableNonFungible,
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   const listLegacyIx = await getListLegacyInstructionAsync({

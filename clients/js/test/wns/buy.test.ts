@@ -733,7 +733,7 @@ test('it cannot buy a listing that specified a different currency', async (t) =>
   await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__CURRENCY_MISMATCH);
 });
 
-test.only('it has to specify the correct maker broker', async (t) => {
+test('it has to specify the correct maker broker', async (t) => {
   const client = createDefaultSolanaClient();
   const lister = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);

@@ -60,13 +60,13 @@ import {
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common.js';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   findMarginAccountPda,
   getDepositMarginAccountInstructionAsync,
   getInitMarginAccountInstructionAsync,
 } from '@tensor-foundation/escrow';
 import { generateTreeOfSize } from '../_merkle.js';
+import { computeIx } from './_common.js';
 
 test('it can take a bid on a legacy collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -497,10 +497,6 @@ test('it pays fees and royalties correctly', async (t) => {
     .getBalance(seller.address)
     .send();
 
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 500_000,
-  });
-
   // When the seller takes the bid...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
     owner: bidOwner.address,
@@ -666,10 +662,6 @@ test('it uses escrow funds when the bid is taken', async (t) => {
   const sharedEscrowBalanceBefore = await client.rpc
     .getBalance(marginAccount)
     .send();
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 500_000,
-  });
 
   // When the seller takes the bid...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
@@ -1501,10 +1493,6 @@ test('it enforces pNFT royalties', async (t) => {
     bidState,
     creators: [authority.address],
     optionalRoyaltyPct: 0,
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 400_000,
   });
 
   await pipe(

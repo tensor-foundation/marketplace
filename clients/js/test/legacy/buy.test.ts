@@ -42,8 +42,7 @@ import {
   TAKER_FEE_BPS,
   TestAction,
 } from '../_common.js';
-import { setupLegacyTest } from './_common.js';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { computeIx, setupLegacyTest } from './_common.js';
 
 test('it can buy an NFT', async (t) => {
   const { client, signers, mint, listing, listingPrice } =
@@ -654,10 +653,6 @@ test('it pays royalties and fees correctly', async (t) => {
     .getBalance(lister.address)
     .send();
 
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 500_000,
-  });
-
   const listStateRent = await client.rpc
     .getBalance((await findListStatePda({ mint }))[0])
     .send();
@@ -762,6 +757,7 @@ test('it enforces pNFT royalties', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, lister),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(listIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -769,10 +765,6 @@ test('it enforces pNFT royalties', async (t) => {
   const creatorBalanceBefore = await client.rpc
     .getBalance(creator.address)
     .send();
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 500_000,
-  });
 
   // Even if the buyer specifies 0% royalties...
   const buyIx = await getBuyLegacyInstructionAsync({

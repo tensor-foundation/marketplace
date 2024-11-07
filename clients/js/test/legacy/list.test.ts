@@ -1,4 +1,3 @@
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import {
   appendTransactionMessageInstruction,
   generateKeyPairSigner,
@@ -19,6 +18,7 @@ import {
   fetchListStateFromSeeds,
   getListLegacyInstructionAsync,
 } from '../../src/index.js';
+import { computeIx } from './_common.js';
 
 test('it can list an NFT', async (t) => {
   const client = createDefaultSolanaClient();
@@ -75,10 +75,6 @@ test('it can list a Programmable NFT', async (t) => {
     mint,
     amount: 1,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   // When we list the pNFT.
@@ -162,10 +158,6 @@ test('it can list a Programmable NFT with a cosigner', async (t) => {
     amount: 1,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     cosigner,
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   // When we list the pNFT.
