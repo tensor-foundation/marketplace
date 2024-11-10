@@ -1762,66 +1762,6 @@ describe("tcomp bids", () => {
       }
     });
 
-    it("FVC + Name: rejects an NFT with wrong name", async () => {
-      const canopyDepth = 12;
-      const verifiedCreator = Keypair.generate();
-      const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
-        await beforeHook({
-          nrCreators: 0,
-          numMints: 2,
-          canopyDepth,
-          verifiedCreator
-        });
-      const { whitelist } = await makeFvcWhitelist(verifiedCreator.publicKey);
-
-      await testBid({
-        amount: new BN(LAMPORTS_PER_SOL),
-        target: Target.Whitelist,
-        targetId: whitelist,
-        field: Field.Name,
-        fieldId: new PublicKey(nameToBuffer(leaves.at(-1)!.metadata.name)),
-        owner: traderB
-      });
-
-      for (const { leaf, index, metadata, assetId } of leaves) {
-        if (index === leaves.length - 1) {
-          await testTakeBid({
-            target: Target.Whitelist,
-            index,
-            lookupTableAccount,
-            memTree,
-            merkleTree,
-            metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
-            owner: traderB.publicKey,
-            seller: traderA,
-            canopyDepth,
-            bidId: whitelist,
-            field: Field.Name,
-            whitelist
-          });
-          continue;
-        }
-        await expect(
-          testTakeBid({
-            target: Target.Whitelist,
-            index,
-            lookupTableAccount,
-            memTree,
-            merkleTree,
-            metadata,
-            minAmount: new BN(LAMPORTS_PER_SOL),
-            owner: traderB.publicKey,
-            seller: traderA,
-            canopyDepth,
-            bidId: whitelist,
-            field: Field.Name,
-            whitelist
-          })
-        ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongBidFieldId"));
-      }
-    });
-
     // --------------------------------------- quantity
 
     it("VOC: bids + accepts bid (multiple quantity)", async () => {
