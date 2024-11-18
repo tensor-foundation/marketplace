@@ -86,9 +86,7 @@ export type BuyWnsInstruction<
     | string
     | IAccountMeta<string> = 'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay',
   TAccountExtraMetas extends string | IAccountMeta<string> = string,
-  TAccountCosigner extends
-    | string
-    | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
+  TAccountCosigner extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -452,10 +450,6 @@ export async function getBuyWnsInstructionAsync<
       ...(await resolveWnsExtraAccountMetasPda(resolverScope)),
     };
   }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
-  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
@@ -720,10 +714,6 @@ export function getBuyWnsInstruction<
   if (!accounts.distributionProgram.value) {
     accounts.distributionProgram.value =
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
-  }
-  if (!accounts.cosigner.value) {
-    accounts.cosigner.value =
-      'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
 
   // Remaining accounts.
