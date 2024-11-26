@@ -770,8 +770,6 @@ test('it can buy an NFT w/ a SPL token w/ multiple creators', async (t) => {
   });
   assertAccountExists(await fetchEncodedAccount(client.rpc, listing));
 
-  t.pass();
-
   // NFT is now escrowed in the listing.
   await assertTokenNftOwnedBy({
     t,
