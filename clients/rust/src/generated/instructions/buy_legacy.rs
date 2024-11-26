@@ -295,7 +295,7 @@ pub struct BuyLegacyInstructionArgs {
 ///   20. `[optional]` authorization_rules_program
 ///   21. `[optional]` token_metadata_program
 ///   22. `[optional]` sysvar_instructions
-///   23. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   23. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyLegacyBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,

@@ -229,7 +229,7 @@ pub struct BuyWnsInstructionArgs {
 ///   17. `[optional]` wns_program (default to `wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM`)
 ///   18. `[optional]` distribution_program (default to `diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay`)
 ///   19. `[]` extra_metas
-///   20. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   20. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyWnsBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,

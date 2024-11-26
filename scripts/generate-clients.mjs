@@ -208,13 +208,13 @@ codama.update(
 // Update instructions.
 codama.update(
   c.updateInstructionsVisitor({
-    // Manually set cosigner to be true if it's passed in.
+    // set cosigner to be an optional signer
+    // don't (!) set a defaultValue, since this value will end up not being omitted 
+    // in getAccountMetaFactory and will lead to the ix failing
     buyLegacy: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -222,9 +222,7 @@ codama.update(
     buy: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -232,9 +230,7 @@ codama.update(
     list: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -242,9 +238,7 @@ codama.update(
     buySpl: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -252,9 +246,7 @@ codama.update(
     buyCore: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -262,9 +254,7 @@ codama.update(
     buyWns: {
       accounts: {
         cosigner: {
-          defaultValue: c.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },

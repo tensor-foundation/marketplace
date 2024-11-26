@@ -186,7 +186,7 @@ pub struct BuyCoreInstructionArgs {
 ///   10. `[optional]` mpl_core_program (default to `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`)
 ///   11. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   13. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   13. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyCoreBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,

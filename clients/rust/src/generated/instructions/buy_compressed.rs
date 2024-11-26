@@ -203,7 +203,7 @@ pub struct BuyCompressedInstructionArgs {
 ///   12. `[writable, optional]` taker_broker
 ///   13. `[writable, optional]` maker_broker
 ///   14. `[writable]` rent_destination
-///   15. `[signer, optional]` cosigner (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
+///   15. `[signer, optional]` cosigner
 #[derive(Clone, Debug, Default)]
 pub struct BuyCompressedBuilder {
     fee_vault: Option<solana_program::pubkey::Pubkey>,
