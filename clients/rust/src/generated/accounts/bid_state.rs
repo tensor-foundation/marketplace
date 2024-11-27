@@ -6,8 +6,8 @@
 //!
 
 use crate::generated::types::Field;
-use crate::generated::types::NullableAddress;
 use crate::generated::types::Target;
+use crate::hooked::NullableAddress;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;

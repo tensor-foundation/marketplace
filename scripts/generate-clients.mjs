@@ -541,5 +541,10 @@ codama.accept(
   renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
     crateFolder: rustClient,
+    linkOverrides: {
+      definedTypes: {
+        nullableAddress: 'crate::hooked',
+      }
+    }
   }),
 );
