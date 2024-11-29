@@ -213,8 +213,6 @@ kinobi.update(
 kinobi.update(
   k.updateInstructionsVisitor({
     // set cosigner to be an optional signer
-    // don't (!) set a defaultValue, since this value will end up not being omitted 
-    // in getAccountMetaFactory and will lead to the ix failing
     buyLegacy: {
       accounts: {
         cosigner: {
