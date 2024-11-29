@@ -212,13 +212,13 @@ kinobi.update(
 // Update instructions.
 kinobi.update(
   k.updateInstructionsVisitor({
-    // Manually set cosigner to be true if it's passed in.
+    // set cosigner to be an optional signer
+    // don't (!) set a defaultValue, since this value will end up not being omitted 
+    // in getAccountMetaFactory and will lead to the ix failing
     buyLegacy: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
+          isOptional: true,
           isSigner: true,
         },
       },
@@ -226,50 +226,40 @@ kinobi.update(
     buy: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
           isSigner: true,
+          isOptional: true,
         },
       },
     },
     list: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
           isSigner: true,
+          isOptional: true,
         },
       },
     },
     buySpl: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
           isSigner: true,
+          isOptional: true,
         },
       },
     },
     buyCore: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
           isSigner: true,
+          isOptional: true,
         },
       },
     },
     buyWns: {
       accounts: {
         cosigner: {
-          defaultValue: k.publicKeyValueNode(
-            "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
-          ),
           isSigner: true,
+          isOptional: true,
         },
       },
     },
