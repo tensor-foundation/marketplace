@@ -209,8 +209,6 @@ codama.update(
 codama.update(
   c.updateInstructionsVisitor({
     // set cosigner to be an optional signer
-    // don't (!) set a defaultValue, since this value will end up not being omitted 
-    // in getAccountMetaFactory and will lead to the ix failing
     buyLegacy: {
       accounts: {
         cosigner: {
@@ -414,6 +412,44 @@ codama.update(
         return {
           ...node,
           type: c.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
+      },
+    },
+  ]),
+);
+
+// Overwrite tokenProgram's defaultValue for all T22 ixs
+codama.update(
+  c.bottomUpTransformerVisitor([
+    {
+      select: (node) => {
+        const names = [
+          "buyT22",
+          "buyT22Spl",
+          "closeExpiredListingT22",
+          "delistT22",
+          "listT22",
+          "takeBidT22",
+        ];
+        return (
+          c.isNode(node, "instructionNode") && names.includes(node.name)
+        );
+      },
+      transform: (node) => {
+        c.assertIsNode(node, "instructionNode");
+        return {
+          ...node,
+          accounts: node.accounts.map(account => 
+            account.name === "tokenProgram" 
+              ? {
+                  ...account,
+                  defaultValue: c.publicKeyValueNode(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                    "tokenProgram"
+                  )
+                }
+              : account
+          )
         };
       },
     },

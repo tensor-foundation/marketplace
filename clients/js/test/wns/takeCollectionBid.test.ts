@@ -666,6 +666,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
 
   const tx = pipe(
     await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
