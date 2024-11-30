@@ -30,7 +30,7 @@ test('it can close an expired a bid on a legacy NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
   const price = 100_000_000n;
   const bidIx = await getBidInstructionAsync({
@@ -92,7 +92,7 @@ test('it cannot close an active bid on a legacy NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const bidIx = await getBidInstructionAsync({

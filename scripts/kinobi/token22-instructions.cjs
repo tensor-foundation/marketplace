@@ -44,16 +44,12 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
             },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
+            
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -79,12 +75,14 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromListState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("listState")],
                 },
               ),
             },
             feeVaultCurrencyTa: {
               defaultValue: k.resolverValueNode("resolveFeeVaultCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("feeVault"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -94,6 +92,7 @@ module.exports = function visitor(options) {
             },
             payerCurrencyTa: {
               defaultValue: k.resolverValueNode("resolvePayerCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("payer"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -103,6 +102,7 @@ module.exports = function visitor(options) {
             },
             ownerCurrencyTa: {
               defaultValue: k.resolverValueNode("resolveOwnerCurrencyAta", {
+                importFrom: "resolvers",
                 dependsOn: [
                   k.accountValueNode("owner"),
                   k.accountValueNode("currencyTokenProgram"),
@@ -115,6 +115,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveMakerBrokerCurrencyAta",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("makerBroker"),
                     k.accountValueNode("currencyTokenProgram"),
@@ -128,6 +129,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveTakerBrokerCurrencyAta",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [
                     k.accountValueNode("takerBroker"),
                     k.accountValueNode("currencyTokenProgram"),
@@ -163,17 +165,30 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
             currencyTokenProgram: {
               defaultValue: k.publicKeyValueNode(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
                 "tokenProgram",
               ),
+            },
+          },
+          arguments: {
+            creators: {
+              type: k.arrayTypeNode(k.publicKeyTypeNode(), k.fixedCountNode(5)),
+            },
+            creatorsCurrencyTa: {
+              type: k.arrayTypeNode(
+                k.publicKeyTypeNode(),
+                k.fixedCountNode(5),
+              ),
+              defaultValue: k.resolverValueNode("resolveCreatorsCurrencyAta", {
+                importFrom: "resolvers",
+                dependsOn: [
+                  k.argumentValueNode("creators"),
+                  k.accountValueNode("currency"),
+                  k.accountValueNode("currencyTokenProgram"),
+                ],
+              }),
             },
           },
           remainingAccounts: [
@@ -185,7 +200,7 @@ module.exports = function visitor(options) {
               },
             ),
             k.instructionRemainingAccountsNode(
-              k.argumentValueNode("creatorAtas"),
+              k.argumentValueNode("creatorsCurrencyTa"),
               {
                 isWritable: true,
                 isOptional: true,
@@ -229,14 +244,18 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
-            listState: { defaultValue: k.pdaValueNode("listState") },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
+            listState: { defaultValue: k.pdaValueNode("listState") }, 
           },
+          remainingAccounts: [
+            k.instructionRemainingAccountsNode(
+              k.argumentValueNode("transferHookAccounts"),
+              {
+                isOptional: false,
+                isSigner: false,
+                isWritable: false,
+              },
+            ),
+          ],
         },
         delistT22: {
           accounts: {
@@ -267,12 +286,7 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
+            
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -317,12 +331,7 @@ module.exports = function visitor(options) {
               }),
             },
             listState: { defaultValue: k.pdaValueNode("listState") },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
+            
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(
@@ -341,6 +350,7 @@ module.exports = function visitor(options) {
               defaultValue: k.resolverValueNode(
                 "resolveFeeVaultPdaFromBidState",
                 {
+                  importFrom: "resolvers",
                   dependsOn: [k.accountValueNode("bidState")],
                 },
               ),
@@ -382,21 +392,16 @@ module.exports = function visitor(options) {
               }),
             },
             bidTa: {
-              defaultValue: k.resolverValueNode("resolveBidTa", {
-                dependsOn: [k.accountValueNode("mint")],
-              }),
+              defaultValue: k.pdaValueNode("bidTa", [
+                k.pdaSeedValueNode("mint", k.accountValueNode("mint")),
+              ]),
             },
             bidState: {
               defaultValue: k.pdaValueNode("bidState", [
                 k.pdaSeedValueNode("bidId", k.accountValueNode("mint")),
               ]),
             },
-            tokenProgram: {
-              defaultValue: k.publicKeyValueNode(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-                "tokenProgram",
-              ),
-            },
+            
           },
           remainingAccounts: [
             k.instructionRemainingAccountsNode(

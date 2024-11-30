@@ -141,7 +141,6 @@ pub fn process_take_bid_core<'info>(
         &ctx.accounts.asset.to_account_info(),
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-
     let bid_state = &ctx.accounts.bid_state;
     let asset_id = ctx.accounts.asset.key();
 

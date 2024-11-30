@@ -34,7 +34,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
+import {
+  resolveCreatorsCurrencyAta,
+  resolveFeeVaultCurrencyAta,
+  resolveFeeVaultPdaFromListState,
+  resolveMakerBrokerCurrencyAta,
+  resolveOwnerCurrencyAta,
+  resolvePayerCurrencyAta,
+  resolveTakerBrokerCurrencyAta,
+} from '@tensor-foundation/resolvers';
 import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -63,7 +71,7 @@ export type BuyCoreSplInstruction<
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
   TAccountMakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
-  TAccountTokenProgram extends
+  TAccountCurrencyTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TAccountAssociatedTokenProgram extends
@@ -133,9 +141,9 @@ export type BuyCoreSplInstruction<
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
+      TAccountCurrencyTokenProgram extends string
+        ? ReadonlyAccount<TAccountCurrencyTokenProgram>
+        : TAccountCurrencyTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -193,6 +201,11 @@ export function getBuyCoreSplInstructionDataCodec(): Codec<
   );
 }
 
+export type BuyCoreSplInstructionExtraArgs = {
+  creators: Array<Address>;
+  creatorsCurrencyTa: Array<Address>;
+};
+
 export type BuyCoreSplAsyncInput<
   TAccountFeeVault extends string = string,
   TAccountFeeVaultCurrencyTa extends string = string,
@@ -210,7 +223,7 @@ export type BuyCoreSplAsyncInput<
   TAccountMakerBroker extends string = string,
   TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -218,31 +231,31 @@ export type BuyCoreSplAsyncInput<
   TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
+  feeVaultCurrencyTa?: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
   listState?: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
   collection?: Address<TAccountCollection>;
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
-  ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
+  ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
   payer: TransactionSigner<TAccountPayer>;
-  payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
+  payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
   takerBroker?: Address<TAccountTakerBroker>;
   takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination?: Address<TAccountRentDestination>;
   /** Token Program used for the currency. */
-  tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreSplInstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
-  creatorsAtas?: Array<Address>;
+  creators: BuyCoreSplInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuyCoreSplInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export async function getBuyCoreSplInstructionAsync<
@@ -262,7 +275,7 @@ export async function getBuyCoreSplInstructionAsync<
   TAccountMakerBroker extends string,
   TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
-  TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -286,7 +299,7 @@ export async function getBuyCoreSplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerTa,
     TAccountRentDestination,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -312,7 +325,7 @@ export async function getBuyCoreSplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerTa,
     TAccountRentDestination,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -344,7 +357,10 @@ export async function getBuyCoreSplInstructionAsync<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -380,17 +396,47 @@ export async function getBuyCoreSplInstructionAsync<
       ...(await resolveFeeVaultPdaFromListState(resolverScope)),
     };
   }
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.feeVaultCurrencyTa.value) {
+    accounts.feeVaultCurrencyTa = {
+      ...accounts.feeVaultCurrencyTa,
+      ...(await resolveFeeVaultCurrencyAta(resolverScope)),
+    };
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
     ).address;
   }
+  if (!accounts.ownerCurrencyTa.value) {
+    accounts.ownerCurrencyTa = {
+      ...accounts.ownerCurrencyTa,
+      ...(await resolveOwnerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.payerCurrencyTa.value) {
+    accounts.payerCurrencyTa = {
+      ...accounts.payerCurrencyTa,
+      ...(await resolvePayerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.takerBrokerTa.value) {
+    accounts.takerBrokerTa = {
+      ...accounts.takerBrokerTa,
+      ...(await resolveTakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.makerBrokerTa.value) {
+    accounts.makerBrokerTa = {
+      ...accounts.makerBrokerTa,
+      ...(await resolveMakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -408,6 +454,9 @@ export async function getBuyCoreSplInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!args.creatorsCurrencyTa) {
+    args.creatorsCurrencyTa = await resolveCreatorsCurrencyAta(resolverScope);
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = [
@@ -415,7 +464,7 @@ export async function getBuyCoreSplInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsAtas ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -440,7 +489,7 @@ export async function getBuyCoreSplInstructionAsync<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -470,7 +519,7 @@ export async function getBuyCoreSplInstructionAsync<
     TAccountMakerBroker,
     TAccountMakerBrokerTa,
     TAccountRentDestination,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -498,7 +547,7 @@ export type BuyCoreSplInput<
   TAccountMakerBroker extends string = string,
   TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
@@ -522,15 +571,15 @@ export type BuyCoreSplInput<
   makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination?: Address<TAccountRentDestination>;
   /** Token Program used for the currency. */
-  tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   mplCoreProgram?: Address<TAccountMplCoreProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyCoreSplInstructionDataArgs['maxAmount'];
-  creators?: Array<Address>;
-  creatorsAtas?: Array<Address>;
+  creators: BuyCoreSplInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuyCoreSplInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export function getBuyCoreSplInstruction<
@@ -550,7 +599,7 @@ export function getBuyCoreSplInstruction<
   TAccountMakerBroker extends string,
   TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
-  TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMplCoreProgram extends string,
   TAccountMarketplaceProgram extends string,
@@ -574,7 +623,7 @@ export function getBuyCoreSplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerTa,
     TAccountRentDestination,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -599,7 +648,7 @@ export function getBuyCoreSplInstruction<
   TAccountMakerBroker,
   TAccountMakerBrokerTa,
   TAccountRentDestination,
-  TAccountTokenProgram,
+  TAccountCurrencyTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountMplCoreProgram,
   TAccountMarketplaceProgram,
@@ -630,7 +679,10 @@ export function getBuyCoreSplInstruction<
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
     makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -652,6 +704,10 @@ export function getBuyCoreSplInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
@@ -659,10 +715,6 @@ export function getBuyCoreSplInstruction<
   }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
-  }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
@@ -687,7 +739,7 @@ export function getBuyCoreSplInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsAtas ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -712,7 +764,7 @@ export function getBuyCoreSplInstruction<
       getAccountMeta(accounts.makerBroker),
       getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.mplCoreProgram),
       getAccountMeta(accounts.marketplaceProgram),
@@ -742,7 +794,7 @@ export function getBuyCoreSplInstruction<
     TAccountMakerBroker,
     TAccountMakerBrokerTa,
     TAccountRentDestination,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountMplCoreProgram,
     TAccountMarketplaceProgram,
@@ -776,7 +828,7 @@ export type ParsedBuyCoreSplInstruction<
     makerBrokerTa?: TAccountMetas[14] | undefined;
     rentDestination: TAccountMetas[15];
     /** Token Program used for the currency. */
-    tokenProgram: TAccountMetas[16];
+    currencyTokenProgram: TAccountMetas[16];
     associatedTokenProgram: TAccountMetas[17];
     mplCoreProgram: TAccountMetas[18];
     marketplaceProgram: TAccountMetas[19];
@@ -829,7 +881,7 @@ export function parseBuyCoreSplInstruction<
       makerBroker: getNextOptionalAccount(),
       makerBrokerTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
-      tokenProgram: getNextAccount(),
+      currencyTokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       mplCoreProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),

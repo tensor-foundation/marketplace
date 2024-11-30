@@ -31,11 +31,8 @@ import {
   type ReadonlyUint8Array,
   type WritableAccount,
 } from '@solana/web3.js';
-import {
-  resolveCreatorPath,
-  resolveProofPath,
-  resolveTreeAuthorityPda,
-} from '../../hooked';
+import { resolveTreeAuthorityPda } from '@tensor-foundation/resolvers';
+import { resolveCreatorPath, resolveProofPath } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,

@@ -9,7 +9,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use std::ops::Deref;
 use tensor_toolbox::{
-    calc_creators_fee, calc_fees, fees, mpl_token_auth_rules, shard_num,
+    calc_creators_fee, calc_fees, fees, is_royalty_enforced, mpl_token_auth_rules, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT,
     TAKER_FEE_BPS,
@@ -246,8 +246,9 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     optional_royalty_pct: Option<u16>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
-    // validate the mint
+    // validate mint and currency
     let mint = ctx.accounts.mint.key();
+    let currency = ctx.accounts.currency.key();
     let metadata = assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
     let list_state = &ctx.accounts.list_state;
 
@@ -264,7 +265,23 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             let (account, remaining) = remaining
                 .split_first()
                 .ok_or(TcompError::InsufficientRemainingAccounts)?;
-            assert_decode_token_account(&mint, &maker_broker.key(), account)?;
+
+            // Create ATA if it doesn't exist
+            if account.data_is_empty() {
+                anchor_spl::associated_token::create(CpiContext::new(
+                    ctx.accounts.associated_token_program.to_account_info(),
+                    anchor_spl::associated_token::Create {
+                        payer: ctx.accounts.payer.to_account_info(),
+                        associated_token: account.to_account_info(),
+                        authority: maker_broker.to_account_info(),
+                        mint: ctx.accounts.currency.to_account_info(),
+                        system_program: ctx.accounts.system_program.to_account_info(),
+                        token_program: ctx.accounts.currency_token_program.to_account_info(),
+                    },
+                ))?;
+            }
+
+            assert_decode_token_account(&currency, &maker_broker.key(), account)?;
 
             (Some(account), remaining)
         } else {
@@ -276,7 +293,23 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             let (account, remaining) = remaining
                 .split_first()
                 .ok_or(TcompError::InsufficientRemainingAccounts)?;
-            assert_decode_token_account(&mint, &taker_broker.key(), account)?;
+
+            // Create ATA if it doesn't exist
+            if account.data_is_empty() {
+                anchor_spl::associated_token::create(CpiContext::new(
+                    ctx.accounts.associated_token_program.to_account_info(),
+                    anchor_spl::associated_token::Create {
+                        payer: ctx.accounts.payer.to_account_info(),
+                        associated_token: account.to_account_info(),
+                        authority: taker_broker.to_account_info(),
+                        mint: ctx.accounts.currency.to_account_info(),
+                        system_program: ctx.accounts.system_program.to_account_info(),
+                        token_program: ctx.accounts.currency_token_program.to_account_info(),
+                    },
+                ))?;
+            }
+
+            assert_decode_token_account(&currency, &taker_broker.key(), account)?;
 
             (Some(account), remaining)
         } else {
@@ -313,7 +346,11 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     let creator_fee = calc_creators_fee(
         metadata.seller_fee_basis_points,
         amount,
-        optional_royalty_pct,
+        if is_royalty_enforced(metadata.token_standard) {
+            Some(100)
+        } else {
+            optional_royalty_pct
+        },
     )?;
 
     // Transfer the NFT to the buyer
@@ -387,25 +424,27 @@ pub fn process_buy_legacy_spl<'info, 'b>(
     )?;
 
     // Pay creator royalties.
-    transfer_creators_fee(
-        &metadata
-            .creators
-            .unwrap_or(Vec::with_capacity(0))
-            .into_iter()
-            .map(Into::into)
-            .collect(),
-        &mut creator_accounts_with_ta.iter(),
-        creator_fee,
-        &CreatorFeeMode::Spl {
-            associated_token_program: &ctx.accounts.associated_token_program,
-            token_program: &ctx.accounts.currency_token_program,
-            system_program: &ctx.accounts.system_program,
-            currency: ctx.accounts.currency.deref().as_ref(),
-            from: &ctx.accounts.payer,
-            from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
-            rent_payer: &ctx.accounts.payer,
-        },
-    )?;
+    if creator_fee > 0 {
+        transfer_creators_fee(
+            &metadata
+                .creators
+                .unwrap_or(Vec::with_capacity(0))
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            &mut creator_accounts_with_ta.iter(),
+            creator_fee,
+            &CreatorFeeMode::Spl {
+                associated_token_program: &ctx.accounts.associated_token_program,
+                token_program: &ctx.accounts.currency_token_program,
+                system_program: &ctx.accounts.system_program,
+                currency: ctx.accounts.currency.deref().as_ref(),
+                from: &ctx.accounts.payer,
+                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                rent_payer: &ctx.accounts.payer,
+            },
+        )?;
+    }
 
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts

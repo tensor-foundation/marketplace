@@ -26,7 +26,7 @@ test('it can cancel a bid on a legacy NFT', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   const bidIx = await getBidInstructionAsync({

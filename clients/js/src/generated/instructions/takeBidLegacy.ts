@@ -48,6 +48,7 @@ import {
   resolveAuthorizationRulesProgramFromTokenStandard,
   resolveBidTokenRecordFromTokenStandard,
   resolveEditionFromTokenStandard,
+  resolveFeeVaultPdaFromBidState,
   resolveMetadata,
   resolveOwnerAta,
   resolveOwnerTokenRecordFromTokenStandard,
@@ -57,8 +58,7 @@ import {
   resolveTokenMetadataProgramFromTokenStandard,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
-import { resolveBidTa, resolveFeeVaultPdaFromBidState } from '../../hooked';
-import { findBidStatePda } from '../pdas';
+import { findBidStatePda, findBidTaPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
@@ -595,10 +595,9 @@ export async function getTakeBidLegacyInstructionAsync<
     };
   }
   if (!accounts.bidTa.value) {
-    accounts.bidTa = {
-      ...accounts.bidTa,
-      ...(await resolveBidTa(resolverScope)),
-    };
+    accounts.bidTa.value = await findBidTaPda({
+      mint: expectAddress(accounts.mint.value),
+    });
   }
   if (!accounts.bidTokenRecord.value) {
     accounts.bidTokenRecord = {

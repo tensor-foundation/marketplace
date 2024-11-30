@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -36,20 +35,18 @@ import {
 } from '@solana/web3.js';
 import {
   resolveBuyerAta,
-  resolveListAta,
-  resolveWnsApprovePda,
-  resolveWnsDistributionPda,
-  resolveWnsExtraAccountMetasPda,
-} from '@tensor-foundation/resolvers';
-import {
   resolveDistributionCurrencyAta,
   resolveFeeVaultCurrencyAta,
   resolveFeeVaultPdaFromListState,
+  resolveListAta,
   resolveMakerBrokerCurrencyAta,
   resolveOwnerCurrencyAta,
   resolvePayerCurrencyAta,
   resolveTakerBrokerCurrencyAta,
-} from '../../hooked';
+  resolveWnsApprovePda,
+  resolveWnsDistributionPda,
+  resolveWnsExtraAccountMetasPda,
+} from '@tensor-foundation/resolvers';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -310,7 +307,6 @@ export type BuyWnsSplAsyncInput<
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   collection: BuyWnsSplInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export async function getBuyWnsSplInstructionAsync<
@@ -598,11 +594,6 @@ export async function getBuyWnsSplInstructionAsync<
     };
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -635,7 +626,6 @@ export async function getBuyWnsSplInstructionAsync<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsSplInstructionDataEncoder().encode(
@@ -742,7 +732,6 @@ export type BuyWnsSplInput<
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   collection: BuyWnsSplInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export function getBuyWnsSplInstruction<
@@ -948,11 +937,6 @@ export function getBuyWnsSplInstruction<
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -985,7 +969,6 @@ export function getBuyWnsSplInstruction<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsSplInstructionDataEncoder().encode(

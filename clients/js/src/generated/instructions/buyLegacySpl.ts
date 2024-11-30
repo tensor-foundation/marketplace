@@ -44,17 +44,22 @@ import {
 import {
   TokenStandard,
   resolveAuthorizationRulesProgramFromTokenStandard,
+  resolveBrokersCurrencyAta,
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
+  resolveCreatorsCurrencyAta,
   resolveEditionFromTokenStandard,
+  resolveFeeVaultCurrencyAta,
+  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
+  resolveOwnerCurrencyAta,
+  resolvePayerCurrencyAta,
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
   type TokenStandardArgs,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -263,7 +268,10 @@ export function getBuyLegacySplInstructionDataCodec(): Codec<
 }
 
 export type BuyLegacySplInstructionExtraArgs = {
+  creators: Array<Address>;
   tokenStandard?: TokenStandardArgs;
+  brokersCurrencyTa: Array<Address>;
+  creatorsCurrencyTa: Array<Address>;
 };
 
 export type BuyLegacySplAsyncInput<
@@ -298,7 +306,7 @@ export type BuyLegacySplAsyncInput<
   TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
+  feeVaultCurrencyTa?: Address<TAccountFeeVaultCurrencyTa>;
   buyer?: Address<TAccountBuyer>;
   buyerTa?: Address<TAccountBuyerTa>;
   listTa?: Address<TAccountListTa>;
@@ -306,9 +314,9 @@ export type BuyLegacySplAsyncInput<
   mint: Address<TAccountMint>;
   currency: Address<TAccountCurrency>;
   owner: Address<TAccountOwner>;
-  ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
+  ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
   payer: TransactionSigner<TAccountPayer>;
-  payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
+  payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
   makerBroker?: Address<TAccountMakerBroker>;
   takerBroker?: Address<TAccountTakerBroker>;
   rentDestination?: Address<TAccountRentDestination>;
@@ -329,9 +337,10 @@ export type BuyLegacySplAsyncInput<
   maxAmount: BuyLegacySplInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacySplInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacySplInstructionDataArgs['authorizationData'];
+  creators: BuyLegacySplInstructionExtraArgs['creators'];
   tokenStandard?: BuyLegacySplInstructionExtraArgs['tokenStandard'];
-  creators?: Array<Address>;
-  creatorsTa?: Array<Address>;
+  brokersCurrencyTa?: BuyLegacySplInstructionExtraArgs['brokersCurrencyTa'];
+  creatorsCurrencyTa?: BuyLegacySplInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export async function getBuyLegacySplInstructionAsync<
@@ -515,6 +524,12 @@ export async function getBuyLegacySplInstructionAsync<
       ...(await resolveFeeVaultPdaFromListState(resolverScope)),
     };
   }
+  if (!accounts.feeVaultCurrencyTa.value) {
+    accounts.feeVaultCurrencyTa = {
+      ...accounts.feeVaultCurrencyTa,
+      ...(await resolveFeeVaultCurrencyAta(resolverScope)),
+    };
+  }
   if (!accounts.buyer.value) {
     accounts.buyer.value = expectTransactionSigner(
       accounts.payer.value
@@ -534,6 +549,18 @@ export async function getBuyLegacySplInstructionAsync<
     accounts.listTa = {
       ...accounts.listTa,
       ...(await resolveListAta(resolverScope)),
+    };
+  }
+  if (!accounts.ownerCurrencyTa.value) {
+    accounts.ownerCurrencyTa = {
+      ...accounts.ownerCurrencyTa,
+      ...(await resolveOwnerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.payerCurrencyTa.value) {
+    accounts.payerCurrencyTa = {
+      ...accounts.payerCurrencyTa,
+      ...(await resolvePayerCurrencyAta(resolverScope)),
     };
   }
   if (!accounts.rentDestination.value) {
@@ -596,6 +623,12 @@ export async function getBuyLegacySplInstructionAsync<
       ...resolveSysvarInstructionsFromTokenStandard(resolverScope),
     };
   }
+  if (!args.brokersCurrencyTa) {
+    args.brokersCurrencyTa = await resolveBrokersCurrencyAta(resolverScope);
+  }
+  if (!args.creatorsCurrencyTa) {
+    args.creatorsCurrencyTa = await resolveCreatorsCurrencyAta(resolverScope);
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = [
@@ -603,7 +636,11 @@ export async function getBuyLegacySplInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsTa ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.brokersCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),
@@ -746,9 +783,10 @@ export type BuyLegacySplInput<
   maxAmount: BuyLegacySplInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuyLegacySplInstructionDataArgs['optionalRoyaltyPct'];
   authorizationData?: BuyLegacySplInstructionDataArgs['authorizationData'];
+  creators: BuyLegacySplInstructionExtraArgs['creators'];
   tokenStandard?: BuyLegacySplInstructionExtraArgs['tokenStandard'];
-  creators?: Array<Address>;
-  creatorsTa?: Array<Address>;
+  brokersCurrencyTa?: BuyLegacySplInstructionExtraArgs['brokersCurrencyTa'];
+  creatorsCurrencyTa?: BuyLegacySplInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export function getBuyLegacySplInstruction<
@@ -971,7 +1009,11 @@ export function getBuyLegacySplInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
-    ...(args.creatorsTa ?? []).map((address) => ({
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.brokersCurrencyTa ?? []).map((address) => ({
       address,
       role: AccountRole.WRITABLE,
     })),

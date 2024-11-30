@@ -54,7 +54,7 @@ test('it can buy an NFT paying out fees correctly', async (t) => {
     client,
     payer: owner,
     authority: owner,
-    owner,
+    owner: owner.address,
   });
 
   // And we list the NFT.

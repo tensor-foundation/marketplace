@@ -3,7 +3,6 @@ import {
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
-import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -17,25 +16,31 @@ import {
   TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED,
   fetchListStateFromSeeds,
   findListStatePda,
-  getCloseExpiredListingLegacyInstructionAsync,
-  getListLegacyInstructionAsync,
+  getCloseExpiredListingCoreInstructionAsync,
+  getListCoreInstructionAsync,
 } from '../../src/index.js';
 import { sleep } from '../_common.js';
+import { createDefaultAsset } from '@tensor-foundation/mpl-core';
 
 test('it can close an expired listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const asset = await createDefaultAsset({
     client,
     payer: owner,
     authority: owner,
     owner: owner.address,
+    royalties: {
+      creators: [{ address: owner.address, percentage: 100 }],
+      basisPoints: 500,
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listCoreIx = await getListCoreInstructionAsync({
     owner,
-    mint,
+    asset: asset.address,
+    payer: owner,
     amount: 1,
     expireInSec: 1,
   });
@@ -43,18 +48,19 @@ test('it can close an expired listing', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listCoreIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: asset.address,
   });
+
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: asset.address,
     },
   });
 
@@ -63,9 +69,9 @@ test('it can close an expired listing', async (t) => {
 
   // When we close an expired listing.
   const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
-      payer: owner,
-      mint,
+    await getCloseExpiredListingCoreInstructionAsync({
+      owner: owner.address,
+      asset: asset.address,
     });
 
   await pipe(
@@ -79,7 +85,7 @@ test('it can close an expired listing', async (t) => {
     (
       await fetchEncodedAccount(
         client.rpc,
-        (await findListStatePda({ mint }))[0]
+        (await findListStatePda({ mint: asset.address }))[0]
       )
     ).exists
   );
@@ -88,17 +94,23 @@ test('it can close an expired listing', async (t) => {
 test('it cannot close an active listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
+
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const asset = await createDefaultAsset({
     client,
     payer: owner,
     authority: owner,
     owner: owner.address,
+    royalties: {
+      creators: [{ address: owner.address, percentage: 100 }],
+      basisPoints: 500,
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listCoreIx = await getListCoreInstructionAsync({
     owner,
-    mint,
+    asset: asset.address,
+    payer: owner,
     amount: 1,
     expireInSec: 100,
   });
@@ -106,26 +118,26 @@ test('it cannot close an active listing', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listCoreIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: asset.address,
   });
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: asset.address,
     },
   });
 
   // When we try to close an active listing.
   const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
-      payer: owner,
-      mint,
+    await getCloseExpiredListingCoreInstructionAsync({
+      owner: owner.address,
+      asset: asset.address,
     });
 
   // Then we expect an error.
@@ -151,16 +163,21 @@ test('it can close an expired listing with another payer', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const asset = await createDefaultAsset({
     client,
     payer: owner,
     authority: owner,
     owner: owner.address,
+    royalties: {
+      creators: [{ address: owner.address, percentage: 100 }],
+      basisPoints: 500,
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listCoreIx = await getListCoreInstructionAsync({
     owner,
-    mint,
+    asset: asset.address,
+    payer: owner,
     amount: 1,
     expireInSec: 1,
   });
@@ -168,37 +185,36 @@ test('it can close an expired listing with another payer', async (t) => {
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listCoreIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: asset.address,
   });
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: asset.address,
     },
   });
 
   // And we wait for the listing to expire.
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
+  // When we close an expired listing with a different payer.
+  const payer = await generateKeyPairSignerWithSol(client);
+  const closeExpiredListingIx =
+    await getCloseExpiredListingCoreInstructionAsync({
+      owner: owner.address,
+      asset: asset.address,
+    });
+
   const ownerFundsBefore = await client.rpc.getBalance(owner.address).send();
   const listStateAccountRent = await client.rpc
     .getBalance(listing.address)
     .send();
-
-  // When we close an expired listing with a different payer.
-  const payer = await generateKeyPairSignerWithSol(client);
-  const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
-      owner: owner.address,
-      payer,
-      mint,
-    });
 
   await pipe(
     await createDefaultTransaction(client, payer),
@@ -211,7 +227,7 @@ test('it can close an expired listing with another payer', async (t) => {
     (
       await fetchEncodedAccount(
         client.rpc,
-        (await findListStatePda({ mint }))[0]
+        (await findListStatePda({ mint: asset.address }))[0]
       )
     ).exists
   );
@@ -231,16 +247,20 @@ test('the rent destination cannot differ from the payer of the listing', async (
   const listPayer = await generateKeyPairSignerWithSol(client);
   const notListPayer = await generateKeyPairSignerWithSol(client);
 
-  const { mint } = await createDefaultNft({
+  const asset = await createDefaultAsset({
     client,
     payer: owner,
     authority: owner,
     owner: owner.address,
+    royalties: {
+      creators: [{ address: owner.address, percentage: 100 }],
+      basisPoints: 500,
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listCoreIx = await getListCoreInstructionAsync({
     owner,
-    mint,
+    asset: asset.address,
     amount: 1,
     expireInSec: 1,
     // (!)
@@ -249,16 +269,15 @@ test('the rent destination cannot differ from the payer of the listing', async (
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listCoreIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   await sleep(5000);
 
   const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
-      payer: closer,
-      mint,
+    await getCloseExpiredListingCoreInstructionAsync({
+      asset: asset.address,
       owner: owner.address,
       // (!)
       rentDestination: notListPayer.address,

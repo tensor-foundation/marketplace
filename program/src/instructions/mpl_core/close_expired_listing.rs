@@ -44,7 +44,6 @@ pub fn process_close_expired_listing_core<'info>(
     ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
-
     validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),

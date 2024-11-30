@@ -7,7 +7,6 @@
  */
 
 import {
-  AccountRole,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -36,12 +35,12 @@ import {
 } from '@solana/web3.js';
 import {
   resolveBuyerAta,
+  resolveFeeVaultPdaFromListState,
   resolveListAta,
   resolveWnsApprovePda,
   resolveWnsDistributionPda,
   resolveWnsExtraAccountMetasPda,
 } from '@tensor-foundation/resolvers';
-import { resolveFeeVaultPdaFromListState } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -250,7 +249,6 @@ export type BuyWnsAsyncInput<
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export async function getBuyWnsInstructionAsync<
@@ -451,11 +449,6 @@ export async function getBuyWnsInstructionAsync<
     };
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -480,7 +473,6 @@ export async function getBuyWnsInstructionAsync<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(
@@ -561,7 +553,6 @@ export type BuyWnsInput<
   maxAmount: BuyWnsInstructionDataArgs['maxAmount'];
   collection: BuyWnsInstructionExtraArgs['collection'];
   paymentMint?: BuyWnsInstructionExtraArgs['paymentMint'];
-  creators?: Array<Address>;
 };
 
 export function getBuyWnsInstruction<
@@ -716,11 +707,6 @@ export function getBuyWnsInstruction<
       'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay' as Address<'diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay'>;
   }
 
-  // Remaining accounts.
-  const remainingAccounts: IAccountMeta[] = (args.creators ?? []).map(
-    (address) => ({ address, role: AccountRole.WRITABLE })
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -745,7 +731,6 @@ export function getBuyWnsInstruction<
       getAccountMeta(accounts.distributionProgram),
       getAccountMeta(accounts.extraMetas),
       getAccountMeta(accounts.cosigner),
-      ...remainingAccounts,
     ],
     programAddress,
     data: getBuyWnsInstructionDataEncoder().encode(

@@ -1,12 +1,13 @@
 import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
+  generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
-import { createDefaultNft } from '@tensor-foundation/mpl-token-metadata';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
+  createT22NftWithRoyalties,
   expectCustomError,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
@@ -17,44 +18,57 @@ import {
   TENSOR_MARKETPLACE_ERROR__LISTING_NOT_YET_EXPIRED,
   fetchListStateFromSeeds,
   findListStatePda,
-  getCloseExpiredListingLegacyInstructionAsync,
-  getListLegacyInstructionAsync,
+  getCloseExpiredListingT22InstructionAsync,
+  getListT22InstructionAsync,
 } from '../../src/index.js';
-import { sleep } from '../_common.js';
+import { DEFAULT_SFBP, sleep } from '../_common.js';
 
 test('it can close an expired listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSigner();
+
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const nft = await createT22NftWithRoyalties({
     client,
     payer: owner,
-    authority: owner,
     owner: owner.address,
+    mintAuthority: updateAuthority,
+    freezeAuthority: null,
+    decimals: 0,
+    data: {
+      name: 'Test Token',
+      symbol: 'TT',
+      uri: 'https://example.com',
+    },
+    royalties: {
+      key: '_ro_' + updateAuthority.address,
+      value: DEFAULT_SFBP.toString(),
+    },
   });
-
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listT22Ix = await getListT22InstructionAsync({
     owner,
-    mint,
+    mint: nft.mint,
     amount: 1,
     expireInSec: 1,
+    transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
   });
 
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listT22Ix, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: nft.mint,
   });
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: nft.mint,
     },
   });
 
@@ -62,11 +76,13 @@ test('it can close an expired listing', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
   // When we close an expired listing.
-  const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
+  const closeExpiredListingIx = await getCloseExpiredListingT22InstructionAsync(
+    {
       payer: owner,
-      mint,
-    });
+      mint: nft.mint,
+      transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
+    }
+  );
 
   await pipe(
     await createDefaultTransaction(client, owner),
@@ -79,7 +95,7 @@ test('it can close an expired listing', async (t) => {
     (
       await fetchEncodedAccount(
         client.rpc,
-        (await findListStatePda({ mint }))[0]
+        (await findListStatePda({ mint: nft.mint }))[0]
       )
     ).exists
   );
@@ -89,45 +105,58 @@ test('it cannot close an active listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const nft = await createT22NftWithRoyalties({
     client,
     payer: owner,
-    authority: owner,
     owner: owner.address,
+    mintAuthority: owner,
+    freezeAuthority: null,
+    decimals: 0,
+    data: {
+      name: 'Test Token',
+      symbol: 'TT',
+      uri: 'https://example.com',
+    },
+    royalties: {
+      key: '_ro_' + owner.address,
+      value: DEFAULT_SFBP.toString(),
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listT22Ix = await getListT22InstructionAsync({
     owner,
-    mint,
+    mint: nft.mint,
     amount: 1,
     expireInSec: 100,
+    transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
   });
 
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listT22Ix, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: nft.mint,
   });
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: nft.mint,
     },
   });
 
   // When we try to close an active listing.
-  const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
+  const closeExpiredListingIx = await getCloseExpiredListingT22InstructionAsync(
+    {
       payer: owner,
-      mint,
-    });
-
+      mint: nft.mint,
+      transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
+    }
+  );
   // Then we expect an error.
   try {
     await pipe(
@@ -151,35 +180,47 @@ test('it can close an expired listing with another payer', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const nft = await createT22NftWithRoyalties({
     client,
     payer: owner,
-    authority: owner,
     owner: owner.address,
+    mintAuthority: owner,
+    freezeAuthority: null,
+    decimals: 0,
+    data: {
+      name: 'Test Token',
+      symbol: 'TT',
+      uri: 'https://example.com',
+    },
+    royalties: {
+      key: '_ro_' + owner.address,
+      value: DEFAULT_SFBP.toString(),
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listT22Ix = await getListT22InstructionAsync({
     owner,
-    mint,
+    mint: nft.mint,
     amount: 1,
     expireInSec: 1,
+    transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
   });
 
   // And we list the NFT.
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listT22Ix, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const listing = await fetchListStateFromSeeds(client.rpc, {
-    mint,
+    mint: nft.mint,
   });
   t.like(listing, {
     data: {
       owner: owner.address,
       amount: 1n,
-      assetId: mint,
+      assetId: nft.mint,
     },
   });
 
@@ -193,12 +234,14 @@ test('it can close an expired listing with another payer', async (t) => {
 
   // When we close an expired listing with a different payer.
   const payer = await generateKeyPairSignerWithSol(client);
-  const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
+  const closeExpiredListingIx = await getCloseExpiredListingT22InstructionAsync(
+    {
       owner: owner.address,
       payer,
-      mint,
-    });
+      mint: nft.mint,
+      transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
+    }
+  );
 
   await pipe(
     await createDefaultTransaction(client, payer),
@@ -211,7 +254,7 @@ test('it can close an expired listing with another payer', async (t) => {
     (
       await fetchEncodedAccount(
         client.rpc,
-        (await findListStatePda({ mint }))[0]
+        (await findListStatePda({ mint: nft.mint }))[0]
       )
     ).exists
   );
@@ -231,38 +274,52 @@ test('the rent destination cannot differ from the payer of the listing', async (
   const listPayer = await generateKeyPairSignerWithSol(client);
   const notListPayer = await generateKeyPairSignerWithSol(client);
 
-  const { mint } = await createDefaultNft({
+  const nft = await createT22NftWithRoyalties({
     client,
     payer: owner,
-    authority: owner,
     owner: owner.address,
+    mintAuthority: owner,
+    freezeAuthority: null,
+    decimals: 0,
+    data: {
+      name: 'Test Token',
+      symbol: 'TT',
+      uri: 'https://example.com',
+    },
+    royalties: {
+      key: '_ro_' + owner.address,
+      value: DEFAULT_SFBP.toString(),
+    },
   });
 
-  const listLegacyIx = await getListLegacyInstructionAsync({
+  const listT22Ix = await getListT22InstructionAsync({
     owner,
-    mint,
+    mint: nft.mint,
     amount: 1,
     expireInSec: 1,
+    transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
     // (!)
     payer: listPayer,
   });
 
   await pipe(
     await createDefaultTransaction(client, owner),
-    (tx) => appendTransactionMessageInstruction(listLegacyIx, tx),
+    (tx) => appendTransactionMessageInstruction(listT22Ix, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   await sleep(5000);
 
-  const closeExpiredListingIx =
-    await getCloseExpiredListingLegacyInstructionAsync({
+  const closeExpiredListingIx = await getCloseExpiredListingT22InstructionAsync(
+    {
       payer: closer,
-      mint,
+      mint: nft.mint,
       owner: owner.address,
+      transferHookAccounts: nft.extraAccountMetas.map((meta) => meta.address),
       // (!)
       rentDestination: notListPayer.address,
-    });
+    }
+  );
 
   const tx = pipe(
     await createDefaultTransaction(client, closer),

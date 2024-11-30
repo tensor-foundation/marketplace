@@ -34,7 +34,8 @@ import {
   type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
-import { resolveProofPath, resolveTreeAuthorityPda } from '../../hooked';
+import { resolveTreeAuthorityPda } from '@tensor-foundation/resolvers';
+import { resolveProofPath } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,

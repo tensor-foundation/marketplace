@@ -37,6 +37,7 @@ pub struct CloseExpiredListingWns<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -104,7 +105,10 @@ pub fn process_close_expired_listing_wns<'info>(
         payment_token_program: None,
     };
     // no need for royalty enforcement here
-    approve(approve_accounts, ApproveParams::no_royalties())?;
+    approve(
+        approve_accounts,
+        ApproveParams::no_royalties_with_signer_seeds(&[&ctx.accounts.list_state.seeds()]),
+    )?;
 
     // transfer the NFT
 

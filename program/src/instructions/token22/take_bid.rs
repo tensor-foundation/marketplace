@@ -1,13 +1,21 @@
+use crate::{
+    take_bid_common::{take_bid_shared, TakeBidArgs},
+    BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
+    token_2022::spl_token_2022::{
+        extension::{BaseStateWithExtensions, StateWithExtensions},
+        state::Mint as Mint2022,
+    },
     token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
-use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account,
+    token_2022::extension::get_variable_len_extension,
     token_2022::{
         transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
     },
@@ -16,11 +24,6 @@ use tensor_toolbox::{
 use tensor_vipers::Validate;
 use tensorswap::program::EscrowProgram;
 use whitelist_program::verify_whitelist_generic;
-
-use crate::{
-    take_bid_common::{take_bid_shared, TakeBidArgs},
-    BidState, Field, Target, TcompError, CURRENT_TCOMP_VERSION,
-};
 
 #[derive(Accounts)]
 pub struct TakeBidT22<'info> {
@@ -185,8 +188,8 @@ pub fn process_take_bid_t22<'info>(
                 let mint_info = &ctx.accounts.mint.to_account_info();
                 let token_metadata = {
                     let buffer = mint_info.try_borrow_data()?;
-                    let state = TlvStateBorrowed::unpack(&buffer)?;
-                    state.get_first_variable_len_value::<TokenMetadata>()?
+                    let mint = StateWithExtensions::<Mint2022>::unpack(&buffer)?;
+                    get_variable_len_extension::<TokenMetadata>(mint.get_tlv_data())?
                 };
 
                 let mut name_arr = [0u8; 32];
