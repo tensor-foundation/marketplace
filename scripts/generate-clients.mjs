@@ -1,42 +1,41 @@
 #!/usr/bin/env zx
 import "zx/globals";
-import * as k from "kinobi";
-import { rootNodeFromAnchor } from "@kinobi-so/nodes-from-anchor";
-import { renderVisitor as renderJavaScriptVisitor } from "@kinobi-so/renderers-js";
-import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
+import * as c from "codama";
+import { rootNodeFromAnchor } from "@codama/nodes-from-anchor";
+import { renderVisitor as renderJavaScriptVisitor } from "@codama/renderers-js";
+import { renderVisitor as renderRustVisitor } from "@codama/renderers-rust";
 import { getAllProgramIdls } from "./utils.mjs";
 
-// Instanciate Kinobi.
+// Instanciate codama.
 const [idl] = getAllProgramIdls()
   .filter((idl) => idl.includes("program/idl.json"))
   .map((idl) => rootNodeFromAnchor(require(idl)));
-const kinobi = k.createFromRoot(idl);
+const codama = c.createFromRoot(idl);
 
-// Additional visitors for instrunctions.
-const legacyInstructions = require("./kinobi/legacy-instructions.cjs");
-const compressedInstructions = require("./kinobi/compressed-instructions.cjs");
-const token22Instructions = require("./kinobi/token22-instructions.cjs");
-const wnsInstructions = require("./kinobi/wns-instructions.cjs");
-const coreInstructions = require("./kinobi/core-instructions.cjs");
+// Additional visitors for instructions.
+const legacyInstructions = require("./codama/legacy-instructions.cjs");
+const compressedInstructions = require("./codama/compressed-instructions.cjs");
+const token22Instructions = require("./codama/token22-instructions.cjs");
+const wnsInstructions = require("./codama/wns-instructions.cjs");
+const coreInstructions = require("./codama/core-instructions.cjs");
 
 // Update programs.
-kinobi.update(
-  new k.updateProgramsVisitor({
+codama.update(
+  new c.updateProgramsVisitor({
     marketplaceProgram: { name: "tensorMarketplace" },
   }),
 );
 
 // Set default account values accross multiple instructions.
-kinobi.update(
-  k.setInstructionAccountDefaultValuesVisitor([
+codama.update(
+  c.setInstructionAccountDefaultValuesVisitor([
     {
       account: "treeAuthority",
       ignoreIfOptional: true,
-      defaultValue: k.resolverValueNode("resolveTreeAuthorityPda", {
-        importFrom: "resolvers",
+      defaultValue: c.resolverValueNode("resolveTreeAuthorityPda", {
         dependsOn: [
-          k.accountValueNode("merkleTree"),
-          k.accountValueNode("bubblegumProgram"),
+          c.accountValueNode("merkleTree"),
+          c.accountValueNode("bubblegumProgram"),
         ],
       }),
     },
@@ -44,7 +43,7 @@ kinobi.update(
     {
       account: "marketplaceProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",
         "marketplaceProgram",
       ),
@@ -52,7 +51,7 @@ kinobi.update(
     {
       account: "escrowProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
         "escrowProgram",
       ),
@@ -60,7 +59,7 @@ kinobi.update(
     {
       account: "systemProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "11111111111111111111111111111111",
         "systemProgram",
       ),
@@ -68,7 +67,7 @@ kinobi.update(
     {
       account: "tokenProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
         "tokenProgram",
       ),
@@ -76,7 +75,7 @@ kinobi.update(
     {
       account: "associatedTokenProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
         "associatedTokenProgram",
       ),
@@ -84,7 +83,7 @@ kinobi.update(
     {
       account: "tensorswapProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
         "tensorswapProgram",
       ),
@@ -92,31 +91,28 @@ kinobi.update(
     // Legacy
     {
       account: "tokenMetadataProgram",
-      defaultValue: k.resolverValueNode(
+      defaultValue: c.resolverValueNode(
         "resolveTokenMetadataProgramFromTokenStandard",
         {
-          importFrom: "resolvers",
-          dependsOn: [k.argumentValueNode("tokenStandard")],
+          dependsOn: [c.argumentValueNode("tokenStandard")],
         },
       ),
     },
     {
       account: "authorizationRulesProgram",
-      defaultValue: k.resolverValueNode(
+      defaultValue: c.resolverValueNode(
         "resolveAuthorizationRulesProgramFromTokenStandard",
         {
-          importFrom: "resolvers",
-          dependsOn: [k.argumentValueNode("tokenStandard")],
+          dependsOn: [c.argumentValueNode("tokenStandard")],
         },
       ),
     },
     {
       account: "sysvarInstructions",
-      defaultValue: k.resolverValueNode(
+      defaultValue: c.resolverValueNode(
         "resolveSysvarInstructionsFromTokenStandard",
         {
-          importFrom: "resolvers",
-          dependsOn: [k.argumentValueNode("tokenStandard")],
+          dependsOn: [c.argumentValueNode("tokenStandard")],
         },
       ),
     },
@@ -124,7 +120,7 @@ kinobi.update(
     {
       account: "wnsProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM",
         "wnsProgram",
       ),
@@ -132,7 +128,7 @@ kinobi.update(
     {
       account: "distributionProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "diste3nXmK7ddDTs1zb6uday6j4etCa9RChD8fJ1xay",
         "distributionProgram",
       ),
@@ -141,7 +137,7 @@ kinobi.update(
     {
       account: "logWrapper",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV",
         "logWrapper",
       ),
@@ -149,7 +145,7 @@ kinobi.update(
     {
       account: "compressionProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK",
         "compressionProgram",
       ),
@@ -157,7 +153,7 @@ kinobi.update(
     {
       account: "bubblegumProgram",
       ignoreIfOptional: true,
-      defaultValue: k.publicKeyValueNode(
+      defaultValue: c.publicKeyValueNode(
         "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY",
         "bubblegumProgram",
       ),
@@ -165,13 +161,13 @@ kinobi.update(
     {
       account: "tcompProgram",
       ignoreIfOptional: true,
-      defaultValue: k.programIdValueNode(),
+      defaultValue: c.programIdValueNode(),
     },
     // MPL Core
     {
       account: "mplCoreProgram",
       ignoreIfOptional: true,
-      defaultValue: k.programIdValueNode(
+      defaultValue: c.programIdValueNode(
         "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
       ),
     },
@@ -179,39 +175,39 @@ kinobi.update(
 );
 
 // Update accounts.
-kinobi.update(
-  k.updateAccountsVisitor({
+codama.update(
+  c.updateAccountsVisitor({
     listState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "list_state"),
-        k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
+        c.constantPdaSeedNodeFromString("utf8", "list_state"),
+        c.variablePdaSeedNode("mint", c.publicKeyTypeNode()),
       ],
     },
     assetListState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "list_state"),
-        k.variablePdaSeedNode("asset", k.publicKeyTypeNode()),
+        c.constantPdaSeedNodeFromString("utf8", "list_state"),
+        c.variablePdaSeedNode("asset", c.publicKeyTypeNode()),
       ],
     },
     bidState: {
       seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "bid_state"),
-        k.variablePdaSeedNode("owner", k.publicKeyTypeNode()),
-        k.variablePdaSeedNode("bidId", k.publicKeyTypeNode()),
+        c.constantPdaSeedNodeFromString("utf8", "bid_state"),
+        c.variablePdaSeedNode("owner", c.publicKeyTypeNode()),
+        c.variablePdaSeedNode("bidId", c.publicKeyTypeNode()),
       ],
     },
     bidTa: {
       seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "nft_escrow"),
-        k.variablePdaSeedNode("mint", k.publicKeyTypeNode()),
+        c.constantPdaSeedNodeFromString("utf8", "nft_escrow"),
+        c.variablePdaSeedNode("mint", c.publicKeyTypeNode()),
       ],
     },
   }),
 );
 
 // Update instructions.
-kinobi.update(
-  k.updateInstructionsVisitor({
+codama.update(
+  c.updateInstructionsVisitor({
     // set cosigner to be an optional signer
     buyLegacy: {
       accounts: {
@@ -224,40 +220,40 @@ kinobi.update(
     buy: {
       accounts: {
         cosigner: {
-          isSigner: true,
           isOptional: true,
+          isSigner: true,
         },
       },
     },
     list: {
       accounts: {
         cosigner: {
-          isSigner: true,
           isOptional: true,
+          isSigner: true,
         },
       },
     },
     buySpl: {
       accounts: {
         cosigner: {
-          isSigner: true,
           isOptional: true,
+          isSigner: true,
         },
       },
     },
     buyCore: {
       accounts: {
         cosigner: {
-          isSigner: true,
           isOptional: true,
+          isSigner: true,
         },
       },
     },
     buyWns: {
       accounts: {
         cosigner: {
-          isSigner: true,
           isOptional: true,
+          isSigner: true,
         },
       },
     },
@@ -265,21 +261,21 @@ kinobi.update(
     bid: {
       accounts: {
         rentPayer: {
-          defaultValue: k.accountValueNode("owner"),
+          defaultValue: c.accountValueNode("owner"),
         },
         sharedEscrow: {
-          defaultValue: k.accountValueNode("owner"),
+          defaultValue: c.accountValueNode("owner"),
         },
         bidState: {
-          defaultValue: k.pdaValueNode("bidState"),
+          defaultValue: c.pdaValueNode("bidState"),
         },
       },
       arguments: {
         bidId: {
-          defaultValue: k.resolverValueNode("resolveBidIdOnCreate"),
+          defaultValue: c.resolverValueNode("resolveBidIdOnCreate"),
           dependsOn: [
-            k.argumentValueNode("target"),
-            k.argumentValueNode("targetId"),
+            c.argumentValueNode("target"),
+            c.argumentValueNode("targetId"),
           ],
         },
       },
@@ -287,18 +283,18 @@ kinobi.update(
     cancelBid: {
       accounts: {
         rentDestination: {
-          defaultValue: k.accountValueNode("owner"),
+          defaultValue: c.accountValueNode("owner"),
         },
         bidState: {
-          defaultValue: k.pdaValueNode("bidState", [
-            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          defaultValue: c.pdaValueNode("bidState", [
+            c.pdaSeedValueNode("bidId", c.argumentValueNode("bidId")),
           ]),
         },
       },
       arguments: {
         bidId: {
-          type: k.publicKeyTypeNode(),
-          defaultValue: k.publicKeyValueNode(
+          type: c.publicKeyTypeNode(),
+          defaultValue: c.publicKeyValueNode(
             "11111111111111111111111111111111",
           ),
           isRequired: true,
@@ -308,18 +304,18 @@ kinobi.update(
     closeExpiredBid: {
       accounts: {
         rentDestination: {
-          defaultValue: k.accountValueNode("owner"),
+          defaultValue: c.accountValueNode("owner"),
         },
         bidState: {
-          defaultValue: k.pdaValueNode("bidState", [
-            k.pdaSeedValueNode("bidId", k.argumentValueNode("bidId")),
+          defaultValue: c.pdaValueNode("bidState", [
+            c.pdaSeedValueNode("bidId", c.argumentValueNode("bidId")),
           ]),
         },
       },
       arguments: {
         bidId: {
-          type: k.publicKeyTypeNode(),
-          defaultValue: k.publicKeyValueNode(
+          type: c.publicKeyTypeNode(),
+          defaultValue: c.publicKeyValueNode(
             "11111111111111111111111111111111",
           ),
         },
@@ -329,15 +325,15 @@ kinobi.update(
 );
 
 // Update instructions using additional visitors.
-kinobi.update(legacyInstructions());
-kinobi.update(compressedInstructions());
-kinobi.update(token22Instructions());
-kinobi.update(wnsInstructions());
-kinobi.update(coreInstructions());
+codama.update(legacyInstructions());
+codama.update(compressedInstructions());
+codama.update(token22Instructions());
+codama.update(wnsInstructions());
+codama.update(coreInstructions());
 
 // Set struct default values.
-kinobi.update(
-  k.bottomUpTransformerVisitor([
+codama.update(
+  c.bottomUpTransformerVisitor([
     {
       select: (node) => {
         const names = [
@@ -351,45 +347,45 @@ kinobi.update(
           "fieldId",
         ];
         return (
-          k.isNode(node, ["instructionNode", "instructionArgumentNode"]) &&
-          k.isNode(node.type, "optionTypeNode") &&
+          c.isNode(node, ["instructionNode", "instructionArgumentNode"]) &&
+          c.isNode(node.type, "optionTypeNode") &&
           names.includes(node.name)
         );
       },
       transform: (node) => {
-        k.assertIsNode(node, ["instructionNode", "instructionArgumentNode"]);
+        c.assertIsNode(node, ["instructionNode", "instructionArgumentNode"]);
         // prevents overriding existing default values (e.g. optionalRoyaltyPct for cNFTs)
         if (!!node.defaultValue) return node;
         return {
           ...node,
           defaultValueStrategy: "optional",
-          defaultValue: k.noneValueNode(),
+          defaultValue: c.noneValueNode(),
         };
       },
     },
     {
       select: "[structFieldTypeNode|instructionArgumentNode]quantity",
       transform: (node) => {
-        k.assertIsNode(node, [
+        c.assertIsNode(node, [
           "structFieldTypeNode",
           "instructionArgumentNode",
         ]);
         return {
           ...node,
-          defaultValue: k.numberValueNode(1),
+          defaultValue: c.numberValueNode(1),
         };
       },
     },
     {
       select: "[structFieldTypeNode|instructionArgumentNode]rulesAccPresent",
       transform: (node) => {
-        k.assertIsNode(node, [
+        c.assertIsNode(node, [
           "structFieldTypeNode",
           "instructionArgumentNode",
         ]);
         return {
           ...node,
-          defaultValue: k.booleanValueNode(false),
+          defaultValue: c.booleanValueNode(false),
         };
       },
     },
@@ -397,25 +393,25 @@ kinobi.update(
 );
 
 // Add missing types from the IDL.
-kinobi.update(
-  k.bottomUpTransformerVisitor([
+codama.update(
+  c.bottomUpTransformerVisitor([
     {
       select: "[structTypeNode].[structFieldTypeNode]rentPayer",
       transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
+        c.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+          type: c.definedTypeLinkNode("nullableAddress", "hooked"),
         };
       },
     },
     {
       select: "[structTypeNode].[structFieldTypeNode]cosigner",
       transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
+        c.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+          type: c.definedTypeLinkNode("nullableAddress", "hooked"),
         };
       },
     },
@@ -423,8 +419,8 @@ kinobi.update(
 );
 
 // Overwrite tokenProgram's defaultValue for all T22 ixs
-kinobi.update(
-  k.bottomUpTransformerVisitor([
+codama.update(
+  c.bottomUpTransformerVisitor([
     {
       select: (node) => {
         const names = [
@@ -436,18 +432,56 @@ kinobi.update(
           "takeBidT22",
         ];
         return (
-          k.isNode(node, "instructionNode") && names.includes(node.name)
+          c.isNode(node, "instructionNode") && names.includes(node.name)
         );
       },
       transform: (node) => {
-        k.assertIsNode(node, "instructionNode");
+        c.assertIsNode(node, "instructionNode");
         return {
           ...node,
           accounts: node.accounts.map(account => 
             account.name === "tokenProgram" 
               ? {
                   ...account,
-                  defaultValue: k.publicKeyValueNode(
+                  defaultValue: c.publicKeyValueNode(
+                    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+                    "tokenProgram"
+                  )
+                }
+              : account
+          )
+        };
+      },
+    },
+  ]),
+);
+
+// Overwrite tokenProgram's defaultValue for all T22 ixs
+codama.update(
+  c.bottomUpTransformerVisitor([
+    {
+      select: (node) => {
+        const names = [
+          "buyT22",
+          "buyT22Spl",
+          "closeExpiredListingT22",
+          "delistT22",
+          "listT22",
+          "takeBidT22",
+        ];
+        return (
+          c.isNode(node, "instructionNode") && names.includes(node.name)
+        );
+      },
+      transform: (node) => {
+        c.assertIsNode(node, "instructionNode");
+        return {
+          ...node,
+          accounts: node.accounts.map(account => 
+            account.name === "tokenProgram" 
+              ? {
+                  ...account,
+                  defaultValue: c.publicKeyValueNode(
                     "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
                     "tokenProgram"
                   )
@@ -462,9 +496,46 @@ kinobi.update(
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
-kinobi.accept(
+codama.accept(
   renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), {
     prettier: require(path.join(jsClient, ".prettierrc.json")),
+    linkOverrides: {
+      resolvers: {
+        resolveTreeAuthorityPda: '@tensor-foundation/resolvers',
+        resolveTokenMetadataProgramFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveAuthorizationRulesProgramFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveSysvarInstructionsFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveFeeVaultPdaFromListState: '@tensor-foundation/resolvers',
+        resolveBuyerAta: '@tensor-foundation/resolvers',
+        resolveListAta: '@tensor-foundation/resolvers',
+        resolveOwnerAta: '@tensor-foundation/resolvers',
+        resolveSellerAta: '@tensor-foundation/resolvers',
+        resolveMetadata: '@tensor-foundation/resolvers',
+        resolveFeeVaultCurrencyAta: '@tensor-foundation/resolvers',
+        resolveOwnerCurrencyAta: '@tensor-foundation/resolvers',
+        resolvePayerCurrencyAta: '@tensor-foundation/resolvers',
+        resolveMakerBrokerCurrencyAta: '@tensor-foundation/resolvers',
+        resolveTakerBrokerCurrencyAta: '@tensor-foundation/resolvers',
+        resolveCreatorsCurrencyAta: '@tensor-foundation/resolvers',
+        resolveBrokersCurrencyAta: '@tensor-foundation/resolvers',
+        resolveDistributionCurrencyAta: '@tensor-foundation/resolvers',
+        resolveWnsApprovePda: '@tensor-foundation/resolvers',
+        resolveWnsDistributionPda: '@tensor-foundation/resolvers',
+        resolveWnsExtraAccountMetasPda: '@tensor-foundation/resolvers',
+        resolveFeeVaultPdaFromBidState: '@tensor-foundation/resolvers',
+        resolveBidTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveListTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveOwnerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveSellerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveBuyerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveEditionFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveDistributionCurrencyAta: '@tensor-foundation/resolvers',
+      },
+      definedTypes: {
+        tokenStandard: '@tensor-foundation/mpl-token-metadata',
+        nullableAddress: '../../hooked',
+      }
+    },
     asyncResolvers: [
       "resolveBidStateFromBidId",
       "resolveFeeVaultPdaFromListState",
@@ -502,9 +573,14 @@ kinobi.accept(
 
 // Render Rust.
 const rustClient = path.join(__dirname, "..", "clients", "rust");
-kinobi.accept(
+codama.accept(
   renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
     crateFolder: rustClient,
+    linkOverrides: {
+      definedTypes: {
+        nullableAddress: 'crate::hooked',
+      }
+    }
   }),
 );
