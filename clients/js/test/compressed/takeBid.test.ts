@@ -7,12 +7,24 @@ import {
   some,
 } from '@solana/web3.js';
 import {
+  Collection,
+  Creator,
+  MetadataArgs,
+  makeLeaf,
+  makeTree,
+  mintCNft,
+  sparseMerkleTreeFromLeaves,
+  verifyCNft,
+  verifyCNftCreator,
+} from '@tensor-foundation/mpl-bubblegum';
+import {
+  LAMPORTS_PER_SOL,
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
-  LAMPORTS_PER_SOL,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
+import { Mode } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   Field,
@@ -24,18 +36,6 @@ import {
   getTakeBidCompressedFullMetaInstructionAsync,
 } from '../../src/index.js';
 import { createWhitelistV2, expectCustomError } from '../_common.js';
-import {
-  makeTree,
-  Creator,
-  MetadataArgs,
-  mintCNft,
-  verifyCNftCreator,
-  verifyCNft,
-  sparseMerkleTreeFromLeaves,
-  Collection,
-  makeLeaf,
-} from '@tensor-foundation/mpl-bubblegum';
-import { Mode } from '@tensor-foundation/whitelist';
 import { computeIx } from '../legacy/_common.js';
 
 test('FVC + Name: it rejects an NFT with wrong name', async (t) => {
@@ -276,7 +276,6 @@ test('FVC + Name: it rejects an NFT with wrong name', async (t) => {
   const { whitelist } = await createWhitelistV2({
     client,
     updateAuthority: creatorKeypair,
-    //@ts-expect-error version issue
     conditions: [{ mode: Mode.FVC, value: creator.address }],
   });
 
