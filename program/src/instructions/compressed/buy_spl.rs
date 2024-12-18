@@ -337,6 +337,10 @@ pub fn process_buy_spl<'info>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_destination.deref().as_ref(), amount)?;
+
     // Pay creators
     transfer_creators_fee(
         &creators.into_iter().map(Into::into).collect(),
@@ -352,10 +356,6 @@ pub fn process_buy_spl<'info>(
             rent_payer: &ctx.accounts.rent_payer,
         },
     )?;
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_destination.deref().as_ref(), amount)?;
 
     Ok(())
 }

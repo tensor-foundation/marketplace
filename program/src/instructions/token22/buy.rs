@@ -276,6 +276,9 @@ pub fn process_buy_t22<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
+
     // Pay creators
     if royalties.is_some() {
         transfer_creators_fee(
@@ -290,9 +293,6 @@ pub fn process_buy_t22<'info, 'b>(
             },
         )?;
     }
-
-    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
 
     // closes the list token account
 

@@ -391,6 +391,10 @@ pub fn process_buy_t22_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     let (_creator_accounts, creator_ta_accounts) = remaining_accounts.split_at(creators.len());
 
     let creator_accounts_with_ta = creator_accounts
@@ -416,10 +420,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
             },
         )?;
     }
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

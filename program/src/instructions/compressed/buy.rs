@@ -281,6 +281,10 @@ pub fn process_buy<'info>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
     // Pay creators
     transfer_creators_fee(
         &creators.into_iter().map(Into::into).collect(),
@@ -293,10 +297,6 @@ pub fn process_buy<'info>(
             }),
         },
     )?;
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 
     Ok(())
 }

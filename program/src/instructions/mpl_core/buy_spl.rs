@@ -294,6 +294,10 @@ pub fn process_buy_core_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     // Pay creator royalties.
     if let Some(creators) = asset.royalty_creators {
         let creators_len = creators.len();
@@ -325,7 +329,5 @@ pub fn process_buy_core_spl<'info, 'b>(
         )?;
     }
 
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)
+    Ok(())
 }
