@@ -9,10 +9,7 @@ import {
 import {
   AssetV1,
   createDefaultAsset,
-  fetchAssetPlugin,
   fetchAssetV1,
-  PluginType,
-  Royalties,
 } from '@tensor-foundation/mpl-core';
 import {
   createAndMintTo,
@@ -722,19 +719,6 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     payer: lister,
   });
 
-  console.log('asset', asset.address);
-
-  const assetV1 = await fetchAssetV1(client.rpc, asset.address);
-  console.log('assetV1', assetV1);
-  const royaltiesPlugin = await fetchAssetPlugin(
-    client,
-    asset.address,
-    PluginType.Royalties
-  );
-  console.log('royaltiesPlugin', royaltiesPlugin);
-  const creatorsArray = (royaltiesPlugin?.fields[0] as Royalties)?.creators;
-  console.log('creatorsArray', creatorsArray);
-
   const listCoreIx = await getListCoreInstructionAsync({
     payer: lister,
     owner: lister,
@@ -757,21 +741,18 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     mint: currency,
     owner: creator0.address,
   });
-  console.log('creator0Ata', creator0Ata);
   const creator1Ata = await createAta({
     client,
     payer: creator1,
     mint: currency,
     owner: creator1.address,
   });
-  console.log('creator1Ata', creator1Ata);
   const creator2Ata = await createAta({
     client,
     payer: creator2,
     mint: currency,
     owner: creator2.address,
   });
-  console.log('creator2Ata', creator2Ata);
   const makerBrokerAta = await createAta({
     client,
     payer: makerBroker,
