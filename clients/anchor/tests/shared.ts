@@ -3353,7 +3353,8 @@ export const testDelistCore = async ({
   owner,
   rentDest = owner,
   lookupTableAccount,
-  forceExpired = false
+  forceExpired = false,
+  payer = owner
 }: {
   asset: PublicKey;
   collection: PublicKey;
@@ -3361,6 +3362,7 @@ export const testDelistCore = async ({
   rentDest?: Keypair;
   lookupTableAccount?: AddressLookupTableAccount;
   forceExpired?: boolean;
+  payer?: Keypair;
 }) => {
   let ixs;
   let assetId;
@@ -3372,7 +3374,8 @@ export const testDelistCore = async ({
       asset,
       collection,
       owner: owner.publicKey,
-      rentDest: rentDest.publicKey
+      rentDest: rentDest.publicKey,
+      payer: payer.publicKey
     }));
   } else {
     ({
@@ -3393,7 +3396,7 @@ export const testDelistCore = async ({
     async ({ prevOwnerLamports, prevRentDestLamports }) => {
       const sig = await buildAndSendTx({
         ixs,
-        extraSigners: forceExpired ? [] : [owner],
+        extraSigners: forceExpired ? [payer] : [owner],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
           : undefined
