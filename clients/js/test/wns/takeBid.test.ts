@@ -158,6 +158,82 @@ test('fees are paid correctly', async (t) => {
   );
 });
 
+test('royalties are enforced when min_amount is zero', async (t) => {
+  const {
+    client,
+    signers,
+    nft,
+    price: bidPrice,
+    state: bidState,
+    feeVault,
+  } = await setupWnsTest({
+    t,
+    action: TestAction.Bid,
+  });
+
+  const { buyer, nftOwner } = signers;
+  const { mint, group, distribution, sellerFeeBasisPoints } = nft;
+
+  const startingFeeVaultBalance = BigInt(
+    (await client.rpc.getBalance(feeVault).send()).value
+  );
+
+  const startingDistributionBalance = (
+    await client.rpc.getBalance(distribution).send()
+  ).value;
+
+  // When the seller takes the bid.
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: buyer.address, // Bid owner--the buyer
+    seller: nftOwner, // NFT holder--the seller
+    mint,
+    distribution,
+    collection: group,
+    minAmount: 0,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, nftOwner),
+    (tx) => appendTransactionMessageInstruction(COMPUTE_500K_IX, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Then the bid state should not exist.
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+
+  // And the owner has the NFT.
+  await assertTokenNftOwnedBy({
+    t,
+    client,
+    mint,
+    owner: buyer.address,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+  });
+
+  const endingFeeVaultBalance = BigInt(
+    (await client.rpc.getBalance(feeVault).send()).value
+  );
+
+  // Fee vault gets entire protocol fee because no maker or taker brokers are set.
+  t.assert(
+    endingFeeVaultBalance >=
+      startingFeeVaultBalance + (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS
+  );
+
+  // Check that the royalties were paid correctly.
+  // WNS royalties go to the distribution account and not directly to the creator.
+  const endingDistributionBalance = (
+    await client.rpc.getBalance(distribution).send()
+  ).value;
+  t.assert(
+    endingDistributionBalance ===
+      startingDistributionBalance +
+        (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+  );
+});
+
 test('maker and taker brokers receive correct split', async (t) => {
   const {
     client,

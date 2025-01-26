@@ -62,6 +62,9 @@ pub struct BuyLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -109,7 +112,18 @@ pub struct BuyLegacy<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
+        ],
+        seeds::program = mpl_token_metadata::ID,
+        bump,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI
@@ -299,6 +313,9 @@ pub fn process_buy_legacy<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
+
     transfer_creators_fee(
         &metadata
             .creators
@@ -315,9 +332,6 @@ pub fn process_buy_legacy<'info, 'b>(
             }),
         },
     )?;
-
-    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
 
     // closes the list token account
 

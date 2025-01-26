@@ -74,6 +74,9 @@ pub struct BuyLegacySpl<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: list_state.currency
@@ -423,6 +426,10 @@ pub fn process_buy_legacy_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     // Pay creator royalties.
     if creator_fee > 0 {
         transfer_creators_fee(
@@ -445,10 +452,6 @@ pub fn process_buy_legacy_spl<'info, 'b>(
             },
         )?;
     }
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

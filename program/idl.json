@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "1.0.0-beta.1",
   "name": "marketplace_program",
   "constants": [
     {
@@ -3617,6 +3617,15 @@
           "name": "rentDestination",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The signer who is closing the expired listing; will have to pay any MPL Core",
+            "transaction fees, if they are ever implemented."
+          ]
         }
       ],
       "args": []
@@ -4829,6 +4838,11 @@
       "code": 6146,
       "name": "MissingWhitelistMethod",
       "msg": "No whitelist method provided"
+    },
+    {
+      "code": 6147,
+      "name": "EditionDataEmpty",
+      "msg": "Edition data is empty"
     }
   ],
   "metadata": {

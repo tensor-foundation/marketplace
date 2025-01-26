@@ -1982,6 +1982,7 @@ export class TCompSDK {
     collection = null,
     owner,
     rentDest,
+    payer,
     compute = DEFAULT_XFER_COMPUTE_UNITS,
     priorityMicroLamports = DEFAULT_MICRO_LAMPORTS
   }: {
@@ -1989,6 +1990,7 @@ export class TCompSDK {
     collection?: PublicKey | null;
     owner: PublicKey;
     rentDest: PublicKey;
+    payer: PublicKey;
     compute?: number | null;
     priorityMicroLamports?: number | null;
   }) {
@@ -2002,7 +2004,8 @@ export class TCompSDK {
       systemProgram: SystemProgram.programId,
       owner,
       listState,
-      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner })
+      rentDest: getTcompRentPayer({ rentPayer: rentDest, owner }),
+      payer
     });
 
     const ixs = prependComputeIxs(

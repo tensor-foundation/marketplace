@@ -151,6 +151,9 @@ pub enum TensorMarketplaceError {
     /// 6146 - No whitelist method provided
     #[error("No whitelist method provided")]
     MissingWhitelistMethod = 0x1802,
+    /// 6147 - Edition data is empty
+    #[error("Edition data is empty")]
+    EditionDataEmpty = 0x1803,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {
