@@ -74,6 +74,9 @@ pub struct BuyLegacySpl<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: list_state.currency

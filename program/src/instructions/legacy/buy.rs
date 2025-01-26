@@ -62,6 +62,9 @@ pub struct BuyLegacy<'info> {
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them

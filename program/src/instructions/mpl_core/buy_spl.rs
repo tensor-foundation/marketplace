@@ -62,6 +62,9 @@ pub struct BuyCoreSpl<'info> {
     pub collection: Option<UncheckedAccount<'info>>,
 
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them

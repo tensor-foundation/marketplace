@@ -74,6 +74,9 @@ pub struct BuyT22Spl<'info> {
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// T22 asset mint.
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// SPL token mint of the currency.

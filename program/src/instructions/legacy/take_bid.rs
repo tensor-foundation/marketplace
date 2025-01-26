@@ -65,6 +65,9 @@ pub struct TakeBidLegacy<'info> {
     pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: ownership, structure and mint are checked in assert_decode_metadata, seeds checked here.

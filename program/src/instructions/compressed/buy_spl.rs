@@ -75,6 +75,9 @@ pub struct BuySpl<'info> {
     pub owner_destination: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: none, can be anything

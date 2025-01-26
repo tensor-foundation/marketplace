@@ -58,6 +58,9 @@ pub struct BuyWnsSpl<'info> {
     pub list_state: Box<Account<'info, ListState>>,
 
     /// WNS asset mint.
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// SPL token mint of the currency.
