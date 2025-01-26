@@ -3,6 +3,7 @@ import {
   fetchEncodedAccount,
   pipe,
 } from '@solana/web3.js';
+import { createDefaultAsset } from '@tensor-foundation/mpl-core';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -20,11 +21,11 @@ import {
   getListCoreInstructionAsync,
 } from '../../src/index.js';
 import { sleep } from '../_common.js';
-import { createDefaultAsset } from '@tensor-foundation/mpl-core';
 
 test('it can close an expired listing', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
+
   // We create an NFT.
   const asset = await createDefaultAsset({
     client,
@@ -68,10 +69,12 @@ test('it can close an expired listing', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
   // When we close an expired listing.
+  // User payer to prove owner is not required to sign.
   const closeExpiredListingIx =
     await getCloseExpiredListingCoreInstructionAsync({
       owner: owner.address,
       asset: asset.address,
+      payer: owner,
     });
 
   await pipe(
@@ -138,6 +141,7 @@ test('it cannot close an active listing', async (t) => {
     await getCloseExpiredListingCoreInstructionAsync({
       owner: owner.address,
       asset: asset.address,
+      payer: owner,
     });
 
   // Then we expect an error.
@@ -162,6 +166,7 @@ test('it cannot close an active listing', async (t) => {
 test('it can close an expired listing with another payer', async (t) => {
   const client = createDefaultSolanaClient();
   const owner = await generateKeyPairSignerWithSol(client);
+
   // We create an NFT.
   const asset = await createDefaultAsset({
     client,
@@ -209,6 +214,7 @@ test('it can close an expired listing with another payer', async (t) => {
     await getCloseExpiredListingCoreInstructionAsync({
       owner: owner.address,
       asset: asset.address,
+      payer,
     });
 
   const ownerFundsBefore = await client.rpc.getBalance(owner.address).send();
@@ -279,6 +285,7 @@ test('the rent destination cannot differ from the payer of the listing', async (
     await getCloseExpiredListingCoreInstructionAsync({
       asset: asset.address,
       owner: owner.address,
+      payer: closer,
       // (!)
       rentDestination: notListPayer.address,
     });

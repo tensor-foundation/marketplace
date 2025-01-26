@@ -3617,6 +3617,15 @@
           "name": "rentDestination",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The signer who is closing the expired listing; will have to pay any MPL Core",
+            "transaction fees, if they are ever implemented."
+          ]
         }
       ],
       "args": []

@@ -25,6 +25,9 @@ pub struct CloseExpiredListingCore {
     pub marketplace_program: solana_program::pubkey::Pubkey,
 
     pub rent_destination: solana_program::pubkey::Pubkey,
+    /// The signer who is closing the expired listing; will have to pay any MPL Core
+    /// transaction fees, if they are ever implemented.
+    pub payer: solana_program::pubkey::Pubkey,
 }
 
 impl CloseExpiredListingCore {
@@ -36,7 +39,7 @@ impl CloseExpiredListingCore {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.list_state,
             false,
@@ -72,6 +75,9 @@ impl CloseExpiredListingCore {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.rent_destination,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = CloseExpiredListingCoreInstructionData::new()
@@ -117,6 +123,7 @@ impl Default for CloseExpiredListingCoreInstructionData {
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   6. `[optional]` marketplace_program (default to `TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp`)
 ///   7. `[writable]` rent_destination
+///   8. `[writable, signer]` payer
 #[derive(Clone, Debug, Default)]
 pub struct CloseExpiredListingCoreBuilder {
     list_state: Option<solana_program::pubkey::Pubkey>,
@@ -127,6 +134,7 @@ pub struct CloseExpiredListingCoreBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     marketplace_program: Option<solana_program::pubkey::Pubkey>,
     rent_destination: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -187,6 +195,13 @@ impl CloseExpiredListingCoreBuilder {
         self.rent_destination = Some(rent_destination);
         self
     }
+    /// The signer who is closing the expired listing; will have to pay any MPL Core
+    /// transaction fees, if they are ever implemented.
+    #[inline(always)]
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -222,6 +237,7 @@ impl CloseExpiredListingCoreBuilder {
                 "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp"
             )),
             rent_destination: self.rent_destination.expect("rent_destination is not set"),
+            payer: self.payer.expect("payer is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -245,6 +261,9 @@ pub struct CloseExpiredListingCoreCpiAccounts<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The signer who is closing the expired listing; will have to pay any MPL Core
+    /// transaction fees, if they are ever implemented.
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `close_expired_listing_core` CPI instruction.
@@ -267,6 +286,9 @@ pub struct CloseExpiredListingCoreCpi<'a, 'b> {
     pub marketplace_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The signer who is closing the expired listing; will have to pay any MPL Core
+    /// transaction fees, if they are ever implemented.
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
@@ -284,6 +306,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
             system_program: accounts.system_program,
             marketplace_program: accounts.marketplace_program,
             rent_destination: accounts.rent_destination,
+            payer: accounts.payer,
         }
     }
     #[inline(always)]
@@ -319,7 +342,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.list_state.key,
             false,
@@ -359,6 +382,10 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
             *self.rent_destination.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -375,7 +402,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.list_state.clone());
         account_infos.push(self.asset.clone());
@@ -387,6 +414,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
         account_infos.push(self.system_program.clone());
         account_infos.push(self.marketplace_program.clone());
         account_infos.push(self.rent_destination.clone());
+        account_infos.push(self.payer.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -411,6 +439,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpi<'a, 'b> {
 ///   5. `[]` system_program
 ///   6. `[]` marketplace_program
 ///   7. `[writable]` rent_destination
+///   8. `[writable, signer]` payer
 #[derive(Clone, Debug)]
 pub struct CloseExpiredListingCoreCpiBuilder<'a, 'b> {
     instruction: Box<CloseExpiredListingCoreCpiBuilderInstruction<'a, 'b>>,
@@ -428,6 +457,7 @@ impl<'a, 'b> CloseExpiredListingCoreCpiBuilder<'a, 'b> {
             system_program: None,
             marketplace_program: None,
             rent_destination: None,
+            payer: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -489,6 +519,13 @@ impl<'a, 'b> CloseExpiredListingCoreCpiBuilder<'a, 'b> {
         rent_destination: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.rent_destination = Some(rent_destination);
+        self
+    }
+    /// The signer who is closing the expired listing; will have to pay any MPL Core
+    /// transaction fees, if they are ever implemented.
+    #[inline(always)]
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
         self
     }
     /// Add an additional account to the instruction.
@@ -562,6 +599,8 @@ impl<'a, 'b> CloseExpiredListingCoreCpiBuilder<'a, 'b> {
                 .instruction
                 .rent_destination
                 .expect("rent_destination is not set"),
+
+            payer: self.instruction.payer.expect("payer is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -581,6 +620,7 @@ struct CloseExpiredListingCoreCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     marketplace_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent_destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
