@@ -40,6 +40,8 @@ test('it can buy a listed compressed nft using a SPL token as currency', async (
   const owner = await generateKeyPairSignerWithSol(client);
   // Asset buyer.
   const buyer = await generateKeyPairSignerWithSol(client);
+  const makerBroker = await generateKeyPairSignerWithSol(client);
+  const takerBroker = await generateKeyPairSignerWithSol(client);
 
   const creatorKeypair = await generateKeyPairSignerWithSol(
     client,
@@ -120,6 +122,7 @@ test('it can buy a listed compressed nft using a SPL token as currency', async (
     amount: price,
     proof,
     currency: currency.mint,
+    makerBroker: makerBroker.address,
   });
 
   await pipe(
@@ -151,6 +154,8 @@ test('it can buy a listed compressed nft using a SPL token as currency', async (
     metaHash,
     sellerFeeBasisPoints: meta.sellerFeeBasisPoints,
     creators: meta.creators.map((creator) => creator.address),
+    makerBroker: makerBroker.address,
+    takerBroker: takerBroker.address,
   });
 
   await pipe(
