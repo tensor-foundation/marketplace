@@ -164,10 +164,10 @@ test('it can buy a listed compressed nft using a SPL token as currency', async (
   t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 
   // Creator should have received royalties in currency TA
-  const updateAuthorityBalance = (
+  const creatorTaBalance = (
     await client.rpc.getTokenAccountBalance(creatorCurrencyTa).send()
   ).value.uiAmount;
-  t.is(updateAuthorityBalance, Number(royalties));
+  t.is(creatorTaBalance, Number(royalties));
 });
 
 test('it can buy a listed compressed nft using a T22 token as currency', async (t) => {
@@ -302,8 +302,8 @@ test('it can buy a listed compressed nft using a T22 token as currency', async (
   t.false((await fetchEncodedAccount(client.rpc, listState)).exists);
 
   // Creator should have received royalties in currency TA
-  const updateAuthorityBalance = (
+  const creatorTaBalance = (
     await client.rpc.getTokenAccountBalance(creatorCurrencyTa).send()
   ).value.uiAmount;
-  t.is(updateAuthorityBalance, Number(royalties));
+  t.is(creatorTaBalance, Number(royalties));
 });
