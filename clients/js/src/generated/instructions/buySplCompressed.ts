@@ -7,6 +7,7 @@
  */
 
 import {
+  AccountRole,
   addDecoderSizePrefix,
   addEncoderSizePrefix,
   combineCodec,
@@ -48,7 +49,13 @@ import {
   type WritableSignerAccount,
 } from '@solana/web3.js';
 import {
+  resolveCreatorsCurrencyAta,
+  resolveFeeVaultCurrencyAta,
   resolveFeeVaultPdaFromListState,
+  resolveMakerBrokerCurrencyAta,
+  resolveOwnerCurrencyAta,
+  resolvePayerCurrencyAta,
+  resolveTakerBrokerCurrencyAta,
   resolveTreeAuthorityPda,
 } from '@tensor-foundation/resolvers';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
@@ -72,7 +79,7 @@ export function getBuySplCompressedDiscriminatorBytes() {
 export type BuySplCompressedInstruction<
   TProgram extends string = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
-  TAccountFeeVaultTa extends string | IAccountMeta<string> = string,
+  TAccountFeeVaultCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountTreeAuthority extends string | IAccountMeta<string> = string,
   TAccountMerkleTree extends string | IAccountMeta<string> = string,
   TAccountLogWrapper extends
@@ -90,7 +97,7 @@ export type BuySplCompressedInstruction<
   TAccountMarketplaceProgram extends
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
-  TAccountTokenProgram extends
+  TAccountCurrencyTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TAccountAssociatedTokenProgram extends
@@ -99,14 +106,14 @@ export type BuySplCompressedInstruction<
   TAccountListState extends string | IAccountMeta<string> = string,
   TAccountBuyer extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountPayerSource extends string | IAccountMeta<string> = string,
+  TAccountPayerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountOwnerDestination extends string | IAccountMeta<string> = string,
+  TAccountOwnerCurrencyTa extends string | IAccountMeta<string> = string,
   TAccountCurrency extends string | IAccountMeta<string> = string,
   TAccountTakerBroker extends string | IAccountMeta<string> = string,
-  TAccountTakerBrokerCurrencyTa extends string | IAccountMeta<string> = string,
+  TAccountTakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountMakerBroker extends string | IAccountMeta<string> = string,
-  TAccountMakerBrokerCurrencyTa extends string | IAccountMeta<string> = string,
+  TAccountMakerBrokerTa extends string | IAccountMeta<string> = string,
   TAccountRentDestination extends string | IAccountMeta<string> = string,
   TAccountRentPayer extends string | IAccountMeta<string> = string,
   TAccountCosigner extends string | IAccountMeta<string> = string,
@@ -118,9 +125,9 @@ export type BuySplCompressedInstruction<
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
-      TAccountFeeVaultTa extends string
-        ? WritableAccount<TAccountFeeVaultTa>
-        : TAccountFeeVaultTa,
+      TAccountFeeVaultCurrencyTa extends string
+        ? WritableAccount<TAccountFeeVaultCurrencyTa>
+        : TAccountFeeVaultCurrencyTa,
       TAccountTreeAuthority extends string
         ? ReadonlyAccount<TAccountTreeAuthority>
         : TAccountTreeAuthority,
@@ -142,9 +149,9 @@ export type BuySplCompressedInstruction<
       TAccountMarketplaceProgram extends string
         ? ReadonlyAccount<TAccountMarketplaceProgram>
         : TAccountMarketplaceProgram,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
+      TAccountCurrencyTokenProgram extends string
+        ? ReadonlyAccount<TAccountCurrencyTokenProgram>
+        : TAccountCurrencyTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -158,30 +165,30 @@ export type BuySplCompressedInstruction<
         ? ReadonlySignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountPayerSource extends string
-        ? WritableAccount<TAccountPayerSource>
-        : TAccountPayerSource,
+      TAccountPayerCurrencyTa extends string
+        ? WritableAccount<TAccountPayerCurrencyTa>
+        : TAccountPayerCurrencyTa,
       TAccountOwner extends string
         ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
-      TAccountOwnerDestination extends string
-        ? WritableAccount<TAccountOwnerDestination>
-        : TAccountOwnerDestination,
+      TAccountOwnerCurrencyTa extends string
+        ? WritableAccount<TAccountOwnerCurrencyTa>
+        : TAccountOwnerCurrencyTa,
       TAccountCurrency extends string
         ? ReadonlyAccount<TAccountCurrency>
         : TAccountCurrency,
       TAccountTakerBroker extends string
         ? WritableAccount<TAccountTakerBroker>
         : TAccountTakerBroker,
-      TAccountTakerBrokerCurrencyTa extends string
-        ? WritableAccount<TAccountTakerBrokerCurrencyTa>
-        : TAccountTakerBrokerCurrencyTa,
+      TAccountTakerBrokerTa extends string
+        ? WritableAccount<TAccountTakerBrokerTa>
+        : TAccountTakerBrokerTa,
       TAccountMakerBroker extends string
         ? WritableAccount<TAccountMakerBroker>
         : TAccountMakerBroker,
-      TAccountMakerBrokerCurrencyTa extends string
-        ? WritableAccount<TAccountMakerBrokerCurrencyTa>
-        : TAccountMakerBrokerCurrencyTa,
+      TAccountMakerBrokerTa extends string
+        ? WritableAccount<TAccountMakerBrokerTa>
+        : TAccountMakerBrokerTa,
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
@@ -272,9 +279,14 @@ export function getBuySplCompressedInstructionDataCodec(): Codec<
   );
 }
 
+export type BuySplCompressedInstructionExtraArgs = {
+  creators: Array<Address>;
+  creatorsCurrencyTa: Array<Address>;
+};
+
 export type BuySplCompressedAsyncInput<
   TAccountFeeVault extends string = string,
-  TAccountFeeVaultTa extends string = string,
+  TAccountFeeVaultCurrencyTa extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -282,25 +294,25 @@ export type BuySplCompressedAsyncInput<
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountListState extends string = string,
   TAccountBuyer extends string = string,
   TAccountPayer extends string = string,
-  TAccountPayerSource extends string = string,
+  TAccountPayerCurrencyTa extends string = string,
   TAccountOwner extends string = string,
-  TAccountOwnerDestination extends string = string,
+  TAccountOwnerCurrencyTa extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
-  TAccountTakerBrokerCurrencyTa extends string = string,
+  TAccountTakerBrokerTa extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMakerBrokerCurrencyTa extends string = string,
+  TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault?: Address<TAccountFeeVault>;
-  feeVaultTa: Address<TAccountFeeVaultTa>;
+  feeVaultCurrencyTa?: Address<TAccountFeeVaultCurrencyTa>;
   treeAuthority?: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -308,21 +320,21 @@ export type BuySplCompressedAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
   buyer?: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
-  payerSource: Address<TAccountPayerSource>;
+  payerCurrencyTa?: Address<TAccountPayerCurrencyTa>;
   owner: Address<TAccountOwner>;
-  ownerDestination: Address<TAccountOwnerDestination>;
+  ownerCurrencyTa?: Address<TAccountOwnerCurrencyTa>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
-  takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
+  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
+  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination?: Address<TAccountRentDestination>;
-  rentPayer: TransactionSigner<TAccountRentPayer>;
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuySplCompressedInstructionDataArgs['nonce'];
   index: BuySplCompressedInstructionDataArgs['index'];
@@ -333,11 +345,13 @@ export type BuySplCompressedAsyncInput<
   sellerFeeBasisPoints: BuySplCompressedInstructionDataArgs['sellerFeeBasisPoints'];
   maxAmount: BuySplCompressedInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
+  creators: BuySplCompressedInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuySplCompressedInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export async function getBuySplCompressedInstructionAsync<
   TAccountFeeVault extends string,
-  TAccountFeeVaultTa extends string,
+  TAccountFeeVaultCurrencyTa extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -345,19 +359,19 @@ export async function getBuySplCompressedInstructionAsync<
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountListState extends string,
   TAccountBuyer extends string,
   TAccountPayer extends string,
-  TAccountPayerSource extends string,
+  TAccountPayerCurrencyTa extends string,
   TAccountOwner extends string,
-  TAccountOwnerDestination extends string,
+  TAccountOwnerCurrencyTa extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
-  TAccountTakerBrokerCurrencyTa extends string,
+  TAccountTakerBrokerTa extends string,
   TAccountMakerBroker extends string,
-  TAccountMakerBrokerCurrencyTa extends string,
+  TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
@@ -365,7 +379,7 @@ export async function getBuySplCompressedInstructionAsync<
 >(
   input: BuySplCompressedAsyncInput<
     TAccountFeeVault,
-    TAccountFeeVaultTa,
+    TAccountFeeVaultCurrencyTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -373,19 +387,19 @@ export async function getBuySplCompressedInstructionAsync<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
-    TAccountPayerSource,
+    TAccountPayerCurrencyTa,
     TAccountOwner,
-    TAccountOwnerDestination,
+    TAccountOwnerCurrencyTa,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerCurrencyTa,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerCurrencyTa,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -395,7 +409,7 @@ export async function getBuySplCompressedInstructionAsync<
   BuySplCompressedInstruction<
     TProgramAddress,
     TAccountFeeVault,
-    TAccountFeeVaultTa,
+    TAccountFeeVaultCurrencyTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -403,19 +417,19 @@ export async function getBuySplCompressedInstructionAsync<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
-    TAccountPayerSource,
+    TAccountPayerCurrencyTa,
     TAccountOwner,
-    TAccountOwnerDestination,
+    TAccountOwnerCurrencyTa,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerCurrencyTa,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerCurrencyTa,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -428,7 +442,10 @@ export async function getBuySplCompressedInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultTa: { value: input.feeVaultTa ?? null, isWritable: true },
+    feeVaultCurrencyTa: {
+      value: input.feeVaultCurrencyTa ?? null,
+      isWritable: true,
+    },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -445,7 +462,10 @@ export async function getBuySplCompressedInstructionAsync<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -453,23 +473,14 @@ export async function getBuySplCompressedInstructionAsync<
     listState: { value: input.listState ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: false },
-    payerSource: { value: input.payerSource ?? null, isWritable: true },
+    payerCurrencyTa: { value: input.payerCurrencyTa ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerDestination: {
-      value: input.ownerDestination ?? null,
-      isWritable: true,
-    },
+    ownerCurrencyTa: { value: input.ownerCurrencyTa ?? null, isWritable: true },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    takerBrokerCurrencyTa: {
-      value: input.takerBrokerCurrencyTa ?? null,
-      isWritable: true,
-    },
+    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    makerBrokerCurrencyTa: {
-      value: input.makerBrokerCurrencyTa ?? null,
-      isWritable: true,
-    },
+    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
@@ -490,6 +501,16 @@ export async function getBuySplCompressedInstructionAsync<
     accounts.feeVault = {
       ...accounts.feeVault,
       ...(await resolveFeeVaultPdaFromListState(resolverScope)),
+    };
+  }
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+  if (!accounts.feeVaultCurrencyTa.value) {
+    accounts.feeVaultCurrencyTa = {
+      ...accounts.feeVaultCurrencyTa,
+      ...(await resolveFeeVaultCurrencyAta(resolverScope)),
     };
   }
   if (!accounts.bubblegumProgram.value) {
@@ -518,10 +539,6 @@ export async function getBuySplCompressedInstructionAsync<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -531,18 +548,60 @@ export async function getBuySplCompressedInstructionAsync<
       accounts.payer.value
     ).address;
   }
+  if (!accounts.payerCurrencyTa.value) {
+    accounts.payerCurrencyTa = {
+      ...accounts.payerCurrencyTa,
+      ...(await resolvePayerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.ownerCurrencyTa.value) {
+    accounts.ownerCurrencyTa = {
+      ...accounts.ownerCurrencyTa,
+      ...(await resolveOwnerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.takerBrokerTa.value) {
+    accounts.takerBrokerTa = {
+      ...accounts.takerBrokerTa,
+      ...(await resolveTakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
+  if (!accounts.makerBrokerTa.value) {
+    accounts.makerBrokerTa = {
+      ...accounts.makerBrokerTa,
+      ...(await resolveMakerBrokerCurrencyAta(resolverScope)),
+    };
+  }
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
+  }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer.value = expectSome(accounts.payer.value);
   }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
+  if (!args.creatorsCurrencyTa) {
+    args.creatorsCurrencyTa = await resolveCreatorsCurrencyAta(resolverScope);
+  }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultTa),
+      getAccountMeta(accounts.feeVaultCurrencyTa),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -550,22 +609,23 @@ export async function getBuySplCompressedInstructionAsync<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.payerSource),
+      getAccountMeta(accounts.payerCurrencyTa),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerDestination),
+      getAccountMeta(accounts.ownerCurrencyTa),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.takerBrokerCurrencyTa),
+      getAccountMeta(accounts.takerBrokerTa),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.makerBrokerCurrencyTa),
+      getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getBuySplCompressedInstructionDataEncoder().encode(
@@ -574,7 +634,7 @@ export async function getBuySplCompressedInstructionAsync<
   } as BuySplCompressedInstruction<
     TProgramAddress,
     TAccountFeeVault,
-    TAccountFeeVaultTa,
+    TAccountFeeVaultCurrencyTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -582,19 +642,19 @@ export async function getBuySplCompressedInstructionAsync<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
-    TAccountPayerSource,
+    TAccountPayerCurrencyTa,
     TAccountOwner,
-    TAccountOwnerDestination,
+    TAccountOwnerCurrencyTa,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerCurrencyTa,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerCurrencyTa,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -605,7 +665,7 @@ export async function getBuySplCompressedInstructionAsync<
 
 export type BuySplCompressedInput<
   TAccountFeeVault extends string = string,
-  TAccountFeeVaultTa extends string = string,
+  TAccountFeeVaultCurrencyTa extends string = string,
   TAccountTreeAuthority extends string = string,
   TAccountMerkleTree extends string = string,
   TAccountLogWrapper extends string = string,
@@ -613,25 +673,25 @@ export type BuySplCompressedInput<
   TAccountSystemProgram extends string = string,
   TAccountBubblegumProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountCurrencyTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountListState extends string = string,
   TAccountBuyer extends string = string,
   TAccountPayer extends string = string,
-  TAccountPayerSource extends string = string,
+  TAccountPayerCurrencyTa extends string = string,
   TAccountOwner extends string = string,
-  TAccountOwnerDestination extends string = string,
+  TAccountOwnerCurrencyTa extends string = string,
   TAccountCurrency extends string = string,
   TAccountTakerBroker extends string = string,
-  TAccountTakerBrokerCurrencyTa extends string = string,
+  TAccountTakerBrokerTa extends string = string,
   TAccountMakerBroker extends string = string,
-  TAccountMakerBrokerCurrencyTa extends string = string,
+  TAccountMakerBrokerTa extends string = string,
   TAccountRentDestination extends string = string,
   TAccountRentPayer extends string = string,
   TAccountCosigner extends string = string,
 > = {
   feeVault: Address<TAccountFeeVault>;
-  feeVaultTa: Address<TAccountFeeVaultTa>;
+  feeVaultCurrencyTa: Address<TAccountFeeVaultCurrencyTa>;
   treeAuthority: Address<TAccountTreeAuthority>;
   merkleTree: Address<TAccountMerkleTree>;
   logWrapper?: Address<TAccountLogWrapper>;
@@ -639,21 +699,21 @@ export type BuySplCompressedInput<
   systemProgram?: Address<TAccountSystemProgram>;
   bubblegumProgram?: Address<TAccountBubblegumProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  currencyTokenProgram?: Address<TAccountCurrencyTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   listState: Address<TAccountListState>;
   buyer?: Address<TAccountBuyer>;
   payer: TransactionSigner<TAccountPayer>;
-  payerSource: Address<TAccountPayerSource>;
+  payerCurrencyTa: Address<TAccountPayerCurrencyTa>;
   owner: Address<TAccountOwner>;
-  ownerDestination: Address<TAccountOwnerDestination>;
+  ownerCurrencyTa: Address<TAccountOwnerCurrencyTa>;
   currency: Address<TAccountCurrency>;
   takerBroker?: Address<TAccountTakerBroker>;
-  takerBrokerCurrencyTa?: Address<TAccountTakerBrokerCurrencyTa>;
+  takerBrokerTa?: Address<TAccountTakerBrokerTa>;
   makerBroker?: Address<TAccountMakerBroker>;
-  makerBrokerCurrencyTa?: Address<TAccountMakerBrokerCurrencyTa>;
+  makerBrokerTa?: Address<TAccountMakerBrokerTa>;
   rentDestination?: Address<TAccountRentDestination>;
-  rentPayer: TransactionSigner<TAccountRentPayer>;
+  rentPayer?: TransactionSigner<TAccountRentPayer>;
   cosigner?: TransactionSigner<TAccountCosigner>;
   nonce?: BuySplCompressedInstructionDataArgs['nonce'];
   index: BuySplCompressedInstructionDataArgs['index'];
@@ -664,11 +724,13 @@ export type BuySplCompressedInput<
   sellerFeeBasisPoints: BuySplCompressedInstructionDataArgs['sellerFeeBasisPoints'];
   maxAmount: BuySplCompressedInstructionDataArgs['maxAmount'];
   optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
+  creators: BuySplCompressedInstructionExtraArgs['creators'];
+  creatorsCurrencyTa?: BuySplCompressedInstructionExtraArgs['creatorsCurrencyTa'];
 };
 
 export function getBuySplCompressedInstruction<
   TAccountFeeVault extends string,
-  TAccountFeeVaultTa extends string,
+  TAccountFeeVaultCurrencyTa extends string,
   TAccountTreeAuthority extends string,
   TAccountMerkleTree extends string,
   TAccountLogWrapper extends string,
@@ -676,19 +738,19 @@ export function getBuySplCompressedInstruction<
   TAccountSystemProgram extends string,
   TAccountBubblegumProgram extends string,
   TAccountMarketplaceProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountCurrencyTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountListState extends string,
   TAccountBuyer extends string,
   TAccountPayer extends string,
-  TAccountPayerSource extends string,
+  TAccountPayerCurrencyTa extends string,
   TAccountOwner extends string,
-  TAccountOwnerDestination extends string,
+  TAccountOwnerCurrencyTa extends string,
   TAccountCurrency extends string,
   TAccountTakerBroker extends string,
-  TAccountTakerBrokerCurrencyTa extends string,
+  TAccountTakerBrokerTa extends string,
   TAccountMakerBroker extends string,
-  TAccountMakerBrokerCurrencyTa extends string,
+  TAccountMakerBrokerTa extends string,
   TAccountRentDestination extends string,
   TAccountRentPayer extends string,
   TAccountCosigner extends string,
@@ -696,7 +758,7 @@ export function getBuySplCompressedInstruction<
 >(
   input: BuySplCompressedInput<
     TAccountFeeVault,
-    TAccountFeeVaultTa,
+    TAccountFeeVaultCurrencyTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -704,19 +766,19 @@ export function getBuySplCompressedInstruction<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
-    TAccountPayerSource,
+    TAccountPayerCurrencyTa,
     TAccountOwner,
-    TAccountOwnerDestination,
+    TAccountOwnerCurrencyTa,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerCurrencyTa,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerCurrencyTa,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -725,7 +787,7 @@ export function getBuySplCompressedInstruction<
 ): BuySplCompressedInstruction<
   TProgramAddress,
   TAccountFeeVault,
-  TAccountFeeVaultTa,
+  TAccountFeeVaultCurrencyTa,
   TAccountTreeAuthority,
   TAccountMerkleTree,
   TAccountLogWrapper,
@@ -733,19 +795,19 @@ export function getBuySplCompressedInstruction<
   TAccountSystemProgram,
   TAccountBubblegumProgram,
   TAccountMarketplaceProgram,
-  TAccountTokenProgram,
+  TAccountCurrencyTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountListState,
   TAccountBuyer,
   TAccountPayer,
-  TAccountPayerSource,
+  TAccountPayerCurrencyTa,
   TAccountOwner,
-  TAccountOwnerDestination,
+  TAccountOwnerCurrencyTa,
   TAccountCurrency,
   TAccountTakerBroker,
-  TAccountTakerBrokerCurrencyTa,
+  TAccountTakerBrokerTa,
   TAccountMakerBroker,
-  TAccountMakerBrokerCurrencyTa,
+  TAccountMakerBrokerTa,
   TAccountRentDestination,
   TAccountRentPayer,
   TAccountCosigner
@@ -757,7 +819,10 @@ export function getBuySplCompressedInstruction<
   // Original accounts.
   const originalAccounts = {
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultTa: { value: input.feeVaultTa ?? null, isWritable: true },
+    feeVaultCurrencyTa: {
+      value: input.feeVaultCurrencyTa ?? null,
+      isWritable: true,
+    },
     treeAuthority: { value: input.treeAuthority ?? null, isWritable: false },
     merkleTree: { value: input.merkleTree ?? null, isWritable: true },
     logWrapper: { value: input.logWrapper ?? null, isWritable: false },
@@ -774,7 +839,10 @@ export function getBuySplCompressedInstruction<
       value: input.marketplaceProgram ?? null,
       isWritable: false,
     },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    currencyTokenProgram: {
+      value: input.currencyTokenProgram ?? null,
+      isWritable: false,
+    },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -782,23 +850,14 @@ export function getBuySplCompressedInstruction<
     listState: { value: input.listState ?? null, isWritable: true },
     buyer: { value: input.buyer ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: false },
-    payerSource: { value: input.payerSource ?? null, isWritable: true },
+    payerCurrencyTa: { value: input.payerCurrencyTa ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    ownerDestination: {
-      value: input.ownerDestination ?? null,
-      isWritable: true,
-    },
+    ownerCurrencyTa: { value: input.ownerCurrencyTa ?? null, isWritable: true },
     currency: { value: input.currency ?? null, isWritable: false },
     takerBroker: { value: input.takerBroker ?? null, isWritable: true },
-    takerBrokerCurrencyTa: {
-      value: input.takerBrokerCurrencyTa ?? null,
-      isWritable: true,
-    },
+    takerBrokerTa: { value: input.takerBrokerTa ?? null, isWritable: true },
     makerBroker: { value: input.makerBroker ?? null, isWritable: true },
-    makerBrokerCurrencyTa: {
-      value: input.makerBrokerCurrencyTa ?? null,
-      isWritable: true,
-    },
+    makerBrokerTa: { value: input.makerBrokerTa ?? null, isWritable: true },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
     rentPayer: { value: input.rentPayer ?? null, isWritable: true },
     cosigner: { value: input.cosigner ?? null, isWritable: false },
@@ -812,6 +871,10 @@ export function getBuySplCompressedInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.currencyTokenProgram.value) {
+    accounts.currencyTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
   if (!accounts.bubblegumProgram.value) {
     accounts.bubblegumProgram.value =
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY' as Address<'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'>;
@@ -832,10 +895,6 @@ export function getBuySplCompressedInstruction<
     accounts.marketplaceProgram.value =
       'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp' as Address<'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -848,15 +907,30 @@ export function getBuySplCompressedInstruction<
   if (!accounts.rentDestination.value) {
     accounts.rentDestination.value = expectSome(accounts.owner.value);
   }
+  if (!accounts.rentPayer.value) {
+    accounts.rentPayer.value = expectSome(accounts.payer.value);
+  }
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
+
+  // Remaining accounts.
+  const remainingAccounts: IAccountMeta[] = [
+    ...(args.creators ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+    ...(args.creatorsCurrencyTa ?? []).map((address) => ({
+      address,
+      role: AccountRole.WRITABLE,
+    })),
+  ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultTa),
+      getAccountMeta(accounts.feeVaultCurrencyTa),
       getAccountMeta(accounts.treeAuthority),
       getAccountMeta(accounts.merkleTree),
       getAccountMeta(accounts.logWrapper),
@@ -864,22 +938,23 @@ export function getBuySplCompressedInstruction<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.bubblegumProgram),
       getAccountMeta(accounts.marketplaceProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.currencyTokenProgram),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.listState),
       getAccountMeta(accounts.buyer),
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.payerSource),
+      getAccountMeta(accounts.payerCurrencyTa),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.ownerDestination),
+      getAccountMeta(accounts.ownerCurrencyTa),
       getAccountMeta(accounts.currency),
       getAccountMeta(accounts.takerBroker),
-      getAccountMeta(accounts.takerBrokerCurrencyTa),
+      getAccountMeta(accounts.takerBrokerTa),
       getAccountMeta(accounts.makerBroker),
-      getAccountMeta(accounts.makerBrokerCurrencyTa),
+      getAccountMeta(accounts.makerBrokerTa),
       getAccountMeta(accounts.rentDestination),
       getAccountMeta(accounts.rentPayer),
       getAccountMeta(accounts.cosigner),
+      ...remainingAccounts,
     ],
     programAddress,
     data: getBuySplCompressedInstructionDataEncoder().encode(
@@ -888,7 +963,7 @@ export function getBuySplCompressedInstruction<
   } as BuySplCompressedInstruction<
     TProgramAddress,
     TAccountFeeVault,
-    TAccountFeeVaultTa,
+    TAccountFeeVaultCurrencyTa,
     TAccountTreeAuthority,
     TAccountMerkleTree,
     TAccountLogWrapper,
@@ -896,19 +971,19 @@ export function getBuySplCompressedInstruction<
     TAccountSystemProgram,
     TAccountBubblegumProgram,
     TAccountMarketplaceProgram,
-    TAccountTokenProgram,
+    TAccountCurrencyTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountListState,
     TAccountBuyer,
     TAccountPayer,
-    TAccountPayerSource,
+    TAccountPayerCurrencyTa,
     TAccountOwner,
-    TAccountOwnerDestination,
+    TAccountOwnerCurrencyTa,
     TAccountCurrency,
     TAccountTakerBroker,
-    TAccountTakerBrokerCurrencyTa,
+    TAccountTakerBrokerTa,
     TAccountMakerBroker,
-    TAccountMakerBrokerCurrencyTa,
+    TAccountMakerBrokerTa,
     TAccountRentDestination,
     TAccountRentPayer,
     TAccountCosigner
@@ -924,7 +999,7 @@ export type ParsedBuySplCompressedInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     feeVault: TAccountMetas[0];
-    feeVaultTa: TAccountMetas[1];
+    feeVaultCurrencyTa: TAccountMetas[1];
     treeAuthority: TAccountMetas[2];
     merkleTree: TAccountMetas[3];
     logWrapper: TAccountMetas[4];
@@ -932,19 +1007,19 @@ export type ParsedBuySplCompressedInstruction<
     systemProgram: TAccountMetas[6];
     bubblegumProgram: TAccountMetas[7];
     marketplaceProgram: TAccountMetas[8];
-    tokenProgram: TAccountMetas[9];
+    currencyTokenProgram: TAccountMetas[9];
     associatedTokenProgram: TAccountMetas[10];
     listState: TAccountMetas[11];
     buyer: TAccountMetas[12];
     payer: TAccountMetas[13];
-    payerSource: TAccountMetas[14];
+    payerCurrencyTa: TAccountMetas[14];
     owner: TAccountMetas[15];
-    ownerDestination: TAccountMetas[16];
+    ownerCurrencyTa: TAccountMetas[16];
     currency: TAccountMetas[17];
     takerBroker?: TAccountMetas[18] | undefined;
-    takerBrokerCurrencyTa?: TAccountMetas[19] | undefined;
+    takerBrokerTa?: TAccountMetas[19] | undefined;
     makerBroker?: TAccountMetas[20] | undefined;
-    makerBrokerCurrencyTa?: TAccountMetas[21] | undefined;
+    makerBrokerTa?: TAccountMetas[21] | undefined;
     rentDestination: TAccountMetas[22];
     rentPayer: TAccountMetas[23];
     cosigner?: TAccountMetas[24] | undefined;
@@ -980,7 +1055,7 @@ export function parseBuySplCompressedInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       feeVault: getNextAccount(),
-      feeVaultTa: getNextAccount(),
+      feeVaultCurrencyTa: getNextAccount(),
       treeAuthority: getNextAccount(),
       merkleTree: getNextAccount(),
       logWrapper: getNextAccount(),
@@ -988,19 +1063,19 @@ export function parseBuySplCompressedInstruction<
       systemProgram: getNextAccount(),
       bubblegumProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
-      tokenProgram: getNextAccount(),
+      currencyTokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       listState: getNextAccount(),
       buyer: getNextAccount(),
       payer: getNextAccount(),
-      payerSource: getNextAccount(),
+      payerCurrencyTa: getNextAccount(),
       owner: getNextAccount(),
-      ownerDestination: getNextAccount(),
+      ownerCurrencyTa: getNextAccount(),
       currency: getNextAccount(),
       takerBroker: getNextOptionalAccount(),
-      takerBrokerCurrencyTa: getNextOptionalAccount(),
+      takerBrokerTa: getNextOptionalAccount(),
       makerBroker: getNextOptionalAccount(),
-      makerBrokerCurrencyTa: getNextOptionalAccount(),
+      makerBrokerTa: getNextOptionalAccount(),
       rentDestination: getNextAccount(),
       rentPayer: getNextAccount(),
       cosigner: getNextOptionalAccount(),

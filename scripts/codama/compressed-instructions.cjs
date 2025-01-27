@@ -81,6 +81,71 @@ module.exports = function visitor(options) {
                 },
               ),
             },
+            rentPayer: {
+              defaultValue: c.accountValueNode("payer"),
+            },
+            feeVaultTa: {
+              name: "feeVaultCurrencyTa",
+              defaultValue: c.resolverValueNode(
+                "resolveFeeVaultCurrencyAta",
+                {
+                  dependsOn: [
+                    c.accountValueNode("listState"),
+                    c.accountValueNode("currency"),
+                    c.accountValueNode("currencyTokenProgram"),
+                  ],
+                },
+              ),
+            },
+            ownerDestination: {
+              name: "ownerCurrencyTa",
+              defaultValue: c.resolverValueNode(
+                "resolveOwnerCurrencyAta",
+                {
+                    dependsOn: [
+                    c.accountValueNode("owner"),
+                    c.accountValueNode("currency"),
+                    c.accountValueNode("currencyTokenProgram"),
+                  ],
+                },
+              ),
+            },
+            payerSource: {
+              name: "payerCurrencyTa",
+              defaultValue: c.resolverValueNode(
+                "resolvePayerCurrencyAta",
+                {
+                    dependsOn: [
+                    c.accountValueNode("payer"),
+                    c.accountValueNode("currency"),
+                    c.accountValueNode("currencyTokenProgram"),
+                  ],
+                },
+              ),
+            },
+            tokenProgram: {
+              name: "currencyTokenProgram",
+            },
+            makerBrokerCurrencyTa: {
+              name: "makerBrokerTa",
+              defaultValue: c.resolverValueNode("resolveMakerBrokerCurrencyAta", {
+                dependsOn: [
+                  c.accountValueNode("makerBroker"),
+                  c.accountValueNode("currency"),
+                  c.accountValueNode("currencyTokenProgram"),
+                ],
+              }),
+            },
+            takerBrokerCurrencyTa: {
+              name: "takerBrokerTa",
+              defaultValue: c.resolverValueNode("resolveTakerBrokerCurrencyAta", {
+                dependsOn: [
+                  c.accountValueNode("takerBroker"),
+                  c.accountValueNode("currency"),
+                  c.accountValueNode("currencyTokenProgram"),
+                ],
+              }),
+            },
           },
           arguments: {
             optionalRoyaltyPct: {
@@ -89,7 +154,39 @@ module.exports = function visitor(options) {
             nonce: {
               defaultValue: c.argumentValueNode("index"),
             },
+            creators: {
+              type: c.arrayTypeNode(c.publicKeyTypeNode(), c.fixedCountNode(5)),
+            },
+            creatorsCurrencyTa: {
+              type: c.arrayTypeNode(
+                c.publicKeyTypeNode(),
+                c.fixedCountNode(5),
+              ),
+              defaultValue: c.resolverValueNode("resolveCreatorsCurrencyAta", {
+                dependsOn: [
+                  c.argumentValueNode("creators"),
+                  c.accountValueNode("currency"),
+                  c.accountValueNode("currencyTokenProgram"),
+                ],
+              }),
+            },
           },
+          remainingAccounts: [
+            c.instructionRemainingAccountsNode(
+              c.argumentValueNode("creators"),
+              {
+                isWritable: true,
+                isOptional: true,
+              },
+            ),
+            c.instructionRemainingAccountsNode(
+              c.argumentValueNode("creatorsCurrencyTa"),
+              {
+                isWritable: true,
+                isOptional: true,
+              },
+            ),
+          ],
         },
         closeExpiredListingCompressed: {
           accounts: {
