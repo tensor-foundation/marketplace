@@ -198,7 +198,7 @@ module.exports = function visitor(options) {
               defaultValue: c.resolverValueNode("resolveWnsDistributionPda", {
                 dependsOn: [
                   c.argumentValueNode("collection"),
-                  c.argumentValueNode("paymentMint"),
+                  c.accountValueNode("currency"),
                 ],
               }),
             },
@@ -229,12 +229,6 @@ module.exports = function visitor(options) {
           arguments: {
             collection: {
               type: c.publicKeyTypeNode(),
-            },
-            paymentMint: {
-              type: c.publicKeyTypeNode(),
-              defaultValue: c.publicKeyValueNode(
-                "11111111111111111111111111111111",
-              ),
             },
           },
         },

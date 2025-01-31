@@ -242,10 +242,7 @@ export function getBuyWnsSplInstructionDataCodec(): Codec<
   );
 }
 
-export type BuyWnsSplInstructionExtraArgs = {
-  collection: Address;
-  paymentMint?: Address;
-};
+export type BuyWnsSplInstructionExtraArgs = { collection: Address };
 
 export type BuyWnsSplAsyncInput<
   TAccountFeeVault extends string = string,
@@ -311,7 +308,6 @@ export type BuyWnsSplAsyncInput<
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   collection: BuyWnsSplInstructionExtraArgs['collection'];
-  paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
 };
 
 export async function getBuyWnsSplInstructionAsync<
@@ -571,10 +567,6 @@ export async function getBuyWnsSplInstructionAsync<
       ...(await resolveWnsApprovePda(resolverScope)),
     };
   }
-  if (!args.paymentMint) {
-    args.paymentMint =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
   if (!accounts.distribution.value) {
     accounts.distribution = {
       ...accounts.distribution,
@@ -739,7 +731,6 @@ export type BuyWnsSplInput<
   cosigner?: TransactionSigner<TAccountCosigner>;
   maxAmount: BuyWnsSplInstructionDataArgs['maxAmount'];
   collection: BuyWnsSplInstructionExtraArgs['collection'];
-  paymentMint?: BuyWnsSplInstructionExtraArgs['paymentMint'];
 };
 
 export function getBuyWnsSplInstruction<
@@ -933,10 +924,6 @@ export function getBuyWnsSplInstruction<
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-  if (!args.paymentMint) {
-    args.paymentMint =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
   if (!accounts.wnsProgram.value) {
