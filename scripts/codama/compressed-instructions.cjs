@@ -170,6 +170,18 @@ module.exports = function visitor(options) {
                 ],
               }),
             },
+            proof: {
+              type: c.arrayTypeNode(
+                c.publicKeyTypeNode(),
+                c.prefixedCountNode(c.numberTypeNode("u32")),
+              ),
+              defaultValue: c.arrayValueNode([]),
+            },
+            canopyDepth: {
+              type: c.numberTypeNode("u8"),
+              defaultValue: c.numberValueNode(0),
+              isOptional: true,
+            },
           },
           remainingAccounts: [
             c.instructionRemainingAccountsNode(
@@ -183,6 +195,17 @@ module.exports = function visitor(options) {
               c.argumentValueNode("creatorsCurrencyTa"),
               {
                 isWritable: true,
+                isOptional: true,
+              },
+            ),
+            c.instructionRemainingAccountsNode(
+              c.resolverValueNode("resolveProofPath", {
+                dependsOn: [
+                  c.argumentValueNode("proof"),
+                  c.argumentValueNode("canopyDepth"),
+                ],
+              }),
+              {
                 isOptional: true,
               },
             ),
@@ -367,6 +390,7 @@ module.exports = function visitor(options) {
                 }),
               ],
               remainingAccounts: [
+                ...(node.remainingAccounts || []),
                 c.instructionRemainingAccountsNode(
                   c.resolverValueNode("resolveCreatorPath", {
                     dependsOn: [c.argumentValueNode("creators")],

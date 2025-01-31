@@ -156,6 +156,7 @@ test('it can buy a listed compressed nft using a SPL token as currency', async (
     creators: meta.creators.map((creator) => creator.address),
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
+    proof,
   });
 
   await pipe(
@@ -294,6 +295,7 @@ test('it can buy a listed compressed nft using a T22 token as currency', async (
     sellerFeeBasisPoints: meta.sellerFeeBasisPoints,
     currencyTokenProgram: TOKEN22_PROGRAM_ID,
     creators: meta.creators.map((creator) => creator.address),
+    proof,
   });
 
   await pipe(

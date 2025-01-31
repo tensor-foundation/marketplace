@@ -58,6 +58,7 @@ import {
   resolveTakerBrokerCurrencyAta,
   resolveTreeAuthorityPda,
 } from '@tensor-foundation/resolvers';
+import { resolveProofPath } from '../../hooked';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
   expectSome,
@@ -282,6 +283,8 @@ export function getBuySplCompressedInstructionDataCodec(): Codec<
 export type BuySplCompressedInstructionExtraArgs = {
   creators: Array<Address>;
   creatorsCurrencyTa: Array<Address>;
+  proof?: Array<Address>;
+  canopyDepth?: number;
 };
 
 export type BuySplCompressedAsyncInput<
@@ -347,6 +350,8 @@ export type BuySplCompressedAsyncInput<
   optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
   creators: BuySplCompressedInstructionExtraArgs['creators'];
   creatorsCurrencyTa?: BuySplCompressedInstructionExtraArgs['creatorsCurrencyTa'];
+  proof?: BuySplCompressedInstructionExtraArgs['proof'];
+  canopyDepth?: BuySplCompressedInstructionExtraArgs['canopyDepth'];
 };
 
 export async function getBuySplCompressedInstructionAsync<
@@ -584,6 +589,12 @@ export async function getBuySplCompressedInstructionAsync<
   if (!args.creatorsCurrencyTa) {
     args.creatorsCurrencyTa = await resolveCreatorsCurrencyAta(resolverScope);
   }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = [
@@ -595,6 +606,7 @@ export async function getBuySplCompressedInstructionAsync<
       address,
       role: AccountRole.WRITABLE,
     })),
+    ...resolveProofPath(resolverScope),
   ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -726,6 +738,8 @@ export type BuySplCompressedInput<
   optionalRoyaltyPct?: BuySplCompressedInstructionDataArgs['optionalRoyaltyPct'];
   creators: BuySplCompressedInstructionExtraArgs['creators'];
   creatorsCurrencyTa?: BuySplCompressedInstructionExtraArgs['creatorsCurrencyTa'];
+  proof?: BuySplCompressedInstructionExtraArgs['proof'];
+  canopyDepth?: BuySplCompressedInstructionExtraArgs['canopyDepth'];
 };
 
 export function getBuySplCompressedInstruction<
@@ -870,6 +884,9 @@ export function getBuySplCompressedInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolver scope.
+  const resolverScope = { programAddress, accounts, args };
+
   // Resolve default values.
   if (!accounts.currencyTokenProgram.value) {
     accounts.currencyTokenProgram.value =
@@ -913,6 +930,12 @@ export function getBuySplCompressedInstruction<
   if (!args.nonce) {
     args.nonce = expectSome(args.index);
   }
+  if (!args.proof) {
+    args.proof = [];
+  }
+  if (!args.canopyDepth) {
+    args.canopyDepth = 0;
+  }
 
   // Remaining accounts.
   const remainingAccounts: IAccountMeta[] = [
@@ -924,6 +947,7 @@ export function getBuySplCompressedInstruction<
       address,
       role: AccountRole.WRITABLE,
     })),
+    ...resolveProofPath(resolverScope),
   ];
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
