@@ -7,7 +7,7 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::{
     mpl_token_auth_rules,
-    token_metadata::{transfer, TransferArgs},
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
 };
 
 use crate::{
@@ -127,6 +127,9 @@ pub fn process_list_legacy<'info>(
     maker_broker: Option<Pubkey>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
+    let mint = ctx.accounts.mint.key();
+    assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
+
     // transfer the NFT (the mint is validated on the transfer)
     transfer(
         TransferArgs {

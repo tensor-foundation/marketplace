@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -7,7 +9,6 @@ use anchor_spl::{
     },
 };
 use mpl_token_metadata::types::AuthorizationData;
-use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees, is_royalty_enforced, mpl_token_auth_rules, shard_num,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
@@ -148,7 +149,18 @@ pub struct BuyLegacySpl<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
+        ],
+        seeds::program = mpl_token_metadata::ID,
+        bump,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI

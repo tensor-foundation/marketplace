@@ -70,7 +70,7 @@ pub struct DelistLegacy<'info> {
     pub system_program: Program<'info, System>,
 
     // ------------------------------------------------ Token Metadata accounts
-    /// CHECK: assert_decode_metadata + seeds below
+    /// CHECK: seeds check below
     #[account(
         mut,
         seeds=[

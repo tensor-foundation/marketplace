@@ -64,7 +64,7 @@ pub struct CloseExpiredListingLegacy<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     // ------------------------------------------------ Token Metadata accounts
-    /// CHECK: assert_decode_metadata + seeds below
+    /// CHECK: seeds below
     #[account(
         mut,
         seeds=[
