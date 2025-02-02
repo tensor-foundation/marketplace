@@ -41,6 +41,9 @@ pub struct ListT22<'info> {
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA

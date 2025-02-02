@@ -1,20 +1,4 @@
-import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  generateKeyPairSignerWithSol,
-  signAndSendTransaction,
-  TOKEN_PROGRAM_ID,
-  createAta,
-  createAndMintTo,
-  expectCustomError,
-  TOKEN22_PROGRAM_ID,
-} from '@tensor-foundation/test-helpers';
-import {
-  AssetV1,
-  createDefaultAsset,
-  fetchAssetV1,
-} from '@tensor-foundation/mpl-core';
-import test from 'ava';
+import { findAssociatedTokenPda } from '@solana-program/token';
 import {
   appendTransactionMessageInstruction,
   assertAccountExists,
@@ -22,7 +6,23 @@ import {
   generateKeyPairSigner,
   pipe,
 } from '@solana/web3.js';
-import { findAssociatedTokenPda } from '@solana-program/token';
+import {
+  AssetV1,
+  createDefaultAsset,
+  fetchAssetV1,
+} from '@tensor-foundation/mpl-core';
+import {
+  createAndMintTo,
+  createAta,
+  createDefaultSolanaClient,
+  createDefaultTransaction,
+  expectCustomError,
+  generateKeyPairSignerWithSol,
+  signAndSendTransaction,
+  TOKEN22_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@tensor-foundation/test-helpers';
+import test from 'ava';
 import {
   findFeeVaultPda,
   findListStatePda,
@@ -36,7 +36,6 @@ import {
   TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED,
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
 } from '../../src';
-import { computeIx } from '../legacy/_common';
 import {
   BASIS_POINTS,
   BROKER_FEE_PCT,
@@ -45,6 +44,7 @@ import {
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common';
+import { computeIx } from '../legacy/_common';
 
 test('it can buy a listed core asset using a SPL token', async (t) => {
   const client = createDefaultSolanaClient();
@@ -682,14 +682,16 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   const lister = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
+  const creator0 = await generateKeyPairSignerWithSol(client);
   const creator1 = await generateKeyPairSignerWithSol(client);
   const creator2 = await generateKeyPairSignerWithSol(client);
   const makerBroker = await generateKeyPairSignerWithSol(client);
   const takerBroker = await generateKeyPairSignerWithSol(client);
 
   const creators = [
+    { address: creator0.address, share: 0, verified: true },
     { address: creator1.address, share: 60, verified: true },
-    { address: creator2.address, share: 40, verified: false },
+    { address: creator2.address, share: 40, verified: true },
   ];
 
   const price = 100_000_000n;
@@ -733,6 +735,12 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const creator0Ata = await createAta({
+    client,
+    payer: creator0,
+    mint: currency,
+    owner: creator0.address,
+  });
   const creator1Ata = await createAta({
     client,
     payer: creator1,
@@ -763,6 +771,9 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     mint: currency,
     owner: lister.address,
   });
+  const creator0BalanceBefore = await client.rpc
+    .getTokenAccountBalance(creator0Ata)
+    .send();
   const creator1BalanceBefore = await client.rpc
     .getTokenAccountBalance(creator1Ata)
     .send();
@@ -809,12 +820,21 @@ test('it pays SPL fees and royalties correctly', async (t) => {
   );
 
   // ...and the creators should have received the correct amount...
+  const creator0BalanceAfter = await client.rpc
+    .getTokenAccountBalance(creator0Ata)
+    .send();
   const creator1BalanceAfter = await client.rpc
     .getTokenAccountBalance(creator1Ata)
     .send();
   const creator2BalanceAfter = await client.rpc
     .getTokenAccountBalance(creator2Ata)
     .send();
+
+  // Creator 0 should not receive any royalties because they have 0% share.
+  t.assert(
+    BigInt(creator0BalanceAfter.value.amount) ===
+      BigInt(creator0BalanceBefore.value.amount)
+  );
   t.assert(
     BigInt(creator1BalanceAfter.value.amount) ===
       BigInt(creator1BalanceBefore.value.amount) +

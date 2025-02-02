@@ -41,6 +41,9 @@ pub struct CloseExpiredListingLegacy<'info> {
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(mut)]
@@ -61,7 +64,7 @@ pub struct CloseExpiredListingLegacy<'info> {
     pub marketplace_program: Program<'info, MarketplaceProgram>,
 
     // ------------------------------------------------ Token Metadata accounts
-    /// CHECK: assert_decode_metadata + seeds below
+    /// CHECK: seeds below
     #[account(
         mut,
         seeds=[
@@ -74,7 +77,18 @@ pub struct CloseExpiredListingLegacy<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
+        ],
+        seeds::program = mpl_token_metadata::ID,
+        bump,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI

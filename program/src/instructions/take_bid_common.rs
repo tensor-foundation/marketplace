@@ -57,6 +57,7 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
     // Verify & increment quantity
     require!(bid_state.can_buy_more(), TcompError::BidFullyFilled);
     bid_state.incr_filled_quantity()?;
+    bid_state.updated_at = Clock::get()?.unix_timestamp;
 
     let amount = bid_state.amount;
     let currency = bid_state.currency;

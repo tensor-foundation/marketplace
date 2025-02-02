@@ -633,6 +633,7 @@ test('it pays royalties and fees correctly', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, lister),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
     (tx) => appendTransactionMessageInstruction(listIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

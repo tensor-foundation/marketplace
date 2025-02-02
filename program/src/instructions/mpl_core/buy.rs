@@ -245,6 +245,10 @@ pub fn process_buy_core<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
     // Pay creator royalties.
     if let Some(creators) = asset.royalty_creators {
         transfer_creators_fee(
@@ -259,10 +263,6 @@ pub fn process_buy_core<'info, 'b>(
             },
         )?;
     }
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 
     Ok(())
 }

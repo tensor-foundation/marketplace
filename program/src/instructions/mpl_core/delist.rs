@@ -55,7 +55,7 @@ pub fn process_delist_core<'info>(
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
         .new_owner(&ctx.accounts.owner.to_account_info())
-        .payer(&ctx.accounts.rent_destination) // pay for what?
+        .payer(&ctx.accounts.owner)
         .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
         .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 

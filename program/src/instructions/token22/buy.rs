@@ -64,6 +64,9 @@ pub struct BuyT22<'info> {
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -276,6 +279,9 @@ pub fn process_buy_t22<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
+
     // Pay creators
     if royalties.is_some() {
         transfer_creators_fee(
@@ -290,9 +296,6 @@ pub fn process_buy_t22<'info, 'b>(
             },
         )?;
     }
-
-    // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
 
     // closes the list token account
 
