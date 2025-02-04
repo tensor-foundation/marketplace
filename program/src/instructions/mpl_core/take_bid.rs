@@ -270,7 +270,7 @@ pub fn process_take_bid_core<'info>(
         taker_broker: &ctx.accounts.taker_broker,
         fee_vault: &ctx.accounts.fee_vault.to_account_info(),
         asset_id,
-        token_standard: Some(TokenStandard::ProgrammableNonFungible),
+        token_standard: Some(TokenStandard::ProgrammableNonFungible), // Use this standard to enforce royalties.
         creators: asset
             .royalty_creators
             .unwrap_or_default()

@@ -38,11 +38,6 @@ pub struct CloseExpiredListingCore<'info> {
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_destination: UncheckedAccount<'info>,
-
-    /// The signer who is closing the expired listing; will have to pay any MPL Core
-    /// transaction fees, if they are ever implemented.
-    #[account(mut)]
-    pub payer: Signer<'info>,
 }
 
 pub fn process_close_expired_listing_core<'info>(
@@ -58,7 +53,8 @@ pub fn process_close_expired_listing_core<'info>(
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
         .new_owner(&ctx.accounts.owner.to_account_info())
-        .payer(&ctx.accounts.payer.to_account_info())
+        // This will break if Metaplex ever adds tx fees as it will take list state below minimum balance
+        .payer(&ctx.accounts.list_state.to_account_info())
         .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
         .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 

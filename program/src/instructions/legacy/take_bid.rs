@@ -72,13 +72,13 @@ pub struct TakeBidLegacy<'info> {
 
     /// CHECK: ownership, structure and mint are checked in assert_decode_metadata, seeds checked here.
     #[account(mut,
-    seeds = [
-        Metadata::PREFIX,
-        mpl_token_metadata::ID.as_ref(),
-        mint.key().as_ref(),
-    ],
-    bump,
-    seeds::program = mpl_token_metadata::ID,
+        seeds = [
+            Metadata::PREFIX,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump,
+        seeds::program = mpl_token_metadata::ID,
     )]
     pub metadata: UncheckedAccount<'info>,
 
