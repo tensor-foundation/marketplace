@@ -20,15 +20,12 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
-  type TransactionSigner,
   type WritableAccount,
-  type WritableSignerAccount,
 } from '@solana/web3.js';
 import { findAssetListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
@@ -65,7 +62,6 @@ export type CloseExpiredListingCoreInstruction<
     | string
     | IAccountMeta<string> = 'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
   TAccountRentDestination extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -95,10 +91,6 @@ export type CloseExpiredListingCoreInstruction<
       TAccountRentDestination extends string
         ? WritableAccount<TAccountRentDestination>
         : TAccountRentDestination,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
       ...TRemainingAccounts,
     ]
   >;
@@ -144,7 +136,6 @@ export type CloseExpiredListingCoreAsyncInput<
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountRentDestination extends string = string,
-  TAccountPayer extends string = string,
 > = {
   listState?: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
@@ -154,11 +145,6 @@ export type CloseExpiredListingCoreAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDestination?: Address<TAccountRentDestination>;
-  /**
-   * The signer who is closing the expired listing; will have to pay any MPL Core
-   * transaction fees, if they are ever implemented.
-   */
-  payer: TransactionSigner<TAccountPayer>;
 };
 
 export async function getCloseExpiredListingCoreInstructionAsync<
@@ -170,7 +156,6 @@ export async function getCloseExpiredListingCoreInstructionAsync<
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountRentDestination extends string,
-  TAccountPayer extends string,
   TProgramAddress extends Address = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
 >(
   input: CloseExpiredListingCoreAsyncInput<
@@ -181,8 +166,7 @@ export async function getCloseExpiredListingCoreInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
-    TAccountPayer
+    TAccountRentDestination
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
@@ -195,8 +179,7 @@ export async function getCloseExpiredListingCoreInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
-    TAccountPayer
+    TAccountRentDestination
   >
 > {
   // Program address.
@@ -216,7 +199,6 @@ export async function getCloseExpiredListingCoreInstructionAsync<
       isWritable: false,
     },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -256,7 +238,6 @@ export async function getCloseExpiredListingCoreInstructionAsync<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.rentDestination),
-      getAccountMeta(accounts.payer),
     ],
     programAddress,
     data: getCloseExpiredListingCoreInstructionDataEncoder().encode({}),
@@ -269,8 +250,7 @@ export async function getCloseExpiredListingCoreInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
-    TAccountPayer
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -285,7 +265,6 @@ export type CloseExpiredListingCoreInput<
   TAccountSystemProgram extends string = string,
   TAccountMarketplaceProgram extends string = string,
   TAccountRentDestination extends string = string,
-  TAccountPayer extends string = string,
 > = {
   listState: Address<TAccountListState>;
   asset: Address<TAccountAsset>;
@@ -295,11 +274,6 @@ export type CloseExpiredListingCoreInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketplaceProgram?: Address<TAccountMarketplaceProgram>;
   rentDestination?: Address<TAccountRentDestination>;
-  /**
-   * The signer who is closing the expired listing; will have to pay any MPL Core
-   * transaction fees, if they are ever implemented.
-   */
-  payer: TransactionSigner<TAccountPayer>;
 };
 
 export function getCloseExpiredListingCoreInstruction<
@@ -311,7 +285,6 @@ export function getCloseExpiredListingCoreInstruction<
   TAccountSystemProgram extends string,
   TAccountMarketplaceProgram extends string,
   TAccountRentDestination extends string,
-  TAccountPayer extends string,
   TProgramAddress extends Address = typeof TENSOR_MARKETPLACE_PROGRAM_ADDRESS,
 >(
   input: CloseExpiredListingCoreInput<
@@ -322,8 +295,7 @@ export function getCloseExpiredListingCoreInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
-    TAccountPayer
+    TAccountRentDestination
   >,
   config?: { programAddress?: TProgramAddress }
 ): CloseExpiredListingCoreInstruction<
@@ -335,8 +307,7 @@ export function getCloseExpiredListingCoreInstruction<
   TAccountMplCoreProgram,
   TAccountSystemProgram,
   TAccountMarketplaceProgram,
-  TAccountRentDestination,
-  TAccountPayer
+  TAccountRentDestination
 > {
   // Program address.
   const programAddress =
@@ -355,7 +326,6 @@ export function getCloseExpiredListingCoreInstruction<
       isWritable: false,
     },
     rentDestination: { value: input.rentDestination ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -390,7 +360,6 @@ export function getCloseExpiredListingCoreInstruction<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.marketplaceProgram),
       getAccountMeta(accounts.rentDestination),
-      getAccountMeta(accounts.payer),
     ],
     programAddress,
     data: getCloseExpiredListingCoreInstructionDataEncoder().encode({}),
@@ -403,8 +372,7 @@ export function getCloseExpiredListingCoreInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram,
     TAccountMarketplaceProgram,
-    TAccountRentDestination,
-    TAccountPayer
+    TAccountRentDestination
   >;
 
   return instruction;
@@ -424,12 +392,6 @@ export type ParsedCloseExpiredListingCoreInstruction<
     systemProgram: TAccountMetas[5];
     marketplaceProgram: TAccountMetas[6];
     rentDestination: TAccountMetas[7];
-    /**
-     * The signer who is closing the expired listing; will have to pay any MPL Core
-     * transaction fees, if they are ever implemented.
-     */
-
-    payer: TAccountMetas[8];
   };
   data: CloseExpiredListingCoreInstructionData;
 };
@@ -442,7 +404,7 @@ export function parseCloseExpiredListingCoreInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseExpiredListingCoreInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -469,7 +431,6 @@ export function parseCloseExpiredListingCoreInstruction<
       systemProgram: getNextAccount(),
       marketplaceProgram: getNextAccount(),
       rentDestination: getNextAccount(),
-      payer: getNextAccount(),
     },
     data: getCloseExpiredListingCoreInstructionDataDecoder().decode(
       instruction.data

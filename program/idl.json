@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.1",
+  "version": "0.7.0",
   "name": "marketplace_program",
   "constants": [
     {
@@ -3617,15 +3617,6 @@
           "name": "rentDestination",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The signer who is closing the expired listing; will have to pay any MPL Core",
-            "transaction fees, if they are ever implemented."
-          ]
         }
       ],
       "args": []
