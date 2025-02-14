@@ -283,7 +283,7 @@ pub fn process_buy_t22<'info, 'b>(
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
 
     // Pay creators
-    if royalties.is_some() {
+    if royalties.is_some() && creator_fee > 0 {
         transfer_creators_fee(
             &creators,
             &mut creator_accounts.iter(),

@@ -101,7 +101,7 @@ pub struct TakeBidLegacy<'info> {
         ],
         bump,
         seeds::program = mpl_token_metadata::ID,
-        constraint = edition.data_len() > 1 @ TcompError::EditionDataEmpty,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 

@@ -251,17 +251,19 @@ pub fn process_buy_core<'info, 'b>(
 
     // Pay creator royalties.
     if let Some(creators) = asset.royalty_creators {
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut remaining_accounts.iter(),
-            creator_fee,
-            &CreatorFeeMode::Sol {
-                from: &FromAcc::External(&FromExternal {
-                    from: &ctx.accounts.payer.to_account_info(),
-                    sys_prog: &ctx.accounts.system_program,
-                }),
-            },
-        )?;
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut remaining_accounts.iter(),
+                creator_fee,
+                &CreatorFeeMode::Sol {
+                    from: &FromAcc::External(&FromExternal {
+                        from: &ctx.accounts.payer.to_account_info(),
+                        sys_prog: &ctx.accounts.system_program,
+                    }),
+                },
+            )?;
+        }
     }
 
     Ok(())

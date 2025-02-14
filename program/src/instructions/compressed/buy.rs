@@ -285,18 +285,20 @@ pub fn process_buy<'info>(
     ctx.accounts
         .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
 
-    // Pay creators
-    transfer_creators_fee(
-        &creators.into_iter().map(Into::into).collect(),
-        &mut creator_accounts.iter(),
-        creator_fee,
-        &CreatorFeeMode::Sol {
-            from: &FromAcc::External(&FromExternal {
-                from: &ctx.accounts.payer.to_account_info(),
-                sys_prog: &ctx.accounts.system_program,
-            }),
-        },
-    )?;
+    if creator_fee > 0 {
+        // Pay creators
+        transfer_creators_fee(
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts.iter(),
+            creator_fee,
+            &CreatorFeeMode::Sol {
+                from: &FromAcc::External(&FromExternal {
+                    from: &ctx.accounts.payer.to_account_info(),
+                    sys_prog: &ctx.accounts.system_program,
+                }),
+            },
+        )?;
+    }
 
     Ok(())
 }

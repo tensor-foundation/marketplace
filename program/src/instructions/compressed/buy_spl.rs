@@ -344,21 +344,23 @@ pub fn process_buy_spl<'info>(
     ctx.accounts
         .transfer_currency(ctx.accounts.owner_destination.deref().as_ref(), amount)?;
 
-    // Pay creators
-    transfer_creators_fee(
-        &creators.into_iter().map(Into::into).collect(),
-        &mut creator_accounts_with_ata.iter(),
-        creator_fee,
-        &CreatorFeeMode::Spl {
-            associated_token_program: &ctx.accounts.associated_token_program,
-            token_program: &ctx.accounts.token_program,
-            system_program: &ctx.accounts.system_program,
-            currency: ctx.accounts.currency.deref().as_ref(),
-            from: &ctx.accounts.payer,
-            from_token_acc: ctx.accounts.payer_source.deref().as_ref(),
-            rent_payer: &ctx.accounts.rent_payer,
-        },
-    )?;
+    if creator_fee > 0 {
+        // Pay creators
+        transfer_creators_fee(
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts_with_ata.iter(),
+            creator_fee,
+            &CreatorFeeMode::Spl {
+                associated_token_program: &ctx.accounts.associated_token_program,
+                token_program: &ctx.accounts.token_program,
+                system_program: &ctx.accounts.system_program,
+                currency: ctx.accounts.currency.deref().as_ref(),
+                from: &ctx.accounts.payer,
+                from_token_acc: ctx.accounts.payer_source.deref().as_ref(),
+                rent_payer: &ctx.accounts.rent_payer,
+            },
+        )?;
+    }
 
     Ok(())
 }

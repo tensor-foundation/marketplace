@@ -316,22 +316,24 @@ pub fn process_buy_legacy<'info, 'b>(
     // pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     transfer_lamports(&ctx.accounts.payer, &ctx.accounts.owner, amount)?;
 
-    transfer_creators_fee(
-        &metadata
-            .creators
-            .unwrap_or(Vec::with_capacity(0))
-            .into_iter()
-            .map(Into::into)
-            .collect(),
-        &mut ctx.remaining_accounts.iter(),
-        creator_fee,
-        &CreatorFeeMode::Sol {
-            from: &FromAcc::External(&FromExternal {
-                from: &ctx.accounts.payer.to_account_info(),
-                sys_prog: &ctx.accounts.system_program,
-            }),
-        },
-    )?;
+    if creator_fee > 0 {
+        transfer_creators_fee(
+            &metadata
+                .creators
+                .unwrap_or(Vec::with_capacity(0))
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            &mut ctx.remaining_accounts.iter(),
+            creator_fee,
+            &CreatorFeeMode::Sol {
+                from: &FromAcc::External(&FromExternal {
+                    from: &ctx.accounts.payer.to_account_info(),
+                    sys_prog: &ctx.accounts.system_program,
+                }),
+            },
+        )?;
+    }
 
     // closes the list token account
 

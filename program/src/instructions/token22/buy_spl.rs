@@ -407,7 +407,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         .collect::<Vec<_>>();
 
     // Pay creator royalties.
-    if royalties.is_some() {
+    if royalties.is_some() && creator_fee > 0 {
         transfer_creators_fee(
             &creators.into_iter().map(Into::into).collect(),
             &mut creator_accounts_with_ta.iter(),

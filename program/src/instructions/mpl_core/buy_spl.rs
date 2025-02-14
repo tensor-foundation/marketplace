@@ -316,20 +316,22 @@ pub fn process_buy_core_spl<'info, 'b>(
             .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
             .collect::<Vec<_>>();
 
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut creator_accounts_with_ta.iter(),
-            creator_fee,
-            &CreatorFeeMode::Spl {
-                associated_token_program: &ctx.accounts.associated_token_program,
-                token_program: &ctx.accounts.token_program,
-                system_program: &ctx.accounts.system_program,
-                currency: ctx.accounts.currency.deref().as_ref(),
-                from: &ctx.accounts.payer,
-                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
-                rent_payer: &ctx.accounts.payer,
-            },
-        )?;
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut creator_accounts_with_ta.iter(),
+                creator_fee,
+                &CreatorFeeMode::Spl {
+                    associated_token_program: &ctx.accounts.associated_token_program,
+                    token_program: &ctx.accounts.token_program,
+                    system_program: &ctx.accounts.system_program,
+                    currency: ctx.accounts.currency.deref().as_ref(),
+                    from: &ctx.accounts.payer,
+                    from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                    rent_payer: &ctx.accounts.payer,
+                },
+            )?;
+        }
     }
 
     Ok(())
