@@ -3,7 +3,10 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
-use mpl_token_metadata::types::AuthorizationData;
+use mpl_token_metadata::{
+    accounts::{MasterEdition, Metadata},
+    types::AuthorizationData,
+};
 use tensor_toolbox::{
     assert_fee_account,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
@@ -62,11 +65,21 @@ pub struct TakeBidLegacy<'info> {
     pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    //can't deserialize directly coz Anchor traits not implemented
-    /// CHECK: assert_decode_metadata check seeds
-    #[account(mut)]
+    /// CHECK: ownership, structure and mint are checked in assert_decode_metadata, seeds checked here.
+    #[account(mut,
+        seeds = [
+            Metadata::PREFIX,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump,
+        seeds::program = mpl_token_metadata::ID,
+    )]
     pub metadata: UncheckedAccount<'info>,
 
     #[account(
@@ -78,9 +91,18 @@ pub struct TakeBidLegacy<'info> {
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
-
-    //note that MASTER EDITION and EDITION share the same seeds, and so it's valid to check them here
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            MasterEdition::PREFIX.1,
+        ],
+        bump,
+        seeds::program = mpl_token_metadata::ID,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI

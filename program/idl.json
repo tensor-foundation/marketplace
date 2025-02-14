@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "name": "marketplace_program",
   "constants": [
     {
@@ -4829,6 +4829,11 @@
       "code": 6146,
       "name": "MissingWhitelistMethod",
       "msg": "No whitelist method provided"
+    },
+    {
+      "code": 6147,
+      "name": "EditionDataEmpty",
+      "msg": "Edition data is empty"
     }
   ],
   "metadata": {

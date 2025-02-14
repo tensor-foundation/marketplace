@@ -144,4 +144,7 @@ pub enum TcompError {
 
     #[msg("No whitelist method provided")]
     MissingWhitelistMethod = 146,
+
+    #[msg("Edition data is empty")]
+    EditionDataEmpty = 147,
 }

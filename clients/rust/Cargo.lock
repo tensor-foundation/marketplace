@@ -5033,7 +5033,7 @@ dependencies = [
 
 [[package]]
 name = "tensor-marketplace"
-version = "0.6.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "anchor-lang",
  "assert_matches",

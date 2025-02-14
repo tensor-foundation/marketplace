@@ -62,6 +62,9 @@ pub struct BuyCoreSpl<'info> {
     pub collection: Option<UncheckedAccount<'info>>,
 
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -294,6 +297,10 @@ pub fn process_buy_core_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     // Pay creator royalties.
     if let Some(creators) = asset.royalty_creators {
         let creators_len = creators.len();
@@ -309,23 +316,23 @@ pub fn process_buy_core_spl<'info, 'b>(
             .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
             .collect::<Vec<_>>();
 
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut creator_accounts_with_ta.iter(),
-            creator_fee,
-            &CreatorFeeMode::Spl {
-                associated_token_program: &ctx.accounts.associated_token_program,
-                token_program: &ctx.accounts.token_program,
-                system_program: &ctx.accounts.system_program,
-                currency: ctx.accounts.currency.deref().as_ref(),
-                from: &ctx.accounts.payer,
-                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
-                rent_payer: &ctx.accounts.payer,
-            },
-        )?;
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut creator_accounts_with_ta.iter(),
+                creator_fee,
+                &CreatorFeeMode::Spl {
+                    associated_token_program: &ctx.accounts.associated_token_program,
+                    token_program: &ctx.accounts.token_program,
+                    system_program: &ctx.accounts.system_program,
+                    currency: ctx.accounts.currency.deref().as_ref(),
+                    from: &ctx.accounts.payer,
+                    from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                    rent_payer: &ctx.accounts.payer,
+                },
+            )?;
+        }
     }
 
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)
+    Ok(())
 }

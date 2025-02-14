@@ -245,24 +245,26 @@ pub fn process_buy_core<'info, 'b>(
         taker_broker_fee,
     )?;
 
-    // Pay creator royalties.
-    if let Some(creators) = asset.royalty_creators {
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut remaining_accounts.iter(),
-            creator_fee,
-            &CreatorFeeMode::Sol {
-                from: &FromAcc::External(&FromExternal {
-                    from: &ctx.accounts.payer.to_account_info(),
-                    sys_prog: &ctx.accounts.system_program,
-                }),
-            },
-        )?;
-    }
-
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
         .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
+    // Pay creator royalties.
+    if let Some(creators) = asset.royalty_creators {
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut remaining_accounts.iter(),
+                creator_fee,
+                &CreatorFeeMode::Sol {
+                    from: &FromAcc::External(&FromExternal {
+                        from: &ctx.accounts.payer.to_account_info(),
+                        sys_prog: &ctx.accounts.system_program,
+                    }),
+                },
+            )?;
+        }
+    }
 
     Ok(())
 }
