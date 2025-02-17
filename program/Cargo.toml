@@ -68,7 +68,7 @@ tensor-vipers = { version = "1.0.1" }
 tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", features = [
     "cpi",
 ] }
-whitelist-program = { package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", branch = "main", features = [
+whitelist-program = { rev = "17ee287051181f28358ca7eeb883e20a1211d058", package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
     "cpi",
 ] }
 

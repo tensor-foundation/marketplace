@@ -2685,7 +2685,7 @@ dependencies = [
 [[package]]
 name = "whitelist-program"
 version = "0.2.3"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?branch=main#17ee287051181f28358ca7eeb883e20a1211d058"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=17ee287051181f28358ca7eeb883e20a1211d058#17ee287051181f28358ca7eeb883e20a1211d058"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
