@@ -1228,7 +1228,7 @@ checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "marketplace-program"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2408,6 +2408,23 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-account-compression",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "tensor-vipers",
+]
+
+[[package]]
+name = "tensor-toolbox"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86ad0af7b3655fac8e00f9baffa5a91026bb66858cd3a3c4208e8f523d306dbf"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
  "mpl-bubblegum",
  "mpl-token-metadata",
  "solana-program",
@@ -2667,13 +2684,13 @@ dependencies = [
 
 [[package]]
 name = "whitelist-program"
-version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=71e0013#71e0013f26ff18b39c3aeeb5bfc2533af7ef32cf"
+version = "0.2.3"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?branch=fix/mint-proof-validation#599f27f073aa05efb0ccc8ef42fe27fb239a0889"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "mpl-token-metadata",
- "tensor-toolbox 0.1.0",
+ "tensor-toolbox 0.4.0",
  "tensor-vipers",
 ]
 

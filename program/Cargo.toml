@@ -1,6 +1,6 @@
 [package]
 name = "marketplace-program"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
@@ -68,9 +68,10 @@ tensor-vipers = { version = "1.0.1" }
 tensorswap = { version = "0.1.0", package = "escrow-program", git = "ssh://git@github.com/tensor-foundation/escrow.git", features = [
     "cpi",
 ] }
-whitelist-program = { rev = "71e0013", package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", features = [
+whitelist-program = { package = "whitelist-program", git = "ssh://git@github.com/tensor-foundation/whitelist.git", branch = "fix/mint-proof-validation", features = [
     "cpi",
 ] }
+
 
 [lints.rust]
 unused_must_use = "deny"
