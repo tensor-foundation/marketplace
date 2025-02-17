@@ -2071,3 +2071,207 @@ test('initialized and valid mintProof with other valid condition', async (t) => 
   // ...it should succeed and the bid state should be closed
   t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 });
+
+test('fails with uninitialized mintProofV2 if whitelistV2 only has merkleTree condition', async (t) => {
+  // We create a whitelist with only a MerkleTree condition.
+  // The NFT is verified in the Merkle tree.
+  // It will fail when passing in an uninitialized mintProofV2.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: creator,
+  });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [_],
+  } = await generateTreeOfSize(1, [mint]);
+
+  // Create the whitelist with only a MerkleTree condition.
+  const conditions = [{ mode: Mode.MerkleTree, value: intoAddress(root) }];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // We derive the mintProofPda but don't initialize it.
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint,
+    whitelist,
+  });
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof: mintProofPda,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const promise = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(
+    t,
+    promise,
+    TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION
+  );
+});
+
+test('fails with initialized but incorrect mintProofV2 if whitelistV2 only has merkleTree condition', async (t) => {
+  // We create a whitelist with only a MerkleTree condition.
+  // It will fail when passing in an initialized mintProofV2 with an incorrect proof.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: creator,
+  });
+
+  // Create the Merkle Tree with the mint.
+  const {
+    root,
+    proofs: [proof],
+  } = await generateTreeOfSize(1, [mint]);
+
+  // Create the whitelist with only a MerkleTree condition, for mint.
+  const conditions = [{ mode: Mode.MerkleTree, value: intoAddress(root) }];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // We initialize the mintProofPda
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint,
+      mintProof: mintProofPda,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Now we update the root of the tree to a new root.
+  const {
+    root: newRoot,
+    proofs: [_],
+  } = await generateTreeOfSize(3, [mint]);
+
+  // New conditions with updated merkle tree so the old mint proof is invalid.
+  const newConditions = [
+    { mode: Mode.MerkleTree, value: intoAddress(newRoot) },
+  ];
+
+  // Update the whitelist to have the new root
+  const updateWhitelistIx = getUpdateWhitelistV2Instruction({
+    whitelist,
+    conditions: newConditions,
+    payer: seller,
+    updateAuthority: creator,
+    freezeAuthority: operation('Noop'),
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(updateWhitelistIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof: mintProofPda, // old and invalid mint proof, but still initialized
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const promise = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(
+    t,
+    promise,
+    TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION
+  );
+});
