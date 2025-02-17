@@ -9,6 +9,11 @@ import {
   SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS,
 } from '@solana/web3.js';
 import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
+import {
   createDefaultNft,
   createDefaultNftInCollection,
   findAtaPda,
@@ -28,8 +33,10 @@ import {
 import {
   findMintProofV2Pda,
   getInitUpdateMintProofV2InstructionAsync,
+  getUpdateWhitelistV2Instruction,
   intoAddress,
   Mode,
+  operation,
   TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
   TENSOR_WHITELIST_ERROR__FAILED_FVC_VERIFICATION,
   TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION,
@@ -37,16 +44,16 @@ import {
 } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
-  Field,
-  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
-  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
-  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
-  Target,
   fetchBidStateFromSeeds,
   fetchMaybeBidStateFromSeeds,
+  Field,
   findBidStatePda,
   getBidInstructionAsync,
   getTakeBidLegacyInstructionAsync,
+  Target,
+  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
+  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
+  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
 } from '../../src/index.js';
 import {
   BASIS_POINTS,
@@ -60,11 +67,6 @@ import {
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common.js';
-import {
-  findMarginAccountPda,
-  getDepositMarginAccountInstructionAsync,
-  getInitMarginAccountInstructionAsync,
-} from '@tensor-foundation/escrow';
 import { generateTreeOfSize } from '../_merkle.js';
 import { computeIx } from './_common.js';
 
@@ -1588,4 +1590,688 @@ test('it correctly handles optional royalties', async (t) => {
       (price * 500n * BigInt(royaltyPct)) / BASIS_POINTS / 100n
     );
   }
+});
+
+test('unitialized mintProof with other valid condition', async (t) => {
+  // We create a whitelist with both a VOC and a MerkleTree condition.
+  // The NFT is verified in the VOC collection, but we will pass in an uninitialized but correctly derived mintProof
+  // This should still succeed as the VOC condition is satisfied.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const { collection: collectionMint, item: mint } =
+    await createDefaultNftInCollection({
+      client,
+      payer: seller,
+      owner: seller.address,
+      authority: updateAuthority,
+      creators: [{ address: creator.address, verified: false, share: 100 }],
+    });
+
+  const {
+    root,
+    proofs: [_],
+  } = await generateTreeOfSize(1, [mint.mint]);
+
+  const conditions = [
+    { mode: Mode.VOC, value: collectionMint.mint },
+    { mode: Mode.MerkleTree, value: intoAddress(root) },
+  ];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Create a collection bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint: mint.mint,
+    whitelist,
+  });
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint.mint,
+    mintProof: mintProofPda, // Correct derivation but uninitialized
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed and the bid state should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('initialized but wrong mintProof with other valid condition', async (t) => {
+  // We create a whitelist with both a VOC and a MerkleTree condition.
+  // The NFT is verified in the VOC collection, but we will pass in an initialized but old/invalid mintProof
+  // The mintProof will fail but the VOC condition will still be satisfied
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const { collection: collectionMint, item: mint } =
+    await createDefaultNftInCollection({
+      client,
+      payer: seller,
+      owner: seller.address,
+      authority: updateAuthority,
+      creators: [{ address: creator.address, verified: false, share: 100 }],
+    });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [proof],
+  } = await generateTreeOfSize(1, [mint.mint]);
+
+  // Create the whitelist with both a VOC and a MerkleTree condition.
+  const conditions = [
+    { mode: Mode.VOC, value: collectionMint.mint },
+    { mode: Mode.MerkleTree, value: intoAddress(root) },
+  ];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Create the mintProof for the mint.
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint: mint.mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint: mint.mint,
+      mintProof: mintProofPda,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Update the merkle tree to have a new root
+  const {
+    root: newRoot,
+    proofs: [_],
+  } = await generateTreeOfSize(10, [mint.mint]);
+
+  // New conditions with updated merkle tree so the old mint proof is invalid.
+  const newConditions = [
+    { mode: Mode.VOC, value: collectionMint.mint },
+    { mode: Mode.MerkleTree, value: intoAddress(newRoot) },
+  ];
+
+  // Update the whitelist to have the new root
+  const updateWhitelistIx = getUpdateWhitelistV2Instruction({
+    whitelist,
+    conditions: newConditions,
+    payer: seller,
+    updateAuthority: creator,
+    freezeAuthority: operation('Noop'),
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(updateWhitelistIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint.mint,
+    mintProof: mintProofPda, // Correct derivation, initialized, but old/invalid
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  // Old mint proof shouldn't stop the bid from being taken because the VOC condition is satisfied.
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed and the bid state should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('no mint proof passed in with other valid condition', async (t) => {
+  // We create a whitelist with both a VOC and a MerkleTree condition.
+  // The NFT is verified in the VOC collection and we pass in None for the mintProof.
+  // The merkle validation will fail but the VOC condition will still be satisfied
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const updateAuthority = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const { collection: collectionMint, item: mint } =
+    await createDefaultNftInCollection({
+      client,
+      payer: seller,
+      owner: seller.address,
+      authority: updateAuthority,
+      creators: [{ address: creator.address, verified: false, share: 100 }],
+    });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [_],
+  } = await generateTreeOfSize(1, [mint.mint]);
+
+  // Create the whitelist with both a VOC and a MerkleTree condition.
+  const conditions = [
+    { mode: Mode.VOC, value: collectionMint.mint },
+    { mode: Mode.MerkleTree, value: intoAddress(root) },
+  ];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint.mint,
+    // no mint proof
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  // Old mint proof shouldn't stop the bid from being taken because the VOC condition is satisfied.
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed and the bid state should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('initialized and valid mintProof with other invalid condition', async (t) => {
+  // We create a whitelist with both a VOC and a MerkleTree condition.
+  // The NFT is verified in the Merkle tree but not in the VOC collection
+  // The merkle validation will succeed and this will pass.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  const dummyVOCCollectionMint = (await generateKeyPairSigner()).address;
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    authority: creator,
+    owner: seller.address,
+  });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [proof],
+  } = await generateTreeOfSize(1, [mint]);
+
+  // Create the whitelist with both a VOC and a MerkleTree condition.
+  const conditions = [
+    { mode: Mode.VOC, value: dummyVOCCollectionMint },
+    { mode: Mode.MerkleTree, value: intoAddress(root) },
+  ];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Upsert mint proof for the mint in the tree...
+  const [mintProofPdaInTree] = await findMintProofV2Pda({
+    mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint,
+      mintProof: mintProofPdaInTree,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof: mintProofPdaInTree,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed and the bid state should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('initialized and valid mintProof with other valid condition', async (t) => {
+  // We create a whitelist with both a VOC and a MerkleTree condition.
+  // The NFT is verified in the Merkle tree and the VOC collection
+  // The merkle validation will succeed and this will pass as either condition is satisfied.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { collection: collectionMint, item: mint } =
+    await createDefaultNftInCollection({
+      client,
+      payer: seller,
+      owner: seller.address,
+      authority: creator,
+      creators: [{ address: creator.address, verified: false, share: 100 }],
+    });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [proof],
+  } = await generateTreeOfSize(1, [mint.mint]);
+
+  // Create the whitelist with both a VOC and a MerkleTree condition.
+  const conditions = [
+    { mode: Mode.VOC, value: collectionMint.mint },
+    { mode: Mode.MerkleTree, value: intoAddress(root) },
+  ];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // Upsert mint proof for the mint in the tree...
+  const [mintProofPdaInTree] = await findMintProofV2Pda({
+    mint: mint.mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint: mint.mint,
+      mintProof: mintProofPdaInTree,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint.mint,
+    mintProof: mintProofPdaInTree,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed and the bid state should be closed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('fails with uninitialized mintProofV2 if whitelistV2 only has merkleTree condition', async (t) => {
+  // We create a whitelist with only a MerkleTree condition.
+  // The NFT is verified in the Merkle tree.
+  // It will fail when passing in an uninitialized mintProofV2.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: creator,
+  });
+
+  // Create the Merkle Tree with just the mint.
+  const {
+    root,
+    proofs: [_],
+  } = await generateTreeOfSize(1, [mint]);
+
+  // Create the whitelist with only a MerkleTree condition.
+  const conditions = [{ mode: Mode.MerkleTree, value: intoAddress(root) }];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // We derive the mintProofPda but don't initialize it.
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint,
+    whitelist,
+  });
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof: mintProofPda,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const promise = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(
+    t,
+    promise,
+    TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION
+  );
+});
+
+test('fails with initialized but incorrect mintProofV2 if whitelistV2 only has merkleTree condition', async (t) => {
+  // We create a whitelist with only a MerkleTree condition.
+  // It will fail when passing in an initialized mintProofV2 with an incorrect proof.
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const creator = await generateKeyPairSignerWithSol(client);
+
+  // We create an NFT.
+  const { mint } = await createDefaultNft({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: creator,
+  });
+
+  // Create the Merkle Tree with the mint.
+  const {
+    root,
+    proofs: [proof],
+  } = await generateTreeOfSize(1, [mint]);
+
+  // Create the whitelist with only a MerkleTree condition, for mint.
+  const conditions = [{ mode: Mode.MerkleTree, value: intoAddress(root) }];
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: creator,
+    conditions,
+  });
+
+  // We initialize the mintProofPda
+  const [mintProofPda] = await findMintProofV2Pda({
+    mint,
+    whitelist,
+  });
+
+  const createMintProofIxInTree =
+    await getInitUpdateMintProofV2InstructionAsync({
+      payer: seller,
+      mint,
+      mintProof: mintProofPda,
+      whitelist,
+      proof: proof.proof,
+    });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(createMintProofIxInTree, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Now we update the root of the tree to a new root.
+  const {
+    root: newRoot,
+    proofs: [_],
+  } = await generateTreeOfSize(3, [mint]);
+
+  // New conditions with updated merkle tree so the old mint proof is invalid.
+  const newConditions = [
+    { mode: Mode.MerkleTree, value: intoAddress(newRoot) },
+  ];
+
+  // Update the whitelist to have the new root
+  const updateWhitelistIx = getUpdateWhitelistV2Instruction({
+    whitelist,
+    conditions: newConditions,
+    payer: seller,
+    updateAuthority: creator,
+    freezeAuthority: operation('Noop'),
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(updateWhitelistIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create a collection bid with the whitelist
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const takeBidIx = await getTakeBidLegacyInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof: mintProofPda, // old and invalid mint proof, but still initialized
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    creators: [creator.address],
+  });
+
+  const promise = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  await expectCustomError(
+    t,
+    promise,
+    TENSOR_WHITELIST_ERROR__FAILED_MERKLE_PROOF_VERIFICATION
+  );
 });

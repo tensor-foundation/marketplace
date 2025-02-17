@@ -9,7 +9,8 @@ cluster = "devnet"
 wallet = "~/.config/solana/devnet.json"
 
 [workspace]
-members = [
-  "cpitest",
-  "program"
-]
+members = ["cpitest", "program"]
+
+[toolchain]
+anchor_version = "0.29.0"
+solana_version = "1.17.23"
