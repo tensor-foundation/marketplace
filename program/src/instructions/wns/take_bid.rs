@@ -1,14 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::spl_token_2022,
+    token_2022::spl_token_2022::{
+        self,
+        extension::{BaseStateWithExtensions, StateWithExtensions},
+        state::Mint as Mint2022,
+    },
     token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
 use mpl_token_metadata::types::TokenStandard;
 use spl_token_metadata_interface::state::TokenMetadata;
-use spl_type_length_value::state::{TlvState, TlvStateBorrowed};
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee,
+    token_2022::extension::get_variable_len_extension,
     token_2022::{
         transfer::transfer_checked as tensor_transfer_checked,
         wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
@@ -25,7 +29,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidWns<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: checked in assert_fee_account()
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -50,13 +54,13 @@ pub struct TakeBidWns<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: UncheckedAccount<'info>,
@@ -153,10 +157,10 @@ impl<'info> Validate<'info> for TakeBidWns<'info> {
         );
 
         // check if the cosigner is required
-        if let Some(cosigner) = bid_state.cosigner.value() {
+        if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(bid_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
@@ -170,6 +174,7 @@ pub fn process_take_bid_wns<'info>(
     min_amount: u64,
 ) -> Result<()> {
     let bid_state = &ctx.accounts.bid_state;
+
     // validate mint account
     let seller_fee_basis_points = validate_mint(&ctx.accounts.mint.to_account_info())?;
     let mint = ctx.accounts.mint.key();
@@ -179,7 +184,6 @@ pub fn process_take_bid_wns<'info>(
     let creators_fee = calc_creators_fee(
         seller_fee_basis_points,
         bid_price,
-        None,
         Some(100), // <- enforced royalties
     )?;
 
@@ -210,15 +214,19 @@ pub fn process_take_bid_wns<'info>(
                 let mint_info = &ctx.accounts.mint.to_account_info();
                 let token_metadata = {
                     let buffer = mint_info.try_borrow_data()?;
-                    let state = TlvStateBorrowed::unpack(&buffer)?;
-                    state.get_first_variable_len_value::<TokenMetadata>()?
+                    let mint = StateWithExtensions::<Mint2022>::unpack(&buffer)?;
+                    get_variable_len_extension::<TokenMetadata>(mint.get_tlv_data())?
                 };
 
                 let mut name_arr = [0u8; 32];
                 let length = std::cmp::min(token_metadata.name.len(), name_arr.len());
                 name_arr[..length].copy_from_slice(&token_metadata.name.as_bytes()[..length]);
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }
@@ -280,7 +288,7 @@ pub fn process_take_bid_wns<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin: &ctx.accounts.margin,
+        escrow: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
@@ -293,8 +301,8 @@ pub fn process_take_bid_wns<'info>(
         optional_royalty_pct: None,
         seller_fee_basis_points: 0, // <- royalty value was already paid on approve
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.escrow_program,
+        marketplace_prog: &ctx.accounts.marketplace_program,
+        escrow_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

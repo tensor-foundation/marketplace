@@ -47,6 +47,10 @@ const OWNER_BYTES = [
   146, 43, 217, 148, 215, 83, 14, 162, 91, 65, 177,
 ];
 
+export const computeIx = getSetComputeUnitLimitInstruction({
+  units: 800_000,
+});
+
 export const getOwner = async () =>
   await createKeyPairSigner(Uint8Array.from(OWNER_BYTES));
 
@@ -98,12 +102,8 @@ export async function setupLegacyTest(
     client,
     payer,
     authority: nftUpdateAuthority,
-    owner: nftOwner,
+    owner: nftOwner.address,
     standard,
-  });
-
-  const computeIx = getSetComputeUnitLimitInstruction({
-    units: 300_000,
   });
 
   let bid;

@@ -33,14 +33,7 @@ pub fn process_edit<'info>(
     // Grab current expiry in case they're editing a bid
     let current_expiry = list_state.expiry;
     // Figure out new expiry
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
-        }
-        None => current_expiry,
-    };
+    let expiry = assert_expiry(expire_in_sec, Some(current_expiry))?;
     list_state.expiry = expiry;
 
     record_event(

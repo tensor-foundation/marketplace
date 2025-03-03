@@ -12,7 +12,7 @@ import {
   testBuyCore,
   testDelistCore,
   testEdit,
-  testListCore,
+  testListCore
 } from "./shared";
 
 // Enables rejectedWith.
@@ -59,7 +59,7 @@ describe("[mpl-core] tcomp listings", () => {
           collection,
           owner,
           lookupTableAccount,
-          currency,
+          currency
         });
 
         //can't list again
@@ -70,7 +70,7 @@ describe("[mpl-core] tcomp listings", () => {
             collection,
             owner,
             lookupTableAccount,
-            currency,
+            currency
           })
         ).to.be.rejectedWith(ALREADY_IN_USE_ERR);
 
@@ -78,7 +78,7 @@ describe("[mpl-core] tcomp listings", () => {
           amount,
           owner,
           listState,
-          currency,
+          currency
         });
 
         //try to buy at the wrong price
@@ -92,7 +92,7 @@ describe("[mpl-core] tcomp listings", () => {
             owner: owner.publicKey,
             lookupTableAccount,
             currency,
-            royaltyBps,
+            royaltyBps
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
@@ -100,7 +100,7 @@ describe("[mpl-core] tcomp listings", () => {
           amount,
           owner,
           listState,
-          currency,
+          currency
         });
 
         await testBuyCore({
@@ -112,7 +112,7 @@ describe("[mpl-core] tcomp listings", () => {
           owner: owner.publicKey,
           lookupTableAccount,
           currency,
-          royaltyBps,
+          royaltyBps
         });
       });
 
@@ -138,7 +138,7 @@ describe("[mpl-core] tcomp listings", () => {
           collection,
           owner,
           lookupTableAccount,
-          currency,
+          currency
         });
 
         await testBuyCore({
@@ -151,7 +151,7 @@ describe("[mpl-core] tcomp listings", () => {
           lookupTableAccount,
           payer: rentPayer,
           currency,
-          royaltyBps,
+          royaltyBps
         });
       });
 
@@ -176,14 +176,14 @@ describe("[mpl-core] tcomp listings", () => {
           collection,
           owner,
           expireInSec: new BN(3),
-          currency,
+          currency
         });
         await expect(
           testDelistCore({
             asset,
             collection,
             owner,
-            forceExpired: true,
+            forceExpired: true
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingNotYetExpired"));
         await waitMS(5000);
@@ -191,7 +191,7 @@ describe("[mpl-core] tcomp listings", () => {
           asset,
           collection,
           owner,
-          forceExpired: true,
+          forceExpired: true
         });
       });
 
@@ -216,7 +216,7 @@ describe("[mpl-core] tcomp listings", () => {
           collection,
           owner,
           expireInSec: new BN(1),
-          currency,
+          currency
         });
 
         await waitMS(3000);
@@ -230,7 +230,7 @@ describe("[mpl-core] tcomp listings", () => {
             buyer,
             owner: owner.publicKey,
             currency,
-            royaltyBps,
+            royaltyBps
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("ListingExpired"));
 
@@ -239,7 +239,7 @@ describe("[mpl-core] tcomp listings", () => {
           owner,
           expireInSec: new BN(100),
           listState,
-          currency,
+          currency
         });
 
         await testBuyCore({
@@ -250,7 +250,7 @@ describe("[mpl-core] tcomp listings", () => {
           buyer,
           owner: owner.publicKey,
           currency,
-          royaltyBps,
+          royaltyBps
         });
       });
 
@@ -277,7 +277,7 @@ describe("[mpl-core] tcomp listings", () => {
           collection,
           owner,
           privateTaker: buyer.publicKey,
-          currency,
+          currency
         });
 
         //fails to buy with wrong taker
@@ -290,7 +290,7 @@ describe("[mpl-core] tcomp listings", () => {
             buyer: traderC,
             owner: owner.publicKey,
             currency,
-            royaltyBps,
+            royaltyBps
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("TakerNotAllowed"));
 
@@ -302,7 +302,7 @@ describe("[mpl-core] tcomp listings", () => {
           buyer,
           owner: owner.publicKey,
           currency,
-          royaltyBps,
+          royaltyBps
         });
       });
     });

@@ -7,14 +7,12 @@ use anchor_spl::{
 use mpl_token_metadata::types::AuthorizationData;
 use tensor_toolbox::{
     mpl_token_auth_rules,
-    token_metadata::{transfer, TransferArgs},
-    NullableOption,
+    token_metadata::{assert_decode_metadata, transfer, TransferArgs},
 };
 
 use crate::{
-    program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState, MakeEvent,
-    Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, LIST_STATE_SIZE,
-    MAX_EXPIRY_SEC,
+    assert_expiry, program::MarketplaceProgram, record_event, AuthorizationDataLocal, ListState,
+    MakeEvent, Target, TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -37,18 +35,21 @@ pub struct ListLegacy<'info> {
             mint.key().as_ref(),
         ],
         bump,
-        space = LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         associated_token::mint = mint,
         associated_token::authority = list_state,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     //separate payer so that a program can list with owner being a PDA
@@ -77,7 +78,18 @@ pub struct ListLegacy<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            mpl_token_metadata::accounts::MasterEdition::PREFIX.1,
+        ],
+        seeds::program = mpl_token_metadata::ID,
+        bump,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI
@@ -115,6 +127,9 @@ pub fn process_list_legacy<'info>(
     maker_broker: Option<Pubkey>,
     authorization_data: Option<AuthorizationDataLocal>,
 ) -> Result<()> {
+    let mint = ctx.accounts.mint.key();
+    assert_decode_metadata(&mint, &ctx.accounts.metadata)?;
+
     // transfer the NFT (the mint is validated on the transfer)
     transfer(
         TransferArgs {
@@ -155,17 +170,15 @@ pub fn process_list_legacy<'info>(
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
 
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
-        }
-        None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
-    };
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
-    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
+    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.cosigner = ctx
+        .accounts
+        .cosigner
+        .as_ref()
+        .map(|c| c.key())
+        .unwrap_or_default();
     // Manually serialize the account data so that we can use it in the event noop CPI.
     list_state.exit(ctx.program_id)?;
 

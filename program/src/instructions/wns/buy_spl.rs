@@ -6,7 +6,6 @@ use anchor_spl::{
         close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked,
     },
 };
-use mpl_token_metadata::types::TokenStandard;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees,
@@ -14,14 +13,15 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked,
         wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     },
-    CalcFeesArgs, Fees, BROKER_FEE_PCT,
+    CalcFeesArgs, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
-    assert_fee_vault_seeds, assert_list_state_seeds, assert_token_account, init_if_needed_ata,
-    program::MarketplaceProgram, record_event, InitIfNeededAtaParams, ListState, TakeEvent, Target,
-    TcompError, TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    assert_associated_token_account, assert_fee_vault_seeds, assert_list_state_seeds,
+    assert_token_account, init_if_needed_ata, program::MarketplaceProgram, record_event,
+    InitIfNeededAtaParams, ListState, TakeEvent, Target, TcompError, TcompEvent, TcompSigner,
+    CURRENT_TCOMP_VERSION, TNSR_CURRENCY,
 };
 
 #[derive(Accounts)]
@@ -58,6 +58,9 @@ pub struct BuyWnsSpl<'info> {
     pub list_state: Box<Account<'info, ListState>>,
 
     /// WNS asset mint.
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// SPL token mint of the currency.
@@ -163,7 +166,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             &self.currency_token_program.key(),
         )?;
 
-        assert_token_account(
+        assert_associated_token_account(
             &self.list_ta.to_account_info(),
             &self.mint.key(),
             &self.list_state.key(),
@@ -205,10 +208,10 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
         );
 
         // Validate the cosigner if it's required.
-        if let Some(cosigner) = list_state.cosigner.value() {
+        if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         // maker_broker accs are both None or Some
@@ -219,7 +222,7 @@ impl<'info> Validate<'info> for BuyWnsSpl<'info> {
             TcompError::BrokerMismatch
         );
 
-        //taker_broker accs are both None or Some
+        // taker_broker accs are both None or Some
         #[rustfmt::skip]
         require!(
             (self.taker_broker.is_some() && self.taker_broker_currency_ta.is_some()) ||
@@ -288,7 +291,11 @@ impl<'info> BuyWnsSpl<'info> {
             init_if_needed_ata(InitIfNeededAtaParams {
                 ata: maker_broker_currency_ta.to_account_info(),
                 payer: self.payer.to_account_info(),
-                owner: self.maker_broker.as_ref().unwrap().to_account_info(),
+                owner: self
+                    .maker_broker
+                    .as_ref()
+                    .ok_or(TcompError::MissingBroker)?
+                    .to_account_info(),
                 mint: self.currency.to_account_info(),
                 associated_token_program: self.associated_token_program.to_account_info(),
                 token_program: self.currency_token_program.to_account_info(),
@@ -301,7 +308,11 @@ impl<'info> BuyWnsSpl<'info> {
             init_if_needed_ata(InitIfNeededAtaParams {
                 ata: taker_broker_currency_ta.to_account_info(),
                 payer: self.payer.to_account_info(),
-                owner: self.taker_broker.as_ref().unwrap().to_account_info(),
+                owner: self
+                    .taker_broker
+                    .as_ref()
+                    .ok_or(TcompError::MissingBroker)?
+                    .to_account_info(),
                 mint: self.currency.to_account_info(),
                 associated_token_program: self.associated_token_program.to_account_info(),
                 token_program: self.currency_token_program.to_account_info(),
@@ -329,7 +340,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
         TcompError::CurrencyMismatch
     );
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         taker_fee: _,
@@ -339,7 +350,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -349,8 +360,7 @@ pub fn process_buy_wns_spl<'info, 'b>(
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
-        Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
-        None,
+        Some(100), // <- enforced royalties
     )?;
 
     let asset_id = ctx.accounts.mint.key();

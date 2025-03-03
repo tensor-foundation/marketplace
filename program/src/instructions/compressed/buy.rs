@@ -1,7 +1,8 @@
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
     transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, Fees, FromAcc,
-    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
+    FromExternal, MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT, MAKER_BROKER_PCT,
+    TAKER_FEE_BPS,
 };
 
 use crate::*;
@@ -207,13 +208,12 @@ pub fn process_buy<'info>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    let creator_fee =
-        calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // Record event before price check to make debugging easier.
     record_event(
@@ -288,22 +288,24 @@ pub fn process_buy<'info>(
         taker_broker_fee,
     )?;
 
-    // Pay creators
-    transfer_creators_fee(
-        &creators.into_iter().map(Into::into).collect(),
-        &mut creator_accounts.iter(),
-        creator_fee,
-        &CreatorFeeMode::Sol {
-            from: &FromAcc::External(&FromExternal {
-                from: &ctx.accounts.payer.to_account_info(),
-                sys_prog: &ctx.accounts.system_program,
-            }),
-        },
-    )?;
-
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
         .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
+    if creator_fee > 0 {
+        // Pay creators
+        transfer_creators_fee(
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts.iter(),
+            creator_fee,
+            &CreatorFeeMode::Sol {
+                from: &FromAcc::External(&FromExternal {
+                    from: &ctx.accounts.payer.to_account_info(),
+                    sys_prog: &ctx.accounts.system_program,
+                }),
+            },
+        )?;
+    }
 
     Ok(())
 }

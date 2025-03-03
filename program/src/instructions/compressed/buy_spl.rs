@@ -4,14 +4,14 @@ use anchor_spl::token_interface::{
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, make_cnft_args, transfer_cnft,
     transfer_creators_fee, CalcFeesArgs, CnftArgs, CreatorFeeMode, DataHashArgs, Fees,
-    MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT,
+    MakeCnftArgs, MetadataSrc, TransferArgs, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 
 use crate::*;
 
 #[derive(Accounts)]
 pub struct BuySpl<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: Checked in assert_fee_account().
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -21,18 +21,28 @@ pub struct BuySpl<'info> {
         associated_token::authority = fee_vault,
     )]
     pub fee_vault_ta: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
+
     pub log_wrapper: Program<'info, Noop>,
+
     pub compression_program: Program<'info, SplAccountCompression>,
+
     pub system_program: Program<'info, System>,
+
     pub bubblegum_program: Program<'info, Bubblegum>,
+
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+
     pub token_program: Interface<'info, TokenInterface>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
+
     #[account(mut, close = rent_destination,
         seeds=[
             b"list_state".as_ref(),
@@ -43,6 +53,7 @@ pub struct BuySpl<'info> {
         constraint = list_state.currency == Some(currency.key()) @ TcompError::CurrencyMismatch,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
     /// CHECK: doesnt matter, but this lets you pass in a 3rd party received address
     pub buyer: UncheckedAccount<'info>,
 
@@ -53,6 +64,7 @@ pub struct BuySpl<'info> {
       token::authority = payer,
     )]
     pub payer_source: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: has_one = owner on list_state
     pub owner: UncheckedAccount<'info>,
     #[account(init_if_needed,
@@ -61,7 +73,11 @@ pub struct BuySpl<'info> {
       associated_token::authority = owner,
     )]
     pub owner_destination: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: none, can be anything
@@ -97,9 +113,11 @@ pub struct BuySpl<'info> {
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest
     )]
     pub rent_destination: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub rent_payer: Signer<'info>,
-    // cosigner is checked in validate()
+
+    // cosigner is checked in handler
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
@@ -180,7 +198,7 @@ pub fn process_buy_spl<'info>(
     let list_state = &ctx.accounts.list_state;
 
     // In case we have an extra remaining account.
-    let mut v = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
+    let mut v: Vec<AccountInfo<'_>> = Vec::with_capacity(ctx.remaining_accounts.len() + 1);
 
     // Validate the cosigner and fetch additional remaining account if it exists.
     // Cosigner could be a remaining account from an old client.
@@ -235,7 +253,7 @@ pub fn process_buy_spl<'info>(
     // Should be checked in transfer_cnft, but why not.
     require!(asset_id == list_state.asset_id, TcompError::AssetIdMismatch);
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         taker_fee: _,
@@ -245,13 +263,12 @@ pub fn process_buy_spl<'info>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
-    let creator_fee =
-        calc_creators_fee(seller_fee_basis_points, amount, None, optional_royalty_pct)?;
+    let creator_fee = calc_creators_fee(seller_fee_basis_points, amount, optional_royalty_pct)?;
 
     // Record event before price check to make debugging easier.
     record_event(
@@ -328,25 +345,27 @@ pub fn process_buy_spl<'info>(
         taker_broker_fee,
     )?;
 
-    // Pay creators
-    transfer_creators_fee(
-        &creators.into_iter().map(Into::into).collect(),
-        &mut creator_accounts_with_ata.iter(),
-        creator_fee,
-        &CreatorFeeMode::Spl {
-            associated_token_program: &ctx.accounts.associated_token_program,
-            token_program: &ctx.accounts.token_program,
-            system_program: &ctx.accounts.system_program,
-            currency: ctx.accounts.currency.deref().as_ref(),
-            from: &ctx.accounts.payer,
-            from_token_acc: ctx.accounts.payer_source.deref().as_ref(),
-            rent_payer: &ctx.accounts.rent_payer,
-        },
-    )?;
-
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
         .transfer_currency(ctx.accounts.owner_destination.deref().as_ref(), amount)?;
+
+    if creator_fee > 0 {
+        // Pay creators
+        transfer_creators_fee(
+            &creators.into_iter().map(Into::into).collect(),
+            &mut creator_accounts_with_ata.iter(),
+            creator_fee,
+            &CreatorFeeMode::Spl {
+                associated_token_program: &ctx.accounts.associated_token_program,
+                token_program: &ctx.accounts.token_program,
+                system_program: &ctx.accounts.system_program,
+                currency: ctx.accounts.currency.deref().as_ref(),
+                from: &ctx.accounts.payer,
+                from_token_acc: ctx.accounts.payer_source.deref().as_ref(),
+                rent_payer: &ctx.accounts.rent_payer,
+            },
+        )?;
+    }
 
     Ok(())
 }

@@ -2,15 +2,23 @@ import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
   generateKeyPairSigner,
+  getAddressDecoder,
   pipe,
 } from '@solana/web3.js';
+import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   createWnsNftInGroup,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
+  TENSOR_ERROR__INSUFFICIENT_BALANCE,
   TOKEN22_PROGRAM_ID,
+  TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
 import {
   intoAddress,
@@ -19,10 +27,13 @@ import {
 } from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
+  Field,
   findBidStatePda,
   getBidInstructionAsync,
   getTakeBidWnsInstructionAsync,
   Target,
+  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
+  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
 } from '../../src/index.js';
 import {
   APPROVE_ACCOUNT_RENT_LAMPORTS,
@@ -31,11 +42,16 @@ import {
   BASIS_POINTS,
   COMPUTE_500K_IX,
   createWhitelistV2,
+  DEFAULT_SFBP,
   expectCustomError,
+  initTswap,
+  LAMPORTS_PER_SOL,
+  sleep,
   TAKER_FEE_BPS,
   upsertMintProof,
 } from '../_common.js';
 import { generateTreeOfSize } from '../_merkle.js';
+import { computeIx } from '../legacy/_common.js';
 
 test('it can take a bid on a WNS collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -52,7 +68,7 @@ test('it can take a bid on a WNS collection', async (t) => {
     price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: seller.address,
@@ -123,9 +139,9 @@ test('it can take a bid on a WNS collection', async (t) => {
     whitelist,
     bidState,
     distribution,
+    collection: group,
     minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   await pipe(
@@ -177,8 +193,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
-  // Mint NFT
-  const { mint, distribution } = await createWnsNftInGroup({
+  const { mint, group, distribution } = await createWnsNftInGroup({
     client,
     payer,
     owner: seller.address,
@@ -281,11 +296,11 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mint: otherMint,
     distribution,
     mintProof,
+    collection: group,
     whitelist,
     bidState,
     minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   let promise = pipe(
@@ -307,9 +322,9 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     whitelist,
     bidState,
     distribution,
+    collection: group,
     minAmount: price,
     tokenProgram: TOKEN22_PROGRAM_ID,
-    creators: [nftUpdateAuthority.address],
   });
 
   promise = pipe(
@@ -320,4 +335,343 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
   );
 
   await expectCustomError(t, promise, TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF);
+});
+
+test('it has to match the name field if set', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+  const correctName = 'TestAsset';
+  const incorrectName = 'test';
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: authority,
+    data: {
+      name: correctName,
+      symbol: 'TNFT',
+      uri: 'https://tensor.foundation/',
+      royaltyBasisPoints: Number(DEFAULT_SFBP),
+      creators: [{ address: authority.address, share: 100 }],
+    },
+  });
+
+  const {
+    mint: mint2,
+    group: group2,
+    distribution: distribution2,
+  } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: authority,
+    data: {
+      name: incorrectName,
+      symbol: 'TNFT',
+      uri: 'https://tensor.foundation/',
+      royaltyBasisPoints: Number(DEFAULT_SFBP),
+      creators: [{ address: authority.address, share: 100 }],
+    },
+  });
+
+  const {
+    root,
+    proofs: [p, otherP],
+  } = await generateTreeOfSize(10, [mint, mint2]);
+
+  // Create Whitelist including both mints
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.MerkleTree, value: intoAddress(root) }],
+  });
+
+  // Upsert Mint Proof for both mints
+  const { mintProof } = await upsertMintProof({
+    client,
+    payer: seller,
+    mint,
+    whitelist,
+    proof: p.proof,
+  });
+
+  const { mintProof: mintProof2 } = await upsertMintProof({
+    client,
+    payer: seller,
+    mint: mint2,
+    whitelist,
+    proof: otherP.proof,
+  });
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    // (!)
+    field: Field.Name,
+    fieldId: getAddressDecoder().decode(
+      new TextEncoder()
+        .encode(correctName)
+        .slice(0, 32)
+        .reduce((arr, byte, i) => {
+          arr[i] = byte;
+          return arr;
+        }, new Uint8Array(32))
+    ),
+    bidId,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller takes the bid with the incorrect named mint...
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint: mint2,
+    mintProof: mintProof2,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution: distribution2,
+    collection: group2,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID);
+
+  // When the seller takes the bid with the correct mint...
+  const takeBidIx2 = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx2, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should succeed
+  t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
+});
+
+test('it cannot take an expired bid', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: authority,
+  });
+
+  const {
+    root,
+    proofs: [p],
+  } = await generateTreeOfSize(10, [mint]);
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.MerkleTree, value: intoAddress(root) }],
+  });
+
+  const { mintProof } = await upsertMintProof({
+    client,
+    payer: seller,
+    mint,
+    whitelist,
+    proof: p.proof,
+  });
+
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: LAMPORTS_PER_SOL / 2n,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    expireInSec: 1n,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Sleep for 5 seconds to let the bid expire
+  await sleep(5000);
+
+  // When the seller tries to take the bid...
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof,
+    minAmount: LAMPORTS_PER_SOL / 2n,
+    bidState,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  // ...it should fail
+  await expectCustomError(t, tx, TENSOR_MARKETPLACE_ERROR__BID_EXPIRED);
+});
+
+test('it cannot take a bid when the escrow balance is insufficient', async (t) => {
+  const client = createDefaultSolanaClient();
+  const bidder = await generateKeyPairSignerWithSol(client);
+  const seller = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
+  const price = LAMPORTS_PER_SOL / 4n;
+  await initTswap(client);
+
+  const { mint, group, distribution } = await createWnsNftInGroup({
+    client,
+    payer: seller,
+    owner: seller.address,
+    authority: authority,
+  });
+
+  const {
+    root,
+    proofs: [p],
+  } = await generateTreeOfSize(10, [mint]);
+
+  const { whitelist } = await createWhitelistV2({
+    client,
+    updateAuthority: authority,
+    conditions: [{ mode: Mode.MerkleTree, value: intoAddress(root) }],
+  });
+
+  const { mintProof } = await upsertMintProof({
+    client,
+    payer: seller,
+    mint,
+    whitelist,
+    proof: p.proof,
+  });
+
+  // Create Escrow
+  const marginAccount = (
+    await findMarginAccountPda({
+      owner: bidder.address,
+      tswap: TSWAP_SINGLETON,
+      marginNr: 0,
+    })
+  )[0];
+  const escrowIx = await getInitMarginAccountInstructionAsync({
+    owner: bidder,
+    marginAccount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(escrowIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Deposit SOL to escrow
+  const depositIx = await getDepositMarginAccountInstructionAsync({
+    owner: bidder,
+    marginAccount,
+    // (!) bidder deposits 1 lamports less than the bid amount
+    lamports: price - 1n,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(depositIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Create Bid
+  const bidId = (await generateKeyPairSigner()).address;
+  const [bidState] = await findBidStatePda({
+    owner: bidder.address,
+    bidId,
+  });
+  const bidIx = await getBidInstructionAsync({
+    owner: bidder,
+    amount: price,
+    target: Target.Whitelist,
+    targetId: whitelist,
+    bidId,
+    //(!)
+    sharedEscrow: marginAccount,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, bidder),
+    (tx) => appendTransactionMessageInstruction(bidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // When the seller tries to take the bid...
+  const takeBidIx = await getTakeBidWnsInstructionAsync({
+    owner: bidder.address,
+    seller,
+    whitelist,
+    mint,
+    mintProof,
+    minAmount: price,
+    bidState,
+    //(!)
+    sharedEscrow: marginAccount,
+    tokenProgram: TOKEN22_PROGRAM_ID,
+    distribution,
+    collection: group,
+  });
+
+  const tx = pipe(
+    await createDefaultTransaction(client, seller),
+    (tx) => appendTransactionMessageInstruction(computeIx, tx),
+    (tx) => appendTransactionMessageInstruction(takeBidIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+  await expectCustomError(t, tx, TENSOR_ERROR__INSUFFICIENT_BALANCE);
 });

@@ -1,5 +1,5 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::metaplex_core::{validate_asset, MetaplexCore};
+use tensor_toolbox::metaplex_core::{validate_core_asset, MetaplexCore};
 
 use crate::*;
 
@@ -13,6 +13,7 @@ pub struct CloseExpiredListingCore<'info> {
         bump = list_state.bump[0],
         close = rent_destination,
         has_one = owner,
+        constraint = list_state.expiry < Clock::get()?.unix_timestamp @ TcompError::ListingNotYetExpired
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -43,12 +44,7 @@ pub fn process_close_expired_listing_core<'info>(
     ctx: Context<'_, '_, '_, 'info, CloseExpiredListingCore<'info>>,
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
-    require!(
-        list_state.expiry < Clock::get()?.unix_timestamp,
-        TcompError::ListingNotYetExpired
-    );
-
-    validate_asset(
+    validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
@@ -57,7 +53,8 @@ pub fn process_close_expired_listing_core<'info>(
         .asset(&ctx.accounts.asset)
         .authority(Some(&ctx.accounts.list_state.to_account_info()))
         .new_owner(&ctx.accounts.owner.to_account_info())
-        .payer(&ctx.accounts.list_state.to_account_info()) // pay for what?
+        // This will break if Metaplex ever adds tx fees as it will take list state below minimum balance
+        .payer(&ctx.accounts.list_state.to_account_info())
         .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
         .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 

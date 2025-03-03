@@ -1,5 +1,5 @@
 use crate::*;
-use tensor_toolbox::{transfer_lamports_from_pda, NullableOption};
+use tensor_toolbox::transfer_lamports_from_pda;
 use tensorswap::instructions::assert_decode_margin_account;
 
 #[derive(Accounts)]
@@ -10,7 +10,7 @@ pub struct Bid<'info> {
     #[account(init_if_needed, payer = rent_payer,
         seeds=[b"bid_state".as_ref(), owner.key().as_ref(), bid_id.as_ref()],
         bump,
-        space = BID_STATE_SIZE,
+        space = BidState::SIZE,
     )]
     pub bid_state: Box<Account<'info, BidState>>,
     #[account(mut)]
@@ -38,13 +38,6 @@ impl<'info> Bid<'info> {
     }
 }
 
-impl<'info> Validate<'info> for Bid<'info> {
-    fn validate(&self) -> Result<()> {
-        Ok(())
-    }
-}
-
-#[access_control(ctx.accounts.validate())]
 pub fn process_bid<'info>(
     ctx: Context<'_, '_, '_, 'info, Bid<'info>>,
     bid_id: Pubkey,
@@ -70,9 +63,12 @@ pub fn process_bid<'info>(
     // At least 1 seems reasonable, else why bother
     require!(quantity >= 1, TcompError::BadQuantity);
 
+    // Non-SOL currencies not supported yet.
+    require!(currency.is_none(), TcompError::CurrencyNotYetEnabled);
+
     // only set rent_payer when initializing
     if bid_state.version == 0 {
-        bid_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
+        bid_state.rent_payer = ctx.accounts.rent_payer.key();
     }
     bid_state.version = CURRENT_TCOMP_VERSION;
     bid_state.bump = [ctx.bumps.bid_state];
@@ -95,7 +91,11 @@ pub fn process_bid<'info>(
         require!(field_id.is_none(), TcompError::BadBidField);
     }
 
-    // Can only be set once.
+    // User cannot set the target id to be the default pubkey to avoid them being able to re-edit these
+    // specific fields.
+    require!(target_id != Pubkey::default(), TcompError::WrongTargetId);
+
+    // Can only be set once, when the bid is first initialized the empty target id is the default pubkey.
     if bid_state.target_id == Pubkey::default() {
         bid_state.target = target.clone();
         bid_state.target_id = target_id;
@@ -107,7 +107,7 @@ pub fn process_bid<'info>(
         // our api uses a bidTx ix when editing bids.
         match &ctx.accounts.cosigner {
             Some(cosigner) if cosigner.key() != ctx.accounts.owner.key() => {
-                bid_state.cosigner = NullableOption::new(cosigner.key());
+                bid_state.cosigner = cosigner.key();
             }
             _ => (),
         }
@@ -136,12 +136,19 @@ pub fn process_bid<'info>(
     // Figure out new expiry
     let expiry = match expire_in_sec {
         Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
+            let expire_in_i64 =
+                i64::try_from(expire_in_sec).map_err(|_| TcompError::ExpiryTooLarge)?;
             require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
+            Clock::get()?
+                .unix_timestamp
+                .checked_add(expire_in_i64)
+                .ok_or(TcompError::ExpiryTooLarge)?
         }
         // When creating bid for the first time.
-        None if current_expiry == 0 => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
+        None if current_expiry == 0 => Clock::get()?
+            .unix_timestamp
+            .checked_add(MAX_EXPIRY_SEC)
+            .ok_or(TcompError::ExpiryTooLarge)?,
         // Editing a bid.
         None => current_expiry,
     };
@@ -203,7 +210,7 @@ pub fn process_bid<'info>(
             }
             //(!)We do NOT transfer lamports to margin if insufficient, assume done in a separate ix if needed
         }
-        // Not marginated
+        // Not marginated (or closed margin account = user's responsibility for trying to pass in a closed account)
         Err(_) => {
             if bid_balance > deposit_amount {
                 let diff = unwrap_int!(bid_balance.checked_sub(deposit_amount));

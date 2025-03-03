@@ -56,6 +56,7 @@ export interface WnsNft {
   extraAccountMetas: IAccountMeta[];
   distribution: Address;
   sellerFeeBasisPoints: bigint;
+  group: Address;
 }
 
 export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
@@ -95,13 +96,14 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   }
 
   // Mint NFT
-  const { mint, extraAccountMetas, distribution } = await createWnsNftInGroup({
-    client,
-    payer,
-    owner: nftOwner.address,
-    authority: nftUpdateAuthority,
-    paymentMint: splMint,
-  });
+  const { mint, group, extraAccountMetas, distribution } =
+    await createWnsNftInGroup({
+      client,
+      payer,
+      owner: nftOwner.address,
+      authority: nftUpdateAuthority,
+      paymentMint: splMint,
+    });
 
   let bid;
   let listing;
@@ -116,6 +118,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
         cosigner: useCosigner ? cosigner : undefined,
         makerBroker: useMakerBroker ? makerBroker.address : undefined,
         distribution,
+        collection: group,
         currency: splMint,
       });
 
@@ -208,7 +211,7 @@ export async function setupWnsTest(params: SetupTestParams): Promise<WnsTest> {
   return {
     client,
     signers,
-    nft: { mint, extraAccountMetas, distribution, sellerFeeBasisPoints },
+    nft: { mint, extraAccountMetas, distribution, sellerFeeBasisPoints, group },
     splMint,
     state,
     price,

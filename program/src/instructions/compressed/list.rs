@@ -1,5 +1,5 @@
 use mpl_bubblegum::utils::get_asset_id;
-use tensor_toolbox::{transfer_cnft, NullableOption, TransferArgs};
+use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
@@ -29,13 +29,14 @@ pub struct List<'info> {
 
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
 
-    #[account(init, payer = rent_payer,
+    #[account(init,
+        payer = rent_payer,
         seeds=[
             b"list_state".as_ref(),
             get_asset_id(&merkle_tree.key(), nonce).as_ref()
         ],
         bump,
-        space = LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -112,16 +113,10 @@ pub fn process_list<'info>(
     list_state.currency = currency;
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
-        }
-        None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
-    };
+
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.rent_payer.key());
+    list_state.rent_payer = ctx.accounts.rent_payer.key();
 
     // Only set the cosigner if it's a signer and not a remaining account.
     list_state.cosigner = ctx
@@ -130,9 +125,9 @@ pub fn process_list<'info>(
         .as_ref()
         .filter(|cosigner| cosigner.is_signer)
         .map(|cosigner| cosigner.key())
-        .into();
+        .unwrap_or_default();
 
-    // seriallizes the account data
+    // serializes the account data so the record event emits the correct data
     list_state.exit(ctx.program_id)?;
 
     record_event(

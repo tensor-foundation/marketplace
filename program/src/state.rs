@@ -1,28 +1,20 @@
-use tensor_toolbox::NullableOption;
-
 use crate::*;
 
 // (!) DONT USE UNDERSCORES (3_000) OR WONT BE ABLE TO READ JS-SIDE
 #[constant]
 pub const CURRENT_TCOMP_VERSION: u8 = 1;
-/// NB: (!!) sync with TRoll
-#[constant]
-pub const TCOMP_FEE_BPS: u64 = 200;
 #[constant]
 pub const MAX_EXPIRY_SEC: i64 = 31536000; // Max 365 days (can't be too short o/w liquidity disappears too early)
 
-/// NB: (!!) sync with TRoll
-#[constant]
-pub const MAKER_BROKER_PCT: u64 = 80; // Out of 100
-
 pub const BID_STATE_DISCRIMINATOR: [u8; 8] = [155, 197, 5, 97, 189, 60, 8, 183];
 pub const LIST_STATE_DISCRIMINATOR: [u8; 8] = [78, 242, 89, 138, 161, 221, 176, 75];
+pub const DISCRIMINATOR_SIZE: usize = 8;
 
 //(!!) sync with sdk.ts:getRentPayer()
 #[inline(always)]
-fn get_rent_payer(rent_payer: NullableOption<Pubkey>, owner: Pubkey) -> Pubkey {
-    if let Some(rent_payer) = rent_payer.value() {
-        *rent_payer
+fn get_rent_payer(rent_payer: Pubkey, owner: Pubkey) -> Pubkey {
+    if rent_payer != Pubkey::default() {
+        rent_payer
     } else {
         owner
     }
@@ -31,6 +23,7 @@ fn get_rent_payer(rent_payer: NullableOption<Pubkey>, owner: Pubkey) -> Pubkey {
 // --------------------------------------- listing
 
 #[account]
+#[derive(InitSpace)]
 pub struct ListState {
     pub version: u8,
     pub bump: [u8; 1],
@@ -44,19 +37,18 @@ pub struct ListState {
     pub expiry: i64,
     pub private_taker: Option<Pubkey>,
     pub maker_broker: Option<Pubkey>,
-    /// owner is the rent payer when this is `None`
-    pub rent_payer: NullableOption<Pubkey>,
-    /// cosigner
-    pub cosigner: NullableOption<Pubkey>,
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
+    pub rent_payer: Pubkey,
+    /// Cosigner
+    /// Default Pubkey represents a None value.
+    pub cosigner: Pubkey,
     pub _reserved1: [u8; 64],
 }
 
-// (!) INCLUSIVE of discriminator (8 bytes)
-#[constant]
-#[allow(clippy::identity_op)]
-pub const LIST_STATE_SIZE: usize = 8 + 1 + 1 + (32 * 2) + 8 + 33 + 8 + (33 * 2) + 128;
-
 impl ListState {
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
+
     pub fn seeds(&self) -> [&[u8]; 3] {
         [b"list_state".as_ref(), self.asset_id.as_ref(), &self.bump]
     }
@@ -72,19 +64,20 @@ pub struct AssetListState {}
 // --------------------------------------- bidding
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Target {
     AssetId = 0,
     Whitelist = 1,
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace, PartialEq, Eq)]
 pub enum Field {
     Name = 0,
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct BidState {
     pub version: u8,
     pub bump: [u8; 1],
@@ -110,9 +103,12 @@ pub struct BidState {
     pub margin: Option<Pubkey>,
     pub updated_at: i64,
 
-    pub cosigner: NullableOption<Pubkey>,
-    /// owner is the rent payer when this is `None`
-    pub rent_payer: NullableOption<Pubkey>,
+    /// Cosigner
+    /// Default Pubkey represents a None value.
+    pub cosigner: Pubkey,
+    /// Owner is the rent payer when this is None.
+    /// Default Pubkey represents a None value.
+    pub rent_payer: Pubkey,
 
     //borsh not implemented for u8;56
     pub _reserved: [u8; 8],
@@ -120,13 +116,9 @@ pub struct BidState {
     pub _reserved2: [u8; 32],
 }
 
-// (!) INCLUSIVE of discriminator (8 bytes)
-#[constant]
-#[allow(clippy::identity_op)]
-pub const BID_STATE_SIZE: usize =
-    8 + 1 + 1 + (32 * 2) + 1 + 32 + 2 + 33 + 4 * 2 + 8 + 33 + 8 + (33 * 3) + 128;
-
 impl BidState {
+    pub const SIZE: usize = DISCRIMINATOR_SIZE + Self::INIT_SPACE;
+
     pub fn can_buy_more(&self) -> bool {
         self.filled_quantity < self.quantity
     }

@@ -11,12 +11,13 @@ use tensor_toolbox::{
         transfer::transfer_checked as tensor_transfer_checked, validate_mint, RoyaltyInfo,
     },
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, TCreator, BROKER_FEE_PCT,
+    MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, TNSR_CURRENCY,
 };
 
 #[derive(Accounts)]
@@ -73,6 +74,9 @@ pub struct BuyT22Spl<'info> {
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// T22 asset mint.
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// SPL token mint of the currency.
@@ -189,10 +193,10 @@ impl<'info> Validate<'info> for BuyT22Spl<'info> {
         );
 
         // Validate the cosigner if it's required.
-        if let Some(cosigner) = list_state.cosigner.value() {
+        if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
@@ -239,7 +243,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         TcompError::CurrencyMismatch
     );
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         taker_fee: _,
@@ -249,7 +253,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -325,7 +329,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         }
 
         // No optional royalties.
-        let creator_fee = calc_creators_fee(*seller_fee, amount, None, Some(100))?;
+        let creator_fee = calc_creators_fee(*seller_fee, amount, Some(100))?;
 
         (creator_data, creator_infos, creator_fee)
     } else {
@@ -395,6 +399,10 @@ pub fn process_buy_t22_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     let (_creator_accounts, creator_ta_accounts) = remaining_accounts.split_at(creators.len());
 
     let creator_accounts_with_ta = creator_accounts
@@ -404,7 +412,7 @@ pub fn process_buy_t22_spl<'info, 'b>(
         .collect::<Vec<_>>();
 
     // Pay creator royalties.
-    if royalties.is_some() {
+    if royalties.is_some() && creator_fee > 0 {
         transfer_creators_fee(
             &creators.into_iter().map(Into::into).collect(),
             &mut creator_accounts_with_ta.iter(),
@@ -420,10 +428,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
             },
         )?;
     }
-
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
 
     // Close the list token account.
     close_account(

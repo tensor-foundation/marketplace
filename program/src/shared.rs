@@ -5,6 +5,7 @@ use anchor_spl::{
 use tensor_toolbox::{fees, shard_num, TensorError};
 
 use crate::*;
+pub const TNSR_CURRENCY: &str = "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6";
 
 const TOKEN_PROGRAMS: [&str; 2] = [
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
@@ -45,13 +46,33 @@ pub fn validate_cosigner<'info>(
     };
 
     // check if the cosigner is required
-    if let Some(cosigner) = list_state.cosigner.value() {
+    if list_state.cosigner != Pubkey::default() {
         let signer = maybe_cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-        require!(cosigner == signer.key, TcompError::BadCosigner);
+        require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
     }
 
     Ok(maybe_remaining)
+}
+
+pub fn assert_expiry(expire_in_sec: Option<u64>, current_expiry: Option<i64>) -> Result<i64> {
+    Ok(match expire_in_sec {
+        Some(expire_in_sec) => {
+            let expire_in_i64 =
+                i64::try_from(expire_in_sec).map_err(|_| TcompError::ExpiryTooLarge)?;
+            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
+            Clock::get()?
+                .unix_timestamp
+                .checked_add(expire_in_i64)
+                .ok_or(TcompError::ExpiryTooLarge)?
+        }
+        None => current_expiry.unwrap_or(
+            Clock::get()?
+                .unix_timestamp
+                .checked_add(MAX_EXPIRY_SEC)
+                .ok_or(TcompError::ExpiryTooLarge)?,
+        ),
+    })
 }
 
 pub fn assert_decode_token_account(
@@ -135,6 +156,23 @@ pub fn assert_token_account(
         TcompError::InvalidTokenAccount
     );
     Ok(())
+}
+
+/// Asserts that the given token account belongs to the provided mint, owner and token_program and is the derived
+/// associated token account for the given owner and mint.
+pub fn assert_associated_token_account(
+    token_account_info: &AccountInfo,
+    mint: &Pubkey,
+    owner: &Pubkey,
+    token_program: &Pubkey,
+) -> Result<()> {
+    let expected_ata = get_associated_token_address_with_program_id(owner, mint, token_program);
+    require!(
+        expected_ata == *token_account_info.key,
+        TcompError::InvalidTokenAccount
+    );
+
+    assert_token_account(token_account_info, mint, owner, token_program)
 }
 
 pub struct InitIfNeededAtaParams<'info> {

@@ -17,19 +17,19 @@ import {
   MetadataArgs,
   metadataArgsBeet,
   TokenProgramVersion,
-  TokenStandard,
+  TokenStandard
 } from "@metaplex-foundation/mpl-bubblegum";
 import { mplTokenAuthRules } from "@metaplex-foundation/mpl-token-auth-rules";
 import { keypairIdentity } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   fromWeb3JsKeypair,
-  toWeb3JsPublicKey,
+  toWeb3JsPublicKey
 } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   SingleConnectionBroadcaster,
   SolanaProvider,
-  TransactionEnvelope,
+  TransactionEnvelope
 } from "@saberhq/solana-contrib";
 import {
   ConcurrentMerkleTreeAccount,
@@ -38,7 +38,7 @@ import {
   MerkleTree,
   SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
   SPL_NOOP_PROGRAM_ID,
-  ValidDepthSizePair,
+  ValidDepthSizePair
 } from "@solana/spl-account-compression";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -48,7 +48,7 @@ import {
   getMinimumBalanceForRentExemptAccount,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  TokenAccountNotFoundError,
+  TokenAccountNotFoundError
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
@@ -61,7 +61,7 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   AUTH_PROGRAM_ID,
@@ -77,14 +77,14 @@ import {
   test_utils,
   TMETA_PROGRAM_ID,
   TSWAP_PROGRAM_ID,
-  waitMS,
+  waitMS
 } from "@tensor-hq/tensor-common";
 import { createDefaultRuleSet } from "@tensor-hq/tensor-tests-common";
 import {
   TensorSwapSDK,
   TensorWhitelistSDK,
   TSWAP_TAKER_FEE_BPS,
-  TSwapConfigAnchor,
+  TSwapConfigAnchor
 } from "@tensor-hq/tensorswap-ts";
 import { fail } from "assert";
 import chai, { expect } from "chai";
@@ -113,7 +113,7 @@ import {
   TCOMP_DISC_MAP,
   TCOMP_FEE_BPS,
   TCompIxName,
-  TCompSDK,
+  TCompSDK
 } from "../src";
 import { getCreators } from "../src/metaplexCore";
 import {
@@ -123,7 +123,7 @@ import {
   getTokenBalance,
   initCollection,
   makeNTraders,
-  transferLamports,
+  transferLamports
 } from "./account";
 import { testInitWLAuthority } from "./tswap";
 
@@ -172,7 +172,7 @@ export const buildAndSendTx = async ({
     conn,
     payer,
     ...args,
-    opts: undefined,
+    opts: undefined
   });
 };
 
@@ -205,7 +205,7 @@ export const withLamports = async <
     await Promise.all(
       Object.entries(accts).map(async ([k, key]) => [
         k,
-        await getLamports(key as PublicKey),
+        await getLamports(key as PublicKey)
       ])
     )
   );
@@ -249,24 +249,24 @@ export const TEST_KEYPAIR = Keypair.fromSecretKey(
   Buffer.from(
     JSON.parse(
       require("fs").readFileSync(process.env.ANCHOR_WALLET, {
-        encoding: "utf-8",
+        encoding: "utf-8"
       })
     )
   )
 );
 export const TEST_CONN_PAYER = {
   conn: TEST_PROVIDER.connection,
-  payer: TEST_KEYPAIR,
+  payer: TEST_KEYPAIR
 };
 export const TEST_UMI = createUmi(TEST_PROVIDER.connection.rpcEndpoint, {
-  commitment: "confirmed",
+  commitment: "confirmed"
 })
   .use(keypairIdentity(fromWeb3JsKeypair(TEST_KEYPAIR)))
   .use(mplTokenAuthRules());
 
 export const TEST_COSIGNER = Keypair.generate();
 export const TSWAP_CONFIG: TSwapConfigAnchor = {
-  feeBps: TSWAP_TAKER_FEE_BPS,
+  feeBps: TSWAP_TAKER_FEE_BPS
 };
 
 export const swapSdk = new TensorSwapSDK({ provider: TEST_PROVIDER });
@@ -306,7 +306,7 @@ export const calcMinRent = async (address: PublicKey) => {
 
 export const DEFAULT_DEPTH_SIZE: ValidDepthSizePair = {
   maxDepth: 14,
-  maxBufferSize: 64,
+  maxBufferSize: 64
 };
 
 export const FEE_PCT = TCOMP_FEE_BPS / 1e4;
@@ -322,7 +322,7 @@ export const calcFees = (amount: number) => {
 
 export const updateLUT = async ({
   lookupTableAddress,
-  addresses,
+  addresses
 }: {
   committment?: Commitment;
   lookupTableAddress: PublicKey;
@@ -335,14 +335,14 @@ export const updateLUT = async ({
     payer: TEST_PROVIDER.wallet.publicKey,
     authority: TEST_PROVIDER.wallet.publicKey,
     lookupTable: lookupTableAddress,
-    addresses,
+    addresses
   });
 
   let done = false;
   while (!done) {
     try {
       await buildAndSendTx({
-        ixs: [extendInstruction],
+        ixs: [extendInstruction]
       });
       done = true;
     } catch (e) {
@@ -370,7 +370,7 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
     AddressLookupTableProgram.createLookupTable({
       authority: TEST_PROVIDER.wallet.publicKey,
       payer: TEST_PROVIDER.wallet.publicKey,
-      recentSlot: slot,
+      recentSlot: slot
     });
 
   //see if already created
@@ -412,15 +412,15 @@ const createLUT = async (slotCommitment: Commitment = "finalized") => {
       TSWAP_PROGRAM_ID, //margin
       //tcomp spl
       TEST_USDC,
-      tcompAta,
-    ],
+      tcompAta
+    ]
   });
 
   let done = false;
   while (!done) {
     try {
       await buildAndSendTx({
-        ixs: [lookupTableInst, extendInstruction],
+        ixs: [lookupTableInst, extendInstruction]
       });
       done = true;
     } catch (e) {
@@ -442,7 +442,7 @@ export const makeTree = async ({
   conn = TEST_PROVIDER.connection,
   treeOwner,
   depthSizePair = DEFAULT_DEPTH_SIZE,
-  canopyDepth = 0,
+  canopyDepth = 0
 }: {
   conn?: Connection;
   treeOwner: Keypair;
@@ -463,7 +463,7 @@ export const makeTree = async ({
     newAccountPubkey: merkleTree,
     lamports: await conn.getMinimumBalanceForRentExemption(space),
     space: space,
-    programId: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+    programId: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID
   });
   const [treeAuthority, _bump] = findTreeAuthorityPda({ merkleTree });
   const createTreeIx = createCreateTreeInstruction(
@@ -473,23 +473,23 @@ export const makeTree = async ({
       treeCreator: owner,
       payer: owner,
       logWrapper: SPL_NOOP_PROGRAM_ID,
-      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID
     },
     {
       maxBufferSize: depthSizePair.maxBufferSize,
       maxDepth: depthSizePair.maxDepth,
-      public: false,
+      public: false
     },
     BUBBLEGUM_PROGRAM_ID
   );
 
   await buildAndSendTx({
     ixs: [allocTreeIx, createTreeIx],
-    extraSigners: [merkleTreeKeypair, treeOwner],
+    extraSigners: [merkleTreeKeypair, treeOwner]
   });
 
   return {
-    merkleTree,
+    merkleTree
   };
 };
 
@@ -506,7 +506,7 @@ export function getMasterEdition(mint: PublicKey) {
       Buffer.from("metadata"),
       TMETA_PROGRAM_ID.toBuffer(),
       mint.toBuffer(),
-      Buffer.from("edition"),
+      Buffer.from("edition")
     ],
     TMETA_PROGRAM_ID
   )[0];
@@ -517,7 +517,7 @@ export const mintCNft = async ({
   receiver,
   metadata,
   merkleTree,
-  unverifiedCollection = false,
+  unverifiedCollection = false
 }: {
   treeOwner: Keypair;
   receiver: PublicKey;
@@ -552,14 +552,14 @@ export const mintCNft = async ({
             collectionMetadata: getMetadata(metadata.collection.key),
             collectionMint: metadata.collection.key,
             editionAccount: getMasterEdition(metadata.collection.key),
-            tokenMetadataProgram: TMETA_PROGRAM_ID,
+            tokenMetadataProgram: TMETA_PROGRAM_ID
           },
           {
             metadataArgs: {
               ...metadata,
               //we have to pass it in as FALSE, it'll be set to TRUE during the ix
-              collection: { key: metadata.collection.key, verified: false },
-            },
+              collection: { key: metadata.collection.key, verified: false }
+            }
           }
         )
       : createMintV1Instruction(
@@ -571,16 +571,16 @@ export const mintCNft = async ({
             leafDelegate: receiver,
             leafOwner: receiver,
             compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-            logWrapper: SPL_NOOP_PROGRAM_ID,
+            logWrapper: SPL_NOOP_PROGRAM_ID
           },
           {
-            message: metadata,
+            message: metadata
           }
         );
 
   const sig = await buildAndSendTx({
     ixs: [mintIx],
-    extraSigners: [treeOwner],
+    extraSigners: [treeOwner]
   });
 
   console.log("✅ minted", sig);
@@ -592,7 +592,7 @@ export const decompressCNft = async ({
   index,
   owner,
   metadataArgs,
-  canopyDepth,
+  canopyDepth
 }: {
   memTree: MerkleTree;
   merkleTree: PublicKey;
@@ -606,7 +606,7 @@ export const decompressCNft = async ({
     [
       Buffer.from("voucher", "utf8"),
       merkleTree.toBuffer(),
-      new BN(index).toBuffer("le", 8),
+      new BN(index).toBuffer("le", 8)
     ],
     BUBBLEGUM_PROGRAM_ID
   );
@@ -635,15 +635,15 @@ export const decompressCNft = async ({
       anchorRemainingAccounts: proof.proof.map((b) => ({
         pubkey: new PublicKey(b),
         isWritable: false,
-        isSigner: false,
-      })),
+        isSigner: false
+      }))
     },
     {
       root: [...proof.root],
       nonce: new BN(index),
       index,
       dataHash: [...dataHash],
-      creatorHash: [...creatorsHash],
+      creatorHash: [...creatorsHash]
     }
   );
 
@@ -659,21 +659,21 @@ export const decompressCNft = async ({
       logWrapper: SPL_NOOP_PROGRAM_ID,
       sysvarRent: SYSVAR_RENT_PUBKEY,
       tokenMetadataProgram: TMETA_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID
     },
     {
-      metadata: metadataArgs,
+      metadata: metadataArgs
     }
   );
 
   const sig1 = await buildAndSendTx({
     ixs: [redeemIx],
-    extraSigners: [owner],
+    extraSigners: [owner]
   });
   memTree.updateLeaf(index, Buffer.alloc(32));
   const sig2 = await buildAndSendTx({
     ixs: prependComputeIxs([decompressIx], 400_000),
-    extraSigners: [owner],
+    extraSigners: [owner]
   });
 
   console.log("✅ decompressed", sig1, sig2);
@@ -688,7 +688,7 @@ export const delegateCNft = async ({
   merkleTree,
   metadata,
   canopyDepth = 0,
-  depthSizePair = DEFAULT_DEPTH_SIZE,
+  depthSizePair = DEFAULT_DEPTH_SIZE
 }: {
   memTree: MerkleTree;
   index: number;
@@ -717,21 +717,21 @@ export const delegateCNft = async ({
         .map((b) => ({
           pubkey: new PublicKey(b),
           isWritable: false,
-          isSigner: false,
-        })),
+          isSigner: false
+        }))
     },
     {
       root: [...proof.root],
       dataHash: [...dataHash],
       creatorHash: [...creatorHash],
       index,
-      nonce: new BN(index),
+      nonce: new BN(index)
     }
   );
 
   const sig = await buildAndSendTx({
     ixs: [delegateIx],
-    extraSigners: [owner],
+    extraSigners: [owner]
   });
 
   console.log("✅ delegated", sig);
@@ -743,7 +743,7 @@ export const delegateCNft = async ({
     metadata,
     owner: owner.publicKey,
     delegate: newDelegate,
-    proof: proof.proof,
+    proof: proof.proof
   });
 };
 
@@ -754,7 +754,7 @@ export const verifyCNft = async ({
   delegate,
   merkleTree,
   metadata,
-  proof,
+  proof
 }: {
   conn?: Connection;
   index: number;
@@ -765,7 +765,7 @@ export const verifyCNft = async ({
   proof: Buffer[];
 }) => {
   const accountInfo = await conn.getAccountInfo(merkleTree, {
-    commitment: "confirmed",
+    commitment: "confirmed"
   });
   const account = ConcurrentMerkleTreeAccount.fromBuffer(accountInfo!.data!);
   const { leaf, assetId } = await makeLeaf({
@@ -773,13 +773,13 @@ export const verifyCNft = async ({
     owner,
     delegate,
     merkleTree,
-    metadata,
+    metadata
   });
   const verifyLeafIx = createVerifyLeafIx(merkleTree, {
     root: account.getCurrentRoot(),
     leaf,
     leafIndex: index,
-    proof,
+    proof
   });
 
   const ixs = prependComputeIxs(
@@ -790,7 +790,7 @@ export const verifyCNft = async ({
 
   const sig = await buildAndSendTx({
     ixs,
-    extraSigners: [TEST_KEYPAIR],
+    extraSigners: [TEST_KEYPAIR]
   });
   console.log("✅ CNFT verified:", sig);
 
@@ -806,7 +806,7 @@ export const verifyCNftCreator = async ({
   memTree,
   metadata,
   proof,
-  verifiedCreator,
+  verifiedCreator
 }: {
   conn?: Connection;
   index: number;
@@ -819,7 +819,7 @@ export const verifyCNftCreator = async ({
   memTree: MerkleTree;
 }) => {
   const accountInfo = await conn.getAccountInfo(merkleTree, {
-    commitment: "confirmed",
+    commitment: "confirmed"
   });
   const account = ConcurrentMerkleTreeAccount.fromBuffer(accountInfo!.data!);
 
@@ -838,8 +838,8 @@ export const verifyCNftCreator = async ({
       anchorRemainingAccounts: proof.map((p) => ({
         pubkey: new PublicKey(p),
         isWritable: false,
-        isSigner: false,
-      })),
+        isSigner: false
+      }))
     },
     {
       root: [...account.getCurrentRoot()],
@@ -847,13 +847,13 @@ export const verifyCNftCreator = async ({
       dataHash: [...computeDataHash(metadata)],
       index,
       message: metadata,
-      nonce: new BN(index),
+      nonce: new BN(index)
     }
   );
 
   const sig = await buildAndSendTx({
     ixs: [verifyCreatorIx],
-    extraSigners: [TEST_KEYPAIR, verifiedCreator],
+    extraSigners: [TEST_KEYPAIR, verifiedCreator]
   });
   console.log("✅ creator verified:", sig);
 
@@ -869,7 +869,7 @@ export const verifyCNftCreator = async ({
     owner,
     delegate,
     merkleTree,
-    metadata,
+    metadata
   });
   memTree.updateLeaf(index, leaf);
 
@@ -881,7 +881,7 @@ export const makeLeaf = async ({
   owner,
   delegate,
   merkleTree,
-  metadata,
+  metadata
 }: {
   index: number;
   owner: PublicKey;
@@ -900,7 +900,7 @@ export const makeLeaf = async ({
   );
   return {
     leaf,
-    assetId,
+    assetId
   };
 };
 
@@ -909,7 +909,7 @@ export const makeCNftMeta = ({
   sellerFeeBasisPoints = 1000,
   collectionMint,
   randomizeName = true,
-  unverifiedCollection = false,
+  unverifiedCollection = false
 }: {
   nrCreators?: number;
   sellerFeeBasisPoints?: number;
@@ -932,7 +932,7 @@ export const makeCNftMeta = ({
       .map((_) => ({
         address: Keypair.generate().publicKey,
         verified: false,
-        share: 100 / nrCreators,
+        share: 100 / nrCreators
       })),
     editionNonce: 0,
     tokenProgramVersion: TokenProgramVersion.Original,
@@ -944,7 +944,7 @@ export const makeCNftMeta = ({
       : null,
     primarySaleHappened: true,
     sellerFeeBasisPoints,
-    isMutable: false,
+    isMutable: false
   };
 };
 
@@ -960,7 +960,7 @@ export const beforeAllHook = async () => {
   const lut = createLUT();
   const usdc = testInitUsdc();
   const ruleSet = createDefaultRuleSet({
-    umi: TEST_UMI,
+    umi: TEST_UMI
   });
 
   const [lookupTableAccount, ruleSetAddr] = await Promise.all([
@@ -969,7 +969,7 @@ export const beforeAllHook = async () => {
     wl,
     xfer,
     lut,
-    usdc,
+    usdc
   ]);
 
   return { lookupTableAccount, ruleSetAddr: toWeb3JsPublicKey(ruleSetAddr) };
@@ -984,7 +984,7 @@ export const beforeHook = async ({
   randomizeName = true,
   verifiedCreator,
   collectionless = false,
-  unverifiedCollection = false,
+  unverifiedCollection = false
 }: {
   numMints: number;
   nrCreators?: number;
@@ -1004,22 +1004,22 @@ export const beforeHook = async ({
   const { merkleTree } = await makeTree({
     treeOwner,
     depthSizePair,
-    canopyDepth,
+    canopyDepth
   });
   const [treeAuthority] = findTreeAuthorityPda({ merkleTree });
   // Allow decompression since we need to decompress for tests.
   const setDecompressIx = createSetDecompressableStateInstruction(
     {
       treeAuthority: treeAuthority,
-      treeCreator: treeOwner.publicKey,
+      treeCreator: treeOwner.publicKey
     },
     {
-      decompressableState: DecompressableState.Enabled,
+      decompressableState: DecompressableState.Enabled
     }
   );
   await buildAndSendTx({
     ixs: [setDecompressIx],
-    extraSigners: [treeOwner],
+    extraSigners: [treeOwner]
   });
 
   //has to be sequential to ensure index is correct
@@ -1034,7 +1034,7 @@ export const beforeHook = async ({
       collectionMint: collectionless ? undefined : collectionMint,
       nrCreators,
       randomizeName,
-      unverifiedCollection,
+      unverifiedCollection
     });
 
     //attach optioonal verified creators
@@ -1046,7 +1046,7 @@ export const beforeHook = async ({
         address: verifiedCreator.publicKey,
         verified: false,
         //doesn't matter, we're not testing share
-        share: 100,
+        share: 100
       });
       //keep the last 4
       if (metadata.creators.length > 4) {
@@ -1062,20 +1062,20 @@ export const beforeHook = async ({
       metadata,
       treeOwner,
       receiver: traderA.publicKey,
-      unverifiedCollection,
+      unverifiedCollection
     });
 
     const { leaf, assetId } = await makeLeaf({
       index,
       merkleTree,
       metadata,
-      owner: traderA.publicKey,
+      owner: traderA.publicKey
     });
     leaves.push({
       index,
       metadata,
       assetId,
-      leaf,
+      leaf
     });
   }
 
@@ -1098,7 +1098,7 @@ export const beforeHook = async ({
           metadata,
           owner: traderA.publicKey,
           proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
-          verifiedCreator,
+          verifiedCreator
         }));
         //get new proof after verification
         proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
@@ -1109,7 +1109,7 @@ export const beforeHook = async ({
         merkleTree,
         metadata,
         owner: traderA.publicKey,
-        proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
+        proof: proof.proof.slice(0, proof.proof.length - canopyDepth)
       });
 
       return { index, assetId, leaf, metadata };
@@ -1120,17 +1120,17 @@ export const beforeHook = async ({
     // Tswap
     const {
       tx: { ixs },
-      tswapPda,
+      tswapPda
     } = await swapSdk.initUpdateTSwap({
       owner: TEST_PROVIDER.publicKey,
       newOwner: TEST_PROVIDER.publicKey,
       config: TSWAP_CONFIG,
-      cosigner: TEST_COSIGNER.publicKey,
+      cosigner: TEST_COSIGNER.publicKey
     });
 
     await buildAndSendTx({
       ixs,
-      extraSigners: [TEST_COSIGNER],
+      extraSigners: [TEST_COSIGNER]
     });
 
     const swapAcc = await swapSdk.fetchTSwap(tswapPda);
@@ -1154,7 +1154,7 @@ export const beforeHook = async ({
     traderB,
     rentPayer,
     secondaryRentPayer,
-    collectionMint,
+    collectionMint
   };
 };
 
@@ -1218,7 +1218,7 @@ export const testList = async ({
   canopyDepth = 0,
   lookupTableAccount,
   rentPayer = owner,
-  delegateSigns = false,
+  delegateSigns = false
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1248,7 +1248,7 @@ export const testList = async ({
   const {
     tx: { ixs },
     assetId,
-    listState,
+    listState
   } = await tcompSdk.list({
     proof: proof.proof,
     owner: owner.publicKey,
@@ -1264,7 +1264,7 @@ export const testList = async ({
     delegate: delegate?.publicKey,
     privateTaker,
     canopyDepth,
-    delegateSigner: delegateSigns,
+    delegateSigner: delegateSigns
   });
 
   let sig;
@@ -1272,7 +1272,7 @@ export const testList = async ({
   await withLamports(
     {
       prevRentPayerLamports: rentPayer.publicKey,
-      prevOwnerLamports: owner.publicKey,
+      prevOwnerLamports: owner.publicKey
     },
     async ({ prevRentPayerLamports, prevOwnerLamports }) => {
       sig = await buildAndSendTx({
@@ -1281,7 +1281,7 @@ export const testList = async ({
         extraSigners: [delegateSigns && delegate ? delegate : owner, rentPayer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ listed", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
@@ -1290,7 +1290,7 @@ export const testList = async ({
         await Promise.all([
           getLamports(owner.publicKey),
           getLamports(rentPayer.publicKey),
-          tcompSdk.getListStateRent(),
+          tcompSdk.getListStateRent()
         ]);
 
       //if rentPayer != owner, make sure owner didnt lose lamports
@@ -1308,7 +1308,7 @@ export const testList = async ({
         metadata,
         owner: listState,
         delegate: listState,
-        proof: proof.proof,
+        proof: proof.proof
       });
 
       const listStateAcc = await tcompSdk.fetchListState(listState);
@@ -1341,7 +1341,7 @@ export const testList = async ({
     merkleTree,
     metadata,
     owner: listState,
-    delegate: listState,
+    delegate: listState
   });
   memTree.updateLeaf(index, leaf);
 
@@ -1354,7 +1354,7 @@ export const testEdit = async ({
   amount,
   currency,
   expireInSec,
-  privateTaker,
+  privateTaker
 }: {
   owner: Keypair;
   listState: PublicKey;
@@ -1364,19 +1364,19 @@ export const testEdit = async ({
   privateTaker?: PublicKey | null;
 }) => {
   const {
-    tx: { ixs },
+    tx: { ixs }
   } = await tcompSdk.edit({
     owner: owner.publicKey,
     listState,
     amount,
     currency,
     expireInSec,
-    privateTaker,
+    privateTaker
   });
 
   const sig = await buildAndSendTx({
     ixs,
-    extraSigners: [owner],
+    extraSigners: [owner]
   });
   console.log("✅ edited", sig);
 
@@ -1407,7 +1407,7 @@ export const testDelist = async ({
   metadata,
   canopyDepth = 0,
   lookupTableAccount,
-  forceExpired = false,
+  forceExpired = false
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1435,7 +1435,7 @@ export const testDelist = async ({
   if (forceExpired) {
     ({
       tx: { ixs },
-      assetId,
+      assetId
     } = await tcompSdk.closeExpiredListing({
       proof: proof.proof,
       owner: owner.publicKey,
@@ -1445,12 +1445,12 @@ export const testDelist = async ({
       creatorsHash,
       root: [...proof.root],
       index,
-      canopyDepth,
+      canopyDepth
     }));
   } else {
     ({
       tx: { ixs },
-      assetId,
+      assetId
     } = await tcompSdk.delist({
       proof: proof.proof,
       owner: owner.publicKey,
@@ -1460,14 +1460,14 @@ export const testDelist = async ({
       creatorsHash,
       root: [...proof.root],
       index,
-      canopyDepth,
+      canopyDepth
     }));
   }
 
   await withLamports(
     {
       prevOwnerLamports: owner.publicKey,
-      prevRentDestLamports: rentDest.publicKey,
+      prevRentDestLamports: rentDest.publicKey
     },
     async ({ prevOwnerLamports, prevRentDestLamports }) => {
       const sig = await buildAndSendTx({
@@ -1475,7 +1475,7 @@ export const testDelist = async ({
         extraSigners: forceExpired ? [] : [owner],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ delisted", sig);
 
@@ -1486,7 +1486,7 @@ export const testDelist = async ({
         metadata,
         owner: owner.publicKey,
         delegate: owner.publicKey,
-        proof: proof.proof,
+        proof: proof.proof
       });
 
       //listing closed
@@ -1499,7 +1499,7 @@ export const testDelist = async ({
         await Promise.all([
           tcompSdk.getListStateRent(),
           getLamports(owner.publicKey),
-          getLamports(rentDest.publicKey),
+          getLamports(rentDest.publicKey)
         ]);
 
       const rentToOwner = rentDest.publicKey.equals(owner.publicKey)
@@ -1517,7 +1517,7 @@ export const testDelist = async ({
     merkleTree,
     metadata,
     owner: owner.publicKey,
-    delegate: owner.publicKey,
+    delegate: owner.publicKey
   });
   memTree.updateLeaf(index, leaf);
 };
@@ -1540,7 +1540,7 @@ export const testBuy = async ({
   canopyDepth = 2,
   payer = buyer,
   rentPayer = payer,
-  rentDest = owner,
+  rentDest = owner
 }: {
   memTree: MerkleTree;
   index: number;
@@ -1586,18 +1586,18 @@ export const testBuy = async ({
     takerBroker,
     optionalRoyaltyPct,
     canopyDepth,
-    rentDest: rentDest,
+    rentDest: rentDest
   };
 
   const {
     tx: { ixs },
-    listState,
+    listState
   } = isNullLike(currency)
     ? await tcompSdk.buy({ ...common })
     : await tcompSdk.buySpl({
         ...common,
         currency,
-        rentPayer: rentPayer.publicKey,
+        rentPayer: rentPayer.publicKey
       });
 
   let sig: string | undefined;
@@ -1612,7 +1612,7 @@ export const testBuy = async ({
       prevBuyerLamports: buyer.publicKey,
       prevRentDestLamports: rentDest,
       ...(makerBroker ? { prevMakerBroker: makerBroker } : {}),
-      ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
+      ...(takerBroker ? { prevTakerBroker: takerBroker } : {})
     },
     async ({
       prevFeeAccLamports,
@@ -1621,7 +1621,7 @@ export const testBuy = async ({
       prevBuyerLamports,
       prevRentDestLamports,
       prevMakerBroker,
-      prevTakerBroker,
+      prevTakerBroker
     }) => {
       const [
         prevFeeAccTokens,
@@ -1629,7 +1629,7 @@ export const testBuy = async ({
         prevPayerTokens,
         prevBuyerTokens,
         prevMakerBrokerTokens,
-        prevTakerBrokerTokens,
+        prevTakerBrokerTokens
       ] = currency
         ? await Promise.all([
             getTokenBalance(findAta(currency, feeVault)),
@@ -1639,7 +1639,7 @@ export const testBuy = async ({
             ),
             getTokenBalance(findAta(currency, buyer.publicKey)),
             getTokenBalance(findAta(currency, makerBroker ?? feeVault)),
-            getTokenBalance(findAta(currency, takerBroker ?? feeVault)),
+            getTokenBalance(findAta(currency, takerBroker ?? feeVault))
           ])
         : [0, 0, 0, 0, 0];
       sig = await buildAndSendTx({
@@ -1647,7 +1647,7 @@ export const testBuy = async ({
         extraSigners: [payer, ...(currency ? [rentPayer] : [])],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bought", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
@@ -1659,7 +1659,7 @@ export const testBuy = async ({
         metadata,
         owner: buyer.publicKey,
         delegate: buyer.publicKey,
-        proof: proof.proof,
+        proof: proof.proof
       });
 
       //list state closed
@@ -1837,7 +1837,7 @@ export const testBuy = async ({
     merkleTree,
     metadata,
     owner: buyer.publicKey,
-    delegate: buyer.publicKey,
+    delegate: buyer.publicKey
   });
   memTree.updateLeaf(index, leaf);
 
@@ -1889,7 +1889,7 @@ export const testBid = async ({
   privateTaker,
   margin,
   cosigner,
-  rentPayer,
+  rentPayer
 }: {
   target?: Target;
   targetId: PublicKey;
@@ -1913,7 +1913,7 @@ export const testBid = async ({
 
   const {
     tx: { ixs },
-    bidState,
+    bidState
   } = await tcompSdk.bid({
     target,
     targetId,
@@ -1928,7 +1928,7 @@ export const testBid = async ({
     privateTaker,
     margin,
     cosigner: cosigner?.publicKey,
-    rentPayer: rentPayer?.publicKey,
+    rentPayer: rentPayer?.publicKey
   });
 
   let sig: string | undefined = undefined;
@@ -1938,17 +1938,17 @@ export const testBid = async ({
       prevBidderLamports: owner.publicKey,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
-      ...(rentPayer ? { prevRentPayerLamports: rentPayer.publicKey } : {}),
+      ...(rentPayer ? { prevRentPayerLamports: rentPayer.publicKey } : {})
     },
     async ({
       prevBidderLamports,
       prevBidStateLamports,
       prevMarginLamports,
-      prevRentPayerLamports,
+      prevRentPayerLamports
     }) => {
       sig = await buildAndSendTx({
         ixs,
-        extraSigners: filterNullLike([owner, cosigner, rentPayer]),
+        extraSigners: filterNullLike([owner, cosigner, rentPayer])
       });
       console.log("✅ placed bid", sig);
 
@@ -2016,12 +2016,12 @@ export const testBid = async ({
         currBidderLamports,
         currBidStateLamports,
         currRentPayerLamports,
-        bidRent,
+        bidRent
       ] = await Promise.all([
         getLamports(owner.publicKey),
         getLamports(bidState),
         rentPayer ? getLamports(rentPayer.publicKey) : null,
-        tcompSdk.getBidStateRent(),
+        tcompSdk.getBidStateRent()
       ]);
 
       const rentToBidder = rentPayer ? 0 : bidRent;
@@ -2065,7 +2065,7 @@ export const testCancelCloseBid = async ({
   rentDest = null,
   amount,
   margin,
-  forceClose = false,
+  forceClose = false
 }: {
   owner: Keypair;
   bidId: PublicKey;
@@ -2080,20 +2080,20 @@ export const testCancelCloseBid = async ({
   if (forceClose) {
     ({
       tx: { ixs },
-      bidState,
+      bidState
     } = await tcompSdk.closeExpiredBid({
       owner: owner.publicKey,
       bidId,
-      rentDest: rentDest?.publicKey ?? owner.publicKey,
+      rentDest: rentDest?.publicKey ?? owner.publicKey
     }));
   } else {
     ({
       tx: { ixs },
-      bidState,
+      bidState
     } = await tcompSdk.cancelBid({
       owner: owner.publicKey,
       bidId,
-      rentDest: rentDest?.publicKey ?? owner.publicKey,
+      rentDest: rentDest?.publicKey ?? owner.publicKey
     }));
   }
 
@@ -2102,13 +2102,13 @@ export const testCancelCloseBid = async ({
       prevBidderLamports: owner.publicKey,
       prevBidStateLamports: bidState,
       ...(margin ? { prevMarginLamports: margin } : {}),
-      ...(rentDest ? { prevRentPayerLamports: rentDest.publicKey } : {}),
+      ...(rentDest ? { prevRentPayerLamports: rentDest.publicKey } : {})
     },
     async ({
       prevBidderLamports,
       prevBidStateLamports,
       prevMarginLamports,
-      prevRentPayerLamports,
+      prevRentPayerLamports
     }) => {
       const { quantity, filledQuantity } = await tcompSdk.fetchBidState(
         bidState
@@ -2117,7 +2117,7 @@ export const testCancelCloseBid = async ({
 
       const sig = await buildAndSendTx({
         ixs,
-        extraSigners: forceClose ? [] : [owner],
+        extraSigners: forceClose ? [] : [owner]
       });
       console.log("✅ closed bid", sig);
 
@@ -2125,12 +2125,12 @@ export const testCancelCloseBid = async ({
         currBidderLamports,
         currBidStateLamports,
         currRentPayerLamports,
-        bidRent,
+        bidRent
       ] = await Promise.all([
         getLamports(owner.publicKey),
         getLamports(bidState) ?? 0,
         rentDest ? getLamports(rentDest.publicKey) : undefined,
-        tcompSdk.getBidStateRent(),
+        tcompSdk.getBidStateRent()
       ]);
 
       const rentToBidder = rentDest ? 0 : bidRent;
@@ -2192,7 +2192,7 @@ export const testTakeBid = async ({
   margin,
   whitelist = null,
   delegateSigns = false,
-  cosigner,
+  cosigner
 }: {
   target?: Target;
   field?: Field | null;
@@ -2230,12 +2230,12 @@ export const testTakeBid = async ({
 
   const {
     tx: { ixs: takeIxs },
-    bidState,
+    bidState
   } = await tcompSdk.takeBid({
     targetData: hashed
       ? {
           target: "assetIdOrFvcWithoutField",
-          data: { ...metadata, metaHash: computeMetadataArgsHash(metadata) },
+          data: { ...metadata, metaHash: computeMetadataArgsHash(metadata) }
         }
       : { target: "rest", data: { metadata } },
     bidId,
@@ -2256,7 +2256,7 @@ export const testTakeBid = async ({
     currency,
     whitelist,
     delegateSigner: delegateSigns,
-    cosigner: cosigner?.publicKey,
+    cosigner: cosigner?.publicKey
   });
 
   const feeVault = findFeeVaultPda({ stateAccount: bidState });
@@ -2271,7 +2271,7 @@ export const testTakeBid = async ({
       ...(makerBroker ? { prevMakerBroker: makerBroker } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
       prevFeeAccLamports: feeVault,
-      prevSellerLamports: seller.publicKey,
+      prevSellerLamports: seller.publicKey
     },
     async ({
       prevRentDestLamports,
@@ -2280,7 +2280,7 @@ export const testTakeBid = async ({
       prevMakerBroker,
       prevTakerBroker,
       prevFeeAccLamports,
-      prevSellerLamports,
+      prevSellerLamports
     }) => {
       let prevQuantity = 0;
       let prevQuantityFilled = 0;
@@ -2297,7 +2297,7 @@ export const testTakeBid = async ({
         extraSigners: cosigner ? [cosigner, ...commonSigners] : commonSigners,
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bid accepted", sig);
 
@@ -2308,7 +2308,7 @@ export const testTakeBid = async ({
         metadata,
         owner: owner,
         delegate: owner,
-        proof: proof.proof,
+        proof: proof.proof
       });
 
       const bidRent = await tcompSdk.getBidStateRent();
@@ -2426,7 +2426,7 @@ export const testTakeBid = async ({
     merkleTree,
     metadata,
     owner,
-    delegate: owner,
+    delegate: owner
   });
   memTree.updateLeaf(index, leaf);
 
@@ -2452,7 +2452,7 @@ export const testTakeBidLegacy = async ({
   lookupTableAccount,
   margin,
   whitelist = null,
-  cosigner,
+  cosigner
 }: {
   bidId: PublicKey;
   nftMint: PublicKey;
@@ -2477,7 +2477,7 @@ export const testTakeBidLegacy = async ({
   const {
     tx: { ixs: takeIxs },
     bidState,
-    ownerAtaAcc,
+    ownerAtaAcc
   } = await tcompSdk.takeBidLegacy({
     bidId,
     nftMint,
@@ -2493,7 +2493,7 @@ export const testTakeBidLegacy = async ({
     currency,
     whitelist,
     cosigner: cosigner?.publicKey,
-    tokenProgram: TOKEN_PROGRAM_ID,
+    tokenProgram: TOKEN_PROGRAM_ID
   });
 
   const feeVault = findFeeVaultPda({ stateAccount: bidState });
@@ -2509,7 +2509,7 @@ export const testTakeBidLegacy = async ({
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
       prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
-      prevOwnerAtaLamports: ownerAtaAcc,
+      prevOwnerAtaLamports: ownerAtaAcc
     },
     async ({
       prevRentDestLamports,
@@ -2519,7 +2519,7 @@ export const testTakeBidLegacy = async ({
       prevTakerBroker,
       prevFeeAccLamports,
       prevSellerLamports,
-      prevOwnerAtaLamports,
+      prevOwnerAtaLamports
     }) => {
       let prevQuantity = 0;
       let prevQuantityFilled = 0;
@@ -2544,7 +2544,7 @@ export const testTakeBidLegacy = async ({
         extraSigners: cosigner ? [cosigner, seller] : [seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bid accepted", sig);
 
@@ -2690,7 +2690,7 @@ export const testTakeBidT22 = async ({
   lookupTableAccount,
   margin,
   whitelist = null,
-  cosigner,
+  cosigner
 }: {
   bidId: PublicKey;
   nftMint: PublicKey;
@@ -2711,7 +2711,7 @@ export const testTakeBidT22 = async ({
   const {
     tx: { ixs: takeIxs },
     bidState,
-    ownerAtaAcc,
+    ownerAtaAcc
   } = await tcompSdk.takeBidT22({
     bidId,
     nftMint,
@@ -2725,7 +2725,7 @@ export const testTakeBidT22 = async ({
     takerBroker,
     currency,
     whitelist,
-    cosigner: cosigner?.publicKey,
+    cosigner: cosigner?.publicKey
   });
 
   const feeVault = findFeeVaultPda({ stateAccount: bidState });
@@ -2740,7 +2740,7 @@ export const testTakeBidT22 = async ({
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
       prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
-      prevOwnerAtaLamports: ownerAtaAcc,
+      prevOwnerAtaLamports: ownerAtaAcc
     },
     async ({
       prevRentDestLamports,
@@ -2749,7 +2749,7 @@ export const testTakeBidT22 = async ({
       prevTakerBroker,
       prevFeeAccLamports,
       prevSellerLamports,
-      prevOwnerAtaLamports,
+      prevOwnerAtaLamports
     }) => {
       let prevQuantity = 0;
       let prevQuantityFilled = 0;
@@ -2779,7 +2779,7 @@ export const testTakeBidT22 = async ({
         extraSigners: cosigner ? [cosigner, seller] : [seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bid accepted", sig);
 
@@ -2879,7 +2879,7 @@ export const testTakeBidWns = async ({
   lookupTableAccount,
   margin,
   whitelist = null,
-  cosigner,
+  cosigner
 }: {
   bidId: PublicKey;
   nftMint: PublicKey;
@@ -2901,7 +2901,7 @@ export const testTakeBidWns = async ({
   const {
     tx: { ixs: takeIxs },
     bidState,
-    ownerAtaAcc,
+    ownerAtaAcc
   } = await tcompSdk.takeBidWns({
     bidId,
     nftMint,
@@ -2916,7 +2916,7 @@ export const testTakeBidWns = async ({
     currency,
     whitelist,
     cosigner: cosigner?.publicKey,
-    collectionMint,
+    collectionMint
   });
 
   const feeVault = findFeeVaultPda({ stateAccount: bidState });
@@ -2931,7 +2931,7 @@ export const testTakeBidWns = async ({
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
       prevFeeAccLamports: feeVault,
       prevSellerLamports: seller.publicKey,
-      prevOwnerAtaLamports: ownerAtaAcc,
+      prevOwnerAtaLamports: ownerAtaAcc
     },
     async ({
       prevRentDestLamports,
@@ -2940,7 +2940,7 @@ export const testTakeBidWns = async ({
       prevTakerBroker,
       prevFeeAccLamports,
       prevSellerLamports,
-      prevOwnerAtaLamports,
+      prevOwnerAtaLamports
     }) => {
       let prevQuantity = 0;
       let prevQuantityFilled = 0;
@@ -2970,7 +2970,7 @@ export const testTakeBidWns = async ({
         extraSigners: cosigner ? [cosigner, seller] : [seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bid accepted", sig);
 
@@ -3069,7 +3069,7 @@ export const testTakeBidCore = async ({
   margin,
   whitelist = null,
   cosigner,
-  royaltyBps = 0,
+  royaltyBps = 0
 }: {
   bidId: PublicKey;
   asset: PublicKey;
@@ -3103,7 +3103,7 @@ export const testTakeBidCore = async ({
 
   const {
     tx: { ixs: takeIxs },
-    bidState,
+    bidState
   } = await tcompSdk.takeBidCore({
     bidId,
     asset,
@@ -3117,7 +3117,7 @@ export const testTakeBidCore = async ({
     currency,
     whitelist,
     cosigner: cosigner?.publicKey,
-    collection,
+    collection
   });
 
   const feeVault = findFeeVaultPda({ stateAccount: bidState });
@@ -3132,7 +3132,7 @@ export const testTakeBidCore = async ({
       ...(makerBroker ? { prevMakerBroker: makerBroker } : {}),
       ...(takerBroker ? { prevTakerBroker: takerBroker } : {}),
       prevFeeAccLamports: feeVault,
-      prevSellerLamports: seller.publicKey,
+      prevSellerLamports: seller.publicKey
     },
     async ({
       prevRentDestLamports,
@@ -3141,7 +3141,7 @@ export const testTakeBidCore = async ({
       prevMakerBroker,
       prevTakerBroker,
       prevFeeAccLamports,
-      prevSellerLamports,
+      prevSellerLamports
     }) => {
       let prevQuantity = 0;
       let prevQuantityFilled = 0;
@@ -3157,7 +3157,7 @@ export const testTakeBidCore = async ({
         extraSigners: cosigner ? [cosigner, seller] : [seller],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bid accepted", sig);
 
@@ -3270,7 +3270,7 @@ export const testListCore = async ({
   expireInSec,
   privateTaker,
   lookupTableAccount,
-  payer = owner,
+  payer = owner
 }: {
   asset: PublicKey;
   collection: PublicKey;
@@ -3284,7 +3284,7 @@ export const testListCore = async ({
 }) => {
   const {
     tx: { ixs },
-    listState,
+    listState
   } = await tcompSdk.listCore({
     asset,
     collection,
@@ -3293,7 +3293,7 @@ export const testListCore = async ({
     amount,
     currency,
     expireInSec,
-    privateTaker,
+    privateTaker
   });
 
   let sig;
@@ -3301,7 +3301,7 @@ export const testListCore = async ({
   await withLamports(
     {
       prevRentPayerLamports: payer.publicKey,
-      prevOwnerLamports: owner.publicKey,
+      prevOwnerLamports: owner.publicKey
     },
     async ({ prevRentPayerLamports, prevOwnerLamports }) => {
       sig = await buildAndSendTx({
@@ -3310,7 +3310,7 @@ export const testListCore = async ({
         //if leaf delegate passed in, then skip the owner
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ listed", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
@@ -3319,7 +3319,7 @@ export const testListCore = async ({
         await Promise.all([
           getLamports(owner.publicKey),
           getLamports(payer.publicKey),
-          tcompSdk.getListStateRent(),
+          tcompSdk.getListStateRent()
         ]);
 
       //if rentPayer != owner, make sure owner didnt lose lamports
@@ -3366,6 +3366,7 @@ export const testDelistCore = async ({
   rentDest = owner,
   lookupTableAccount,
   forceExpired = false,
+  payer = owner
 }: {
   asset: PublicKey;
   collection: PublicKey;
@@ -3373,42 +3374,44 @@ export const testDelistCore = async ({
   rentDest?: Keypair;
   lookupTableAccount?: AddressLookupTableAccount;
   forceExpired?: boolean;
+  payer?: Keypair;
 }) => {
   let ixs;
   let assetId;
 
   if (forceExpired) {
     ({
-      tx: { ixs },
+      tx: { ixs }
     } = await tcompSdk.closeExpiredListingCore({
       asset,
       collection,
       owner: owner.publicKey,
       rentDest: rentDest.publicKey,
+      payer: payer.publicKey
     }));
   } else {
     ({
-      tx: { ixs },
+      tx: { ixs }
     } = await tcompSdk.delistCore({
       asset,
       collection,
       owner: owner.publicKey,
-      rentDest: rentDest.publicKey,
+      rentDest: rentDest.publicKey
     }));
   }
 
   await withLamports(
     {
       prevOwnerLamports: owner.publicKey,
-      prevRentDestLamports: rentDest.publicKey,
+      prevRentDestLamports: rentDest.publicKey
     },
     async ({ prevOwnerLamports, prevRentDestLamports }) => {
       const sig = await buildAndSendTx({
         ixs,
-        extraSigners: forceExpired ? [] : [owner],
+        extraSigners: forceExpired ? [payer] : [owner],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ delisted", sig);
 
@@ -3422,7 +3425,7 @@ export const testDelistCore = async ({
         await Promise.all([
           tcompSdk.getListStateRent(),
           getLamports(owner.publicKey),
-          getLamports(rentDest.publicKey),
+          getLamports(rentDest.publicKey)
         ]);
 
       const rentToOwner = rentDest.publicKey.equals(owner.publicKey)
@@ -3448,7 +3451,7 @@ export const testBuyCore = async ({
   lookupTableAccount,
   payer = buyer,
   rentDest = owner,
-  royaltyBps = 0,
+  royaltyBps = 0
 }: {
   asset: PublicKey;
   collection: PublicKey;
@@ -3486,7 +3489,7 @@ export const testBuyCore = async ({
       return {
         pubkey: toWeb3JsPublicKey(c.address),
         isWritable: c.percentage > 0, // reduces congestion + program creators
-        isSigner: false,
+        isSigner: false
       };
     }),
     owner,
@@ -3494,12 +3497,12 @@ export const testBuyCore = async ({
     currency,
     makerBroker,
     takerBroker,
-    rentDest: rentDest,
+    rentDest: rentDest
   };
 
   const {
     tx: { ixs },
-    listState,
+    listState
   } = isNullLike(currency)
     ? await tcompSdk.buyCore({ ...common })
     : fail("SPL buy not implemented yet");
@@ -3515,7 +3518,7 @@ export const testBuyCore = async ({
       prevPayerLamports: payer.publicKey,
       prevBuyerLamports: buyer.publicKey,
       prevRentDestLamports: rentDest,
-      ...(makerBroker ? { prevMakerBroker: makerBroker } : {}),
+      ...(makerBroker ? { prevMakerBroker: makerBroker } : {})
     },
     async ({
       prevFeeAccLamports,
@@ -3523,14 +3526,14 @@ export const testBuyCore = async ({
       prevPayerLamports,
       prevBuyerLamports,
       prevRentDestLamports,
-      prevMakerBroker,
+      prevMakerBroker
     }) => {
       const [
         prevFeeAccTokens,
         prevSellerTokens,
         prevPayerTokens,
         prevBuyerTokens,
-        prevMakerBrokerTokens,
+        prevMakerBrokerTokens
       ] = currency
         ? await Promise.all([
             getTokenBalance(findAta(currency, feeVault)),
@@ -3539,7 +3542,7 @@ export const testBuyCore = async ({
               findAta(currency, payer.publicKey ?? buyer.publicKey)
             ),
             getTokenBalance(findAta(currency, buyer.publicKey)),
-            getTokenBalance(findAta(currency, makerBroker ?? feeVault)),
+            getTokenBalance(findAta(currency, makerBroker ?? feeVault))
           ])
         : [0, 0, 0, 0, 0];
       sig = await buildAndSendTx({
@@ -3547,7 +3550,7 @@ export const testBuyCore = async ({
         extraSigners: [payer],
         lookupTableAccounts: lookupTableAccount
           ? [lookupTableAccount]
-          : undefined,
+          : undefined
       });
       console.log("✅ bought", sig);
       // await parseTcompEvent({ conn: TEST_PROVIDER.connection, sig });
@@ -3725,7 +3728,7 @@ const generateTreeOfSize = (size: number, targetMints: PublicKey[]) => {
 
   const tree = new MerkleTreeJs(leaves, keccak256, {
     sortPairs: true,
-    hashLeaves: true,
+    hashLeaves: true
   });
 
   const proofs: { mint: PublicKey; proof: Buffer[] }[] = targetMints.map(
@@ -3745,7 +3748,7 @@ export const testInitUpdateMintProof = async ({
   mint,
   whitelist,
   proof,
-  expectedProofLen = Math.floor(Math.log2(100)) + 1,
+  expectedProofLen = Math.floor(Math.log2(100)) + 1
 }: {
   user: Keypair;
   mint: PublicKey;
@@ -3755,12 +3758,12 @@ export const testInitUpdateMintProof = async ({
 }) => {
   const {
     tx: { ixs },
-    mintProofPda,
+    mintProofPda
   } = await wlSdk.initUpdateMintProof({
     user: user.publicKey,
     mint,
     whitelist,
-    proof,
+    proof
   });
   await buildAndSendTx({ ixs, extraSigners: [user] });
 
@@ -3787,12 +3790,12 @@ export const makeProofWhitelist = async (
   const name = "hello_world";
   const {
     tx: { ixs },
-    whitelistPda,
+    whitelistPda
   } = await wlSdk.initUpdateWhitelist({
     cosigner: TEST_PROVIDER.publicKey,
     uuid: TensorWhitelistSDK.uuidToBuffer(uuid),
     rootHash: root,
-    name: TensorWhitelistSDK.nameToBuffer(name),
+    name: TensorWhitelistSDK.nameToBuffer(name)
   });
   await buildAndSendTx({ ixs });
 

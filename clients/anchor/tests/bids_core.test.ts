@@ -1,9 +1,9 @@
 import { BN } from "@coral-xyz/anchor";
 import {
-    AddressLookupTableAccount,
-    Keypair,
-    LAMPORTS_PER_SOL,
-    PublicKey,
+  AddressLookupTableAccount,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey
 } from "@solana/web3.js";
 import { nameToBuffer } from "@tensor-hq/tensor-common";
 import chai, { expect } from "chai";
@@ -11,18 +11,18 @@ import chaiAsPromised from "chai-as-promised";
 import { Field, MakeEvent, MAKER_BROKER_PCT, TakeEvent, Target } from "../src";
 import { makeNTraders } from "./account";
 import {
-    createAssetWithCollection,
-    createUmi,
-    getOwner,
+  createAssetWithCollection,
+  createUmi,
+  getOwner
 } from "./metaplex_core";
 import {
-    beforeAllHook,
-    BROKER_FEE_PCT,
-    FEE_PCT,
-    fetchAndCheckSingleIxTx,
-    tcompSdk,
-    testBid,
-    testTakeBidCore,
+  beforeAllHook,
+  BROKER_FEE_PCT,
+  FEE_PCT,
+  fetchAndCheckSingleIxTx,
+  tcompSdk,
+  testBid,
+  testTakeBidCore
 } from "./shared";
 import { makeVocWhitelist } from "./tswap";
 
@@ -43,7 +43,7 @@ describe("[mpl-core] tcomp bids", () => {
     // TODO: Add cosigner tests.
     for (const cosigned of [false]) {
       const [traderA, traderB] = await makeNTraders({
-        n: 2,
+        n: 2
       });
 
       const cosigner = cosigned ? Keypair.generate() : undefined;
@@ -68,14 +68,14 @@ describe("[mpl-core] tcomp bids", () => {
         amount: initialAmount,
         targetId: asset,
         owner: traderB,
-        cosigner,
+        cosigner
       });
       await testBid({
         amount,
         targetId: asset,
         owner: traderB,
         prevBidAmount: initialAmount.toNumber(),
-        cosigner,
+        cosigner
       });
 
       const common = {
@@ -84,7 +84,7 @@ describe("[mpl-core] tcomp bids", () => {
         collection,
         owner: traderB.publicKey,
         seller: traderA,
-        lookupTableAccount,
+        lookupTableAccount
       };
 
       if (cosigned) {
@@ -92,7 +92,7 @@ describe("[mpl-core] tcomp bids", () => {
           testTakeBidCore({
             ...common,
             minAmount,
-            bidPrice: amount,
+            bidPrice: amount
           })
         ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("BadCosigner"));
       }
@@ -103,7 +103,7 @@ describe("[mpl-core] tcomp bids", () => {
           ...common,
           bidPrice: amount,
           minAmount: new BN(LAMPORTS_PER_SOL),
-          cosigner,
+          cosigner
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("PriceMismatch"));
 
@@ -115,7 +115,7 @@ describe("[mpl-core] tcomp bids", () => {
           minAmount,
           bidPrice: amount,
           cosigner,
-          collection: badCollection,
+          collection: badCollection
         })
       ).to.be.rejectedWith(tcompSdk.getErrorCodeHex("WrongTargetId"));
 
@@ -126,7 +126,7 @@ describe("[mpl-core] tcomp bids", () => {
         bidPrice: amount,
         cosigner,
         collection,
-        royaltyBps,
+        royaltyBps
       });
 
       // check ownership
@@ -162,13 +162,13 @@ describe("[mpl-core] tcomp bids", () => {
         targetId: whitelist,
         owner: traderB,
         privateTaker: traderA.publicKey,
-        quantity: 2,
+        quantity: 2
       };
       await expect(
         testBid({
           ...commonArgs,
           field: Field.Name,
-          fieldId: null,
+          fieldId: null
         })
       ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
 
@@ -176,7 +176,7 @@ describe("[mpl-core] tcomp bids", () => {
         testBid({
           ...commonArgs,
           field: null,
-          fieldId: new PublicKey(nameToBuffer(name)),
+          fieldId: new PublicKey(nameToBuffer(name))
         })
       ).rejectedWith(tcompSdk.getErrorCodeHex("BadBidField"));
     }
@@ -190,7 +190,7 @@ describe("[mpl-core] tcomp bids", () => {
         field: Field.Name,
         fieldId: new PublicKey(nameToBuffer(name)),
         privateTaker: traderA.publicKey,
-        quantity: 2,
+        quantity: 2
       });
 
       const amount = bidPrice.toNumber();
@@ -225,7 +225,7 @@ describe("[mpl-core] tcomp bids", () => {
         takerBroker,
         bidId: whitelist,
         whitelist,
-        royaltyBps,
+        royaltyBps
       });
 
       const amount = bidPrice.toNumber();

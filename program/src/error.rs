@@ -136,9 +136,15 @@ pub enum TcompError {
     #[msg("missing broker token account")]
     MissingBrokerTokenAccount = 143,
 
-    #[msg("invalidtoken account")]
+    #[msg("invalid token account")]
     InvalidTokenAccount = 144,
 
     #[msg("missing creator ATA")]
     MissingCreatorATA = 145,
+
+    #[msg("No whitelist method provided")]
+    MissingWhitelistMethod = 146,
+
+    #[msg("Edition data is empty")]
+    EditionDataEmpty = 147,
 }

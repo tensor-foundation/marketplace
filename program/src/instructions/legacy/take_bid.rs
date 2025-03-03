@@ -3,7 +3,10 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
-use mpl_token_metadata::types::AuthorizationData;
+use mpl_token_metadata::{
+    accounts::{MasterEdition, Metadata},
+    types::AuthorizationData,
+};
 use tensor_toolbox::{
     assert_fee_account,
     token_metadata::{assert_decode_metadata, transfer, TransferArgs},
@@ -21,7 +24,7 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct TakeBidLegacy<'info> {
-    /// CHECK: Seeds checked here, account has no state.
+    /// CHECK: checked in assert_fee_account()
     #[account(mut)]
     pub fee_vault: UncheckedAccount<'info>,
 
@@ -37,7 +40,7 @@ pub struct TakeBidLegacy<'info> {
     )]
     pub bid_state: Box<Account<'info, BidState>>,
 
-    // Owner needs to be passed in as mutable account, so we reassign lamports back to them
+    // Owner needs to be passed in as mutable account, so we can reassign lamports back to them
     /// CHECK: has_one = owner on bid_state
     #[account(mut)]
     pub owner: UncheckedAccount<'info>,
@@ -46,13 +49,13 @@ pub struct TakeBidLegacy<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
     /// CHECK: optional, manually handled in handler: 1)seeds, 2)program owner, 3)normal owner, 4)margin acc stored on pool
     #[account(mut)]
-    pub margin: UncheckedAccount<'info>,
+    pub shared_escrow: UncheckedAccount<'info>,
 
     /// CHECK: manually below, since this account is optional
     pub whitelist: Option<UncheckedAccount<'info>>,
@@ -62,11 +65,21 @@ pub struct TakeBidLegacy<'info> {
     pub seller_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    //can't deserialize directly coz Anchor traits not implemented
-    /// CHECK: assert_decode_metadata check seeds
-    #[account(mut)]
+    /// CHECK: ownership, structure and mint are checked in assert_decode_metadata, seeds checked here.
+    #[account(mut,
+        seeds = [
+            Metadata::PREFIX,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump,
+        seeds::program = mpl_token_metadata::ID,
+    )]
     pub metadata: UncheckedAccount<'info>,
 
     #[account(
@@ -78,9 +91,18 @@ pub struct TakeBidLegacy<'info> {
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
-
-    //note that MASTER EDITION and EDITION share the same seeds, and so it's valid to check them here
-    /// CHECK: seeds checked on Token Metadata CPI
+    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    #[account(
+        seeds=[
+            MasterEdition::PREFIX.0,
+            mpl_token_metadata::ID.as_ref(),
+            mint.key().as_ref(),
+            MasterEdition::PREFIX.1,
+        ],
+        bump,
+        seeds::program = mpl_token_metadata::ID,
+        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
+    )]
     pub edition: UncheckedAccount<'info>,
 
     /// CHECK: seeds checked on Token Metadata CPI
@@ -175,10 +197,10 @@ impl<'info> Validate<'info> for TakeBidLegacy<'info> {
         );
 
         // check if the cosigner is required
-        if let Some(cosigner) = bid_state.cosigner.value() {
+        if bid_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(bid_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
@@ -249,7 +271,11 @@ pub fn process_take_bid_legacy<'info>(
                 let mut name_arr = [0u8; 32];
                 name_arr[..metadata.name.len()].copy_from_slice(metadata.name.as_bytes());
                 require!(
-                    name_arr == bid_state.field_id.unwrap().to_bytes(),
+                    name_arr
+                        == bid_state
+                            .field_id
+                            .ok_or(TcompError::WrongBidFieldId)?
+                            .to_bytes(),
                     TcompError::WrongBidFieldId
                 );
             }
@@ -339,7 +365,7 @@ pub fn process_take_bid_legacy<'info>(
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
         seller: &ctx.accounts.seller.to_account_info(),
-        margin: &ctx.accounts.margin,
+        escrow: &ctx.accounts.shared_escrow,
         owner: &ctx.accounts.owner,
         rent_destination: &ctx.accounts.rent_destination,
         maker_broker: &ctx.accounts.maker_broker,
@@ -357,8 +383,8 @@ pub fn process_take_bid_legacy<'info>(
         optional_royalty_pct,
         seller_fee_basis_points: metadata.seller_fee_basis_points,
         creator_accounts: ctx.remaining_accounts,
-        tcomp_prog: &ctx.accounts.marketplace_program,
-        tswap_prog: &ctx.accounts.escrow_program,
+        marketplace_prog: &ctx.accounts.marketplace_program,
+        escrow_prog: &ctx.accounts.escrow_program,
         system_prog: &ctx.accounts.system_program,
     })
 }

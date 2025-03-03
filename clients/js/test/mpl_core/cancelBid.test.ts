@@ -27,13 +27,16 @@ test('it can cancel an existing bid', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
 
   // Create a MPL core asset owned by the seller.
-  const asset = await createDefaultAsset(
+  const asset = await createDefaultAsset({
     client,
+    authority: updateAuthority,
+    owner: seller.address,
+    royalties: {
+      creators: [{ address: updateAuthority.address, percentage: 100 }],
+      basisPoints: 500,
+    },
     payer,
-    updateAuthority.address,
-    seller.address,
-    true // withRoyalties
-  );
+  });
 
   // Create a bid by the buyer.
   const bidIx = await getBidInstructionAsync({

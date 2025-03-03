@@ -4,17 +4,17 @@ use anchor_spl::{
     token_2022::{Token2022, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount},
 };
-use mpl_token_metadata::types::TokenStandard;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees, fees, shard_num,
     token_2022::wns::{approve, validate_mint, ApproveAccounts, ApproveParams},
     transfer_lamports, transfer_lamports_checked, CalcFeesArgs, Fees, BROKER_FEE_PCT,
+    MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION,
 };
 
 #[derive(Accounts)]
@@ -63,6 +63,9 @@ pub struct BuyWns<'info> {
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seed in nft_escrow & nft_receipt
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -77,7 +80,7 @@ pub struct BuyWns<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -149,12 +152,11 @@ impl<'info> Validate<'info> for BuyWns<'info> {
             list_state.maker_broker == self.maker_broker.as_ref().map(|acc| acc.key()),
             TcompError::BrokerMismatch
         );
-
         // Validate the cosigner if it's required.
-        if let Some(cosigner) = list_state.cosigner.value() {
+        if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
@@ -179,7 +181,7 @@ pub fn process_buy_wns<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
@@ -189,8 +191,7 @@ pub fn process_buy_wns<'info, 'b>(
     let creator_fee = calc_creators_fee(
         seller_fee_basis_points,
         amount,
-        Some(TokenStandard::ProgrammableNonFungible), // <- enforced royalties
-        None,
+        Some(100), // <- enforced royalties
     )?;
 
     let asset_id = ctx.accounts.mint.key();

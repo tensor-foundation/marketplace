@@ -931,6 +931,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835a3dc7d1ec9e75e2b5fb4ba75396837112d2060b03f7d43bc1897c7f7211da"
 
 [[package]]
+name = "five8_const"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b4f62f0f8ca357f93ae90c8c2dd1041a1f665fde2f889ea9b1787903829015"
+dependencies = [
+ "five8_core",
+]
+
+[[package]]
+name = "five8_core"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94474d15a76982be62ca8a39570dccce148d98c238ebb7408b0a21b2c4bdddc4"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1118,11 +1133,12 @@ dependencies = [
 
 [[package]]
 name = "kaigan"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e623cca1f0e2a0919032c1bdabbf81dd9aa34658d5066aca7bb90d608317ab91"
+checksum = "b6dd100976df9dd59d0c3fecf6f9ad3f161a087374d1b2a77ebb4ad8920f11bb"
 dependencies = [
  "borsh 0.10.3",
+ "serde",
 ]
 
 [[package]]
@@ -1212,13 +1228,13 @@ checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "marketplace-program"
-version = "0.3.1"
+version = "0.7.1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "escrow-program",
  "mpl-bubblegum",
- "mpl-core",
+ "mpl-core 0.9.0",
  "mpl-token-metadata",
  "spl-account-compression",
  "spl-noop",
@@ -1226,7 +1242,7 @@ dependencies = [
  "spl-type-length-value",
  "static_assertions",
  "tensor-escrow",
- "tensor-toolbox 0.3.0",
+ "tensor-toolbox 0.8.1",
  "tensor-vipers",
  "whitelist-program",
 ]
@@ -1304,9 +1320,9 @@ dependencies = [
 
 [[package]]
 name = "mpl-core"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1d4f516cd9daae872182a50850ab6d5588667e71152d49b0729a32830036b83"
+checksum = "299e6db3f7d9ab8fba383e3c6e88f8869063e694cbeb56da8f1bdd355e255f8f"
 dependencies = [
  "base64 0.22.0",
  "borsh 0.10.3",
@@ -1320,10 +1336,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "mpl-token-metadata"
-version = "4.1.1"
+name = "mpl-core"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4b2de608098eb2ef2a5392069dea83084967e25a4d69d0380a6bb02454fc0fe"
+checksum = "dcef44f3d345b5b28c7584b1d86c3212ccc54f1611b27748bbbaabfe588ae83a"
+dependencies = [
+ "base64 0.22.0",
+ "borsh 0.10.3",
+ "kaigan",
+ "modular-bitfield",
+ "num-derive 0.3.3",
+ "num-traits",
+ "rmp-serde",
+ "serde_json",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "mpl-token-metadata"
+version = "4.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caf0f61b553e424a6234af1268456972ee66c2222e1da89079242251fa7479e5"
 dependencies = [
  "borsh 0.10.3",
  "num-derive 0.3.3",
@@ -2374,6 +2408,23 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-account-compression",
+ "spl-noop",
+ "spl-token-metadata-interface",
+ "tensor-vipers",
+]
+
+[[package]]
+name = "tensor-toolbox"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86ad0af7b3655fac8e00f9baffa5a91026bb66858cd3a3c4208e8f523d306dbf"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
  "mpl-bubblegum",
  "mpl-token-metadata",
  "solana-program",
@@ -2385,17 +2436,17 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.3.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afac38c888eca208989efb9a77048101e117ab5023940ef7d359350acfb11d16"
+checksum = "43285c2352ece2be5389708c13ff2241f6c12cb046ff9ef8c8d9bc831cdb6d65"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
+ "five8_const",
  "mpl-bubblegum",
- "mpl-core",
+ "mpl-core 0.8.0",
  "mpl-token-metadata",
- "solana-program",
  "spl-account-compression",
  "spl-noop",
  "spl-token-metadata-interface",
@@ -2404,9 +2455,9 @@ dependencies = [
 
 [[package]]
 name = "tensor-vipers"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37fdd59bf5f00e3eea14c55b833b0c45fad12d7c017bd8a138e4360887d42011"
+checksum = "264654b48a8f359d62a7bef00997eb14550834b464ad4aab27923f105af93cc0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2633,13 +2684,13 @@ dependencies = [
 
 [[package]]
 name = "whitelist-program"
-version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=71e0013#71e0013f26ff18b39c3aeeb5bfc2533af7ef32cf"
+version = "0.2.3"
+source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=17ee287051181f28358ca7eeb883e20a1211d058#17ee287051181f28358ca7eeb883e20a1211d058"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "mpl-token-metadata",
- "tensor-toolbox 0.1.0",
+ "tensor-toolbox 0.4.0",
  "tensor-vipers",
 ]
 

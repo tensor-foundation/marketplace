@@ -1,11 +1,10 @@
 use anchor_lang::solana_program::{program::invoke, system_instruction};
-use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
-use mpl_token_metadata::types::TokenStandard;
+use metaplex_core::instructions::TransferV1CpiBuilder;
 use tensor_toolbox::{
     assert_fee_account, calc_creators_fee, calc_fees,
-    metaplex_core::{validate_asset, MetaplexCore},
+    metaplex_core::{validate_core_asset, MetaplexCore},
     transfer_creators_fee, transfer_lamports_from_pda, CalcFeesArgs, CreatorFeeMode, Fees, FromAcc,
-    FromExternal, BROKER_FEE_PCT,
+    FromExternal, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 
 use crate::*;
@@ -51,7 +50,7 @@ pub struct BuyCore<'info> {
     #[account(mut)]
     pub taker_broker: Option<UncheckedAccount<'info>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut)]
     pub maker_broker: Option<UncheckedAccount<'info>>,
 
@@ -67,7 +66,7 @@ pub struct BuyCore<'info> {
 
     pub system_program: Program<'info, System>,
 
-    // cosigner is checked in validate()
+    // cosigner is checked in handler: validate_cosigner()
     pub cosigner: Option<UncheckedAccount<'info>>,
     // Remaining accounts:
     // 1. creators (1-5)
@@ -159,16 +158,11 @@ pub fn process_buy_core<'info, 'b>(
             ctx.remaining_accounts
         };
 
-    // validate the asset account
-    let royalties = validate_asset(
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
+    let asset = validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-    let (royalty_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
-        (basis_points, TokenStandard::ProgrammableNonFungible)
-    } else {
-        (0, TokenStandard::NonFungible)
-    };
 
     let amount = list_state.amount;
     let currency = list_state.currency;
@@ -183,13 +177,13 @@ pub fn process_buy_core<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(asset.royalty_fee_bps, amount, Some(100))?;
 
     let asset_id = ctx.accounts.asset.key();
 
@@ -252,24 +246,26 @@ pub fn process_buy_core<'info, 'b>(
         taker_broker_fee,
     )?;
 
-    // Pay creator royalties.
-    if let Some(Royalties { creators, .. }) = royalties {
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut remaining_accounts.iter(),
-            creator_fee,
-            &CreatorFeeMode::Sol {
-                from: &FromAcc::External(&FromExternal {
-                    from: &ctx.accounts.payer.to_account_info(),
-                    sys_prog: &ctx.accounts.system_program,
-                }),
-            },
-        )?;
-    }
-
     // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
     ctx.accounts
         .transfer_lamports(&ctx.accounts.owner.to_account_info(), amount)?;
+
+    // Pay creator royalties.
+    if let Some(creators) = asset.royalty_creators {
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut remaining_accounts.iter(),
+                creator_fee,
+                &CreatorFeeMode::Sol {
+                    from: &FromAcc::External(&FromExternal {
+                        from: &ctx.accounts.payer.to_account_info(),
+                        sys_prog: &ctx.accounts.system_program,
+                    }),
+                },
+            )?;
+        }
+    }
 
     Ok(())
 }

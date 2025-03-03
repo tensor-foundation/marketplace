@@ -28,6 +28,7 @@ pub struct CloseExpiredListingT22<'info> {
         bump = list_state.bump[0],
         close = rent_destination,
         has_one = owner,
+        constraint = list_state.expiry < Clock::get()?.unix_timestamp @ TcompError::ListingNotYetExpired,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -35,10 +36,14 @@ pub struct CloseExpiredListingT22<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = list_state,
+        associated_token::token_program = token_program,
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: seed in nft_escrow & nft_receipt
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: list_state.get_rent_payer()
@@ -65,10 +70,6 @@ pub fn process_close_expired_listing_t22<'info>(
     ctx: Context<'_, '_, '_, 'info, CloseExpiredListingT22<'info>>,
 ) -> Result<()> {
     let list_state = &ctx.accounts.list_state;
-    require!(
-        list_state.expiry < Clock::get()?.unix_timestamp,
-        TcompError::ListingNotYetExpired
-    );
 
     // validates the mint
 

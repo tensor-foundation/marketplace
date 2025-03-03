@@ -1,29 +1,41 @@
+use mpl_bubblegum::utils::get_asset_id;
 use tensor_toolbox::{transfer_cnft, TransferArgs};
 
 use crate::*;
 
 #[derive(Accounts)]
+#[instruction(nonce: u64)]
 pub struct CloseExpiredListing<'info> {
     #[account(
         mut,
-        seeds=[b"list_state".as_ref(), list_state.asset_id.as_ref()],
+        seeds=[
+            b"list_state".as_ref(),
+            get_asset_id(&merkle_tree.key(), nonce).as_ref()
+        ],
         bump = list_state.bump[0],
         close = rent_destination,
         has_one = owner,
     )]
     pub list_state: Box<Account<'info, ListState>>,
+
     /// CHECK: stored on list_state. In this case doesn't have to sign since the listing expired.
     pub owner: UncheckedAccount<'info>,
+
     pub system_program: Program<'info, System>,
+
     pub marketplace_program: Program<'info, crate::program::MarketplaceProgram>,
+
     /// CHECK: downstream
     pub tree_authority: UncheckedAccount<'info>,
+
     /// CHECK: downstream
     #[account(mut)]
     pub merkle_tree: UncheckedAccount<'info>,
+
     pub log_wrapper: Program<'info, Noop>,
     pub compression_program: Program<'info, SplAccountCompression>,
     pub bubblegum_program: Program<'info, Bubblegum>,
+
     /// CHECK: list_state.get_rent_payer()
     #[account(mut,
         constraint = rent_destination.key() == list_state.get_rent_payer() @ TcompError::BadRentDest

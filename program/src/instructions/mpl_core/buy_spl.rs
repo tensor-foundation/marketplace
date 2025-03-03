@@ -3,19 +3,19 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use metaplex_core::{instructions::TransferV1CpiBuilder, types::Royalties};
-use mpl_token_metadata::types::TokenStandard;
+use metaplex_core::instructions::TransferV1CpiBuilder;
 use std::ops::Deref;
 use tensor_toolbox::{
     calc_creators_fee, calc_fees, fees,
-    metaplex_core::{validate_asset, MetaplexCore},
+    metaplex_core::{validate_core_asset, MetaplexCore},
     shard_num, transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, BROKER_FEE_PCT,
+    MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
 use tensor_vipers::{throw_err, unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
-    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, MAKER_BROKER_PCT, TCOMP_FEE_BPS,
+    TcompEvent, TcompSigner, CURRENT_TCOMP_VERSION, TNSR_CURRENCY,
 };
 
 #[derive(Accounts)]
@@ -62,6 +62,9 @@ pub struct BuyCoreSpl<'info> {
     pub collection: Option<UncheckedAccount<'info>>,
 
     /// CHECK: list_state.currency
+    #[account(
+        mint::token_program = token_program,
+    )]
     pub currency: Box<InterfaceAccount<'info, Mint>>,
 
     // Owner needs to be passed in as mutable account, so we reassign lamports back to them
@@ -96,10 +99,11 @@ pub struct BuyCoreSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = taker_broker,
+        constraint = taker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub taker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
-    /// CHECK: none, can be anything
+    /// CHECK: checked in validate()
     #[account(mut,
         constraint = maker_broker_ta.is_some()
     )]
@@ -109,6 +113,7 @@ pub struct BuyCoreSpl<'info> {
         payer = payer,
         associated_token::mint = currency,
         associated_token::authority = maker_broker,
+        constraint = maker_broker.is_some() @ TcompError::MissingBroker
     )]
     pub maker_broker_ta: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
@@ -163,10 +168,10 @@ impl<'info> Validate<'info> for BuyCoreSpl<'info> {
         );
 
         // Validate the cosigner if it's required.
-        if let Some(cosigner) = list_state.cosigner.value() {
+        if list_state.cosigner != Pubkey::default() {
             let signer = self.cosigner.as_ref().ok_or(TcompError::BadCosigner)?;
 
-            require!(cosigner == signer.key, TcompError::BadCosigner);
+            require!(list_state.cosigner == *signer.key, TcompError::BadCosigner);
         }
 
         Ok(())
@@ -200,16 +205,11 @@ pub fn process_buy_core_spl<'info, 'b>(
     // validate the mint
     let list_state = &ctx.accounts.list_state;
 
-    // validate the asset account
-    let royalties = validate_asset(
+    // validate the asset and collection accounts and extract royalty and whitelist info from them.
+    let asset = validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
-    let (royalty_fee, _) = if let Some(Royalties { basis_points, .. }) = royalties {
-        (basis_points, TokenStandard::ProgrammableNonFungible)
-    } else {
-        (0, TokenStandard::NonFungible)
-    };
 
     let amount = list_state.amount;
     let currency = list_state.currency;
@@ -219,7 +219,7 @@ pub fn process_buy_core_spl<'info, 'b>(
         TcompError::CurrencyMismatch
     );
 
-    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6");
+    let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
         taker_fee: _,
@@ -229,13 +229,13 @@ pub fn process_buy_core_spl<'info, 'b>(
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
-        total_fee_bps: TCOMP_FEE_BPS,
+        total_fee_bps: TAKER_FEE_BPS,
         broker_fee_pct: BROKER_FEE_PCT,
         maker_broker_pct: MAKER_BROKER_PCT,
     })?;
 
     // No optional royalties.
-    let creator_fee = calc_creators_fee(royalty_fee, amount, None, Some(100))?;
+    let creator_fee = calc_creators_fee(asset.royalty_fee_bps, amount, Some(100))?;
 
     let asset_id = ctx.accounts.asset.key();
 
@@ -302,8 +302,12 @@ pub fn process_buy_core_spl<'info, 'b>(
         taker_broker_fee,
     )?;
 
+    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
+    ctx.accounts
+        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)?;
+
     // Pay creator royalties.
-    if let Some(Royalties { creators, .. }) = royalties {
+    if let Some(creators) = asset.royalty_creators {
         let creators_len = creators.len();
         if ctx.remaining_accounts.len() < creators_len * 2 {
             throw_err!(TcompError::InsufficientRemainingAccounts);
@@ -317,23 +321,23 @@ pub fn process_buy_core_spl<'info, 'b>(
             .flat_map(|(creator, ata)| vec![creator.to_account_info(), ata.to_account_info()])
             .collect::<Vec<_>>();
 
-        transfer_creators_fee(
-            &creators.into_iter().map(Into::into).collect(),
-            &mut creator_accounts_with_ta.iter(),
-            creator_fee,
-            &CreatorFeeMode::Spl {
-                associated_token_program: &ctx.accounts.associated_token_program,
-                token_program: &ctx.accounts.token_program,
-                system_program: &ctx.accounts.system_program,
-                currency: ctx.accounts.currency.deref().as_ref(),
-                from: &ctx.accounts.payer,
-                from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
-                rent_payer: &ctx.accounts.payer,
-            },
-        )?;
+        if creator_fee > 0 {
+            transfer_creators_fee(
+                &creators.into_iter().map(Into::into).collect(),
+                &mut creator_accounts_with_ta.iter(),
+                creator_fee,
+                &CreatorFeeMode::Spl {
+                    associated_token_program: &ctx.accounts.associated_token_program,
+                    token_program: &ctx.accounts.token_program,
+                    system_program: &ctx.accounts.system_program,
+                    currency: ctx.accounts.currency.deref().as_ref(),
+                    from: &ctx.accounts.payer,
+                    from_token_acc: ctx.accounts.payer_currency_ta.deref().as_ref(),
+                    rent_payer: &ctx.accounts.payer,
+                },
+            )?;
+        }
     }
 
-    // Pay the seller (NB: the full listing amount since taker pays above fees + royalties)
-    ctx.accounts
-        .transfer_currency(ctx.accounts.owner_currency_ta.deref().as_ref(), amount)
+    Ok(())
 }

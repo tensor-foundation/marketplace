@@ -1,8 +1,5 @@
 use metaplex_core::instructions::TransferV1CpiBuilder;
-use tensor_toolbox::{
-    metaplex_core::{validate_asset, MetaplexCore},
-    NullableOption,
-};
+use tensor_toolbox::metaplex_core::{validate_core_asset, MetaplexCore};
 
 use crate::*;
 
@@ -23,7 +20,7 @@ pub struct ListCore<'info> {
             asset.key.as_ref(),
         ],
         bump,
-        space = LIST_STATE_SIZE,
+        space = ListState::SIZE,
     )]
     pub list_state: Box<Account<'info, ListState>>,
 
@@ -51,7 +48,7 @@ pub fn process_list_core<'info>(
     private_taker: Option<Pubkey>,
     maker_broker: Option<Pubkey>,
 ) -> Result<()> {
-    validate_asset(
+    validate_core_asset(
         &ctx.accounts.asset,
         ctx.accounts.collection.as_ref().map(|c| c.as_ref()),
     )?;
@@ -78,17 +75,15 @@ pub fn process_list_core<'info>(
     list_state.private_taker = private_taker;
     list_state.maker_broker = maker_broker;
 
-    let expiry = match expire_in_sec {
-        Some(expire_in_sec) => {
-            let expire_in_i64 = i64::try_from(expire_in_sec).unwrap();
-            require!(expire_in_i64 <= MAX_EXPIRY_SEC, TcompError::ExpiryTooLarge);
-            Clock::get()?.unix_timestamp + expire_in_i64
-        }
-        None => Clock::get()?.unix_timestamp + MAX_EXPIRY_SEC,
-    };
+    let expiry = assert_expiry(expire_in_sec, None)?;
     list_state.expiry = expiry;
-    list_state.rent_payer = NullableOption::new(ctx.accounts.payer.key());
-    list_state.cosigner = ctx.accounts.cosigner.as_ref().map(|c| c.key()).into();
+    list_state.rent_payer = ctx.accounts.payer.key();
+    list_state.cosigner = ctx
+        .accounts
+        .cosigner
+        .as_ref()
+        .map(|c| c.key())
+        .unwrap_or_default();
     // serializes the account data
     list_state.exit(ctx.program_id)?;
 
