@@ -6,6 +6,7 @@ import {
 } from '@solana/web3.js';
 import {
   createDefaultNft,
+  fetchMetadata,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
 import { TokenStandard } from '@tensor-foundation/resolvers';
@@ -45,11 +46,16 @@ import {
 import { computeIx, setupLegacyTest } from './_common.js';
 
 test('it can buy an NFT', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+  });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
 
   // When a buyer buys the NFT.
@@ -57,7 +63,7 @@ test('it can buy an NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
   });
 
@@ -85,12 +91,17 @@ test('it can buy an NFT', async (t) => {
 });
 
 test('it can buy a Programmable NFT', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-      pNft: true,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+    pNft: true,
+  });
   const { buyer, nftOwner, nftUpdateAuthority } = signers;
 
   // When a buyer buys the NFT.
@@ -98,7 +109,7 @@ test('it can buy a Programmable NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [nftUpdateAuthority.address],
   });
@@ -167,12 +178,17 @@ test('it cannot buy a Programmable NFT with a lower amount', async (t) => {
 });
 
 test('it can buy an NFT with a cosigner', async (t) => {
-  const { client, signers, mint, listing, listingPrice } =
-    await setupLegacyTest({
-      t,
-      action: TestAction.List,
-      useCosigner: true,
-    });
+  const {
+    client,
+    signers,
+    mint,
+    listing,
+    price: maxPrice,
+  } = await setupLegacyTest({
+    t,
+    action: TestAction.List,
+    useCosigner: true,
+  });
   const { nftOwner, nftUpdateAuthority, cosigner } = signers;
 
   // When a buyer buys the NFT.
@@ -181,7 +197,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     cosigner,
     creators: [nftUpdateAuthority.address],
   });
@@ -210,7 +226,12 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
-  const { client, signers, mint, listingPrice } = await setupLegacyTest({
+  const {
+    client,
+    signers,
+    mint,
+    price: maxPrice,
+  } = await setupLegacyTest({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -223,7 +244,7 @@ test('it cannot buy a Programmable NFT with a missing cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     // Missing cosigner!
     tokenStandard: TokenStandard.ProgrammableNonFungible,
     creators: [nftUpdateAuthority.address],
@@ -610,7 +631,7 @@ test('it pays royalties and fees correctly', async (t) => {
   const listingPrice = LAMPORTS_PER_SOL / 2n;
 
   // Mint pNFT
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: lister,
     authority: creatorKeypair1,
@@ -658,12 +679,18 @@ test('it pays royalties and fees correctly', async (t) => {
     .getBalance((await findListStatePda({ mint }))[0])
     .send();
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+
+  const maxAmount =
+    listingPrice + (listingPrice * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // When the buyer buys the listing...
   const buyIx = await getBuyLegacyInstructionAsync({
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice,
+    maxAmount,
     creators: [creatorKeypair1.address, creatorKeypair2.address],
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
@@ -740,7 +767,7 @@ test('it enforces pNFT royalties', async (t) => {
   const creator = await generateKeyPairSignerWithSol(client);
   const listingPrice = LAMPORTS_PER_SOL / 2n;
 
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: lister,
     authority: creator,
@@ -767,12 +794,17 @@ test('it enforces pNFT royalties', async (t) => {
     .getBalance(creator.address)
     .send();
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const maxAmount =
+    listingPrice + (listingPrice * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // Even if the buyer specifies 0% royalties...
   const buyIx = await getBuyLegacyInstructionAsync({
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice,
+    maxAmount,
     optionalRoyaltyPct: 0,
     creators: [creator.address],
   });
@@ -805,7 +837,7 @@ test('it respects the optionalRoyaltyPct arg', async (t) => {
 
   const optionalRoyaltyPcts = [0, 10, 50, 100];
   for (const optionalRoyaltyPct of optionalRoyaltyPcts) {
-    const { mint } = await createDefaultNft({
+    const { mint, metadata } = await createDefaultNft({
       client,
       payer: lister,
       authority: creator,
@@ -831,11 +863,17 @@ test('it respects the optionalRoyaltyPct arg', async (t) => {
       .getBalance(creator.address)
       .send();
 
+    const md = (await fetchMetadata(client.rpc, metadata)).data;
+    const { sellerFeeBasisPoints } = md;
+    const maxAmount =
+      listingPrice +
+      (listingPrice * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
     const buyIx = await getBuyLegacyInstructionAsync({
       owner: lister.address,
       payer: buyer,
       mint,
-      maxAmount: listingPrice,
+      maxAmount,
       optionalRoyaltyPct,
       creators: [creator.address],
     });

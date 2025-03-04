@@ -13,7 +13,7 @@ use tensor_toolbox::{
     transfer_creators_fee, CalcFeesArgs, CreatorFeeMode, Fees, TCreator, BROKER_FEE_PCT,
     MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
-use tensor_vipers::Validate;
+use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     program::MarketplaceProgram, record_event, ListState, TakeEvent, Target, TcompError,
@@ -238,16 +238,18 @@ pub fn process_buy_t22_spl<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_some(), TcompError::CurrencyMismatch);
+    require!(
+        list_state.currency == Some(ctx.accounts.currency.key()),
+        TcompError::CurrencyMismatch
+    );
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
@@ -334,13 +336,6 @@ pub fn process_buy_t22_spl<'info, 'b>(
         (vec![], vec![], 0)
     };
 
-    // Invoke the transfer.
-    tensor_transfer_checked(
-        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
-        1,
-        0,
-    )?; // supply = 1, decimals = 0
-
     let asset_id = ctx.accounts.mint.key();
 
     record_event(
@@ -363,6 +358,16 @@ pub fn process_buy_t22_spl<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    // Invoke the transfer.
+    tensor_transfer_checked(
+        transfer_cpi.with_signer(&[&ctx.accounts.list_state.seeds()]),
+        1,
+        0,
+    )?; // supply = 1, decimals = 0
 
     // --Pay fees in currency--
 

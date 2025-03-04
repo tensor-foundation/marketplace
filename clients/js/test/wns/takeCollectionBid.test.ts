@@ -6,6 +6,11 @@ import {
   pipe,
 } from '@solana/web3.js';
 import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   createWnsNftInGroup,
@@ -15,6 +20,11 @@ import {
   TOKEN22_PROGRAM_ID,
   TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
+import {
+  intoAddress,
+  Mode,
+  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
+} from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   Field,
@@ -40,17 +50,7 @@ import {
   TAKER_FEE_BPS,
   upsertMintProof,
 } from '../_common.js';
-import {
-  intoAddress,
-  Mode,
-  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
-} from '@tensor-foundation/whitelist';
 import { generateTreeOfSize } from '../_merkle.js';
-import {
-  findMarginAccountPda,
-  getDepositMarginAccountInstructionAsync,
-  getInitMarginAccountInstructionAsync,
-} from '@tensor-foundation/escrow';
 import { computeIx } from '../legacy/_common.js';
 
 test('it can take a bid on a WNS collection', async (t) => {
@@ -64,6 +64,8 @@ test('it can take a bid on a WNS collection', async (t) => {
 
   const sellerFeeBasisPoints = 100n;
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, group, distribution } = await createWnsNftInGroup({
@@ -138,7 +140,7 @@ test('it can take a bid on a WNS collection', async (t) => {
     bidState,
     distribution,
     collection: group,
-    minAmount: price,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
   });
 
@@ -186,8 +188,9 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   const sellerFeeBasisPoints = 1000n;
-
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, group, distribution } = await createWnsNftInGroup({
@@ -296,7 +299,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     collection: group,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
   });
 

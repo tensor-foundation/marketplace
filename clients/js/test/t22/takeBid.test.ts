@@ -19,9 +19,9 @@ import {
   getBidInstructionAsync,
   getTakeBidT22InstructionAsync,
   Target,
+  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
   TENSOR_MARKETPLACE_ERROR__BROKER_MISMATCH,
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
-  TENSOR_MARKETPLACE_ERROR__BAD_COSIGNER,
   TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID,
 } from '../../src/index.js';
 import {
@@ -43,7 +43,7 @@ test('it can take a bid on a T22 NFT', async (t) => {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
     state: bidState,
   } = await setupT22Test({
     t,
@@ -58,7 +58,7 @@ test('it can take a bid on a T22 NFT', async (t) => {
     owner: buyer.address, // Bid owner--the buyer
     seller: nftOwner, // NFT holder--the seller
     mint,
-    minAmount: bidPrice,
+    minAmount: Number(minPrice),
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
@@ -89,7 +89,8 @@ test('fees are paid correctly', async (t) => {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupT22Test({
@@ -113,7 +114,7 @@ test('fees are paid correctly', async (t) => {
     owner: buyer.address, // Bid owner--the buyer
     seller: nftOwner, // NFT holder--the seller
     mint,
-    minAmount: bidPrice,
+    minAmount: Number(minPrice),
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
@@ -149,13 +150,13 @@ test('fees are paid correctly', async (t) => {
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
   t.assert(
     endingFeeVaultBalance >=
-      startingFeeVaultBalance + (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS
+      startingFeeVaultBalance + (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS
   );
 
   // Royalties are paid to the creator.
   t.assert(
     endingCreatorBalance ===
-      startingCreatorBalance + (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+      startingCreatorBalance + (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -164,7 +165,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupT22Test({
@@ -198,7 +200,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     owner: buyer.address, // Bid owner--the buyer
     seller: nftOwner, // NFT holder--the seller
     mint,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -234,7 +236,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
-  const takerFee = (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS;
+  const takerFee = (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS;
   // Taker fee is split between the brokers and the protocol based on the BROKER_FEE_PCT.
   const brokerFee = (takerFee * BROKER_FEE_PCT) / HUNDRED_PCT;
   const protocolFee = takerFee - brokerFee;
@@ -266,7 +268,7 @@ test('maker and taker brokers receive correct split', async (t) => {
   // Creator receives royalties.
   t.assert(
     endingCreatorBalance ===
-      startingCreatorBalance + (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+      startingCreatorBalance + (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -275,7 +277,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     client,
     signers,
     nft,
-    price: bidPrice,
+    price: minPrice,
+    bidPrice,
     state: bidState,
     feeVault,
   } = await setupT22Test({
@@ -304,7 +307,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     owner: buyer.address, // Bid owner--the buyer
     seller: nftOwner, // NFT holder--the seller
     mint,
-    minAmount: bidPrice,
+    minAmount: minPrice,
     // makerBroker not passed in because not set
     takerBroker: takerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -340,7 +343,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   );
 
   // Taker fee is calculated from the listing price and the TAKER_FEE_BPS.
-  const takerFee = (bidPrice * TAKER_FEE_BPS) / BASIS_POINTS;
+  const takerFee = (bidPrice! * TAKER_FEE_BPS) / BASIS_POINTS;
   // Taker fee is split between the brokers and the protocol based on the BROKER_FEE_PCT.
   const brokerFee = (takerFee! * BROKER_FEE_PCT) / HUNDRED_PCT;
   const protocolFee = takerFee - brokerFee;
@@ -358,7 +361,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
   // Check that the royalties were paid correctly.
   t.assert(
     endingCreatorBalance ===
-      startingCreatorBalance + (bidPrice * sellerFeeBasisPoints) / BASIS_POINTS
+      startingCreatorBalance + (bidPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   const endingTakerBrokerBalance = BigInt(
@@ -379,6 +382,7 @@ test('it has to specify the correct makerBroker', async (t) => {
   const makerBroker = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
   const sellerFeeBasisPoints = DEFAULT_SFBP;
+  const price = LAMPORTS_PER_SOL / 2n;
 
   const nft = await createT22NftWithRoyalties({
     client,
@@ -400,7 +404,7 @@ test('it has to specify the correct makerBroker', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.AssetId,
     targetId: nft.mint,
     makerBroker: makerBroker.address,
@@ -417,12 +421,15 @@ test('it has to specify the correct makerBroker', async (t) => {
     bidId: nft.mint,
   });
 
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // If makerBroker is not specified, it should fail.
   const takeBidIx = await getTakeBidT22InstructionAsync({
     seller,
     owner: bidder.address,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
     bidState,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -444,7 +451,7 @@ test('it has to specify the correct makerBroker', async (t) => {
     seller,
     owner: bidder.address,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [updateAuthority.address],
     makerBroker: wrongMakerBroker.address,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -463,7 +470,7 @@ test('it has to specify the correct makerBroker', async (t) => {
     seller,
     owner: bidder.address,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
     makerBroker: makerBroker.address,
     bidState,
@@ -485,8 +492,9 @@ test('it has to specify the correct privateTaker', async (t) => {
   const privateTaker = await generateKeyPairSignerWithSol(client);
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
-  const sellerFeeBasisPoints = DEFAULT_SFBP;
 
+  const sellerFeeBasisPoints = DEFAULT_SFBP;
+  const price = LAMPORTS_PER_SOL / 4n;
   const assetOwnedByNotPrivateTaker = await createT22NftWithRoyalties({
     client,
     payer: notPrivateTaker,
@@ -530,7 +538,7 @@ test('it has to specify the correct privateTaker', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 4n,
+    amount: price,
     target: Target.AssetId,
     targetId: assetOwnedByNotPrivateTaker.mint,
     privateTaker: privateTaker.address,
@@ -542,12 +550,15 @@ test('it has to specify the correct privateTaker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // When NotPrivateTaker tries to take the bid with privateTaker set to PrivateTaker, it fails.
   const takeBidIx = await getTakeBidT22InstructionAsync({
     seller: notPrivateTaker,
     owner: bidder.address,
     mint: assetOwnedByNotPrivateTaker.mint,
-    minAmount: LAMPORTS_PER_SOL / 4n,
+    minAmount,
     creators: [creator.address],
     bidState,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -587,7 +598,7 @@ test('it has to specify the correct privateTaker', async (t) => {
     owner: bidder.address,
     seller: privateTaker,
     mint: assetOwnedByPrivateTaker.mint,
-    minAmount: LAMPORTS_PER_SOL / 4n,
+    minAmount,
     creators: [creator.address],
     bidState: bidState2,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -613,6 +624,8 @@ test('it has to specify the correct cosigner', async (t) => {
   const notCosigner = await generateKeyPairSignerWithSol(client);
   const seller = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
+
+  const price = LAMPORTS_PER_SOL / 2n;
   const sellerFeeBasisPoints = DEFAULT_SFBP;
 
   const nft = await createT22NftWithRoyalties({
@@ -640,7 +653,7 @@ test('it has to specify the correct cosigner', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.AssetId,
     targetId: nft.mint,
     cosigner,
@@ -652,12 +665,15 @@ test('it has to specify the correct cosigner', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // When the cosigner is not set, it should fail.
   const takeBidIx = await getTakeBidT22InstructionAsync({
     owner: bidder.address,
     seller,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
     bidState,
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -677,7 +693,7 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: bidder.address,
     seller,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     cosigner: notCosigner,
     creators: [creator.address],
     bidState,
@@ -698,7 +714,7 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: bidder.address,
     seller,
     mint: nft.mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     cosigner,
     creators: [creator.address],
     bidState,

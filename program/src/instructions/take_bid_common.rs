@@ -61,13 +61,12 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
 
     let amount = bid_state.amount;
     let currency = bid_state.currency;
-    require!(amount >= min_amount, TcompError::PriceMismatch);
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -106,6 +105,9 @@ pub fn take_bid_shared(args: TakeBidArgs) -> Result<()> {
         marketplace_prog,
         TcompSigner::Bid(bid_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_sub(creator_fee) });
+    require!(price >= min_amount, TcompError::PriceMismatch);
 
     // --------------------------------------- sol transfers
 

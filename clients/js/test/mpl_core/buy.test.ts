@@ -1,4 +1,16 @@
 import {
+  appendTransactionMessageInstruction,
+  assertAccountExists,
+  fetchEncodedAccount,
+  generateKeyPairSigner,
+  pipe,
+} from '@solana/web3.js';
+import {
+  AssetV1,
+  createDefaultAsset,
+  fetchAssetV1,
+} from '@tensor-foundation/mpl-core';
+import {
   createAndMintTo,
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -7,19 +19,7 @@ import {
   LAMPORTS_PER_SOL,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import {
-  AssetV1,
-  createDefaultAsset,
-  fetchAssetV1,
-} from '@tensor-foundation/mpl-core';
 import test from 'ava';
-import {
-  appendTransactionMessageInstruction,
-  assertAccountExists,
-  fetchEncodedAccount,
-  generateKeyPairSigner,
-  pipe,
-} from '@solana/web3.js';
 import {
   findFeeVaultPda,
   findListStatePda,
@@ -198,6 +198,9 @@ test('it has to specify the correct maker broker', async (t) => {
   const notMakerBroker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
 
+  const basisPoints = 500;
+  const price = LAMPORTS_PER_SOL / 2n;
+
   const asset = await createDefaultAsset({
     client,
     payer: mintAuthority,
@@ -205,7 +208,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: mintAuthority.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -213,7 +216,7 @@ test('it has to specify the correct maker broker', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     // (!)
     makerBroker: makerBroker.address,
   });
@@ -224,13 +227,15 @@ test('it has to specify the correct maker broker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a maker broker...
   const buyIx = await getBuyCoreInstructionAsync({
     asset: asset.address,
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     creators: [mintAuthority.address],
   });
 
@@ -249,7 +254,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     makerBroker: notMakerBroker.address,
     creators: [mintAuthority.address],
   });
@@ -269,7 +274,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     makerBroker: makerBroker.address,
     creators: [mintAuthority.address],
   });
@@ -293,6 +298,9 @@ test('it has to specify the correct cosigner', async (t) => {
   const notCosigner = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
 
+  const basisPoints = 500;
+  const price = LAMPORTS_PER_SOL / 2n;
+
   const asset = await createDefaultAsset({
     client,
     payer: mintAuthority,
@@ -300,14 +308,14 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: mintAuthority.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
   const listIx = await getListCoreInstructionAsync({
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     cosigner,
   });
 
@@ -317,13 +325,15 @@ test('it has to specify the correct cosigner', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a cosigner...
   const buyIx = await getBuyCoreInstructionAsync({
     asset: asset.address,
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     creators: [mintAuthority.address],
   });
 
@@ -362,7 +372,7 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     owner: lister.address,
     buyer: buyer.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     cosigner,
     creators: [mintAuthority.address],
   });
@@ -385,6 +395,9 @@ test('it has to respect the correct private taker', async (t) => {
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
 
+  const basisPoints = 500;
+  const price = LAMPORTS_PER_SOL / 2n;
+
   const asset = await createDefaultAsset({
     client,
     payer: mintAuthority,
@@ -392,7 +405,7 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: mintAuthority.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -400,7 +413,7 @@ test('it has to respect the correct private taker', async (t) => {
     asset: asset.address,
     payer: lister,
     owner: lister,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     privateTaker: privateTaker.address,
   });
 
@@ -410,13 +423,15 @@ test('it has to respect the correct private taker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If a different buyer tries to buy the NFT...
   const buyIx2 = await getBuyCoreInstructionAsync({
     asset: asset.address,
     owner: lister.address,
     payer: notPrivateTaker,
     buyer: notPrivateTaker.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     creators: [mintAuthority.address],
   });
 
@@ -435,7 +450,7 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: privateTaker,
     buyer: privateTaker.address,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     creators: [mintAuthority.address],
   });
 
@@ -515,6 +530,7 @@ test('it pays royalties and fees correctly', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
 
   const listingPrice = LAMPORTS_PER_SOL / 2n;
+  const basisPoints = 500;
 
   const asset = await createDefaultAsset({
     client,
@@ -526,7 +542,7 @@ test('it pays royalties and fees correctly', async (t) => {
         { address: creatorKeypair1.address, percentage: 70 },
         { address: creatorKeypair2.address, percentage: 30 },
       ],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -565,12 +581,15 @@ test('it pays royalties and fees correctly', async (t) => {
     .getBalance((await findListStatePda({ mint: asset.address }))[0])
     .send();
 
+  const maxAmount =
+    listingPrice + (listingPrice * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the buyer buys the listing...
   const buyIx = await getBuyCoreInstructionAsync({
     asset: asset.address,
     owner: lister.address,
     payer: buyer,
-    maxAmount: listingPrice,
+    maxAmount,
     creators: [creatorKeypair1.address, creatorKeypair2.address],
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,

@@ -16,6 +16,7 @@ import {
 import {
   createDefaultNft,
   createDefaultNftInCollection,
+  fetchMetadata,
   findAtaPda,
   printSupply,
   TokenStandard,
@@ -77,7 +78,7 @@ test('it can take a bid on a legacy collection', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   // We create an NFT.
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: seller,
     authority: creatorKeypair,
@@ -92,6 +93,12 @@ test('it can take a bid on a legacy collection', async (t) => {
   });
 
   const price = 500_000_000n;
+
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Create collection bid
   const bidId = (await generateKeyPairSigner()).address;
@@ -121,7 +128,7 @@ test('it can take a bid on a legacy collection', async (t) => {
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: minPrice,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -215,7 +222,7 @@ test('it cannot take a bid on a legacy collection w/ incorrect mint', async (t) 
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -288,7 +295,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     creators: [creatorKeypair.address],
   });
@@ -312,7 +319,7 @@ test('it cannot take a bid on a legacy collection w/o correct cosigner', async (
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount: (price * 7n) / 10n,
     bidState,
     cosigner: notCosigner,
     creators: [creatorKeypair.address],
@@ -442,7 +449,7 @@ test('it pays fees and royalties correctly', async (t) => {
   const takerBroker = await generateKeyPairSigner();
 
   // Mint pNFT
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: seller,
     authority: creatorKeypair1,
@@ -499,13 +506,18 @@ test('it pays fees and royalties correctly', async (t) => {
     .getBalance(seller.address)
     .send();
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const minAmount =
+    bidAmount - (bidAmount * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // When the seller takes the bid...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
     owner: bidOwner.address,
     seller,
     whitelist,
     mint,
-    minAmount: bidAmount,
+    minAmount,
     bidState: bidState,
     creators: [creatorKeypair1.address, creatorKeypair2.address],
     makerBroker: makerBroker.address,
@@ -1350,7 +1362,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   const price = LAMPORTS_PER_SOL / 4n;
   await initTswap(client);
 
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: seller,
     authority,
@@ -1418,13 +1430,18 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // When the seller tries to take the bid...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
     mint,
-    minAmount: price,
+    minAmount,
     bidState,
     //(!)
     sharedEscrow: marginAccount,
@@ -1446,7 +1463,9 @@ test('it enforces pNFT royalties', async (t) => {
   const seller = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
 
-  const { mint } = await createDefaultNft({
+  const bidAmount = LAMPORTS_PER_SOL / 2n;
+
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: seller,
     authority,
@@ -1469,7 +1488,7 @@ test('it enforces pNFT royalties', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: bidAmount,
     target: Target.Whitelist,
     targetId: whitelist,
     bidId,
@@ -1485,13 +1504,18 @@ test('it enforces pNFT royalties', async (t) => {
     await client.rpc.getBalance(authority.address).send()
   ).value;
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const minAmount =
+    bidAmount - (bidAmount * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // Even when the seller tries to take the bid with optionalRoyalties set to 0...
   const takeBidIx = await getTakeBidLegacyInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
     mint,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     optionalRoyaltyPct: 0,
@@ -1550,13 +1574,18 @@ test('it correctly handles optional royalties', async (t) => {
 
   const correctTestRoyalties = [0, 33, 70, 100];
   for (const royaltyPct of correctTestRoyalties) {
-    const { mint } = await createDefaultNft({
+    const { mint, metadata } = await createDefaultNft({
       client,
       payer: seller,
       authority,
       owner: seller.address,
       standard: TokenStandard.NonFungible,
     });
+
+    const md = (await fetchMetadata(client.rpc, metadata)).data;
+    const { sellerFeeBasisPoints } = md;
+    const minAmount =
+      price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
     const creatorRoyaltyReceiverBalanceBefore = (
       await client.rpc.getBalance(authority.address).send()
@@ -1566,7 +1595,7 @@ test('it correctly handles optional royalties', async (t) => {
       seller,
       whitelist,
       mint,
-      minAmount: price,
+      minAmount,
       bidState,
       creators: [authority.address],
       optionalRoyaltyPct: royaltyPct,

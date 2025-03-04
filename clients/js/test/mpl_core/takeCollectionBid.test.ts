@@ -7,15 +7,27 @@ import {
   SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS,
 } from '@solana/web3.js';
 import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
+import {
+  createDefaultAsset,
+  createDefaultAssetWithCollection,
+  fetchCollectionPlugin,
+  PluginType,
+  Royalties,
+} from '@tensor-foundation/mpl-core';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   LAMPORTS_PER_SOL,
   signAndSendTransaction,
-  TSWAP_SINGLETON,
-  TENSOR_ERROR__INVALID_CORE_ASSET,
-  TENSOR_ERROR__INSUFFICIENT_BALANCE,
   TENSOR_ERROR__CREATOR_MISMATCH,
+  TENSOR_ERROR__INSUFFICIENT_BALANCE,
+  TENSOR_ERROR__INVALID_CORE_ASSET,
+  TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
 import {
   findMintProofV2Pda,
@@ -28,30 +40,22 @@ import {
 import test from 'ava';
 import {
   Field,
-  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
-  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
-  Target,
   findBidStatePda,
   getBidInstructionAsync,
   getTakeBidCoreInstructionAsync,
+  Target,
+  TENSOR_MARKETPLACE_ERROR__BID_EXPIRED,
+  TENSOR_MARKETPLACE_ERROR__WRONG_BID_FIELD_ID,
 } from '../../src/index.js';
 import {
+  BASIS_POINTS,
   createWhitelistV2,
   expectCustomError,
   expectGenericError,
   initTswap,
   sleep,
 } from '../_common.js';
-import {
-  findMarginAccountPda,
-  getDepositMarginAccountInstructionAsync,
-  getInitMarginAccountInstructionAsync,
-} from '@tensor-foundation/escrow';
 import { generateTreeOfSize } from '../_merkle.js';
-import {
-  createDefaultAsset,
-  createDefaultAssetWithCollection,
-} from '@tensor-foundation/mpl-core';
 
 test('mint has to match the whitelist - VOC', async (t) => {
   const client = createDefaultSolanaClient();
@@ -60,6 +64,9 @@ test('mint has to match the whitelist - VOC', async (t) => {
   const updateAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
 
+  const basisPoints = 500;
+  const price = LAMPORTS_PER_SOL / 2n;
+
   const [asset, collection] = await createDefaultAssetWithCollection({
     client,
     collectionAuthority: updateAuthority,
@@ -67,7 +74,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
     payer: seller,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -78,7 +85,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
     payer: seller,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -96,7 +103,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.Whitelist,
     targetId: whitelist,
     bidId,
@@ -108,13 +115,15 @@ test('mint has to match the whitelist - VOC', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the seller takes the bid with a mint of a different collection...
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
     asset: assetDifferentCollection.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [creator.address],
     collection: collection.address,
@@ -135,7 +144,7 @@ test('mint has to match the whitelist - VOC', async (t) => {
     seller,
     whitelist,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [creator.address],
     collection: collection.address,
@@ -295,6 +304,9 @@ test('it has to specify creators', async (t) => {
   const notCreator = await generateKeyPairSignerWithSol(client);
   const updateAuthority = await generateKeyPairSignerWithSol(client);
 
+  const basisPoints = 500;
+  const price = LAMPORTS_PER_SOL / 2n;
+
   const [asset, collection] = await createDefaultAssetWithCollection({
     client,
     collectionAuthority: updateAuthority,
@@ -302,7 +314,7 @@ test('it has to specify creators', async (t) => {
     payer: seller,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
   });
 
@@ -320,7 +332,7 @@ test('it has to specify creators', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.Whitelist,
     targetId: whitelist,
     bidId,
@@ -332,13 +344,15 @@ test('it has to specify creators', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the seller takes the bid without specifying creators...
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [],
     collection: collection.address,
@@ -362,7 +376,7 @@ test('it has to specify creators', async (t) => {
     seller,
     whitelist,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [notCreator.address],
     collection: collection.address,
@@ -382,7 +396,7 @@ test('it has to specify creators', async (t) => {
     seller,
     whitelist,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [creator.address],
     collection: collection.address,
@@ -405,6 +419,8 @@ test('it has to match the name field if set', async (t) => {
 
   const correctName = 'TestAsset';
   const incorrectName = 'test';
+  const price = LAMPORTS_PER_SOL / 2n;
+  const basisPoints = 500;
 
   const [correctMint, collection] = await createDefaultAssetWithCollection({
     client,
@@ -422,6 +438,10 @@ test('it has to match the name field if set', async (t) => {
     name: incorrectName,
     // (!)
     collection: collection.address,
+    royalties: {
+      creators: [{ address: authority.address, percentage: 100 }],
+      basisPoints,
+    },
   });
 
   // Create Whitelist
@@ -439,7 +459,7 @@ test('it has to match the name field if set', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.Whitelist,
     targetId: whitelist,
     // (!)
@@ -462,13 +482,15 @@ test('it has to match the name field if set', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the seller takes the bid with the incorrect mint...
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
     asset: incorrectMint.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     collection: collection.address,
@@ -488,7 +510,7 @@ test('it has to match the name field if set', async (t) => {
     seller,
     whitelist,
     asset: correctMint.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     collection: collection.address,
@@ -575,7 +597,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   const price = LAMPORTS_PER_SOL / 4n;
   await initTswap(client);
 
-  const [mint, collection] = await createDefaultAssetWithCollection({
+  const [asset, collection] = await createDefaultAssetWithCollection({
     client,
     payer: seller,
     collectionAuthority: authority,
@@ -643,13 +665,23 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const plugin = await fetchCollectionPlugin(
+    client,
+    collection.address,
+    PluginType.Royalties
+  );
+  const royalties = plugin?.fields[0] as Royalties;
+  const basisPoints = royalties?.basisPoints;
+
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the seller tries to take the bid...
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller,
     whitelist,
-    asset: mint.address,
-    minAmount: price,
+    asset: asset.address,
+    minAmount,
     bidState,
     //(!)
     sharedEscrow: marginAccount,

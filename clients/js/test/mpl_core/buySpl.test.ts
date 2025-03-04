@@ -272,6 +272,7 @@ test('it has to specify the correct maker broker', async (t) => {
 
   const price = 100_000_000n;
   const initialSupply = 1_000_000_000n;
+  const basisPoints = 500;
 
   // Create a SPL token and fund the buyer with it.
   const [{ mint: currency }] = await createAndMintTo({
@@ -301,7 +302,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: lister,
   });
@@ -323,13 +324,15 @@ test('it has to specify the correct maker broker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a maker broker...
   const buyCoreSplIx = await getBuyCoreSplInstructionAsync({
     asset: asset.address,
     payer: buyer,
     buyer: buyer.address,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -351,7 +354,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -374,7 +377,7 @@ test('it has to specify the correct maker broker', async (t) => {
     asset: asset.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -402,6 +405,7 @@ test('it has to specify the correct cosigner', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
   const price = 100_000_000n;
+  const basisPoints = 500;
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -418,7 +422,7 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: lister,
   });
@@ -439,13 +443,15 @@ test('it has to specify the correct cosigner', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a cosigner...
   const buyCoreSplIx = await getBuyCoreSplInstructionAsync({
     asset: asset.address,
     payer: buyer,
     buyer: buyer.address,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -466,7 +472,7 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -488,7 +494,7 @@ test('it has to specify the correct cosigner', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -515,6 +521,7 @@ test('it has to specify the correct private taker', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
   const price = 100_000_000n;
+  const basisPoints = 500;
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -531,7 +538,7 @@ test('it has to specify the correct private taker', async (t) => {
     owner: lister.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: lister,
   });
@@ -560,13 +567,15 @@ test('it has to specify the correct private taker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer who is not the private taker tries to buy the NFT...
   const buyCoreSplIx = await getBuyCoreSplInstructionAsync({
     asset: asset.address,
     buyer: notPrivateTaker.address,
     payer: notPrivateTaker,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -587,7 +596,7 @@ test('it has to specify the correct private taker', async (t) => {
     buyer: privateTaker.address,
     payer: privateTaker,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: [creator.address],
     currencyTokenProgram: TOKEN_PROGRAM_ID,
@@ -790,12 +799,15 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     .getTokenAccountBalance(listerAta)
     .send();
 
+  const maxAmount =
+    price + (price * BigInt(ROYALTIES_BASIS_POINTS)) / BASIS_POINTS;
+
   const buyCoreSplIx = await getBuyCoreSplInstructionAsync({
     asset: asset.address,
     buyer: buyer.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: creators.map((c) => c.address),
     currencyTokenProgram: TOKEN_PROGRAM_ID,

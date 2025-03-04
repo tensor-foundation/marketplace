@@ -11,8 +11,10 @@ import {
 import {
   createDefaultNft,
   Creator,
+  fetchMetadata,
   findAtaPda,
 } from '@tensor-foundation/mpl-token-metadata';
+import { TokenStandard } from '@tensor-foundation/resolvers';
 import {
   createAndMintTo,
   createAta,
@@ -36,7 +38,6 @@ import {
   TENSOR_MARKETPLACE_ERROR__LISTING_EXPIRED,
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
 } from '../../src';
-import { computeIx } from './_common';
 import {
   BASIS_POINTS,
   BROKER_FEE_PCT,
@@ -45,7 +46,7 @@ import {
   TAKER_BROKER_FEE_PCT,
   TAKER_FEE_BPS,
 } from '../_common';
-import { TokenStandard } from '@tensor-foundation/resolvers';
+import { computeIx } from './_common';
 
 test('it can buy an NFT paying using a SPL token', async (t) => {
   t.timeout(10_000);
@@ -822,7 +823,7 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     initialSupply: 1_000_000_000n,
   });
 
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: lister,
     authority: creator1,
@@ -892,11 +893,16 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     .getTokenAccountBalance(listerAta)
     .send();
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const maxAmount =
+    price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: price,
+    maxAmount,
     currency,
     creators: creators.map((c) => c.address),
     // need to specify this to check if full royalty amounts are paid out
@@ -982,7 +988,7 @@ test('pNFT royalties are enforced', async (t) => {
     initialSupply: 1_000_000_000n,
   });
 
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer: lister,
     authority: creator,
@@ -1016,12 +1022,17 @@ test('pNFT royalties are enforced', async (t) => {
     .getTokenAccountBalance(creatorAta)
     .send();
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+  const maxAmount =
+    price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // Even if the buyer specifies 0% royalties, the royalties should still be enforced
   const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: price,
+    maxAmount,
     currency,
     optionalRoyaltyPct: 0,
     creators: [creator.address],
@@ -1075,7 +1086,7 @@ test('optional royalties are respected', async (t) => {
   });
 
   for (const royaltyPct of royaltyPctsToTest) {
-    const { mint } = await createDefaultNft({
+    const { mint, metadata } = await createDefaultNft({
       client,
       payer: lister,
       authority: creator,
@@ -1103,11 +1114,16 @@ test('optional royalties are respected', async (t) => {
       .getTokenAccountBalance(creatorAta)
       .send();
 
+    const md = (await fetchMetadata(client.rpc, metadata)).data;
+    const { sellerFeeBasisPoints } = md;
+    const maxAmount =
+      price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
     const buyLegacySplIx = await getBuyLegacySplInstructionAsync({
       owner: lister.address,
       payer: buyer,
       mint,
-      maxAmount: price,
+      maxAmount,
       currency,
       optionalRoyaltyPct: royaltyPct,
       creators: [creator.address],

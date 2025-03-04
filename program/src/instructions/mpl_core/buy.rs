@@ -166,15 +166,14 @@ pub fn process_buy_core<'info, 'b>(
 
     let amount = list_state.amount;
     let currency = list_state.currency;
-
-    require!(amount <= max_amount, TcompError::PriceMismatch);
+    // Only SOL supported in this handler.
     require!(currency.is_none(), TcompError::CurrencyMismatch);
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount: false,
@@ -186,18 +185,8 @@ pub fn process_buy_core<'info, 'b>(
     // No optional royalties.
     let creator_fee = calc_creators_fee(asset.royalty_fee_bps, amount, Some(100))?;
 
-    // Transfer the asset to the buyer.
-    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
-        .asset(&ctx.accounts.asset)
-        .authority(Some(&ctx.accounts.list_state.to_account_info()))
-        .new_owner(&ctx.accounts.buyer)
-        .payer(&ctx.accounts.payer) // pay for what?
-        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
-        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
-
     let asset_id = ctx.accounts.asset.key();
 
-    // NOTE: The event doesn't record
     record_event(
         &TcompEvent::Taker(TakeEvent {
             taker: *ctx.accounts.buyer.key,
@@ -218,6 +207,18 @@ pub fn process_buy_core<'info, 'b>(
         &ctx.accounts.marketplace_program,
         TcompSigner::List(&ctx.accounts.list_state),
     )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
+
+    // Transfer the asset to the buyer.
+    TransferV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.asset)
+        .authority(Some(&ctx.accounts.list_state.to_account_info()))
+        .new_owner(&ctx.accounts.buyer)
+        .payer(&ctx.accounts.payer) // pay for what?
+        .collection(ctx.accounts.collection.as_ref().map(|c| c.as_ref()))
+        .invoke_signed(&[&ctx.accounts.list_state.seeds()])?;
 
     // --Pay fees in SOL--
 

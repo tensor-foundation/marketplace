@@ -1,3 +1,4 @@
+import { findAssociatedTokenPda } from '@solana-program/token';
 import {
   appendTransactionMessageInstruction,
   assertAccountExists,
@@ -48,9 +49,8 @@ import {
   TAKER_FEE_BPS,
   TestAction,
 } from '../_common.js';
-import { setupWnsTest } from './_common.js';
 import { computeIx } from '../legacy/_common.js';
-import { findAssociatedTokenPda } from '@solana-program/token';
+import { setupWnsTest } from './_common.js';
 
 test('it can buy an NFT w/ a SPL token', async (t) => {
   const {
@@ -58,7 +58,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -82,7 +82,7 @@ test('it can buy an NFT w/ a SPL token', async (t) => {
     payer: buyer,
     buyer: buyer.address,
     distribution,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   await pipe(
@@ -127,7 +127,7 @@ test('it can buy with a cosigner', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -153,7 +153,7 @@ test('it can buy with a cosigner', async (t) => {
     distribution,
     collection: group,
     cosigner,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   await pipe(
@@ -193,13 +193,7 @@ test('it can buy with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-    splMint,
-  } = await setupWnsTest({
+  const { client, signers, nft, listingPrice, splMint } = await setupWnsTest({
     t,
     action: TestAction.List,
     useSplToken: true,
@@ -221,7 +215,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
     buyer: buyer.address,
     collection: group,
     distribution,
-    maxAmount: listingPrice - 1n,
+    maxAmount: listingPrice! - 1n,
   });
 
   const promise = pipe(
@@ -239,7 +233,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     client,
     signers,
     nft,
-    price: listingPrice,
+    price: maxPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -265,7 +259,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     collection: group,
     distribution,
     // Missing cosigner!
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   let promise = pipe(
@@ -289,7 +283,7 @@ test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
     collection: group,
     distribution,
     cosigner: fakeCosigner, // Invalid cosigner
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   promise = pipe(
@@ -307,7 +301,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: listingPrice,
+    price: maxPrice,
     splMint,
   } = await setupWnsTest({
     t,
@@ -331,7 +325,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     buyer: buyer.address,
     collection: group,
     distribution,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   const sig = await pipe(
@@ -350,7 +344,8 @@ test('SPL fees are paid correctly', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -383,7 +378,7 @@ test('SPL fees are paid correctly', async (t) => {
     buyer: buyer.address,
     distribution,
     collection: group,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   await pipe(
@@ -432,11 +427,11 @@ test('SPL fees are paid correctly', async (t) => {
   );
 
   // Fee vault gets entire protocol fee because no maker or taker brokers are set.
-  t.assert(feeVaultBalance === (listingPrice * TAKER_FEE_BPS) / BASIS_POINTS);
+  t.assert(feeVaultBalance === (listingPrice! * TAKER_FEE_BPS) / BASIS_POINTS);
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 
@@ -446,7 +441,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -491,7 +487,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     collection: group,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   await pipe(
@@ -564,7 +560,7 @@ test('maker and taker brokers receive correct split', async (t) => {
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   t.assert(makerBrokerBalance === makerBrokerFee);
@@ -579,7 +575,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     splMint,
     feeVault,
   } = await setupWnsTest({
@@ -618,7 +615,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     distribution,
     collection: group,
     takerBroker: takerBroker.address,
-    maxAmount: listingPrice,
+    maxAmount: maxPrice,
   });
 
   await pipe(
@@ -686,7 +683,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
 
   // Distribution account gets the royalty payment.
   t.assert(
-    distributionBalance + (listingPrice * sellerFeeBasisPoints) / BASIS_POINTS
+    distributionBalance + (listingPrice! * sellerFeeBasisPoints) / BASIS_POINTS
   );
 
   // Taker broker still receives its share.
@@ -800,7 +797,7 @@ test('it can buy an NFT w/ a SPL token w/ multiple creators', async (t) => {
     buyer: buyer.address,
     distribution,
     collection: group,
-    maxAmount: DEFAULT_LISTING_PRICE,
+    maxAmount: (DEFAULT_LISTING_PRICE * 15n) / 10n,
   });
 
   await pipe(
@@ -844,6 +841,7 @@ test('it cannot buy a SOL listing with a different SPL token', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const listingAmount = 100_000_000n;
+  const basisPoints = 500;
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -875,6 +873,9 @@ test('it cannot buy a SOL listing with a different SPL token', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount =
+    listingAmount + (listingAmount * BigInt(basisPoints)) / BASIS_POINTS;
+
   // Try buying with our own SPL token...
   const buyWnsSplIx = await getBuyWnsSplInstructionAsync({
     mint,
@@ -882,7 +883,7 @@ test('it cannot buy a SOL listing with a different SPL token', async (t) => {
     owner: lister.address,
     payer: buyer,
     buyer: buyer.address,
-    maxAmount: listingAmount,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     distribution,
     collection: group,
@@ -909,6 +910,7 @@ test('it has to specify the correct maker broker', async (t) => {
 
   const price = 100_000_000n;
   const initialSupply = 1_000_000_000n;
+  const basisPoints = 500;
 
   // Create a SPL token and fund the buyer with it.
   const [{ mint: currency }] = await createAndMintTo({
@@ -958,6 +960,8 @@ test('it has to specify the correct maker broker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a maker broker...
   const buyWnsSplIx = await getBuyWnsSplInstructionAsync({
     mint,
@@ -965,7 +969,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     buyer: buyer.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     distribution,
     collection: group,
@@ -988,7 +992,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     buyer: buyer.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     // (!)
     makerBroker: notMakerBroker.address,
@@ -1013,7 +1017,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     buyer: buyer.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     makerBroker: makerBroker.address,
     distribution,
@@ -1038,7 +1042,9 @@ test('it has to specify the correct private taker', async (t) => {
   const privateTaker = await generateKeyPairSignerWithSol(client);
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
+
   const price = 100_000_000n;
+  const basisPoints = 500;
 
   const [{ mint: currency }] = await createAndMintTo({
     client,
@@ -1083,6 +1089,8 @@ test('it has to specify the correct private taker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If the buyer who is not the private taker tries to buy the NFT...
   const buyWnsSplIx = await getBuyWnsSplInstructionAsync({
     mint,
@@ -1090,7 +1098,7 @@ test('it has to specify the correct private taker', async (t) => {
     buyer: notPrivateTaker.address,
     payer: notPrivateTaker,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     distribution,
     collection: group,
@@ -1112,7 +1120,7 @@ test('it has to specify the correct private taker', async (t) => {
     buyer: privateTaker.address,
     payer: privateTaker,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     distribution,
     collection: group,
@@ -1176,6 +1184,9 @@ test('it cannot buy an expired listing', async (t) => {
   // Wait for 5 seconds to ensure the listing has expired.
   await sleep(5000);
 
+  const basisPoints = 500;
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // Try to buy the NFT...
   const buyWnsSplIx = await getBuyWnsSplInstructionAsync({
     mint,
@@ -1183,7 +1194,7 @@ test('it cannot buy an expired listing', async (t) => {
     buyer: buyer.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     distribution,
     collection: group,
@@ -1201,7 +1212,7 @@ test('it cannot buy an expired listing', async (t) => {
 });
 
 test('it pays SPL fees and royalties correctly', async (t) => {
-  const ROYALTIES_BASIS_POINTS = 500n;
+  const ROYALTIES_BASIS_POINTS = 250n;
   const client = createDefaultSolanaClient();
   const lister = await generateKeyPairSignerWithSol(client);
   const buyer = await generateKeyPairSignerWithSol(client);
@@ -1295,13 +1306,16 @@ test('it pays SPL fees and royalties correctly', async (t) => {
     .getTokenAccountBalance(listerAta)
     .send();
 
+  const maxAmount =
+    price + (price * BigInt(ROYALTIES_BASIS_POINTS)) / BASIS_POINTS;
+
   const buyWnsSplIx = await getBuyWnsSplInstructionAsync({
     mint,
     currency,
     buyer: buyer.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     currencyTokenProgram: TOKEN_PROGRAM_ID,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
@@ -1366,6 +1380,7 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
 
   const price = 100_000_000n;
+  const basisPoints = 500;
 
   const [{ mint: currencyT22 }] = await createAndMintTo({
     client,
@@ -1444,13 +1459,15 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount = price + (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   const buyWnsSplIxT22 = await getBuyWnsSplInstructionAsync({
     mint: mintT22,
     currency: currencyT22,
     buyer: buyer.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     distribution: distributionT22,
     collection: groupT22,
     // (!)
@@ -1473,7 +1490,7 @@ test('it works with both T22 and Legacy SPLs', async (t) => {
     buyer: buyer.address,
     payer: buyer,
     owner: lister.address,
-    maxAmount: price,
+    maxAmount,
     distribution: distributionLegacy,
     collection: groupLegacy,
     // (!)

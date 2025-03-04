@@ -11,6 +11,7 @@ import {
 import {
   TokenStandard,
   createDefaultNft,
+  fetchMetadata,
 } from '@tensor-foundation/mpl-token-metadata';
 import {
   Client,
@@ -29,6 +30,9 @@ import {
   getListLegacyInstructionAsync,
 } from '../../src';
 import {
+  BASIS_POINTS,
+  DEFAULT_BID_PRICE,
+  DEFAULT_LISTING_PRICE,
   SetupTestParams,
   TestAction,
   TestSigners,
@@ -65,14 +69,12 @@ export interface LegacyTest {
   client: Client;
   signers: TestSigners;
   listing: Address | undefined;
-  listingPrice: bigint | undefined;
   bid: Address | undefined;
-  bidPrice: number | undefined;
+  price: bigint;
+  listingPrice: bigint | undefined;
+  bidPrice: bigint | undefined;
   mint: Address;
 }
-
-const DEFAULT_LISTING_PRICE = 100_000_000n;
-const DEFAULT_BID_AMOUNT = 1;
 
 export async function setupLegacyTest(
   params: SetupTestParams & { pNft?: boolean }
@@ -82,7 +84,7 @@ export async function setupLegacyTest(
     pNft,
     action,
     listingPrice = DEFAULT_LISTING_PRICE,
-    bidPrice = DEFAULT_BID_AMOUNT,
+    bidPrice = DEFAULT_BID_PRICE,
     useCosigner = false,
   } = params;
 
@@ -96,7 +98,7 @@ export async function setupLegacyTest(
     : TokenStandard.NonFungible;
 
   // Mint an NFT.
-  const { mint } = await createDefaultNft({
+  const { mint, metadata } = await createDefaultNft({
     client,
     payer,
     authority: nftUpdateAuthority,
@@ -176,13 +178,23 @@ export async function setupLegacyTest(
       throw new Error(`Unknown action: ${action}`);
   }
 
+  const md = (await fetchMetadata(client.rpc, metadata)).data;
+  const { sellerFeeBasisPoints } = md;
+
+  // Calculate the max or min price from the price +/- royalties.
+  const price = listingPrice
+    ? listingPrice! +
+      (listingPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS
+    : bidPrice! - (bidPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   return {
     client,
     signers,
     mint,
     bid: bid ?? undefined,
-    bidPrice,
-    listingPrice,
+    price,
+    bidPrice: bidPrice ?? undefined,
+    listingPrice: listingPrice ?? undefined,
     listing: listing ?? undefined,
   };
 }

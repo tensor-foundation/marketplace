@@ -1,3 +1,4 @@
+import { getTransferSolInstruction } from '@solana-program/system';
 import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
@@ -16,7 +17,6 @@ import {
   LAMPORTS_PER_SOL,
   signAndSendTransaction,
 } from '@tensor-foundation/test-helpers';
-import { getTransferSolInstruction } from '@solana-program/system';
 import test from 'ava';
 import {
   findBidStatePda,
@@ -28,7 +28,11 @@ import {
   TENSOR_MARKETPLACE_ERROR__TAKER_NOT_ALLOWED,
   TENSOR_MARKETPLACE_ERROR__WRONG_TARGET_ID,
 } from '../../src';
-import { expectCustomError, getAndFundFeeVault } from '../_common';
+import {
+  BASIS_POINTS,
+  expectCustomError,
+  getAndFundFeeVault,
+} from '../_common';
 
 test('it can take a bid for a single asset', async (t) => {
   const client = createDefaultSolanaClient();
@@ -38,6 +42,9 @@ test('it can take a bid for a single asset', async (t) => {
   const buyer = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
 
+  const price = 10n;
+  const basisPoints = 500;
+
   // Create a MPL core asset owned by the seller.
   const asset = await createDefaultAsset({
     client,
@@ -45,7 +52,7 @@ test('it can take a bid for a single asset', async (t) => {
     owner: seller.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer,
   });
@@ -53,7 +60,7 @@ test('it can take a bid for a single asset', async (t) => {
   // Create a bid by the buyer.
   const bidIx = await getBidInstructionAsync({
     owner: buyer,
-    amount: 10,
+    amount: price,
     target: Target.AssetId,
     targetId: asset.address,
   });
@@ -71,13 +78,15 @@ test('it can take a bid for a single asset', async (t) => {
 
   await getAndFundFeeVault(client, bidState);
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the seller takes the bid.
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     seller,
     owner: buyer.address,
     asset: asset.address,
     bidState,
-    minAmount: 0,
+    minAmount,
     creators: [creator.address],
   });
 
@@ -195,20 +204,23 @@ test('it has to specify the correct makerBroker', async (t) => {
   const makerBroker = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
 
+  const price = LAMPORTS_PER_SOL / 2n;
+  const basisPoints = 500;
+
   const asset = await createDefaultAsset({
     client,
     authority: updateAuthority,
     owner: seller.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: seller,
   });
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.AssetId,
     targetId: asset.address,
     makerBroker: makerBroker.address,
@@ -225,13 +237,15 @@ test('it has to specify the correct makerBroker', async (t) => {
     bidId: asset.address,
   });
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // If makerBroker is not specified, it should fail.
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     seller,
     owner: bidder.address,
     asset: asset.address,
     bidState,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
   });
 
@@ -251,7 +265,7 @@ test('it has to specify the correct makerBroker', async (t) => {
     owner: bidder.address,
     asset: asset.address,
     bidState,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [updateAuthority.address],
     makerBroker: wrongMakerBroker.address,
   });
@@ -269,7 +283,7 @@ test('it has to specify the correct makerBroker', async (t) => {
     owner: bidder.address,
     asset: asset.address,
     bidState,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
     makerBroker: makerBroker.address,
   });
@@ -290,13 +304,16 @@ test('it has to specify the correct privateTaker', async (t) => {
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
 
+  const price = LAMPORTS_PER_SOL / 4n;
+  const basisPoints = 500;
+
   const assetOwnedByNotPrivateTaker = await createDefaultAsset({
     client,
     authority: mintAuthority,
     owner: notPrivateTaker.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: notPrivateTaker,
   });
@@ -307,7 +324,7 @@ test('it has to specify the correct privateTaker', async (t) => {
     owner: privateTaker.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: privateTaker,
   });
@@ -319,7 +336,7 @@ test('it has to specify the correct privateTaker', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 4n,
+    amount: price,
     target: Target.AssetId,
     targetId: assetOwnedByNotPrivateTaker.address,
     privateTaker: privateTaker.address,
@@ -331,12 +348,14 @@ test('it has to specify the correct privateTaker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When NotPrivateTaker tries to take the bid with privateTaker set to PrivateTaker, it fails.
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller: notPrivateTaker,
     asset: assetOwnedByNotPrivateTaker.address,
-    minAmount: LAMPORTS_PER_SOL / 4n,
+    minAmount,
     bidState,
     creators: [creator.address],
   });
@@ -356,7 +375,7 @@ test('it has to specify the correct privateTaker', async (t) => {
   });
   const bidIx2 = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 4n,
+    amount: price,
     target: Target.AssetId,
     targetId: assetOwnedByPrivateTaker.address,
     privateTaker: privateTaker.address,
@@ -372,7 +391,7 @@ test('it has to specify the correct privateTaker', async (t) => {
     owner: bidder.address,
     seller: privateTaker,
     asset: assetOwnedByPrivateTaker.address,
-    minAmount: LAMPORTS_PER_SOL / 4n,
+    minAmount,
     creators: [creator.address],
     bidState: bidState2,
   });
@@ -395,13 +414,16 @@ test('it has to specify the correct cosigner', async (t) => {
   const seller = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSigner();
 
+  const price = LAMPORTS_PER_SOL / 2n;
+  const basisPoints = 500;
+
   const asset = await createDefaultAsset({
     client,
     authority: mintAuthority,
     owner: seller.address,
     royalties: {
       creators: [{ address: creator.address, percentage: 100 }],
-      basisPoints: 500,
+      basisPoints,
     },
     payer: seller,
   });
@@ -413,7 +435,7 @@ test('it has to specify the correct cosigner', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.AssetId,
     targetId: asset.address,
     cosigner,
@@ -425,12 +447,14 @@ test('it has to specify the correct cosigner', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const minAmount = price - (price * BigInt(basisPoints)) / BASIS_POINTS;
+
   // When the cosigner is not set, it should fail.
   const takeBidIx = await getTakeBidCoreInstructionAsync({
     owner: bidder.address,
     seller,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     creators: [creator.address],
     bidState,
   });
@@ -448,7 +472,7 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: bidder.address,
     seller,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     cosigner: notCosigner,
     creators: [creator.address],
     bidState,
@@ -467,7 +491,7 @@ test('it has to specify the correct cosigner', async (t) => {
     owner: bidder.address,
     seller,
     asset: asset.address,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     cosigner,
     creators: [creator.address],
     bidState,

@@ -7,15 +7,25 @@ import {
   SOLANA_ERROR__INSTRUCTION_ERROR__NOT_ENOUGH_ACCOUNT_KEYS,
 } from '@solana/web3.js';
 import {
+  findMarginAccountPda,
+  getDepositMarginAccountInstructionAsync,
+  getInitMarginAccountInstructionAsync,
+} from '@tensor-foundation/escrow';
+import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   createT22NftWithRoyalties,
   generateKeyPairSignerWithSol,
-  TENSOR_ERROR__INSUFFICIENT_BALANCE,
   signAndSendTransaction,
+  TENSOR_ERROR__INSUFFICIENT_BALANCE,
   TOKEN22_PROGRAM_ID,
   TSWAP_SINGLETON,
 } from '@tensor-foundation/test-helpers';
+import {
+  intoAddress,
+  Mode,
+  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
+} from '@tensor-foundation/whitelist';
 import test from 'ava';
 import {
   Field,
@@ -40,17 +50,7 @@ import {
   TAKER_FEE_BPS,
   upsertMintProof,
 } from '../_common.js';
-import {
-  intoAddress,
-  Mode,
-  TENSOR_WHITELIST_ERROR__BAD_MINT_PROOF,
-} from '@tensor-foundation/whitelist';
 import { generateTreeOfSize } from '../_merkle.js';
-import {
-  findMarginAccountPda,
-  getDepositMarginAccountInstructionAsync,
-  getInitMarginAccountInstructionAsync,
-} from '@tensor-foundation/escrow';
 
 test('it can take a bid on a T22 collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -62,8 +62,9 @@ test('it can take a bid on a T22 collection', async (t) => {
   const creatorKeypair = await generateKeyPairSignerWithSol(client);
 
   const sellerFeeBasisPoints = 1000n;
-
   const price = 500_000_000n;
+  const minPrice =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   // Mint NFT
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
@@ -140,7 +141,7 @@ test('it can take a bid on a T22 collection', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount: minPrice,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
@@ -296,6 +297,9 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     bidId,
   });
 
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // NFT mint does not match the mint proof.
   let takeBidIx = await getTakeBidT22InstructionAsync({
     rentDestination: payer.address,
@@ -305,7 +309,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mintProof,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
@@ -329,7 +333,7 @@ test('seller cannot sell invalid mint into collection bid', async (t) => {
     mintProof: otherMintProof,
     whitelist,
     bidState,
-    minAmount: price,
+    minAmount,
     tokenProgram: TOKEN22_PROGRAM_ID,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((meta) => meta.address),
@@ -352,7 +356,11 @@ test('it has to specify creators', async (t) => {
   const creator = await generateKeyPairSignerWithSol(client);
   const notCreator = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
+
   const sellerFeeBasisPoints = 1000n;
+  const price = LAMPORTS_PER_SOL / 2n;
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
@@ -399,7 +407,7 @@ test('it has to specify creators', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     target: Target.Whitelist,
     targetId: whitelist,
     bidId,
@@ -418,7 +426,7 @@ test('it has to specify creators', async (t) => {
     whitelist,
     mint,
     mintProof,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -444,7 +452,7 @@ test('it has to specify creators', async (t) => {
     whitelist,
     mint,
     mintProof,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [notCreator.address],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -470,7 +478,7 @@ test('it has to specify creators', async (t) => {
     whitelist,
     mint,
     mintProof,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [creator.address],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -494,6 +502,10 @@ test('it has to match the name field if set', async (t) => {
   const sellerFeeBasisPoints = 1000n;
   const correctName = 'TestAsset';
   const incorrectName = 'test';
+
+  const amount = LAMPORTS_PER_SOL / 2n;
+  const minAmount =
+    amount - (amount * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
@@ -569,7 +581,7 @@ test('it has to match the name field if set', async (t) => {
   });
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount,
     target: Target.Whitelist,
     targetId: whitelist,
     // (!)
@@ -599,7 +611,7 @@ test('it has to match the name field if set', async (t) => {
     whitelist,
     mint: mint2,
     mintProof: mintProof2,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -621,7 +633,7 @@ test('it has to match the name field if set', async (t) => {
     whitelist,
     mint,
     mintProof,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -643,6 +655,10 @@ test('it cannot take an expired bid', async (t) => {
   const seller = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
   const sellerFeeBasisPoints = 1000n;
+  const amount = LAMPORTS_PER_SOL / 2n;
+  const minAmount =
+    amount - (amount * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
     payer: seller,
@@ -688,7 +704,7 @@ test('it cannot take an expired bid', async (t) => {
 
   const bidIx = await getBidInstructionAsync({
     owner: bidder,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount,
     target: Target.Whitelist,
     targetId: whitelist,
     bidId,
@@ -711,7 +727,7 @@ test('it cannot take an expired bid', async (t) => {
     whitelist,
     mint,
     mintProof,
-    minAmount: LAMPORTS_PER_SOL / 2n,
+    minAmount,
     bidState,
     creators: [authority.address],
     tokenProgram: TOKEN22_PROGRAM_ID,
@@ -733,9 +749,11 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
   const seller = await generateKeyPairSignerWithSol(client);
   const authority = await generateKeyPairSignerWithSol(client);
   const price = LAMPORTS_PER_SOL / 4n;
+  const sellerFeeBasisPoints = 1000n;
+  const minAmount =
+    price - (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
   await initTswap(client);
 
-  const sellerFeeBasisPoints = 1000n;
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
     payer: seller,
@@ -835,7 +853,7 @@ test('it cannot take a bid when the escrow balance is insufficient', async (t) =
     whitelist,
     mint,
     mintProof,
-    minAmount: price,
+    minAmount,
     bidState,
     //(!)
     sharedEscrow: marginAccount,

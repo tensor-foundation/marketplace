@@ -6,13 +6,13 @@ import {
 } from '@solana/web3.js';
 import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 import {
+  createAndMintTo,
+  createDefaultSolanaClient,
   createDefaultTransaction,
-  generateKeyPairSignerWithSol,
   createT22NftWithRoyalties,
+  generateKeyPairSignerWithSol,
   signAndSendTransaction,
   TOKEN22_PROGRAM_ID,
-  createDefaultSolanaClient,
-  createAndMintTo,
 } from '@tensor-foundation/test-helpers';
 import test from 'ava';
 import {
@@ -47,7 +47,7 @@ test('it can buy an NFT', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -60,7 +60,7 @@ test('it can buy an NFT', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice!,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -106,7 +106,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     signers,
     nft,
     state: listing,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -120,7 +120,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice!,
     cosigner,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -162,12 +162,7 @@ test('it can buy an NFT with a cosigner', async (t) => {
 });
 
 test('it cannot buy an NFT with a lower amount', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupT22Test({
+  const { client, signers, nft, listingPrice } = await setupT22Test({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -196,12 +191,7 @@ test('it cannot buy an NFT with a lower amount', async (t) => {
 });
 
 test('it cannot buy an NFT with a missing or incorrect cosigner', async (t) => {
-  const {
-    client,
-    signers,
-    nft,
-    price: listingPrice,
-  } = await setupT22Test({
+  const { client, signers, nft, listingPrice } = await setupT22Test({
     t,
     action: TestAction.List,
     useCosigner: true,
@@ -254,7 +244,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     client,
     signers,
     nft,
-    price: listingPrice,
+    price: maxPrice,
   } = await setupT22Test({
     t,
     action: TestAction.List,
@@ -267,7 +257,7 @@ test('buying emits a self-CPI logging event', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -287,7 +277,8 @@ test('fees are paid correctly', async (t) => {
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -311,7 +302,7 @@ test('fees are paid correctly', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     creators: [nftUpdateAuthority.address],
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -377,7 +368,8 @@ test('maker and taker brokers receive correct split', async (t) => {
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -411,7 +403,7 @@ test('maker and taker brokers receive correct split', async (t) => {
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     makerBroker: makerBroker.address,
     takerBroker: takerBroker.address,
     creators: [nftUpdateAuthority.address],
@@ -503,7 +495,8 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     signers,
     nft,
     state: maybeListing,
-    price: listingPrice,
+    price: maxPrice,
+    listingPrice,
     feeVault,
   } = await setupT22Test({
     t,
@@ -532,7 +525,7 @@ test('taker broker receives correct split even if maker broker is not set', asyn
     owner: nftOwner.address,
     payer: buyer,
     mint,
-    maxAmount: listingPrice!,
+    maxAmount: maxPrice,
     // not passing in maker broker
     takerBroker: takerBroker.address, // still passing in taker broker
     creators: [nftUpdateAuthority.address],
@@ -693,6 +686,7 @@ test('it has to specify the correct maker broker', async (t) => {
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
   const sellerFeeBasisPoints = 1000n;
+  const price = LAMPORTS_PER_SOL;
 
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
@@ -716,7 +710,7 @@ test('it has to specify the correct maker broker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: LAMPORTS_PER_SOL,
+    amount: price,
     // (!)
     makerBroker: makerBroker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
@@ -728,12 +722,15 @@ test('it has to specify the correct maker broker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount =
+    price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // If the buyer tries to buy the NFT without a maker broker...
   const buyIx = await getBuyT22InstructionAsync({
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: LAMPORTS_PER_SOL,
+    maxAmount,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
@@ -752,7 +749,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: LAMPORTS_PER_SOL,
+    maxAmount,
     makerBroker: notMakerBroker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
@@ -772,7 +769,7 @@ test('it has to specify the correct maker broker', async (t) => {
     owner: lister.address,
     payer: buyer,
     mint,
-    maxAmount: LAMPORTS_PER_SOL,
+    maxAmount,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     makerBroker: makerBroker.address,
     creators: [creator.address],
@@ -796,7 +793,9 @@ test('it has to respect the correct private taker', async (t) => {
   const notPrivateTaker = await generateKeyPairSignerWithSol(client);
   const mintAuthority = await generateKeyPairSignerWithSol(client);
   const creator = await generateKeyPairSignerWithSol(client);
+
   const sellerFeeBasisPoints = 1000n;
+  const price = LAMPORTS_PER_SOL / 2n;
 
   const { mint, extraAccountMetas } = await createT22NftWithRoyalties({
     client,
@@ -820,7 +819,7 @@ test('it has to respect the correct private taker', async (t) => {
     payer: lister,
     owner: lister,
     mint,
-    amount: LAMPORTS_PER_SOL / 2n,
+    amount: price,
     privateTaker: privateTaker.address,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
   });
@@ -831,12 +830,15 @@ test('it has to respect the correct private taker', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
+  const maxAmount =
+    price + (price * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+
   // If a different buyer tries to buy the NFT...
   const buyIx2 = await getBuyT22InstructionAsync({
     owner: lister.address,
     payer: notPrivateTaker,
     mint,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });
@@ -855,7 +857,7 @@ test('it has to respect the correct private taker', async (t) => {
     owner: lister.address,
     payer: privateTaker,
     mint,
-    maxAmount: LAMPORTS_PER_SOL / 2n,
+    maxAmount,
     transferHookAccounts: extraAccountMetas.map((a) => a.address),
     creators: [creator.address],
   });

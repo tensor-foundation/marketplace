@@ -15,7 +15,7 @@ use tensor_toolbox::{
     },
     CalcFeesArgs, Fees, BROKER_FEE_PCT, MAKER_BROKER_PCT, TAKER_FEE_BPS,
 };
-use tensor_vipers::Validate;
+use tensor_vipers::{unwrap_checked, Validate};
 
 use crate::{
     assert_associated_token_account, assert_fee_vault_seeds, assert_list_state_seeds,
@@ -335,16 +335,18 @@ pub fn process_buy_wns_spl<'info, 'b>(
     let amount = list_state.amount;
     let currency = list_state.currency;
 
-    require!(amount <= max_amount, TcompError::PriceMismatch);
-    require!(currency.is_some(), TcompError::CurrencyMismatch);
+    require!(
+        list_state.currency == Some(ctx.accounts.currency.key()),
+        TcompError::CurrencyMismatch
+    );
 
     let tnsr_discount = matches!(currency, Some(c) if c.to_string() == TNSR_CURRENCY);
 
     let Fees {
+        taker_fee: _,
         protocol_fee: tcomp_fee,
         maker_broker_fee,
         taker_broker_fee,
-        ..
     } = calc_fees(CalcFeesArgs {
         amount,
         tnsr_discount,
@@ -360,6 +362,32 @@ pub fn process_buy_wns_spl<'info, 'b>(
         amount,
         Some(100), // <- enforced royalties
     )?;
+
+    let asset_id = ctx.accounts.mint.key();
+
+    record_event(
+        &TcompEvent::Taker(TakeEvent {
+            taker: *ctx.accounts.buyer.key,
+            bid_id: None,
+            target: Target::AssetId,
+            target_id: asset_id,
+            field: None,
+            field_id: None,
+            amount,
+            quantity: 0, //quantity left
+            tcomp_fee,
+            taker_broker_fee,
+            maker_broker_fee,
+            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
+            currency,
+            asset_id: Some(asset_id),
+        }),
+        &ctx.accounts.marketplace_program,
+        TcompSigner::List(&ctx.accounts.list_state),
+    )?;
+
+    let price = unwrap_checked!({ amount.checked_add(creator_fee) });
+    require!(price <= max_amount, TcompError::PriceMismatch);
 
     // Approve the transfer using WNS' approval ix. This will CPI into the distribution program
     // to update the royalty distribution state.
@@ -407,29 +435,6 @@ pub fn process_buy_wns_spl<'info, 'b>(
             .with_signer(&[&ctx.accounts.list_state.seeds()]),
         1, // supply = 1
         0, // decimals = 0
-    )?;
-
-    let asset_id = ctx.accounts.mint.key();
-
-    record_event(
-        &TcompEvent::Taker(TakeEvent {
-            taker: *ctx.accounts.buyer.key,
-            bid_id: None,
-            target: Target::AssetId,
-            target_id: asset_id,
-            field: None,
-            field_id: None,
-            amount,
-            quantity: 0, //quantity left
-            tcomp_fee,
-            taker_broker_fee,
-            maker_broker_fee,
-            creator_fee, // Can't record actual because we transfer lamports after we send noop tx
-            currency,
-            asset_id: Some(asset_id),
-        }),
-        &ctx.accounts.marketplace_program,
-        TcompSigner::List(&ctx.accounts.list_state),
     )?;
 
     // --Pay fees in currency--
