@@ -265,7 +265,7 @@ test('listing Fungible Assets with decimals > 0 fail', async (t) => {
   await expectCustomError(t, promise, TENSOR_MARKETPLACE_ERROR__INVALID_MINT);
 });
 
-test.only('Fungible Assets with supply > 0 fail', async (t) => {
+test('Fungible Assets with supply > 0 fail', async (t) => {
   const client = createDefaultSolanaClient();
   const signers = await getTestSigners(client);
 
