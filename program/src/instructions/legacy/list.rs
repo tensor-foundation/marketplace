@@ -49,6 +49,7 @@ pub struct ListLegacy<'info> {
 
     #[account(
         mint::token_program = token_program,
+        constraint = mint.supply == 1 && mint.decimals == 0 @ TcompError::InvalidMint
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -88,7 +89,6 @@ pub struct ListLegacy<'info> {
         ],
         seeds::program = mpl_token_metadata::ID,
         bump,
-        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 
