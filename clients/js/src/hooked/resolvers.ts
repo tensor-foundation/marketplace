@@ -119,9 +119,9 @@ export const resolveEdition = async ({
 }: {
   accounts: Record<string, ResolvedAccount>;
 }): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
-      return {
-        value: await findEditionPda({
-          mint: expectAddress(accounts.mint?.value),
-        }),
-      };
+  return {
+    value: await findEditionPda({
+      mint: expectAddress(accounts.mint?.value),
+    }),
+  };
 };
