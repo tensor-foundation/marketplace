@@ -41,7 +41,6 @@ import {
 } from '@tensor-foundation/mpl-token-metadata';
 import {
   resolveAuthorizationRulesProgramFromTokenStandard,
-  resolveEditionFromTokenStandard,
   resolveListAta,
   resolveListTokenRecordFromTokenStandard,
   resolveMetadata,
@@ -50,6 +49,7 @@ import {
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
 } from '@tensor-foundation/resolvers';
+import { resolveEdition } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -446,7 +446,7 @@ export async function getDelistLegacyInstructionAsync<
   if (!accounts.edition.value) {
     accounts.edition = {
       ...accounts.edition,
-      ...(await resolveEditionFromTokenStandard(resolverScope)),
+      ...(await resolveEdition(resolverScope)),
     };
   }
   if (!accounts.ownerTokenRecord.value) {

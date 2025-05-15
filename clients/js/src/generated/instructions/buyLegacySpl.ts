@@ -51,7 +51,6 @@ import {
   resolveBuyerAta,
   resolveBuyerTokenRecordFromTokenStandard,
   resolveCreatorsCurrencyAta,
-  resolveEditionFromTokenStandard,
   resolveFeeVaultCurrencyAta,
   resolveFeeVaultPdaFromListState,
   resolveListAta,
@@ -62,6 +61,7 @@ import {
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
 } from '@tensor-foundation/resolvers';
+import { resolveEdition } from '../../hooked';
 import { findListStatePda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -605,7 +605,7 @@ export async function getBuyLegacySplInstructionAsync<
   if (!accounts.edition.value) {
     accounts.edition = {
       ...accounts.edition,
-      ...(await resolveEditionFromTokenStandard(resolverScope)),
+      ...(await resolveEdition(resolverScope)),
     };
   }
   if (!accounts.buyerTokenRecord.value) {

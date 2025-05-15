@@ -53,7 +53,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),
@@ -148,7 +148,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),
@@ -312,7 +312,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),
@@ -390,7 +390,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),
@@ -465,7 +465,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),
@@ -566,7 +566,7 @@ module.exports = function visitor(options) {
             },
             edition: {
               defaultValue: c.resolverValueNode(
-                "resolveEditionFromTokenStandard",
+                "resolveEdition",
                 {
                     dependsOn: [
                     c.accountValueNode("mint"),

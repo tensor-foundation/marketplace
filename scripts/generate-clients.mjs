@@ -528,7 +528,7 @@ codama.accept(
         resolveOwnerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
         resolveSellerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
         resolveBuyerTokenRecordFromTokenStandard: '@tensor-foundation/resolvers',
-        resolveEditionFromTokenStandard: '@tensor-foundation/resolvers',
+        resolveEdition: '../../hooked',
         resolveDistributionCurrencyAta: '@tensor-foundation/resolvers',
       },
       definedTypes: {
@@ -556,7 +556,7 @@ codama.accept(
       "resolveSellerTokenRecordFromTokenStandard",
       "resolveBidTokenRecordFromTokenStandard",
       "resolveMetadata",
-      "resolveEditionFromTokenStandard",
+      "resolveEdition",
       "resolveWnsApprovePda",
       "resolveWnsDistributionPda",
       "resolveWnsExtraAccountMetasPda",
