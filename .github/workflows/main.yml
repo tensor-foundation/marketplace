@@ -182,7 +182,7 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install Solana
-        uses: tensor-foundation/actions/install-solana@v2.1
+        uses: tensor-foundation/actions/install-solana@v3
         with:
           version: ${{ env.SOLANA_VERSION }}
           cache: ${{ env.CACHE }}
