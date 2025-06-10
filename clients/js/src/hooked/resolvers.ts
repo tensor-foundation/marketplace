@@ -1,6 +1,7 @@
 import {
   Address,
   IAccountMeta,
+  ProgramDerivedAddress,
   ProgramDerivedAddressBump,
   TransactionSigner,
   generateKeyPair,
@@ -13,6 +14,7 @@ import {
   expectSome,
   isTransactionSigner,
 } from '../generated/shared';
+import { findEditionPda } from '@tensor-foundation/resolvers';
 
 export const resolveBidIdOnCreate = async ({
   args,
@@ -110,4 +112,16 @@ export const resolveRemainingSignerWithSellerOrDelegate = ({
   throw new Error(
     'Either seller or delegate has to be provided as TransactionSigner.'
   );
+};
+
+export const resolveEdition = async ({
+  accounts,
+}: {
+  accounts: Record<string, ResolvedAccount>;
+}): Promise<Partial<{ value: ProgramDerivedAddress | null }>> => {
+  return {
+    value: await findEditionPda({
+      mint: expectAddress(accounts.mint?.value),
+    }),
+  };
 };

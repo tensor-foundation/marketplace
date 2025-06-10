@@ -50,7 +50,6 @@ import {
 import {
   resolveAuthorizationRulesProgramFromTokenStandard,
   resolveBidTokenRecordFromTokenStandard,
-  resolveEditionFromTokenStandard,
   resolveFeeVaultPdaFromBidState,
   resolveMetadata,
   resolveOwnerAta,
@@ -60,6 +59,7 @@ import {
   resolveSysvarInstructionsFromTokenStandard,
   resolveTokenMetadataProgramFromTokenStandard,
 } from '@tensor-foundation/resolvers';
+import { resolveEdition } from '../../hooked';
 import { findBidStatePda, findBidTaPda } from '../pdas';
 import { TENSOR_MARKETPLACE_PROGRAM_ADDRESS } from '../programs';
 import {
@@ -576,7 +576,7 @@ export async function getTakeBidLegacyInstructionAsync<
   if (!accounts.edition.value) {
     accounts.edition = {
       ...accounts.edition,
-      ...(await resolveEditionFromTokenStandard(resolverScope)),
+      ...(await resolveEdition(resolverScope)),
     };
   }
   if (!accounts.sellerTokenRecord.value) {
