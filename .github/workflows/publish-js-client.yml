@@ -20,20 +20,20 @@ env:
 jobs:
   build_programs:
     name: Programs
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || inputs.dry_run == true
     uses: ./.github/workflows/build-programs.yml
     secrets: inherit
 
   test_js:
     name: JS client
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || inputs.dry_run == true
     needs: build_programs
     uses: ./.github/workflows/test-js-client.yml
     secrets: inherit
 
   publish_js:
     name: JS client / Publish
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || inputs.dry_run == true
     runs-on: ubuntu-latest
     needs: test_js
     permissions:
