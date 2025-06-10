@@ -74,4 +74,4 @@ jobs:
 
       - name: Publish
         working-directory: ./clients/js
-        run: pnpm publish --no-git-checks --tag ${{ inputs.tag }} ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
+        run: pnpm publish --no-git-checks --tag ${{ inputs.tag }} ${{ inputs.dry_run && '--dry-run' || '' }}
