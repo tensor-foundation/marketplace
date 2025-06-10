@@ -20,7 +20,7 @@ jobs:
         run: cat .github/.env >> $GITHUB_ENV
 
       - name: Start validator
-        uses: tensor-foundation/actions/start-validator@v2
+        uses: tensor-foundation/actions/start-validator@v3
         with:
           node: ${{ matrix.node }}
           solana: ${{ env.SOLANA_VERSION }}
