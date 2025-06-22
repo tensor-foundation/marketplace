@@ -147,4 +147,7 @@ pub enum TcompError {
 
     #[msg("Edition data is empty")]
     EditionDataEmpty = 147,
+
+    #[msg("Invalid mint")]
+    InvalidMint = 148,
 }

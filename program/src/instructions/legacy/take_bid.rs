@@ -67,6 +67,7 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     #[account(
         mint::token_program = token_program,
+        constraint = mint.supply == 1 && mint.decimals == 0 @ TcompError::InvalidMint
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -101,7 +102,6 @@ pub struct TakeBidLegacy<'info> {
         ],
         bump,
         seeds::program = mpl_token_metadata::ID,
-        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 
