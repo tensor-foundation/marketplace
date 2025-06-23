@@ -2550,8 +2550,8 @@ export const testTakeBidLegacy = async ({
 
       //nft moved to bidder
       expect(
-        await getAccount(nftSellerAcc).then((acc) => acc.amount.toString())
-      ).eq("0");
+        await TEST_PROVIDER.connection.getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccount(ownerAtaAcc).then((acc) => acc.amount.toString())
       ).eq("1");
@@ -2785,10 +2785,8 @@ export const testTakeBidT22 = async ({
 
       //nft moved to bidder
       expect(
-        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
-          (acc) => acc.amount.toString()
-        )
-      ).eq("0");
+        await TEST_PROVIDER.connection.getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccountWithProgramId(ownerAtaAcc, TOKEN_2022_PROGRAM_ID).then(
           (acc) => acc.amount.toString()
@@ -2976,10 +2974,8 @@ export const testTakeBidWns = async ({
 
       //nft moved to bidder
       expect(
-        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
-          (acc) => acc.amount.toString()
-        )
-      ).eq("0");
+        await (TEST_PROVIDER.connection as Connection).getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccountWithProgramId(ownerAtaAcc, TOKEN_2022_PROGRAM_ID).then(
           (acc) => acc.amount.toString()
