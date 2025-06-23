@@ -100,6 +100,13 @@ test('it can take a bid on a legacy NFT', async (t) => {
       tokenAmount: { amount: '1' },
     },
   });
+
+  // And the seller's token account should be closed.
+  const sellerToken = await fetchJsonParsedAccount(
+    client.rpc,
+    (await findAtaPda({ mint, owner: seller.address }))[0]
+  );
+  t.false(sellerToken.exists);
 });
 
 test('it has to specify the correct makerBroker', async (t) => {

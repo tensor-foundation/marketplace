@@ -5,9 +5,13 @@ use crate::{
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::spl_token_2022::{
-        extension::{BaseStateWithExtensions, StateWithExtensions},
-        state::Mint as Mint2022,
+    token_2022::{
+        close_account,
+        spl_token_2022::{
+            extension::{BaseStateWithExtensions, StateWithExtensions},
+            state::Mint as Mint2022,
+        },
+        CloseAccount,
     },
     token_interface::{Mint, Token2022, TokenAccount, TransferChecked},
 };
@@ -261,6 +265,16 @@ pub fn process_take_bid_t22<'info>(
     };
 
     tensor_transfer_checked(transfer_cpi, 1, 0)?; // supply = 1, decimals = 0
+
+    // close seller's token account
+    close_account(CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.seller_ta.to_account_info(),
+            destination: ctx.accounts.seller.to_account_info(),
+            authority: ctx.accounts.seller.to_account_info(),
+        },
+    ))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,

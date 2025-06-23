@@ -162,13 +162,23 @@ test('it can take a bid on a legacy collection', async (t) => {
     },
   });
 
-  // And the seller received the price minus fees (taker fees, tx fees, account rent)
+  // And the seller's token account should be closed.
+  const sellerToken = await fetchJsonParsedAccount(
+    client.rpc,
+    (await findAtaPda({ mint, owner: seller.address }))[0]
+  );
+  t.false(sellerToken.exists);
+
+  // And the seller received the price minus fees (taker fees, tx fees, account rent) + ATA rent
   const postSellerBalance = (await client.rpc.getBalance(seller.address).send())
     .value;
   // tx fees + account rent buffer === 3.5m lamports
   t.assert(
     postSellerBalance >=
-      preSellerBalance + BigInt(Number(price) * 0.98) - 3_500_000n
+      preSellerBalance +
+        BigInt(Number(price) * 0.98) -
+        3_500_000n +
+        (await client.rpc.getMinimumBalanceForRentExemption(165n).send())
   );
 });
 
@@ -535,8 +545,6 @@ test('it pays fees and royalties correctly', async (t) => {
       .getTransaction(tx, { maxSupportedTransactionVersion: 0 })
       .send()
   )?.meta?.fee;
-  const tokenAta = (await findAtaPda({ mint, owner: bidOwner.address }))[0];
-  const tokenAtaRent = await client.rpc.getBalance(tokenAta).send();
 
   // Then the seller received the correct amount...
   const sellerBalanceAfter = await client.rpc.getBalance(seller.address).send();
@@ -546,8 +554,7 @@ test('it pays fees and royalties correctly', async (t) => {
         bidAmount -
         (bidAmount * TAKER_FEE_BPS) / BASIS_POINTS - // 2% taker fees
         (bidAmount * BigInt(ROYALTIES_BASIS_POINTS)) / BASIS_POINTS - //  5% royalties
-        txCost! - // tx costs
-        tokenAtaRent.value // mint ata rent
+        txCost! // tx costs
   );
 
   // ...and the creators should have received the correct amount...

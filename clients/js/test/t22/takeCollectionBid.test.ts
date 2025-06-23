@@ -1,6 +1,7 @@
 import {
   appendTransactionMessageInstruction,
   fetchEncodedAccount,
+  fetchJsonParsedAccount,
   generateKeyPairSigner,
   getAddressDecoder,
   pipe,
@@ -38,7 +39,6 @@ import {
 } from '../../src/index.js';
 import {
   assertTokenNftOwnedBy,
-  ATA_RENT_LAMPORTS,
   BASIS_POINTS,
   COMPUTE_500K_IX,
   createWhitelistV2,
@@ -51,6 +51,7 @@ import {
   upsertMintProof,
 } from '../_common.js';
 import { generateTreeOfSize } from '../_merkle.js';
+import { findAtaPda } from '@tensor-foundation/mpl-token-metadata';
 
 test('it can take a bid on a T22 collection', async (t) => {
   const client = createDefaultSolanaClient();
@@ -157,6 +158,13 @@ test('it can take a bid on a T22 collection', async (t) => {
   // Then the bid state should not exist.
   t.false((await fetchEncodedAccount(client.rpc, bidState)).exists);
 
+  // And the seller's token account should be closed.
+  const sellerToken = await fetchJsonParsedAccount(
+    client.rpc,
+    (await findAtaPda({ mint, owner: seller.address }))[0]
+  );
+  t.false(sellerToken.exists);
+
   // And the bid owner has the NFT.
   await assertTokenNftOwnedBy({
     t,
@@ -175,8 +183,7 @@ test('it can take a bid on a T22 collection', async (t) => {
       preSellerBalance +
         price -
         (price * TAKER_FEE_BPS) / BASIS_POINTS -
-        (price * sellerFeeBasisPoints) / BASIS_POINTS -
-        ATA_RENT_LAMPORTS
+        (price * sellerFeeBasisPoints) / BASIS_POINTS
   );
 });
 

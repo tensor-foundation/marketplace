@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_interface::{self, close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::{
     accounts::{MasterEdition, Metadata},
@@ -361,6 +361,16 @@ pub fn process_take_bid_legacy<'info>(
 
     // close temp nft escrow account, so it's not dangling
     token_interface::close_account(ctx.accounts.close_bid_ta_ctx().with_signer(seeds))?;
+
+    // close seller's token account
+    close_account(CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.seller_ta.to_account_info(),
+            destination: ctx.accounts.seller.to_account_info(),
+            authority: ctx.accounts.seller.to_account_info(),
+        },
+    ))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,
