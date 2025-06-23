@@ -2832,6 +2832,8 @@ export const testTakeBidT22 = async ({
       // seller paid
       const currSellerLamports = await getLamports(seller.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      const ataLength = (await TEST_PROVIDER.connection.getAccountInfo(ownerAtaAcc))?.data.length ?? 0;
+      const ataRent = await TEST_PROVIDER.connection.getMinimumBalanceForRentExemption(ataLength);
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
           tcompFee -
@@ -2839,9 +2841,7 @@ export const testTakeBidT22 = async ({
           // For bidder's ATA rent.
           (!prevOwnerAtaLamports
             ? 0
-            : await getMinimumBalanceForRentExemptAccount(
-                TEST_PROVIDER.connection
-              ))
+            : ataRent)
       );
 
       // Sol escrow should have the NFT cost deducted
@@ -3021,6 +3021,8 @@ export const testTakeBidWns = async ({
       // seller paid
       const currSellerLamports = await getLamports(seller.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      const ataLength = (await TEST_PROVIDER.connection.getAccountInfo(ownerAtaAcc))?.data.length ?? 0;
+      const ataRent = await TEST_PROVIDER.connection.getMinimumBalanceForRentExemption(ataLength);
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
           tcompFee -
@@ -3028,7 +3030,7 @@ export const testTakeBidWns = async ({
           // For bidder's ATA rent.
           (!prevOwnerAtaLamports
             ? 0
-            : await getTokenAcctRentForMint(nftMint, TOKEN_2022_PROGRAM_ID)) -
+            : ataRent) -
           (await getApproveRent())
       );
 

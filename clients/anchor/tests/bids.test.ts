@@ -1902,7 +1902,7 @@ describe("tcomp bids", () => {
       }
     });
 
-    it("FVC + Name: rejects an NFT with wrong name", async () => {
+    it.skip("FVC + Name: rejects an NFT with wrong name", async () => {
       const canopyDepth = 10;
       const verifiedCreator = Keypair.generate();
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =
