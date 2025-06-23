@@ -41,8 +41,11 @@ pub struct CloseExpiredListingLegacy<'info> {
     )]
     pub list_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    // NB: no constraint on mint.supply == 1, since we're closing the listing
+    // this should even succeed if supply > 1
     #[account(
         mint::token_program = token_program,
+        constraint = mint.decimals == 0 @ TcompError::InvalidMint
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -87,7 +90,6 @@ pub struct CloseExpiredListingLegacy<'info> {
         ],
         seeds::program = mpl_token_metadata::ID,
         bump,
-        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 
