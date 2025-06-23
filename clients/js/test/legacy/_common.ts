@@ -309,7 +309,8 @@ export async function setupFungibleAssetTest(
   const price = listingPrice
     ? listingPrice! +
       (listingPrice! * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS
-    : BigInt(bidPrice!) - (BigInt(bidPrice!) * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
+    : BigInt(bidPrice!) -
+      (BigInt(bidPrice!) * BigInt(sellerFeeBasisPoints)) / BASIS_POINTS;
 
   return {
     client,
