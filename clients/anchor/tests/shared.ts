@@ -2649,13 +2649,7 @@ export const testTakeBidLegacy = async ({
           amount -
             tcompFee -
             brokerFee -
-            creatorsFee -
-            // For bidder's ATA rent.
-            (!prevOwnerAtaLamports
-              ? await getMinimumBalanceForRentExemptAccount(
-                  TEST_PROVIDER.connection
-                )
-              : 0)
+            creatorsFee
         );
       }
 
@@ -2836,13 +2830,7 @@ export const testTakeBidT22 = async ({
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
           tcompFee -
-          brokerFee -
-          // For bidder's ATA rent.
-          (!prevOwnerAtaLamports
-            ? await getMinimumBalanceForRentExemptAccount(
-                TEST_PROVIDER.connection
-              )
-            : 0)
+          brokerFee
       );
 
       // Sol escrow should have the NFT cost deducted
@@ -3026,10 +3014,6 @@ export const testTakeBidWns = async ({
         amount -
           tcompFee -
           brokerFee -
-          // For bidder's ATA rent.
-          (!prevOwnerAtaLamports
-            ? await getTokenAcctRentForMint(nftMint, TOKEN_2022_PROGRAM_ID)
-            : 0) -
           (await getApproveRent())
       );
 
