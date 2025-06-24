@@ -65,7 +65,7 @@ tensor-toolbox = { version = "0.8.1", features = [
     "token-2022",
 ] }
 tensor-vipers = { version = "1.0.1" }
-tensorswap = { version = "0.1.0", package = "escrow-program", git = "https://github.com/tensor-foundation/escrow.git", features = [
+tensorswap = { version = "1.0.0-beta.1", package = "escrow-program", git = "https://github.com/tensor-foundation/escrow.git", features = [
     "cpi",
 ] }
 whitelist-program = { rev = "17ee287051181f28358ca7eeb883e20a1211d058", package = "whitelist-program", git = "https://github.com/tensor-foundation/whitelist.git", features = [
