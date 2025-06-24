@@ -83,7 +83,7 @@ jobs:
           key: programs
 
       - name: Restore solana-verify cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-verify
         with:
           path: /home/runner/.cargo-install/solana-verify
@@ -93,18 +93,11 @@ jobs:
         if: steps.cache-verify.outputs.cache-hit != 'true'
         run: cargo install solana-verify --force --root /home/runner/.cargo-install/solana-verify --version ${{ inputs.verify || env.VERIFY_BUILD_VERSION }} --locked
 
-
-      - name: Cache solana-verify
-        if: steps.cache-verify.outputs.cache-hit != 'true'
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cargo-install/solana-verify
-          key: solana-verify-${{ inputs.verify || env.VERIFY_BUILD_VERSION }}-${{ runner.os }}
-
       - name: Verify build programs
         shell: bash
         run: |
-          /home/runner/.cargo-install/solana-verify/bin/solana-verify build --library-name marketplace-program | tail -n 1 > build_hash.txt
+          /home/runner/.cargo-install/solana-verify/bin/solana-verify build --library-name marketplace-program > build_output.txt
+          tail -n 1 build_output.txt > build_hash.txt
 
       - name: Upload programs build
         uses: actions/upload-artifact@v4
