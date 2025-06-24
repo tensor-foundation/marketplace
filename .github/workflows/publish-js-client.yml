@@ -18,16 +18,16 @@ env:
   CACHE: true
 
 jobs:
-  build_programs:
+  build_verify_programs:
     name: Programs
     if: github.ref == 'refs/heads/main' || inputs.dry_run == true
-    uses: ./.github/workflows/build-programs.yml
+    uses: ./.github/workflows/build-verify-programs.yml
     secrets: inherit
 
   test_js:
     name: JS client
     if: github.ref == 'refs/heads/main' || inputs.dry_run == true
-    needs: build_programs
+    needs: build_verify_programs
     uses: ./.github/workflows/test-js-client.yml
     secrets: inherit
 

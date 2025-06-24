@@ -31,9 +31,9 @@ env:
   CACHE: true
 
 jobs:
-  build_programs:
+  build_verify_programs:
     name: Programs
-    uses: ./.github/workflows/build-programs.yml
+    uses: ./.github/workflows/build-verify-programs.yml
     secrets: inherit
 
   build_rust_client:
@@ -43,7 +43,7 @@ jobs:
 
   test_rust_client:
     name: Rust Client
-    needs: [build_programs, build_rust_client]
+    needs: [build_verify_programs, build_rust_client]
     uses: ./.github/workflows/test-rust-client.yml
     secrets: inherit
 

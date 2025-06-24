@@ -26,6 +26,11 @@ on:
         default: 20.x
         required: true
         type: string
+      verify:
+        description: Verify build version
+        default: 0.4.7
+        required: true
+        type: string
 
 env:
   CACHE: true
@@ -34,7 +39,7 @@ env:
   ARTIFACTS_TOKEN: ${{ secrets.ARTIFACTS_TOKEN }}
 
 jobs:
-  build_programs:
+  build_verify_programs:
     name: Build
     runs-on: ubuntu-latest
     steps:
@@ -77,9 +82,14 @@ jobs:
           folder: "."
           key: programs
 
-      - name: Build programs
+      - name: Install verify build
+        run: cargo install solana-verify --version ${{ inputs.verify || env.VERIFY_BUILD_VERSION }}
+
+      - name: Verify build programs
         shell: bash
-        run: pnpm programs:build
+        run: |
+          solana-verify build --library-name marketplace-program | tail -n 1 > build_hash.txt
+
 
       - name: Upload programs build
         uses: actions/upload-artifact@v4
@@ -89,4 +99,5 @@ jobs:
           path: |
             ./targe*/deploy/*.so
             ./targe*/deploy/*.json
+            build_hash.txt
           if-no-files-found: error
