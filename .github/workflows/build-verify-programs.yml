@@ -28,7 +28,7 @@ on:
         type: string
       verify:
         description: Verify build version
-        default: 0.4.6
+        default: 0.2.11
         required: true
         type: string
 
