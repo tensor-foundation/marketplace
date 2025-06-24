@@ -1,4 +1,4 @@
-name: Build Programs
+name: Build Verify Programs
 
 on:
   workflow_call:
@@ -28,7 +28,7 @@ on:
         type: string
       verify:
         description: Verify build version
-        default: 0.4.7
+        default: 0.4.6
         required: true
         type: string
 
