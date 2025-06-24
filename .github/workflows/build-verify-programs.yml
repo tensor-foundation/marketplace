@@ -83,7 +83,7 @@ jobs:
           key: programs
 
       - name: Install verify build
-        run: cargo install solana-verify --version ${{ inputs.verify || env.VERIFY_BUILD_VERSION }}
+        run: cargo install solana-verify --force --root /home/runner/.cargo-install/solana-verify --version ${{ inputs.verify || env.VERIFY_BUILD_VERSION }} --locked
 
       - name: Verify build programs
         shell: bash
