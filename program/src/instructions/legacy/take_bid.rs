@@ -67,6 +67,7 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     #[account(
         mint::token_program = token_program,
+        constraint = mint.supply == 1 && mint.decimals == 0 @ TcompError::InvalidMint
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -91,7 +92,8 @@ pub struct TakeBidLegacy<'info> {
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
-    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    /// CHECK: ensure the edition is a valid edition account and belongs to the mint.
+    /// (NB: can be empty, fungible tokens have no edition)
     #[account(
         seeds=[
             MasterEdition::PREFIX.0,
@@ -101,7 +103,6 @@ pub struct TakeBidLegacy<'info> {
         ],
         bump,
         seeds::program = mpl_token_metadata::ID,
-        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 
