@@ -86,6 +86,9 @@ jobs:
         working-directory: ./cpitest
         run: cargo-build-sbf
 
+      - name: Dump mainnet binaries
+        run: pnpm programs:dump_binaries:mainnet
+
       - name: Cache solana-verify
         uses: actions/cache@v4
         id: cache-verify

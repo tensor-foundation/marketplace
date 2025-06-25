@@ -5,6 +5,8 @@
     "programs:build:artifacts": "zx ./scripts/program/build.mjs artifacts",
     "programs:build:devnet": "zx ./scripts/program/build.mjs devnet",
     "programs:build:mainnet": "zx ./scripts/program/build.mjs mainnet",
+    "programs:dump_binaries:devnet": "zx ./scripts/program/dump_devnet_external.mjs && zx ./scripts/program/dump_devnet_others.mjs",
+    "programs:dump_binaries:mainnet": "zx ./scripts/program/dump_mainnet_external.mjs && zx ./scripts/program/dump_mainnet_others.mjs",
     "programs:test": "zx ./scripts/program/test.mjs",
     "programs:clean": "zx ./scripts/program/clean.mjs",
     "programs:format": "zx ./scripts/program/format.mjs",
