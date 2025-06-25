@@ -140,6 +140,8 @@ export const HAS_ONE_ERR = "0x7d1";
 export const ALREADY_IN_USE_ERR = "0x0";
 export const ACC_NOT_INIT_ERR = "0xbc4";
 export const CONC_MERKLE_TREE_ERROR = "0x1771"; // Error when proof invalid.
+export const INVALID_ROOT_ACCESS_VIOLATION =
+  "failed to send transaction: Transaction simulation failed: Error processing Instruction 2: Program failed to complete";
 
 export const getLamports = (acct: PublicKey) =>
   TEST_PROVIDER.connection.getBalance(acct, "confirmed");
@@ -1085,36 +1087,34 @@ export const beforeHook = async ({
     depthSizePair.maxDepth
   );
 
-  leaves = await Promise.all(
-    leaves.map(async (l) => {
-      let { index, assetId, leaf, metadata } = l;
-      let proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
+  for (const l of leaves) {
+    let { index, assetId, leaf, metadata } = l;
+    let proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
 
-      if (verifiedCreator) {
-        ({ metadata, leaf, assetId } = await verifyCNftCreator({
-          index,
-          merkleTree,
-          memTree,
-          metadata,
-          owner: traderA.publicKey,
-          proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
-          verifiedCreator
-        }));
-        //get new proof after verification
-        proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
-      }
-
-      await verifyCNft({
+    if (verifiedCreator) {
+      ({ metadata, leaf, assetId } = await verifyCNftCreator({
         index,
         merkleTree,
+        memTree,
         metadata,
         owner: traderA.publicKey,
-        proof: proof.proof.slice(0, proof.proof.length - canopyDepth)
-      });
+        proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
+        verifiedCreator
+      }));
+      //get new proof after verification
+      proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
+    }
 
-      return { index, assetId, leaf, metadata };
-    })
-  );
+    await verifyCNft({
+      index,
+      merkleTree,
+      metadata,
+      owner: traderA.publicKey,
+      proof: proof.proof.slice(0, proof.proof.length - canopyDepth)
+    });
+
+    leaves[index] = { index, assetId, leaf, metadata };
+  }
 
   if (setupTswap) {
     // Tswap

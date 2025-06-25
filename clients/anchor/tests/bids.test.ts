@@ -20,7 +20,6 @@ import {
   beforeAllHook,
   beforeHook,
   BROKER_FEE_PCT,
-  CONC_MERKLE_TREE_ERROR,
   decompressCNft,
   DEFAULT_DEPTH_SIZE,
   delegateCNft,
@@ -31,6 +30,7 @@ import {
   makeCNftMeta,
   makeProofWhitelist,
   mintCNft,
+  INVALID_ROOT_ACCESS_VIOLATION,
   tcompSdk,
   TEST_CONN_PAYER,
   testBid,
@@ -384,7 +384,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
         //fake shares
         await expect(
           testTakeBid({
@@ -406,7 +406,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
         //fake verified
         await expect(
           testTakeBid({
@@ -428,7 +428,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
         await testTakeBid({
           index,
           minAmount,
@@ -1902,7 +1902,7 @@ describe("tcomp bids", () => {
       }
     });
 
-    it.skip("FVC + Name: rejects an NFT with wrong name", async () => {
+    it("FVC + Name: rejects an NFT with wrong name", async () => {
       const canopyDepth = 10;
       const verifiedCreator = Keypair.generate();
       const { merkleTree, traderA, leaves, traderB, memTree, treeOwner } =

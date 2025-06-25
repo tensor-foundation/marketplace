@@ -17,11 +17,11 @@ import {
   beforeHook,
   BROKER_FEE_PCT,
   buildAndSendTx,
-  CONC_MERKLE_TREE_ERROR,
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
   HAS_ONE_ERR,
+  INVALID_ROOT_ACCESS_VIOLATION,
   tcompSdk,
   TEST_USDC,
   testBuy,
@@ -265,7 +265,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
 
           //fake shares
           await expect(
@@ -288,7 +288,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
 
           //fake verified
           await expect(
@@ -311,7 +311,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
 
           await testBuy({
             index,
