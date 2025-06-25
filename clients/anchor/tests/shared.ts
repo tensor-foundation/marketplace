@@ -140,8 +140,6 @@ export const HAS_ONE_ERR = "0x7d1";
 export const ALREADY_IN_USE_ERR = "0x0";
 export const ACC_NOT_INIT_ERR = "0xbc4";
 export const CONC_MERKLE_TREE_ERROR = "0x1771"; // Error when proof invalid.
-export const INVALID_ROOT_ACCESS_VIOLATION =
-  "failed to send transaction: Transaction simulation failed: Error processing Instruction 2: Program failed to complete";
 
 export const getLamports = (acct: PublicKey) =>
   TEST_PROVIDER.connection.getBalance(acct, "confirmed");

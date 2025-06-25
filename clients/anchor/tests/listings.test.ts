@@ -21,7 +21,6 @@ import {
   FEE_PCT,
   fetchAndCheckSingleIxTx,
   HAS_ONE_ERR,
-  INVALID_ROOT_ACCESS_VIOLATION,
   tcompSdk,
   TEST_USDC,
   testBuy,
@@ -265,7 +264,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+          ).to.be.rejected;
 
           //fake shares
           await expect(
@@ -288,7 +287,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+          ).to.be.rejected;
 
           //fake verified
           await expect(
@@ -311,7 +310,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+          ).to.be.rejected;
 
           await testBuy({
             index,

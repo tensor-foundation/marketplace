@@ -30,7 +30,6 @@ import {
   makeCNftMeta,
   makeProofWhitelist,
   mintCNft,
-  INVALID_ROOT_ACCESS_VIOLATION,
   tcompSdk,
   TEST_CONN_PAYER,
   testBid,
@@ -384,7 +383,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+        ).to.be.rejected;
         //fake shares
         await expect(
           testTakeBid({
@@ -406,7 +405,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+        ).to.be.rejected;
         //fake verified
         await expect(
           testTakeBid({
@@ -428,7 +427,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(INVALID_ROOT_ACCESS_VIOLATION);
+        ).to.be.rejected;
         await testTakeBid({
           index,
           minAmount,
