@@ -88,15 +88,6 @@ jobs:
 
       - name: Dump mainnet binaries
         run: pnpm programs:dump_binaries:mainnet
-      
-      - name: Parse Cargo.toml for account-dependencies
-        id: parse_cargo_toml
-        run: |
-          import toml
-          with open('program/Cargo.toml', 'r') as f:
-              cargo_toml = toml.load(f)
-          account_dependencies = cargo_toml['package']['account-dependencies']
-          json_files = ' '.join([f"{dep}.json" for dep in account_dependencies])
 
       - name: Cache solana-verify
         uses: actions/cache@v4
@@ -122,5 +113,5 @@ jobs:
           path: |
             ./targe*/deploy/*.so
             build_hash.txt
-            ${{ steps.parse_cargo_toml.outputs.json_files }}
+            $(find ./targe*/deploy -name "*.json" | grep -v "keypair")
           if-no-files-found: error
