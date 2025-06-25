@@ -105,6 +105,12 @@ jobs:
         run: |
           /home/runner/.cargo-install/solana-verify/bin/solana-verify build --library-name marketplace_program | tee >(tail -n 1 > build_hash.txt)
 
+      - name: List account deps
+        id: list_account_deps
+        run: |
+          ACCOUNT_DEP_FILES=$(find ./targe*/deploy -name "*.json" | grep -v "keypair")
+          echo "ACCOUNT_DEP_FILES=$ACCOUNT_DEP_FILES" >> $GITHUB_ENV
+
       - name: Upload programs build
         uses: actions/upload-artifact@v4
         with:
@@ -113,5 +119,5 @@ jobs:
           path: |
             ./targe*/deploy/*.so
             build_hash.txt
-            $(find ./targe*/deploy -name "*.json" | grep -v "keypair")
+            ${{ env.ACCOUNT_DEP_FILES }}
           if-no-files-found: error
