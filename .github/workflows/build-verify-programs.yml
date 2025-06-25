@@ -84,7 +84,7 @@ jobs:
     
       - name: Build cpi test program
         working-directory: ./cpitest
-        run: anchor build
+        run: cargo-build-sbf
 
       - name: Cache solana-verify
         uses: actions/cache@v4
