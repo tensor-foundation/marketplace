@@ -96,7 +96,7 @@ jobs:
       - name: Verify build programs
         shell: bash
         run: |
-          /home/runner/.cargo-install/solana-verify/bin/solana-verify build --library-name marketplace_program | tee >(tail -n 3 | head -n 1 > build_hash.txt)
+          /home/runner/.cargo-install/solana-verify/bin/solana-verify build --library-name marketplace_program | tee >(tail -n 1 > build_hash.txt)
 
       - name: Upload programs build
         uses: actions/upload-artifact@v4
