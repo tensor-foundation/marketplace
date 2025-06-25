@@ -92,8 +92,7 @@ pub struct TakeBidLegacy<'info> {
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
-    /// CHECK: ensure the edition is a valid edition account and belongs to the mint.
-    /// (NB: can be empty, fungible tokens have no edition)
+    /// CHECK: ensure the edition is a valid edition account and belongs to the mint - can be empty, fungible tokens have no edition
     #[account(
         seeds=[
             MasterEdition::PREFIX.0,

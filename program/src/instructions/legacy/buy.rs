@@ -113,8 +113,7 @@ pub struct BuyLegacy<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: ensure the edition is a valid edition account and belongs to the mint.
-    /// (NB: can be empty, fungible tokens have no edition)
+    /// CHECK: ensure the edition is a valid edition account and belongs to the mint - can be empty, fungible tokens have no edition
     #[account(
         seeds=[
             mpl_token_metadata::accounts::MasterEdition::PREFIX.0,
