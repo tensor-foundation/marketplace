@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{self, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_interface::{self, close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 use mpl_token_metadata::{
     accounts::{MasterEdition, Metadata},
@@ -67,6 +67,7 @@ pub struct TakeBidLegacy<'info> {
     /// CHECK: whitelist, token::mint in seller_token, associated_token::mint in owner_ata_acc
     #[account(
         mint::token_program = token_program,
+        constraint = mint.supply == 1 && mint.decimals == 0 @ TcompError::InvalidMint
     )]
     pub mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -91,7 +92,7 @@ pub struct TakeBidLegacy<'info> {
     pub owner_ta: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // --------------------------------------- pNft
-    /// CHECK: ensure the edition is not empty, is a valid edition account and belongs to the mint.
+    /// CHECK: ensure the edition is a valid edition account and belongs to the mint - can be empty, fungible tokens have no edition
     #[account(
         seeds=[
             MasterEdition::PREFIX.0,
@@ -101,7 +102,6 @@ pub struct TakeBidLegacy<'info> {
         ],
         bump,
         seeds::program = mpl_token_metadata::ID,
-        constraint = edition.data_len() > 0 @ TcompError::EditionDataEmpty,
     )]
     pub edition: UncheckedAccount<'info>,
 
@@ -361,6 +361,16 @@ pub fn process_take_bid_legacy<'info>(
 
     // close temp nft escrow account, so it's not dangling
     token_interface::close_account(ctx.accounts.close_bid_ta_ctx().with_signer(seeds))?;
+
+    // close seller's token account
+    close_account(CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.seller_ta.to_account_info(),
+            destination: ctx.accounts.seller.to_account_info(),
+            authority: ctx.accounts.seller.to_account_info(),
+        },
+    ))?;
 
     take_bid_shared(TakeBidArgs {
         bid_state: &mut ctx.accounts.bid_state,

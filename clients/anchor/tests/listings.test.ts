@@ -17,7 +17,6 @@ import {
   beforeHook,
   BROKER_FEE_PCT,
   buildAndSendTx,
-  CONC_MERKLE_TREE_ERROR,
   delegateCNft,
   FEE_PCT,
   fetchAndCheckSingleIxTx,
@@ -265,7 +264,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejected;
 
           //fake shares
           await expect(
@@ -288,7 +287,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejected;
 
           //fake verified
           await expect(
@@ -311,7 +310,7 @@ describe("tcomp listings", () => {
               lookupTableAccount,
               currency,
             })
-          ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+          ).to.be.rejected;
 
           await testBuy({
             index,

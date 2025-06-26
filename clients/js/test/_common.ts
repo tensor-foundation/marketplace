@@ -212,6 +212,7 @@ export interface CreateWhitelistParams {
   namespace?: KeyPairSigner;
   freezeAuthority?: Address;
   conditions?: Condition[];
+  uuid?: Uint8Array;
 }
 
 export interface CreateWhitelistReturns {
@@ -227,8 +228,8 @@ export async function createWhitelistV2({
   namespace,
   freezeAuthority = DEFAULT_PUBKEY,
   conditions = [{ mode: Mode.FVC, value: updateAuthority.address }],
+  uuid = generateUuid(),
 }: CreateWhitelistParams): Promise<CreateWhitelistReturns> {
-  const uuid = generateUuid();
   namespace = namespace || (await generateKeyPairSigner());
 
   const [whitelist] = await findWhitelistV2Pda({

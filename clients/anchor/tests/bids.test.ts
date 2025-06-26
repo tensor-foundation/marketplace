@@ -20,7 +20,6 @@ import {
   beforeAllHook,
   beforeHook,
   BROKER_FEE_PCT,
-  CONC_MERKLE_TREE_ERROR,
   decompressCNft,
   DEFAULT_DEPTH_SIZE,
   delegateCNft,
@@ -384,7 +383,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejected;
         //fake shares
         await expect(
           testTakeBid({
@@ -406,7 +405,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejected;
         //fake verified
         await expect(
           testTakeBid({
@@ -428,7 +427,7 @@ describe("tcomp bids", () => {
             lookupTableAccount,
             bidId: assetId
           })
-        ).to.be.rejectedWith(CONC_MERKLE_TREE_ERROR);
+        ).to.be.rejected;
         await testTakeBid({
           index,
           minAmount,

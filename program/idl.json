@@ -4834,6 +4834,11 @@
       "code": 6147,
       "name": "EditionDataEmpty",
       "msg": "Edition data is empty"
+    },
+    {
+      "code": 6148,
+      "name": "InvalidMint",
+      "msg": "Invalid mint"
     }
   ],
   "metadata": {

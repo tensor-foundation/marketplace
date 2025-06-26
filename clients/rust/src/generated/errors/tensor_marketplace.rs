@@ -154,6 +154,9 @@ pub enum TensorMarketplaceError {
     /// 6147 - Edition data is empty
     #[error("Edition data is empty")]
     EditionDataEmpty = 0x1803,
+    /// 6148 - Invalid mint
+    #[error("Invalid mint")]
+    InvalidMint = 0x1804,
 }
 
 impl solana_program::program_error::PrintProgramError for TensorMarketplaceError {

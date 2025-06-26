@@ -43,7 +43,11 @@ import {
   TAKER_FEE_BPS,
   TestAction,
 } from '../_common.js';
-import { computeIx, setupLegacyTest } from './_common.js';
+import {
+  computeIx,
+  setupFungibleAssetTest,
+  setupLegacyTest,
+} from './_common.js';
 
 test('it can buy an NFT', async (t) => {
   const {
@@ -897,4 +901,51 @@ test('it respects the optionalRoyaltyPct arg', async (t) => {
             100n // optionalRoyaltyPct% of 5%
     );
   }
+});
+
+test('it can list and buy a Fungible Asset w/ supply of 1', async (t) => {
+  // Fungible Assets technically allow supply > 1, but require decimals of 0.
+  // However, we are allowing Fungible Assets used as NFTs such as SNS NFTs which have a supply of 1.
+  const {
+    client,
+    signers,
+    mint,
+    listingPrice: maxPrice,
+    listing,
+  } = await setupFungibleAssetTest({
+    t,
+    action: TestAction.List,
+  });
+  const { buyer, nftOwner, nftUpdateAuthority } = signers;
+
+  // When a buyer buys the NFT.
+  const buyLegacyIx = await getBuyLegacyInstructionAsync({
+    owner: nftOwner.address,
+    payer: buyer,
+    mint,
+    maxAmount: maxPrice!,
+    creators: [nftUpdateAuthority.address],
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, buyer),
+    (tx) => appendTransactionMessageInstruction(buyLegacyIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Then the listing account should have been closed.
+  t.false((await fetchEncodedAccount(client.rpc, listing!)).exists);
+
+  // And the listing token account should have been closed.
+  t.false(
+    (
+      await fetchEncodedAccount(
+        client.rpc,
+        (await findAtaPda({ mint, owner: listing! }))[0]
+      )
+    ).exists
+  );
+
+  // And the buyer has the NFT.
+  await assertTokenNftOwnedBy({ t, client, mint, owner: buyer.address });
 });

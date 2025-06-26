@@ -1085,36 +1085,34 @@ export const beforeHook = async ({
     depthSizePair.maxDepth
   );
 
-  leaves = await Promise.all(
-    leaves.map(async (l) => {
-      let { index, assetId, leaf, metadata } = l;
-      let proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
+  for (const l of leaves) {
+    let { index, assetId, leaf, metadata } = l;
+    let proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
 
-      if (verifiedCreator) {
-        ({ metadata, leaf, assetId } = await verifyCNftCreator({
-          index,
-          merkleTree,
-          memTree,
-          metadata,
-          owner: traderA.publicKey,
-          proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
-          verifiedCreator
-        }));
-        //get new proof after verification
-        proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
-      }
-
-      await verifyCNft({
+    if (verifiedCreator) {
+      ({ metadata, leaf, assetId } = await verifyCNftCreator({
         index,
         merkleTree,
+        memTree,
         metadata,
         owner: traderA.publicKey,
-        proof: proof.proof.slice(0, proof.proof.length - canopyDepth)
-      });
+        proof: proof.proof.slice(0, proof.proof.length - canopyDepth),
+        verifiedCreator
+      }));
+      //get new proof after verification
+      proof = memTree.getProof(index, false, depthSizePair.maxDepth, false);
+    }
 
-      return { index, assetId, leaf, metadata };
-    })
-  );
+    await verifyCNft({
+      index,
+      merkleTree,
+      metadata,
+      owner: traderA.publicKey,
+      proof: proof.proof.slice(0, proof.proof.length - canopyDepth)
+    });
+
+    leaves[index] = { index, assetId, leaf, metadata };
+  }
 
   if (setupTswap) {
     // Tswap
@@ -2550,8 +2548,8 @@ export const testTakeBidLegacy = async ({
 
       //nft moved to bidder
       expect(
-        await getAccount(nftSellerAcc).then((acc) => acc.amount.toString())
-      ).eq("0");
+        await TEST_PROVIDER.connection.getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccount(ownerAtaAcc).then((acc) => acc.amount.toString())
       ).eq("1");
@@ -2649,13 +2647,12 @@ export const testTakeBidLegacy = async ({
           amount -
             tcompFee -
             brokerFee -
-            creatorsFee -
-            // For bidder's ATA rent.
+            creatorsFee + 
             (!prevOwnerAtaLamports
-              ? await getMinimumBalanceForRentExemptAccount(
+              ? 0
+              : await getMinimumBalanceForRentExemptAccount(
                   TEST_PROVIDER.connection
-                )
-              : 0)
+                ))
         );
       }
 
@@ -2785,10 +2782,8 @@ export const testTakeBidT22 = async ({
 
       //nft moved to bidder
       expect(
-        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
-          (acc) => acc.amount.toString()
-        )
-      ).eq("0");
+        await TEST_PROVIDER.connection.getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccountWithProgramId(ownerAtaAcc, TOKEN_2022_PROGRAM_ID).then(
           (acc) => acc.amount.toString()
@@ -2835,16 +2830,16 @@ export const testTakeBidT22 = async ({
       // seller paid
       const currSellerLamports = await getLamports(seller.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      const ataLength = (await TEST_PROVIDER.connection.getAccountInfo(ownerAtaAcc))?.data.length ?? 0;
+      const ataRent = await TEST_PROVIDER.connection.getMinimumBalanceForRentExemption(ataLength);
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
           tcompFee -
-          brokerFee -
+          brokerFee + 
           // For bidder's ATA rent.
           (!prevOwnerAtaLamports
-            ? await getMinimumBalanceForRentExemptAccount(
-                TEST_PROVIDER.connection
-              )
-            : 0)
+            ? 0
+            : ataRent)
       );
 
       // Sol escrow should have the NFT cost deducted
@@ -2976,10 +2971,8 @@ export const testTakeBidWns = async ({
 
       //nft moved to bidder
       expect(
-        await getAccountWithProgramId(nftSellerAcc, TOKEN_2022_PROGRAM_ID).then(
-          (acc) => acc.amount.toString()
-        )
-      ).eq("0");
+        await (TEST_PROVIDER.connection as Connection).getAccountInfo(nftSellerAcc)
+      ).to.be.null;
       expect(
         await getAccountWithProgramId(ownerAtaAcc, TOKEN_2022_PROGRAM_ID).then(
           (acc) => acc.amount.toString()
@@ -3026,14 +3019,16 @@ export const testTakeBidWns = async ({
       // seller paid
       const currSellerLamports = await getLamports(seller.publicKey);
       //skip check for programmable, since you create additional PDAs that cost lamports (not worth tracking)
+      const ataLength = (await TEST_PROVIDER.connection.getAccountInfo(ownerAtaAcc))?.data.length ?? 0;
+      const ataRent = await TEST_PROVIDER.connection.getMinimumBalanceForRentExemption(ataLength);
       expect(currSellerLamports! - prevSellerLamports!).eq(
         amount -
           tcompFee -
-          brokerFee -
+          brokerFee +
           // For bidder's ATA rent.
           (!prevOwnerAtaLamports
-            ? await getTokenAcctRentForMint(nftMint, TOKEN_2022_PROGRAM_ID)
-            : 0) -
+            ? 0
+            : ataRent) -
           (await getApproveRent())
       );
 

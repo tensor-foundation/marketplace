@@ -137,7 +137,7 @@ jobs:
           command: clippy
           args: --all-targets --all-features --no-deps -- -D warnings
 
-  build_programs:
+  build_verify_programs:
     name: Programs
     needs: [changes, lint_js, lint_rust]
     if: |
@@ -145,7 +145,7 @@ jobs:
       (needs.lint_js.result == 'success' || needs.lint_js.result == 'skipped') &&
       (needs.lint_rust.result == 'success' || needs.lint_rust.result == 'skipped') &&
       needs.changes.outputs.any == 'true'
-    uses: ./.github/workflows/build-programs.yml
+    uses: ./.github/workflows/build-verify-programs.yml
     secrets: inherit
 
   test_programs:
@@ -164,7 +164,7 @@ jobs:
   generate_clients:
     name: Generate Clients
     if: ${{ needs.changes.outputs.any == 'true' }}
-    needs: [changes, build_programs]
+    needs: [changes, build_verify_programs]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout

@@ -915,12 +915,12 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "escrow-program"
-version = "0.1.0"
-source = "git+ssh://git@github.com/tensor-foundation/escrow.git#7b880e3ae0529a6d360f973bf5f95d4be4056925"
+version = "1.0.0-beta.1"
+source = "git+https://github.com/tensor-foundation/escrow.git#21fc10786e4bf538062f9a59d9e8f8b085ad3a6e"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "tensor-toolbox 0.1.0",
+ "tensor-toolbox 0.4.0",
  "tensor-vipers",
 ]
 
@@ -2401,23 +2401,6 @@ dependencies = [
 
 [[package]]
 name = "tensor-toolbox"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a50bf6f3c07d2010b30018e6ab4240bcf30b4bb2bc83cb8a5eff1c1ee9929d55"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bytemuck",
- "mpl-token-metadata",
- "solana-program",
- "spl-account-compression",
- "spl-noop",
- "spl-token-metadata-interface",
- "tensor-vipers",
-]
-
-[[package]]
-name = "tensor-toolbox"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86ad0af7b3655fac8e00f9baffa5a91026bb66858cd3a3c4208e8f523d306dbf"
@@ -2685,7 +2668,7 @@ dependencies = [
 [[package]]
 name = "whitelist-program"
 version = "0.2.3"
-source = "git+ssh://git@github.com/tensor-foundation/whitelist.git?rev=17ee287051181f28358ca7eeb883e20a1211d058#17ee287051181f28358ca7eeb883e20a1211d058"
+source = "git+https://github.com/tensor-foundation/whitelist.git?rev=17ee287051181f28358ca7eeb883e20a1211d058#17ee287051181f28358ca7eeb883e20a1211d058"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
